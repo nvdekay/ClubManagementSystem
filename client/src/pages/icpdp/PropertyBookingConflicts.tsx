@@ -1,47 +1,86 @@
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useBlackoutBookings } from "@/hooks/useFacilityBookings";
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { useBlackoutBookings } from '@/hooks/useFacilityBookings'
 
 /** Mục đích mà server lưu cho mọi buổi được sinh ra từ một lần phân bổ phòng UC58. */
-const ROOM_ALLOCATION_PURPOSE = "ICPDP room allocation";
-const pendingStates = ["Requested", "Under Review", "Revision Requested"];
-type ConflictState = "Requested" | "Under Review" | "Revision Requested" | "Approved" | "In Use";
+const ROOM_ALLOCATION_PURPOSE = 'ICPDP room allocation'
+const pendingStates = ['Requested', 'Under Review', 'Revision Requested']
+type ConflictState = 'Requested' | 'Under Review' | 'Revision Requested' | 'Approved' | 'In Use'
 
-interface PropertyBookingConflictsProps { propertyId: string; blackoutKey: string }
+interface PropertyBookingConflictsProps {
+  propertyId: string
+  blackoutKey: string
+}
 // Danh sách booking bị xung đột bởi lịch bảo trì của cơ sở vật chất
-export function PropertyBookingConflicts({ propertyId, blackoutKey }: PropertyBookingConflictsProps) {
-  const { t, i18n } = useTranslation();
-  const bookings = useBlackoutBookings(propertyId, blackoutKey);
+export function PropertyBookingConflicts({
+  propertyId,
+  blackoutKey,
+}: PropertyBookingConflictsProps) {
+  const { t, i18n } = useTranslation()
+  const bookings = useBlackoutBookings(propertyId, blackoutKey)
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", {
-      dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(value));
+    return new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Ho_Chi_Minh',
+    }).format(new Date(value))
   }
-  return <section className="mt-4 space-y-3">
-    <h3 className="font-semibold">{t("facilityBookings.blackoutTitle")}</h3>
-    {bookings.isPending ? <AppSkeleton className="h-20 w-full" /> : bookings.isError ? <AppNotice tone="danger" role="alert">
-      <p>{bookings.error.message}</p><AppButton onClick={() => void bookings.refetch()}>{t("facilityBookings.retry")}</AppButton>
-    </AppNotice> : !bookings.data.length ? <p className="text-sm text-muted-app">{t("facilityBookings.noBlackoutConflicts")}</p>
-      : <>
-        <p className="text-sm text-muted-app">{t("facilityBookings.blackoutHint")}</p>
-        {bookings.data.map((item) => {
-          const allocation = item.purpose === ROOM_ALLOCATION_PURPOSE;
-          return <AppNotice key={item.id} tone={pendingStates.includes(item.state) ? "warning" : "danger"}>
-            <div className="flex flex-wrap items-center gap-2">
-              {allocation
-                ? <Link to="/workspace/room-allocations" className="font-medium text-primary-app hover:underline">
-                  {item.clubName} · {t("facilityBookings.roomSession")}</Link>
-                : <Link to={`/workspace/bookings?id=${encodeURIComponent(item.id)}`} className="font-medium text-primary-app hover:underline">
-                  {item.clubName} · {item.purpose}</Link>}
-              <AppBadge tone={pendingStates.includes(item.state) ? "warning" : "info"}>
-                {t(`facilityBookings.states.${item.state as ConflictState}`)}</AppBadge>
-            </div>
-            <p>{date(item.startAt)} – {date(item.endAt)}</p>
-          </AppNotice>;
-        })}
-      </>}
-  </section>;
+  return (
+    <section className="mt-4 space-y-3">
+      <h3 className="font-semibold">{t('facilityBookings.blackoutTitle')}</h3>
+      {bookings.isPending ? (
+        <AppSkeleton className="h-20 w-full" />
+      ) : bookings.isError ? (
+        <AppNotice tone="danger" role="alert">
+          <p>{bookings.error.message}</p>
+          <AppButton onClick={() => void bookings.refetch()}>
+            {t('facilityBookings.retry')}
+          </AppButton>
+        </AppNotice>
+      ) : !bookings.data.length ? (
+        <p className="text-sm text-muted-app">{t('facilityBookings.noBlackoutConflicts')}</p>
+      ) : (
+        <>
+          <p className="text-sm text-muted-app">{t('facilityBookings.blackoutHint')}</p>
+          {bookings.data.map((item) => {
+            const allocation = item.purpose === ROOM_ALLOCATION_PURPOSE
+            return (
+              <AppNotice
+                key={item.id}
+                tone={pendingStates.includes(item.state) ? 'warning' : 'danger'}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  {allocation ? (
+                    <Link
+                      to="/workspace/room-allocations"
+                      className="font-medium text-primary-app hover:underline"
+                    >
+                      {item.clubName} · {t('facilityBookings.roomSession')}
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/workspace/bookings?id=${encodeURIComponent(item.id)}`}
+                      className="font-medium text-primary-app hover:underline"
+                    >
+                      {item.clubName} · {item.purpose}
+                    </Link>
+                  )}
+                  <AppBadge tone={pendingStates.includes(item.state) ? 'warning' : 'info'}>
+                    {t(`facilityBookings.states.${item.state as ConflictState}`)}
+                  </AppBadge>
+                </div>
+                <p>
+                  {date(item.startAt)} – {date(item.endAt)}
+                </p>
+              </AppNotice>
+            )
+          })}
+        </>
+      )}
+    </section>
+  )
 }

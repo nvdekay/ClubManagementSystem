@@ -1,35 +1,42 @@
-import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams } from "react-router";
+import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, useNavigate, useParams } from 'react-router'
 
-import { ClubLogo } from "@/components/custom/ClubLogo";
-import { MembershipStateBadge } from "@/components/custom/MembershipStateBadge";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useAuth } from "@/hooks/useAuth";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { isNotAMember, useMemberSpace, useMembershipAction } from "@/hooks/useMemberSpace";
-import type { Locale } from "@/i18n";
-import type { MemberSpace } from "@/services/memberSpace";
-import { formatDate, formatDay } from "@/utils/formatDate";
+import { ClubLogo } from '@/components/custom/ClubLogo'
+import { MembershipStateBadge } from '@/components/custom/MembershipStateBadge'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSelect } from '@/components/ui/select/AppSelect'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useAuth } from '@/hooks/useAuth'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { isNotAMember, useMemberSpace, useMembershipAction } from '@/hooks/useMemberSpace'
+import type { Locale } from '@/i18n'
+import type { MemberSpace } from '@/services/memberSpace'
+import { formatDate, formatDay } from '@/utils/formatDate'
 
-const registrationLabels = { Confirmed: "memberSpace.regConfirmed", Waitlisted: "memberSpace.regWaitlisted",
-  Cancelled: "memberSpace.regCancelled" } as const;
+const registrationLabels = {
+  Confirmed: 'memberSpace.regConfirmed',
+  Waitlisted: 'memberSpace.regWaitlisted',
+  Cancelled: 'memberSpace.regCancelled',
+} as const
 
 // Ngày hôm nay (YYYY-MM-DD) theo múi giờ Việt Nam
 /** Hôm nay theo giờ Việt Nam (server so sánh ngày rời CLB theo lịch Asia/Ho_Chi_Minh). */
 function todayInVietnam(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit",
-    day: "2-digit" }).format(new Date());
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
 }
 
 // Khối nội dung có tiêu đề trong không gian thành viên
@@ -39,110 +46,188 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="mb-3 font-heading text-base font-semibold">{title}</h2>
       {children}
     </section>
-  );
+  )
 }
 
 // Trang không gian thành viên của một CLB
 /** Không gian thành viên UC24 (chỉ xem) kèm yêu cầu rời CLB UC22; các link tới UC29/UC31/UC48 chỉ để điều hướng. */
 export function MemberSpacePage() {
-  const { t } = useTranslation();
-  const { clubId } = useParams();
-  const auth = useAuth();
-  const space = useMemberSpace(clubId, Boolean(auth.data));
+  const { t } = useTranslation()
+  const { clubId } = useParams()
+  const auth = useAuth()
+  const space = useMemberSpace(clubId, Boolean(auth.data))
 
   if (space.isPending) {
-    return <div className="space-y-4"><AppSkeleton className="h-24 w-full" /><AppSkeleton className="h-64 w-full" /></div>;
+    return (
+      <div className="space-y-4">
+        <AppSkeleton className="h-24 w-full" />
+        <AppSkeleton className="h-64 w-full" />
+      </div>
+    )
   }
   if (space.isError) {
     return isNotAMember(space.error) ? (
       <section className="mx-auto max-w-lg py-16 text-center">
-        <h1 className="font-heading text-2xl font-semibold">{t("memberSpace.notMemberTitle")}</h1>
-        <p className="mt-2 text-muted-app">{t("memberSpace.notMemberText")}</p>
-        <Link to={`/clubs/${clubId ?? ""}`} className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
-          {t("memberSpace.publicPage")}</Link>
+        <h1 className="font-heading text-2xl font-semibold">{t('memberSpace.notMemberTitle')}</h1>
+        <p className="mt-2 text-muted-app">{t('memberSpace.notMemberText')}</p>
+        <Link
+          to={`/clubs/${clubId ?? ''}`}
+          className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9"
+        >
+          {t('memberSpace.publicPage')}
+        </Link>
       </section>
     ) : (
-      <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}>
+      <AppNotice tone="danger" role="alert" title={t('memberSpace.loadError')}>
         <p>{space.error.message}</p>
-        <AppButton variant="secondary" onClick={() => void space.refetch()}>{t("memberSpace.retry")}</AppButton>
+        <AppButton variant="secondary" onClick={() => void space.refetch()}>
+          {t('memberSpace.retry')}
+        </AppButton>
       </AppNotice>
-    );
+    )
   }
-  return <MemberSpaceView space={space.data} csrfToken={auth.data!.csrfToken} />;
+  return <MemberSpaceView space={space.data} csrfToken={auth.data!.csrfToken} />
 }
 
 // Nội dung không gian thành viên: thông tin CLB, tư cách, ban chủ nhiệm, rút CLB
 function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: string }) {
-  const { t, i18n } = useTranslation();
-  const locale: Locale = i18n.language === "vi" ? "vi" : "en";
-  const navigate = useNavigate();
-  const { club, membership } = space;
-  const pending = membership.pendingWithdrawal;
-  const hasTodo = space.feedbackToSend.length > 0 || Boolean(pending);
+  const { t, i18n } = useTranslation()
+  const locale: Locale = i18n.language === 'vi' ? 'vi' : 'en'
+  const navigate = useNavigate()
+  const { club, membership } = space
+  const pending = membership.pendingWithdrawal
+  const hasTodo = space.feedbackToSend.length > 0 || Boolean(pending)
 
   return (
     <>
       <header className="mb-8 flex flex-wrap items-center gap-4">
         <ClubLogo name={club.name} logoUrl={club.logoUrl} size={64} />
         <div className="min-w-0 flex-1 basis-56">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight break-words">{club.name}</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight break-words">
+            {club.name}
+          </h1>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <MembershipStateBadge state={membership.state} />
-            <Link to={`/clubs/${club.id}`} className="text-sm font-medium text-primary-app hover:underline">
-              {t("memberSpace.publicPage")}</Link>
+            <Link
+              to={`/clubs/${club.id}`}
+              className="text-sm font-medium text-primary-app hover:underline"
+            >
+              {t('memberSpace.publicPage')}
+            </Link>
           </div>
         </div>
         {space.otherClubs.length > 0 && (
           <div className="w-full sm:w-64">
-            <AppSelect label={t("memberSpace.switchClub")} value={club.id} className="w-full"
-              onChange={(value) => { if (value !== club.id) void navigate(`/workspace/clubs/${value}`); }}
-              options={[{ value: club.id, label: club.name },
-                ...space.otherClubs.map((item) => ({ value: item.clubId, label: item.clubName }))]} />
+            <AppSelect
+              label={t('memberSpace.switchClub')}
+              value={club.id}
+              className="w-full"
+              onChange={(value) => {
+                if (value !== club.id) {
+                  void navigate(`/workspace/clubs/${value}`)
+                }
+              }}
+              options={[
+                { value: club.id, label: club.name },
+                ...space.otherClubs.map((item) => ({ value: item.clubId, label: item.clubName })),
+              ]}
+            />
           </div>
         )}
       </header>
 
-      {membership.state === "Inactive" && <AppNotice tone="warning" className="mb-6">{t("memberSpace.inactiveNote")}</AppNotice>}
+      {membership.state === 'Inactive' && (
+        <AppNotice tone="warning" className="mb-6">
+          {t('memberSpace.inactiveNote')}
+        </AppNotice>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-5">
-          <Section title={t("memberSpace.todo")}>
-            {!hasTodo ? <AppEmptyState message={t("memberSpace.todoEmpty")} /> : (
+          <Section title={t('memberSpace.todo')}>
+            {!hasTodo ? (
+              <AppEmptyState message={t('memberSpace.todoEmpty')} />
+            ) : (
               <ul className="space-y-2">
                 {pending && (
-                  <li><AppNotice tone="warning">{pending.state === "Held" ? t("memberSpace.withdrawalHeld")
-                    : t("memberSpace.withdrawalPending", { date: formatDay(pending.requestedEffectiveDate, locale) })}</AppNotice></li>
+                  <li>
+                    <AppNotice tone="warning">
+                      {pending.state === 'Held'
+                        ? t('memberSpace.withdrawalHeld')
+                        : t('memberSpace.withdrawalPending', {
+                            date: formatDay(pending.requestedEffectiveDate, locale),
+                          })}
+                    </AppNotice>
+                  </li>
                 )}
                 {space.feedbackToSend.map((item) => (
-                  <li key={item.eventId} className="flex flex-wrap items-center gap-3 rounded-xl border border-border-app p-3">
+                  <li
+                    key={item.eventId}
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-border-app p-3"
+                  >
                     <AppIcon name="star" className="size-5 text-brand-app" />
                     <span className="min-w-0 flex-1 text-sm break-words">
-                      {t("memberSpace.feedbackOwed", { title: item.eventTitle })}
-                      {item.closesAt && <span className="text-muted-app"> · {t("memberSpace.feedbackUntil", { date: formatDate(item.closesAt, locale) })}</span>}
+                      {t('memberSpace.feedbackOwed', { title: item.eventTitle })}
+                      {item.closesAt && (
+                        <span className="text-muted-app">
+                          {' '}
+                          ·{' '}
+                          {t('memberSpace.feedbackUntil', {
+                            date: formatDate(item.closesAt, locale),
+                          })}
+                        </span>
+                      )}
                     </span>
-                    <Link to={`/events/${item.eventId}`} className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
-                      {t("memberSpace.giveFeedback")}</Link>
+                    <Link
+                      to={`/events/${item.eventId}`}
+                      className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9"
+                    >
+                      {t('memberSpace.giveFeedback')}
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
           </Section>
 
-          <Section title={t("memberSpace.upcoming")}>
-            {space.upcomingEvents.length === 0 ? <AppEmptyState message={t("memberSpace.upcomingEmpty")} /> : (
+          <Section title={t('memberSpace.upcoming')}>
+            {space.upcomingEvents.length === 0 ? (
+              <AppEmptyState message={t('memberSpace.upcomingEmpty')} />
+            ) : (
               <ul className="divide-y divide-border-app">
                 {space.upcomingEvents.map((event) => (
                   <li key={event.id} className="flex flex-wrap items-center gap-3 py-3">
                     <div className="min-w-0 flex-1 basis-56">
-                      <Link to={`/events/${event.id}`} className="font-medium break-words text-text-app hover:text-primary-app">{event.title}</Link>
-                      <p className="text-sm text-muted-app">{formatDate(event.startAt, locale)}{event.venueText && ` · ${event.venueText}`}</p>
+                      <Link
+                        to={`/events/${event.id}`}
+                        className="font-medium break-words text-text-app hover:text-primary-app"
+                      >
+                        {event.title}
+                      </Link>
+                      <p className="text-sm text-muted-app">
+                        {formatDate(event.startAt, locale)}
+                        {event.venueText && ` · ${event.venueText}`}
+                      </p>
                     </div>
                     {event.registrationState ? (
-                      <AppBadge tone={event.registrationState === "Confirmed" ? "success" : event.registrationState === "Waitlisted" ? "warning" : "neutral"}>
-                        {t(registrationLabels[event.registrationState])}</AppBadge>
+                      <AppBadge
+                        tone={
+                          event.registrationState === 'Confirmed'
+                            ? 'success'
+                            : event.registrationState === 'Waitlisted'
+                              ? 'warning'
+                              : 'neutral'
+                        }
+                      >
+                        {t(registrationLabels[event.registrationState])}
+                      </AppBadge>
                     ) : (
-                      <Link to={`/events/${event.id}`} className="inline-flex min-h-11 items-center rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium shadow-xs hover:bg-surface-app sm:min-h-9">
-                        {t("memberSpace.register")}</Link>
+                      <Link
+                        to={`/events/${event.id}`}
+                        className="inline-flex min-h-11 items-center rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium shadow-xs hover:bg-surface-app sm:min-h-9"
+                      >
+                        {t('memberSpace.register')}
+                      </Link>
                     )}
                   </li>
                 ))}
@@ -150,30 +235,50 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
             )}
           </Section>
 
-          <Section title={t("memberSpace.attendance")}>
-            {space.attendance.length === 0 ? <AppEmptyState message={t("memberSpace.attendanceEmpty")} /> : (
+          <Section title={t('memberSpace.attendance')}>
+            {space.attendance.length === 0 ? (
+              <AppEmptyState message={t('memberSpace.attendanceEmpty')} />
+            ) : (
               <ul className="divide-y divide-border-app">
                 {space.attendance.map((item) => (
-                  <li key={item.eventId} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                    <Link to={`/events/${item.eventId}`} className="min-w-0 font-medium break-words text-text-app hover:text-primary-app">{item.eventTitle}</Link>
-                    <span className="text-sm text-muted-app">{t("memberSpace.checkedIn", { date: formatDate(item.checkedInAt, locale) })}</span>
+                  <li
+                    key={item.eventId}
+                    className="flex flex-wrap items-center justify-between gap-2 py-3"
+                  >
+                    <Link
+                      to={`/events/${item.eventId}`}
+                      className="min-w-0 font-medium break-words text-text-app hover:text-primary-app"
+                    >
+                      {item.eventTitle}
+                    </Link>
+                    <span className="text-sm text-muted-app">
+                      {t('memberSpace.checkedIn', { date: formatDate(item.checkedInAt, locale) })}
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
           </Section>
 
-          <Section title={`${t("memberSpace.members")} · ${t("memberSpace.membersCount", { count: space.members.length })}`}>
+          <Section
+            title={`${t('memberSpace.members')} · ${t('memberSpace.membersCount', { count: space.members.length })}`}
+          >
             <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
               {space.members.map((member, index) => (
                 <li key={`${member.displayName}-${index}`} className="flex items-center gap-3">
-                  <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app">
-                    {member.displayName.trim().charAt(0).toUpperCase()}</span>
+                  <span
+                    aria-hidden="true"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app"
+                  >
+                    {member.displayName.trim().charAt(0).toUpperCase()}
+                  </span>
                   <span className="min-w-0">
-                    <span className="block truncate font-medium" title={member.displayName}>{member.displayName}</span>
+                    <span className="block truncate font-medium" title={member.displayName}>
+                      {member.displayName}
+                    </span>
                     <span className="block text-xs text-muted-app">
-                      {member.positions.join(", ") || t("memberSpace.noPosition")}
-                      {member.state === "Inactive" && ` · ${t("memberSpace.stateInactive")}`}
+                      {member.positions.join(', ') || t('memberSpace.noPosition')}
+                      {member.state === 'Inactive' && ` · ${t('memberSpace.stateInactive')}`}
                     </span>
                   </span>
                 </li>
@@ -185,20 +290,33 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
         {/* Điện thoại: phần thành viên, ban chủ nhiệm và thao tác rời CLB đứng trước danh sách thành viên dài. */}
         <aside className="order-first space-y-5 lg:sticky lg:top-22 lg:order-none">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t("memberSpace.yourMembership")}</h2>
+            <h2 className="font-heading text-base font-semibold">
+              {t('memberSpace.yourMembership')}
+            </h2>
             <dl className="mt-3 space-y-2 text-sm">
-              <div><dt className="text-muted-app">{t("memberSpace.positions")}</dt>
-                <dd className="font-semibold">{membership.positions.join(", ") || t("memberSpace.noPosition")}</dd></div>
+              <div>
+                <dt className="text-muted-app">{t('memberSpace.positions')}</dt>
+                <dd className="font-semibold">
+                  {membership.positions.join(', ') || t('memberSpace.noPosition')}
+                </dd>
+              </div>
             </dl>
-            <p className="mt-2 text-sm text-muted-app">{t("memberSpace.joinedOn", { date: formatDay(membership.joinedAt, locale) })}</p>
+            <p className="mt-2 text-sm text-muted-app">
+              {t('memberSpace.joinedOn', { date: formatDay(membership.joinedAt, locale) })}
+            </p>
           </section>
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t("memberSpace.board")}</h2>
-            {space.board.length === 0 ? <div className="mt-2"><AppEmptyState message={t("memberSpace.boardEmpty")} /></div> : (
+            <h2 className="font-heading text-base font-semibold">{t('memberSpace.board')}</h2>
+            {space.board.length === 0 ? (
+              <div className="mt-2">
+                <AppEmptyState message={t('memberSpace.boardEmpty')} />
+              </div>
+            ) : (
               <ul className="mt-3 space-y-2 text-sm">
                 {space.board.map((seat) => (
                   <li key={`${seat.positionName}-${seat.memberName}`}>
-                    <span className="text-muted-app">{seat.positionName}: </span><span className="font-semibold">{seat.memberName}</span>
+                    <span className="text-muted-app">{seat.positionName}: </span>
+                    <span className="font-semibold">{seat.memberName}</span>
                   </li>
                 ))}
               </ul>
@@ -208,78 +326,122 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
         </aside>
       </div>
     </>
-  );
+  )
 }
 
 // Nút và hộp thoại gửi yêu cầu rút khỏi CLB
 /** UC22: thành viên xin rời CLB; CLB thực hiện ở UC21, nên trạng thái thành viên không đổi ở đây. */
 function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToken: string }) {
-  const { t } = useTranslation();
-  const action = useMembershipAction();
-  const inFlight = useRef(false);
-  const reasonId = useId();
-  const dateId = useId();
-  const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [date, setDate] = useState(todayInVietnam);
+  const { t } = useTranslation()
+  const action = useMembershipAction()
+  const inFlight = useRef(false)
+  const reasonId = useId()
+  const dateId = useId()
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [date, setDate] = useState(todayInVietnam)
   const field = useFieldValidation({
-    reason: reason.trim() ? null : t("common.fieldRequired"),
-    date: !date ? t("common.fieldRequired") : date < todayInVietnam() ? t("common.dateNotPast") : null,
-  });
+    reason: reason.trim() ? null : t('common.fieldRequired'),
+    date: !date
+      ? t('common.fieldRequired')
+      : date < todayInVietnam()
+        ? t('common.dateNotPast')
+        : null,
+  })
 
   // Đóng hộp thoại rút CLB và xóa trạng thái kiểm tra
   function close() {
-    setOpen(false);
-    field.reset();
+    setOpen(false)
+    field.reset()
   }
 
   // Gửi yêu cầu rút khỏi CLB kèm lý do
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!field.touchAll() || inFlight.current) return;
-    inFlight.current = true;
+    event.preventDefault()
+    if (!field.touchAll() || inFlight.current) {
+      return
+    }
+    inFlight.current = true
     try {
       // Lấy 12 giờ trưa giờ Việt Nam để giữ đúng ngày đã chọn dù trình duyệt ở múi giờ nào.
-      await action.mutateAsync({ kind: "request", membershipId, reason: reason.trim(),
-        requestedEffectiveDate: new Date(`${date}T12:00:00+07:00`).toISOString(), csrfToken });
-      close();
+      await action.mutateAsync({
+        kind: 'request',
+        membershipId,
+        reason: reason.trim(),
+        requestedEffectiveDate: new Date(`${date}T12:00:00+07:00`).toISOString(),
+        csrfToken,
+      })
+      close()
     } catch {
       // action.isError được hiển thị bên dưới.
     } finally {
-      inFlight.current = false;
+      inFlight.current = false
     }
   }
 
   return (
     <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-      <h2 className="font-heading text-base font-semibold">{t("memberSpace.leaveTitle")}</h2>
-      <p className="mt-1 text-sm text-muted-app">{t("memberSpace.leaveIntro")}</p>
-      {action.isSuccess && <p role="status" className="mt-3 text-sm font-semibold text-success-app">{t("memberSpace.leaveSent")}</p>}
+      <h2 className="font-heading text-base font-semibold">{t('memberSpace.leaveTitle')}</h2>
+      <p className="mt-1 text-sm text-muted-app">{t('memberSpace.leaveIntro')}</p>
+      {action.isSuccess && (
+        <p role="status" className="mt-3 text-sm font-semibold text-success-app">
+          {t('memberSpace.leaveSent')}
+        </p>
+      )}
       {!open ? (
         <AppButton variant="secondary" className="mt-4" onClick={() => setOpen(true)}>
-          <AppIcon name="logout" className="size-4" />{t("memberSpace.leaveOpen")}</AppButton>
+          <AppIcon name="logout" className="size-4" />
+          {t('memberSpace.leaveOpen')}
+        </AppButton>
       ) : (
         <form noValidate onSubmit={(event) => void submit(event)} className="mt-4 space-y-3">
           <div className="space-y-1.5">
-            <label htmlFor={reasonId} className="block text-sm font-medium">{t("memberSpace.leaveReason")}<AppRequiredMark /></label>
-            <AppTextarea id={reasonId} value={reason} {...field.control("reason")} maxLength={2000} rows={3} className="w-full"
-              onChange={(event) => setReason(event.target.value)} />
-            <AppFieldError message={field.error("reason")} />
+            <label htmlFor={reasonId} className="block text-sm font-medium">
+              {t('memberSpace.leaveReason')}
+              <AppRequiredMark />
+            </label>
+            <AppTextarea
+              id={reasonId}
+              value={reason}
+              {...field.control('reason')}
+              maxLength={2000}
+              rows={3}
+              className="w-full"
+              onChange={(event) => setReason(event.target.value)}
+            />
+            <AppFieldError message={field.error('reason')} />
           </div>
           <div className="space-y-1.5">
-            <label htmlFor={dateId} className="block text-sm font-medium">{t("memberSpace.leaveDate")}<AppRequiredMark /></label>
-            <AppInput id={dateId} type="date" value={date} min={todayInVietnam()} {...field.control("date")} className="w-full"
-              onChange={(event) => setDate(event.target.value)} />
-            <AppFieldError message={field.error("date")} />
+            <label htmlFor={dateId} className="block text-sm font-medium">
+              {t('memberSpace.leaveDate')}
+              <AppRequiredMark />
+            </label>
+            <AppInput
+              id={dateId}
+              type="date"
+              value={date}
+              min={todayInVietnam()}
+              {...field.control('date')}
+              className="w-full"
+              onChange={(event) => setDate(event.target.value)}
+            />
+            <AppFieldError message={field.error('date')} />
           </div>
           <div className="flex flex-wrap gap-2">
             <AppButton type="submit" disabled={action.isPending}>
-              {action.isPending ? t("memberSpace.leaveSubmitting") : t("memberSpace.leaveSubmit")}</AppButton>
-            <AppButton type="button" variant="ghost" onClick={close}>{t("memberSpace.cancel")}</AppButton>
+              {action.isPending ? t('memberSpace.leaveSubmitting') : t('memberSpace.leaveSubmit')}
+            </AppButton>
+            <AppButton type="button" variant="ghost" onClick={close}>
+              {t('memberSpace.cancel')}
+            </AppButton>
           </div>
-          {action.isError && <AppNotice tone="danger" role="alert" title={t("memberSpace.leaveError")}><p>{action.error.message}</p></AppNotice>}
+          {action.isError && (
+            <AppNotice tone="danger" role="alert" title={t('memberSpace.leaveError')}>
+              <p>{action.error.message}</p>
+            </AppNotice>
+          )}
         </form>
       )}
     </section>
-  );
+  )
 }

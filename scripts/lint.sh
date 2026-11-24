@@ -8,7 +8,7 @@ workspaces=$(node -p "require('./package.json').workspaces.join(' ')")
 pids=()
 names=()
 for ws in $workspaces; do
-  npm run lint -w "$ws" --if-present & pids+=($!)
+  npm run lint -w "$ws" --if-present -- "$@" & pids+=($!)
   names+=("$ws")
 done
 

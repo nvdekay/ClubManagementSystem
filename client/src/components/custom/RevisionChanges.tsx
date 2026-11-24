@@ -1,38 +1,79 @@
-import { useTranslation } from "react-i18next";
+import { useTranslation } from 'react-i18next'
 
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import type { FieldChange } from "@/utils/revisionDiff";
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import type { FieldChange } from '@/utils/revisionDiff'
 
 // Hiển thị các thay đổi so với phiên bản đã nộp trước đó
 /**
  * Những gì bản nộp lại đã thay đổi so với bản trước, đặt cạnh các phần ICPDP yêu cầu
  * chỉnh sửa, để reviewer thấy ngay các sửa đổi được yêu cầu đã được thực hiện chưa.
  */
-export function RevisionChanges({ previousNumber, changes, requestedSections = [], reason }: {
-  previousNumber: number;
-  changes: FieldChange[];
-  requestedSections?: string[];
-  reason?: string;
+export function RevisionChanges({
+  previousNumber,
+  changes,
+  requestedSections = [],
+  reason,
+}: {
+  previousNumber: number
+  changes: FieldChange[]
+  requestedSections?: string[]
+  reason?: string
 }) {
-  const { t } = useTranslation();
-  return <section className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs">
-    <h2 className="font-heading text-base font-semibold">{t("common.revisionChangesTitle", { number: previousNumber })}</h2>
-    {(requestedSections.length > 0 || reason) && <div className="mt-3 text-sm">
-      <p className="font-semibold">{t("common.revisionRequested")}</p>
-      {requestedSections.length > 0 && <ul className="mt-2 flex flex-wrap gap-2">{requestedSections.map((section) =>
-        <li key={section}><AppBadge tone="warning">{section}</AppBadge></li>)}</ul>}
-      {reason && <p className="mt-2 whitespace-pre-wrap break-words text-muted-app">{reason}</p>}
-    </div>}
-    {changes.length ? <ul className="mt-4 space-y-3">{changes.map((change) =>
-      <li key={change.key} className="rounded-xl border border-border-app bg-surface-app p-3 text-sm">
-        <p className="font-semibold">{change.label}</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <div className="min-w-0"><p className="text-xs font-semibold text-muted-app">{t("common.revisionBefore")}</p>
-            <p className="mt-1 whitespace-pre-wrap break-words text-muted-app line-through">{change.before || "—"}</p></div>
-          <div className="min-w-0"><p className="text-xs font-semibold text-success-app">{t("common.revisionAfter")}</p>
-            <p className="mt-1 whitespace-pre-wrap break-words">{change.after || "—"}</p></div>
+  const { t } = useTranslation()
+  return (
+    <section className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs">
+      <h2 className="font-heading text-base font-semibold">
+        {t('common.revisionChangesTitle', { number: previousNumber })}
+      </h2>
+      {(requestedSections.length > 0 || reason) && (
+        <div className="mt-3 text-sm">
+          <p className="font-semibold">{t('common.revisionRequested')}</p>
+          {requestedSections.length > 0 && (
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {requestedSections.map((section) => (
+                <li key={section}>
+                  <AppBadge tone="warning">{section}</AppBadge>
+                </li>
+              ))}
+            </ul>
+          )}
+          {reason && (
+            <p className="mt-2 whitespace-pre-wrap break-words text-muted-app">{reason}</p>
+          )}
         </div>
-      </li>)}</ul>
-      : <p className="mt-4 text-sm text-muted-app">{t("common.revisionNoChanges", { number: previousNumber })}</p>}
-  </section>;
+      )}
+      {changes.length ? (
+        <ul className="mt-4 space-y-3">
+          {changes.map((change) => (
+            <li
+              key={change.key}
+              className="rounded-xl border border-border-app bg-surface-app p-3 text-sm"
+            >
+              <p className="font-semibold">{change.label}</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-muted-app">
+                    {t('common.revisionBefore')}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-muted-app line-through">
+                    {change.before || '—'}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-success-app">
+                    {t('common.revisionAfter')}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap break-words">{change.after || '—'}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-4 text-sm text-muted-app">
+          {t('common.revisionNoChanges', { number: previousNumber })}
+        </p>
+      )}
+    </section>
+  )
 }

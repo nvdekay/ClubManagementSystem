@@ -1,0 +1,18 @@
+# Dependencies and generated output
+node_modules/
+**/dist/
+**/coverage/
+*.tsbuildinfo
+package-lock.json
+**/*.generated.*
+
+# Documentation, exported assets, and local configuration
+**/*.md
+docs/
+docs-qa/
+outputs/
+seed-data/
+.rules/
+.sdd/
+.claude/
+.env*

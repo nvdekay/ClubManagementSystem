@@ -1,94 +1,86 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
-import { formatMoney } from "@/utils/formatMoney";
-import { formatDay } from "@/utils/formatDate";
-import type { accountability } from "@/i18n/accountability";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppPagination } from "@/components/ui/pagination/AppPagination";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useAuth } from "@/hooks/useAuth";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
+import { formatMoney } from '@/utils/formatMoney'
+import { formatDay } from '@/utils/formatDate'
+import type { accountability } from '@/i18n/accountability'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSelect } from '@/components/ui/select/AppSelect'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppPagination } from '@/components/ui/pagination/AppPagination'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useAuth } from '@/hooks/useAuth'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
   useAccountabilityAction,
   useReportDetail,
   useReportObligations,
-} from "@/hooks/useAccountability";
-import { useOpenViolation } from "@/hooks/useViolations";
+} from '@/hooks/useAccountability'
+import { useOpenViolation } from '@/hooks/useViolations'
 import type {
   AccountabilityContext,
   ReportDetail,
   ReportObligation,
   ReportInput,
   ReportSnapshot,
-} from "@/services/accountability";
-import { useConfirm } from "@/hooks/useConfirm";
+} from '@/services/accountability'
+import { useConfirm } from '@/hooks/useConfirm'
 
 // Ánh xạ trạng thái báo cáo sự kiện sang key i18n
 function reportState(state: string): keyof typeof accountability.en {
   return (
     (
       {
-        Draft: "draft",
-        Submitted: "submitted",
-        Accepted: "accepted",
-        "Returned for correction": "returned",
-        Completed: "completed",
-        Closed: "closed",
-        "Report Submitted": "submitted",
+        Draft: 'draft',
+        Submitted: 'submitted',
+        Accepted: 'accepted',
+        'Returned for correction': 'returned',
+        Completed: 'completed',
+        Closed: 'closed',
+        'Report Submitted': 'submitted',
       } as Record<string, keyof typeof accountability.en>
-    )[state] ?? "state"
-  );
+    )[state] ?? 'state'
+  )
 }
 // Hiển thị số liệu ngân sách và đề xuất chụp trong báo cáo
 function Figures({ figures }: { figures: ReportSnapshot }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation()
   const budget = figures.budget as {
-    approvedTotal?: number;
-    disbursedTotal?: number;
-  } | null;
+    approvedTotal?: number
+    disbursedTotal?: number
+  } | null
   const proposal = figures.proposal as {
-    payload?: { title?: string; objective?: string; plan?: string };
-    revisionNo?: number;
-    conditions?: string[];
-  } | null;
+    payload?: { title?: string; objective?: string; plan?: string }
+    revisionNo?: number
+    conditions?: string[]
+  } | null
   const feedback = figures.feedback as {
-    visible?: boolean;
-    averageRating?: number;
-    respondents?: number;
-    comments?: string[];
-  } | null;
+    visible?: boolean
+    averageRating?: number
+    respondents?: number
+    comments?: string[]
+  } | null
   return (
     <div className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {(["confirmed", "attended", "absent"] as const).map((key) => (
+        {(['confirmed', 'attended', 'absent'] as const).map((key) => (
           <div key={key} className="rounded-xl border border-border-app p-4">
-            <dt className="text-xs text-muted-app">
-              {t(`accountability.${key}`)}
-            </dt>
-            <dd className="mt-1 text-xl font-semibold tabular-nums">
-              {figures.attendance[key]}
-            </dd>
+            <dt className="text-xs text-muted-app">{t(`accountability.${key}`)}</dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums">{figures.attendance[key]}</dd>
           </div>
         ))}
       </dl>
       {proposal && (
         <section>
-          <h3 className="font-semibold">{t("accountability.proposal")}</h3>
-          <p className="whitespace-pre-wrap break-words text-sm">
-            {proposal.payload?.objective}
-          </p>
-          <p className="whitespace-pre-wrap break-words text-sm">
-            {proposal.payload?.plan}
-          </p>
+          <h3 className="font-semibold">{t('accountability.proposal')}</h3>
+          <p className="whitespace-pre-wrap break-words text-sm">{proposal.payload?.objective}</p>
+          <p className="whitespace-pre-wrap break-words text-sm">{proposal.payload?.plan}</p>
           {proposal.conditions?.map((condition, i) => (
             <p key={i} className="mt-2 break-words text-sm">
               {condition}
@@ -98,14 +90,10 @@ function Figures({ figures }: { figures: ReportSnapshot }) {
       )}
       {budget ? (
         <dl className="grid grid-cols-2 gap-3">
-          {(["approvedTotal", "disbursedTotal"] as const).map((key) => (
+          {(['approvedTotal', 'disbursedTotal'] as const).map((key) => (
             <div key={key}>
               <dt className="text-sm text-muted-app">
-                {t(
-                  key === "approvedTotal"
-                    ? "accountability.approved"
-                    : "accountability.advanced",
-                )}
+                {t(key === 'approvedTotal' ? 'accountability.approved' : 'accountability.advanced')}
               </dt>
               <dd className="font-semibold tabular-nums">
                 {formatMoney(budget[key] ?? 0, i18n.language)}
@@ -114,10 +102,10 @@ function Figures({ figures }: { figures: ReportSnapshot }) {
           ))}
         </dl>
       ) : (
-        <p>{t("accountability.noBudget")}</p>
+        <p>{t('accountability.noBudget')}</p>
       )}
       <section>
-        <h3 className="font-semibold">{t("accountability.feedback")}</h3>
+        <h3 className="font-semibold">{t('accountability.feedback')}</h3>
         {feedback?.visible ? (
           <>
             <p>{feedback.averageRating} / 5</p>
@@ -128,13 +116,11 @@ function Figures({ figures }: { figures: ReportSnapshot }) {
             ))}
           </>
         ) : (
-          <p className="text-sm text-muted-app">
-            {t("accountability.hiddenFeedback")}
-          </p>
+          <p className="text-sm text-muted-app">{t('accountability.hiddenFeedback')}</p>
         )}
       </section>
     </div>
-  );
+  )
 }
 // Chi tiết một báo cáo sau sự kiện: soạn, nộp, quyết định và lịch sử
 function ReportEditor({
@@ -143,79 +129,69 @@ function ReportEditor({
   token,
   actorId,
 }: {
-  data: ReportDetail;
-  context: AccountabilityContext;
-  token: string;
-  actorId: string;
+  data: ReportDetail
+  context: AccountabilityContext
+  token: string
+  actorId: string
 }) {
-  const { t } = useTranslation();
-  const askConfirm = useConfirm();
-  const admin = context.kind === "admin";
-  const latest = data.versions[0];
-  const draft =
-    !latest || ["Draft", "Returned for correction"].includes(latest.state);
+  const { t } = useTranslation()
+  const askConfirm = useConfirm()
+  const admin = context.kind === 'admin'
+  const latest = data.versions[0]
+  const draft = !latest || ['Draft', 'Returned for correction'].includes(latest.state)
   const [input, setInput] = useState<ReportInput>({
-    actualResult: latest?.actualResult ?? "",
-    incidents: latest?.incidents ?? "",
-    lessonsLearned: latest?.lessonsLearned ?? "",
+    actualResult: latest?.actualResult ?? '',
+    incidents: latest?.incidents ?? '',
+    lessonsLearned: latest?.lessonsLearned ?? '',
     evidence: latest?.evidence ?? [],
-  });
-  const [severity, setSeverity] = useState<"MINOR" | "MODERATE" | "SERIOUS">(
-    "MINOR",
-  );
-  const [reason, setReason] = useState("");
-  const [url, setUrl] = useState("");
-  const [note, setNote] = useState("");
-  const [violationId, setViolationId] = useState(
-    latest?.findingViolationId ?? "",
-  );
-  const mutation = useAccountabilityAction(
-    context,
-    "report",
-    data.obligation.eventId,
-  );
+  })
+  const [severity, setSeverity] = useState<'MINOR' | 'MODERATE' | 'SERIOUS'>('MINOR')
+  const [reason, setReason] = useState('')
+  const [url, setUrl] = useState('')
+  const [note, setNote] = useState('')
+  const [violationId, setViolationId] = useState(latest?.findingViolationId ?? '')
+  const mutation = useAccountabilityAction(context, 'report', data.obligation.eventId)
   const reportField = useFieldValidation({
-    actualResult: input.actualResult.trim() ? null : t("common.fieldRequired"),
-  });
+    actualResult: input.actualResult.trim() ? null : t('common.fieldRequired'),
+  })
   const reasonField = useFieldValidation({
-    reason: reason.trim() ? null : t("common.fieldRequired"),
-  });
-  const openViolation = useOpenViolation();
+    reason: reason.trim() ? null : t('common.fieldRequired'),
+  })
+  const openViolation = useOpenViolation()
   const claimable =
-    latest?.state === "Submitted" &&
-    (!latest.task?.assigneeId || latest.task.assigneeId === actorId);
-  const claimed = latest?.task?.assigneeId === actorId;
+    latest?.state === 'Submitted' &&
+    (!latest.task?.assigneeId || latest.task.assigneeId === actorId)
+  const claimed = latest?.task?.assigneeId === actorId
   // Gửi thao tác báo cáo (có xác nhận nếu cần) kèm revision hiện tại
   async function act(body: object, confirm = false) {
     if (
       confirm &&
       !(await askConfirm(
-        t(
-          admin
-            ? "accountability.confirmDecision"
-            : "accountability.confirmSubmit",
-        ),
+        t(admin ? 'accountability.confirmDecision' : 'accountability.confirmSubmit'),
       ))
-    )
-      return;
+    ) {
+      return
+    }
     try {
       await mutation.mutateAsync({
         body: { ...body, revision: data.obligation.revision },
         token,
-      });
+      })
     } catch {
       /* Lỗi của mutation được hiển thị ở nơi khác. */
     }
   }
   // Mở vi phạm từ phát hiện trong báo cáo
   async function finding() {
-    if (!reasonField.touchAll() || !latest) return;
+    if (!reasonField.touchAll() || !latest) {
+      return
+    }
     try {
       const created = await openViolation.mutateAsync({
         csrfToken: token,
         input: {
           clubId: latest.clubId,
-          originType: "REPORT_FINDING",
+          originType: 'REPORT_FINDING',
           originRefId: latest.eventId,
           severity,
           title: data.obligation.eventTitle,
@@ -225,8 +201,8 @@ function ReportEditor({
             url: item.url,
           })),
         },
-      });
-      setViolationId(created.id);
+      })
+      setViolationId(created.id)
     } catch {
       /* Lỗi của mutation được hiển thị ở nơi khác. */
     }
@@ -234,32 +210,20 @@ function ReportEditor({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-3 text-sm">
-        <span>
-          {t(
-            `accountability.${reportState(latest?.state ?? data.obligation.state)}`,
-          )}
-        </span>
+        <span>{t(`accountability.${reportState(latest?.state ?? data.obligation.state)}`)}</span>
         {data.obligation.overdue || latest?.lateFlag ? (
-          <span className="text-danger-app">{t("accountability.late")}</span>
+          <span className="text-danger-app">{t('accountability.late')}</span>
         ) : null}
       </div>
       <section>
         <h2 className="mb-3 font-heading text-base font-semibold">
-          {t(
-            latest?.submittedAt
-              ? "accountability.snapshot"
-              : "accountability.preview",
-          )}
+          {t(latest?.submittedAt ? 'accountability.snapshot' : 'accountability.preview')}
         </h2>
-        <Figures
-          figures={latest?.submittedAt ? latest.preloadedFigures : data.preview}
-        />
+        <Figures figures={latest?.submittedAt ? latest.preloadedFigures : data.preview} />
       </section>
       {admin && latest?.submittedAt && (
         <details>
-          <summary className="font-semibold">
-            {t("accountability.preview")}
-          </summary>
+          <summary className="font-semibold">{t('accountability.preview')}</summary>
           <div className="mt-3">
             <Figures figures={data.preview} />
           </div>
@@ -267,13 +231,13 @@ function ReportEditor({
       )}
       {!admin && draft && !data.obligation.attendanceFinalized && (
         <AppNotice tone="warning">
-          {t("accountability.attendanceRequired")}{" "}
-          {context.kind === "club" && (
+          {t('accountability.attendanceRequired')}{' '}
+          {context.kind === 'club' && (
             <Link
               className="font-semibold text-primary-app hover:underline"
               to={`/club/${context.clubId}/event-attendance`}
             >
-              {t("accountability.openAttendance")}
+              {t('accountability.openAttendance')}
             </Link>
           )}
         </AppNotice>
@@ -283,38 +247,32 @@ function ReportEditor({
           noValidate
           className="space-y-4"
           onSubmit={(e) => {
-            e.preventDefault();
-            if (!reportField.touchAll()) return;
-            void act({ kind: "save", input });
+            e.preventDefault()
+            if (!reportField.touchAll()) {
+              return
+            }
+            void act({ kind: 'save', input })
           }}
         >
-          {(["actualResult", "incidents", "lessonsLearned"] as const).map(
-            (key) => (
-              <label key={key} className="block text-sm font-semibold">
-                {t(`accountability.${key}`)}
-                {key === "actualResult" && <AppRequiredMark />}
-                <AppTextarea
-                  className="mt-1.5 block w-full font-normal"
-                  {...(key === "actualResult"
-                    ? reportField.control("actualResult")
-                    : {})}
-                  maxLength={10000}
-                  value={input[key] ?? ""}
-                  onChange={(e) =>
-                    setInput({ ...input, [key]: e.target.value })
-                  }
-                />
-                {key === "actualResult" && (
-                  <AppFieldError message={reportField.error("actualResult")} />
-                )}
-              </label>
-            ),
-          )}
-          <p className="text-sm text-muted-app">
-            {t("accountability.evidenceHint")}
-          </p>
+          {(['actualResult', 'incidents', 'lessonsLearned'] as const).map((key) => (
+            <label key={key} className="block text-sm font-semibold">
+              {t(`accountability.${key}`)}
+              {key === 'actualResult' && <AppRequiredMark />}
+              <AppTextarea
+                className="mt-1.5 block w-full font-normal"
+                {...(key === 'actualResult' ? reportField.control('actualResult') : {})}
+                maxLength={10000}
+                value={input[key] ?? ''}
+                onChange={(e) => setInput({ ...input, [key]: e.target.value })}
+              />
+              {key === 'actualResult' && (
+                <AppFieldError message={reportField.error('actualResult')} />
+              )}
+            </label>
+          ))}
+          <p className="text-sm text-muted-app">{t('accountability.evidenceHint')}</p>
           <label className="block text-sm font-medium text-text-app">
-            {t("accountability.link")}
+            {t('accountability.link')}
             <AppInput
               className="mt-1.5 block w-full font-normal"
               type="url"
@@ -324,7 +282,7 @@ function ReportEditor({
             />
           </label>
           <label className="block text-sm font-medium text-text-app">
-            {t("accountability.evidenceNote")}
+            {t('accountability.evidenceNote')}
             <AppInput
               className="mt-1.5 block w-full font-normal"
               value={note}
@@ -334,19 +292,17 @@ function ReportEditor({
           <AppButton
             type="button"
             variant="secondary"
-            disabled={
-              !url.startsWith("https://") || input.evidence.length >= 20
-            }
+            disabled={!url.startsWith('https://') || input.evidence.length >= 20}
             onClick={() => {
               setInput({
                 ...input,
                 evidence: [...input.evidence, { note, url }],
-              });
-              setUrl("");
-              setNote("");
+              })
+              setUrl('')
+              setNote('')
             }}
           >
-            {t("accountability.addEvidence")}
+            {t('accountability.addEvidence')}
           </AppButton>
           <ul className="space-y-2">
             {input.evidence.map((item, i) => (
@@ -365,13 +321,11 @@ function ReportEditor({
           <div className="flex flex-wrap gap-3">
             <AppButton
               type="submit"
-              disabled={
-                mutation.isPending || !data.obligation.attendanceFinalized
-              }
+              disabled={mutation.isPending || !data.obligation.attendanceFinalized}
             >
-              {t("accountability.save")}
+              {t('accountability.save')}
             </AppButton>
-            {latest?.state === "Draft" && (
+            {latest?.state === 'Draft' && (
               <AppButton
                 type="button"
                 variant="secondary"
@@ -380,14 +334,14 @@ function ReportEditor({
                   JSON.stringify(input) !==
                     JSON.stringify({
                       actualResult: latest.actualResult,
-                      incidents: latest.incidents ?? "",
-                      lessonsLearned: latest.lessonsLearned ?? "",
+                      incidents: latest.incidents ?? '',
+                      lessonsLearned: latest.lessonsLearned ?? '',
                       evidence: latest.evidence,
                     })
                 }
-                onClick={() => void act({ kind: "submit" }, true)}
+                onClick={() => void act({ kind: 'submit' }, true)}
               >
-                {t("accountability.submit")}
+                {t('accountability.submit')}
               </AppButton>
             )}
           </div>
@@ -395,18 +349,12 @@ function ReportEditor({
       ) : (
         latest && (
           <section className="space-y-3">
-            {(["actualResult", "incidents", "lessonsLearned"] as const).map(
-              (key) => (
-                <div key={key}>
-                  <h3 className="text-sm font-semibold">
-                    {t(`accountability.${key}`)}
-                  </h3>
-                  <p className="whitespace-pre-wrap break-words">
-                    {latest[key] || "—"}
-                  </p>
-                </div>
-              ),
-            )}
+            {(['actualResult', 'incidents', 'lessonsLearned'] as const).map((key) => (
+              <div key={key}>
+                <h3 className="text-sm font-semibold">{t(`accountability.${key}`)}</h3>
+                <p className="whitespace-pre-wrap break-words">{latest[key] || '—'}</p>
+              </div>
+            ))}
             {latest.evidence.map((item, i) => (
               <a
                 key={i}
@@ -424,28 +372,25 @@ function ReportEditor({
       {admin && (
         <section className="space-y-3 border-t border-border-app pt-5">
           {claimable && !claimed && (
-            <AppButton
-              disabled={mutation.isPending}
-              onClick={() => void act({ kind: "claim" })}
-            >
-              {t("accountability.claim")}
+            <AppButton disabled={mutation.isPending} onClick={() => void act({ kind: 'claim' })}>
+              {t('accountability.claim')}
             </AppButton>
           )}
-          {latest?.state === "Submitted" && !claimable && (
-            <AppNotice>{t("accountability.taskAssigned")}</AppNotice>
+          {latest?.state === 'Submitted' && !claimable && (
+            <AppNotice>{t('accountability.taskAssigned')}</AppNotice>
           )}
           {(claimed || data.obligation.overdue) && (
             <label className="block text-sm font-medium text-text-app">
-              {t("accountability.reason")}
+              {t('accountability.reason')}
               <AppRequiredMark />
               <AppTextarea
                 className="mt-1.5 block w-full font-normal"
                 value={reason}
                 maxLength={2000}
-                {...reasonField.control("reason")}
+                {...reasonField.control('reason')}
                 onChange={(e) => setReason(e.target.value)}
               />
-              <AppFieldError message={reasonField.error("reason")} />
+              <AppFieldError message={reasonField.error('reason')} />
             </label>
           )}
           {claimed && (
@@ -454,36 +399,34 @@ function ReportEditor({
                 <AppButton
                   disabled={mutation.isPending}
                   onClick={() => {
-                    if (!reasonField.touchAll()) return;
-                    void act(
-                      { kind: "decision", outcome: "accept", reason },
-                      true,
-                    );
+                    if (!reasonField.touchAll()) {
+                      return
+                    }
+                    void act({ kind: 'decision', outcome: 'accept', reason }, true)
                   }}
                 >
-                  {t("accountability.accept")}
+                  {t('accountability.accept')}
                 </AppButton>
                 <AppButton
                   variant="secondary"
                   disabled={mutation.isPending}
                   onClick={() => {
-                    if (!reasonField.touchAll()) return;
-                    void act(
-                      { kind: "decision", outcome: "return", reason },
-                      true,
-                    );
+                    if (!reasonField.touchAll()) {
+                      return
+                    }
+                    void act({ kind: 'decision', outcome: 'return', reason }, true)
                   }}
                 >
-                  {t("accountability.return")}
+                  {t('accountability.return')}
                 </AppButton>
               </div>
               <AppSelect
-                label={t("accountability.severity")}
+                label={t('accountability.severity')}
                 value={severity}
                 options={[
-                  { value: "MINOR", label: t("accountability.minor") },
-                  { value: "MODERATE", label: t("accountability.moderate") },
-                  { value: "SERIOUS", label: t("accountability.serious") },
+                  { value: 'MINOR', label: t('accountability.minor') },
+                  { value: 'MODERATE', label: t('accountability.moderate') },
+                  { value: 'SERIOUS', label: t('accountability.serious') },
                 ]}
                 onChange={setSeverity}
               />
@@ -493,7 +436,7 @@ function ReportEditor({
                   disabled={!!violationId || openViolation.isPending}
                   onClick={() => void finding()}
                 >
-                  {t("accountability.openViolation")}
+                  {t('accountability.openViolation')}
                 </AppButton>
                 {violationId && (
                   <>
@@ -501,24 +444,26 @@ function ReportEditor({
                       className="text-primary-app hover:underline"
                       to={`/workspace/violations/${violationId}`}
                     >
-                      {t("accountability.violation")}
+                      {t('accountability.violation')}
                     </Link>
                     <AppButton
                       disabled={mutation.isPending}
                       onClick={() => {
-                        if (!reasonField.touchAll()) return;
+                        if (!reasonField.touchAll()) {
+                          return
+                        }
                         void act(
                           {
-                            kind: "decision",
-                            outcome: "finding",
+                            kind: 'decision',
+                            outcome: 'finding',
                             reason,
                             violationId,
                           },
                           true,
-                        );
+                        )
                       }}
                     >
-                      {t("accountability.finding")}
+                      {t('accountability.finding')}
                     </AppButton>
                   </>
                 )}
@@ -530,11 +475,13 @@ function ReportEditor({
               variant="secondary"
               disabled={mutation.isPending}
               onClick={() => {
-                if (!reasonField.touchAll()) return;
-                void act({ kind: "overdue", reason }, true);
+                if (!reasonField.touchAll()) {
+                  return
+                }
+                void act({ kind: 'overdue', reason }, true)
               }}
             >
-              {t("accountability.missing")}
+              {t('accountability.missing')}
             </AppButton>
           )}
         </section>
@@ -550,24 +497,18 @@ function ReportEditor({
         </AppNotice>
       )}
       <section className="space-y-3">
-        <h2 className="font-heading text-base font-semibold">
-          {t("accountability.history")}
-        </h2>
+        <h2 className="font-heading text-base font-semibold">{t('accountability.history')}</h2>
         {data.versions.map((version) => (
           <details
             key={version.id}
             className="rounded-xl border border-border-app bg-bg-app px-4 py-3 text-sm"
           >
             <summary>
-              {t("accountability.version", { number: version.versionNo })} ·{" "}
+              {t('accountability.version', { number: version.versionNo })} ·{' '}
               {t(`accountability.${reportState(version.state)}`)}
             </summary>
-            <p className="mt-2 whitespace-pre-wrap break-words">
-              {version.actualResult}
-            </p>
-            {version.decisionReason && (
-              <p className="mt-2 break-words">{version.decisionReason}</p>
-            )}
+            <p className="mt-2 whitespace-pre-wrap break-words">{version.actualResult}</p>
+            {version.decisionReason && <p className="mt-2 break-words">{version.decisionReason}</p>}
             {version.submittedAt && (
               <div className="mt-3">
                 <Figures figures={version.preloadedFigures} />
@@ -577,84 +518,86 @@ function ReportEditor({
         ))}
       </section>
     </div>
-  );
+  )
 }
 // Workspace báo cáo sau sự kiện: danh sách nghĩa vụ và chi tiết (CLB hoặc ICPDP)
-export function ReportWorkspace({
-  context,
-}: {
-  context: AccountabilityContext;
-}) {
-  const { t, i18n } = useTranslation();
-  const auth = useAuth();
-  const [selected, setSelected] = useState("");
-  const [page, setPage] = useState(0);
+export function ReportWorkspace({ context }: { context: AccountabilityContext }) {
+  const { t, i18n } = useTranslation()
+  const auth = useAuth()
+  const [selected, setSelected] = useState('')
+  const [page, setPage] = useState(0)
   const allowed =
-    context.kind === "admin"
-      ? auth.data?.systemRoles.includes("ICPDP_OFFICER")
+    context.kind === 'admin'
+      ? auth.data?.systemRoles.includes('ICPDP_OFFICER')
       : auth.data?.workspaces.some(
           (w) =>
-            w.kind === "club" &&
+            w.kind === 'club' &&
             w.clubId === context.clubId &&
-            w.permissions.includes("club.report.submit"),
-        );
-  const list = useReportObligations(context, !!allowed);
-  const detail = useReportDetail(context, selected, !!allowed);
-  if (auth.isPending) return <AppSkeleton className="h-40 w-full" />;
-  if (!allowed || !auth.data)
-    return <AppNotice tone="danger">{t("accountability.access")}</AppNotice>;
+            w.permissions.includes('club.report.submit'),
+        )
+  const list = useReportObligations(context, !!allowed)
+  const detail = useReportDetail(context, selected, !!allowed)
+  if (auth.isPending) {
+    return <AppSkeleton className="h-40 w-full" />
+  }
+  if (!allowed || !auth.data) {
+    return <AppNotice tone="danger">{t('accountability.access')}</AppNotice>
+  }
   const items = (list.data ?? []).filter(
-    (item): item is ReportObligation => !("configurationError" in item),
-  );
-  const configurationIssues = (list.data ?? []).filter(
-    (item) => "configurationError" in item,
-  );
-  const count = Math.max(1, Math.ceil(items.length / 10));
+    (item): item is ReportObligation => !('configurationError' in item),
+  )
+  const configurationIssues = (list.data ?? []).filter((item) => 'configurationError' in item)
+  const count = Math.max(1, Math.ceil(items.length / 10))
   return (
     <div className="space-y-6">
-      <PageHeader title={t("accountability.reports")} />
+      <PageHeader title={t('accountability.reports')} />
       {list.isPending ? (
         <AppSkeleton className="h-32 w-full" />
       ) : list.isError ? (
         <AppNotice tone="danger" role="alert">
           {list.error.message}
           <AppButton variant="secondary" onClick={() => void list.refetch()}>
-            {t("accountability.retry")}
+            {t('accountability.retry')}
           </AppButton>
         </AppNotice>
       ) : items.length ? (
         // Gộp bộ chọn và phân trang vào một khung, để số trang được hiểu là phân trang danh sách sự kiện chứ không phải báo cáo.
         <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-          <p className="text-sm font-medium">{t("accountability.select")}</p>
+          <p className="text-sm font-medium">{t('accountability.select')}</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-          <AppSelect
-            className="w-full min-w-0 flex-1 sm:max-w-xl"
-            label={t("accountability.select")}
-            value={selected}
-            options={[
-              { value: "", label: t("accountability.select") },
-              ...items.slice(page * 10, page * 10 + 10).map((item) => ({
-                value: item.eventId,
-                label: `${item.eventTitle} · ${t("accountability.due")}: ${formatDay(item.dueAt, i18n.language)}${item.overdue ? ` · ${t("accountability.late")}` : ""}`,
-              })),
-            ]}
-            onChange={setSelected}
-          />
-          <AppPagination
-            pageIndex={page}
-            pageCount={count}
-            onPageChange={setPage}
-            prevLabel={t("accountability.previous")}
-            nextLabel={t("accountability.next")}
-            pageLabel={(p) => t("accountability.page", { page: p })}
-            navLabel={t("accountability.pagination")}
-          />
+            <AppSelect
+              className="w-full min-w-0 flex-1 sm:max-w-xl"
+              label={t('accountability.select')}
+              value={selected}
+              options={[
+                { value: '', label: t('accountability.select') },
+                ...items.slice(page * 10, page * 10 + 10).map((item) => ({
+                  value: item.eventId,
+                  label: `${item.eventTitle} · ${t('accountability.due')}: ${formatDay(item.dueAt, i18n.language)}${item.overdue ? ` · ${t('accountability.late')}` : ''}`,
+                })),
+              ]}
+              onChange={setSelected}
+            />
+            <AppPagination
+              pageIndex={page}
+              pageCount={count}
+              onPageChange={setPage}
+              prevLabel={t('accountability.previous')}
+              nextLabel={t('accountability.next')}
+              pageLabel={(p) => t('accountability.page', { page: p })}
+              navLabel={t('accountability.pagination')}
+            />
           </div>
-          <p className="mt-2 text-xs text-muted-app">{t("accountability.listRange",
-            { from: page * 10 + 1, to: Math.min(page * 10 + 10, items.length), total: items.length })}</p>
+          <p className="mt-2 text-xs text-muted-app">
+            {t('accountability.listRange', {
+              from: page * 10 + 1,
+              to: Math.min(page * 10 + 10, items.length),
+              total: items.length,
+            })}
+          </p>
         </div>
       ) : (
-        <AppEmptyState variant="boxed" message={t("accountability.empty")} />
+        <AppEmptyState variant="boxed" message={t('accountability.empty')} />
       )}
       {selected ? (
         detail.isPending ? (
@@ -662,9 +605,7 @@ export function ReportWorkspace({
         ) : detail.isError ? (
           <AppNotice tone="danger" role="alert">
             {detail.error.message}
-            <AppButton onClick={() => void detail.refetch()}>
-              {t("accountability.retry")}
-            </AppButton>
+            <AppButton onClick={() => void detail.refetch()}>{t('accountability.retry')}</AppButton>
           </AppNotice>
         ) : (
           detail.data && (
@@ -678,19 +619,17 @@ export function ReportWorkspace({
           )
         )
       ) : (
-        <p className="text-sm text-muted-app">
-          {t("accountability.noSelection")}
-        </p>
+        <p className="text-sm text-muted-app">{t('accountability.noSelection')}</p>
       )}
       {configurationIssues.length > 0 && (
         <AppNotice
           tone="warning"
-          title={t("accountability.deadlineMissingTitle", { count: configurationIssues.length })}
+          title={t('accountability.deadlineMissingTitle', { count: configurationIssues.length })}
         >
-          <p>{t("accountability.deadlineMissingHint")}</p>
+          <p>{t('accountability.deadlineMissingHint')}</p>
           <details>
             <summary className="w-fit text-xs font-semibold text-muted-app hover:text-text-app">
-              {t("accountability.deadlineMissingList")}
+              {t('accountability.deadlineMissingList')}
             </summary>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               {configurationIssues.map((item) => (
@@ -701,5 +640,5 @@ export function ReportWorkspace({
         </AppNotice>
       )}
     </div>
-  );
+  )
 }

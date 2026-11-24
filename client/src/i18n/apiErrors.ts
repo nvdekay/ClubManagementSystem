@@ -1,167 +1,551 @@
 const messages = {
-  evaluationZeroPenalty: ["late or missing periodic reports require a zero evaluation score", "Báo cáo định kỳ nộp muộn hoặc quá hạn chưa nộp phải nhận 0 điểm, không được chấm tay ghi đè."],
-  evaluationScoreRequired: ["an evaluation needs a total score before finalizing", "Cần có tổng điểm trước khi chốt đánh giá."],
-  evaluationReportChanged: ["periodic report status changed; reopen and finalize the evaluation again", "Tình trạng báo cáo đã thay đổi. Hãy mở lại và chốt đánh giá để cập nhật điểm trước khi công bố."],
-  unknown: ["The request could not be completed. Please try again.", "Không thể hoàn tất yêu cầu. Vui lòng thử lại."],
-  network: ["Network request failed", "Không thể kết nối đến máy chủ. Kiểm tra kết nối mạng rồi thử lại."],
-  validation: ["Invalid input", "Thông tin chưa hợp lệ. Kiểm tra các trường đã nhập rồi thử lại."],
-  unauthorized: ["authentication required", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."],
-  forbidden: ["Forbidden", "Tài khoản không có quyền thực hiện thao tác này."],
-  notFound: ["Not Found", "Không tìm thấy dữ liệu yêu cầu. Tải lại trang rồi thử lại."],
-  conflict: ["Conflict", "Dữ liệu hoặc trạng thái không cho phép thao tác này. Tải lại trang để kiểm tra."],
-  unavailable: ["Service Unavailable", "Dịch vụ tạm thời chưa sẵn sàng. Vui lòng thử lại sau."],
-  server: ["Internal Server Error", "Máy chủ chưa thể xử lý yêu cầu. Vui lòng thử lại sau."],
-  rateLimit: ["Too Many Requests", "Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại."],
-  checkInWindow: ["invalid check-in window", "Giờ mở check-in phải trước giờ đóng; giờ đóng không được sau giờ kết thúc sự kiện."],
-  registrationWindow: ["registration must open before closing and close no later than the start", "Giờ mở đăng ký phải trước giờ đóng; giờ đóng không được sau giờ bắt đầu sự kiện."],
-  walkInRequired: ["an event without registration must allow walk-ins", "Sự kiện không cần đăng ký phải cho phép khách vãng lai."],
-  eventStarted: ["event has already started", "Sự kiện đã bắt đầu."],
-  eventDates: ["event dates must be in the future and end after the start", "Sự kiện phải bắt đầu trong tương lai và kết thúc sau giờ bắt đầu."],
-  eventSemester: ["the event must start and end within one semester of the academic calendar", "Thời gian bắt đầu và kết thúc sự kiện phải nằm trong cùng một học kỳ đã cấu hình."],
-  eventNotice: ["Submit at least {{hours}} hours before the event starts.", "Cần nộp đề xuất trước giờ bắt đầu sự kiện ít nhất {{hours}} giờ."],
-  eventRequired: ["title, objective and plan are required", "Vui lòng nhập tên sự kiện, mục tiêu và kế hoạch hoạt động."],
-  venueRequired: ["choose a property or enter a venue", "Vui lòng chọn cơ sở vật chất hoặc nhập địa điểm."],
-  capacity: ["invalid capacity", "Sức chứa phải là số nguyên lớn hơn 0."],
-  requestedBudget: ["invalid requested budget", "Kiểm tra hạng mục, mục đích và số tiền nguyên lớn hơn 0 của từng khoản ngân sách."],
-  policyMissing: ["policy is not configured", "Chưa có chính sách vận hành có hiệu lực. Vui lòng liên hệ ICPDP để cấu hình."],
-  policyDate: ["policy is not configured for this date", "Chưa có chính sách vận hành có hiệu lực vào ngày này. Vui lòng liên hệ ICPDP."],
-  clubInactive: ["club is not active for event proposals", "CLB phải đang hoạt động mới được đề xuất sự kiện."],
-  scheduleConflict: ["event schedule has blocking conflicts", "Lịch sự kiện bị xung đột chặn với sự kiện hoặc lịch đặt cơ sở vật chất khác."],
-  obligations: ["overdue club obligations prevent proposal submission", "CLB cần xử lý các nghĩa vụ quá hạn trước khi nộp đề xuất."],
-  evidence: ["evidence requires a valid HTTPS link and type", "Vui lòng chọn loại chứng từ hợp lệ và nhập liên kết bắt đầu bằng https://."],
-  expenseLocked: ["expenses are locked for this budget", "Không thể sửa khoản chi ở trạng thái hiện tại. Nếu cần chỉnh sửa, hãy đề nghị ICPDP trả lại quyết toán."],
-  settlementEvent: ["settlement requires an ended or cancelled event", "Chỉ được nộp quyết toán khi sự kiện đã kết thúc hoặc bị huỷ."],
-  reviewExpenses: ["review every expense exactly once", "Vui lòng thẩm định đầy đủ từng khoản chi, mỗi khoản đúng một lần."],
-  expenseReason: ["each expense review requires an outcome and reason", "Mỗi khoản chi cần có kết quả thẩm định và lý do quyết định."],
-  unsupported: ["unsupported expenses must be rejected", "Không thể chấp nhận khoản chi chưa có chứng từ."],
-  advanceLimit: ["advances exceed approved budget", "Tổng tạm ứng không được vượt ngân sách đã duyệt."],
-  advanceDate: ["an advance must be paid before the event ends", "Khoản tạm ứng phải được chuyển trước khi sự kiện kết thúc."],
-  topUpAmount: ["a top-up must equal the settlement balance", "Khoản cấp bù phải đúng bằng chênh lệch quyết toán."],
-  flowAmount: ["amount exceeds what this budget allows", "Số tiền vượt giới hạn được phép của ngân sách này."],
-  targetTerm: ["invalid target term", "Vui lòng nhập tên nhiệm kỳ và thời gian kết thúc sau thời gian bắt đầu."],
-  termPast: ["target term must not begin in the past", "Nhiệm kỳ mới không được bắt đầu trong quá khứ."],
-  termRequired: ["active term required", "CLB cần có nhiệm kỳ đang hoạt động trước khi lập kế hoạch chuyển giao."],
-  planExists: ["an unfinished transition already exists", "CLB đã có kế hoạch chuyển giao chưa hoàn tất. Vui lòng mở kế hoạch hiện có."],
-  planLocked: ["plan changed or is locked", "Kế hoạch đã thay đổi hoặc bị khoá. Vui lòng tải lại trang."],
-  earlyReason: ["an early handover requires a reason", "Vui lòng nhập lý do chuyển giao trước khi nhiệm kỳ hiện tại kết thúc."],
-  boardCandidates: ["every board seat needs one candidate", "Vui lòng chọn đủ ứng viên cho từng ghế ban điều hành theo số lượng được phép."],
-  activeCandidates: ["every candidate must be an active club member", "Tất cả ứng viên phải là thành viên đang hoạt động của CLB."],
-  duplicateCandidates: ["invalid or duplicate transition candidates", "Danh sách ứng viên chưa hợp lệ hoặc có người được chọn nhiều lần."],
-  overlappingLeader: ["a leader candidate already leads another club in an overlapping term", "Ứng viên Chủ nhiệm đang giữ ghế Chủ nhiệm CLB khác trong nhiệm kỳ chồng lấn."],
-  obligationAssignee: ["every obligation needs an assignee on the new board", "Mỗi nghĩa vụ tồn đọng cần có người tiếp nhận thuộc ban điều hành kế nhiệm."],
-  schemeRequired: ["activate an evaluation scheme for this period first", "Vui lòng kích hoạt bộ tiêu chí đánh giá cho học kỳ này trước."],
-  schemeMissing: ["the period has no active evaluation scheme", "Học kỳ này chưa có bộ tiêu chí đánh giá đang áp dụng."],
-  finalizeAll: ["finalize the evaluation of every club before publishing", "Cần chốt đánh giá của tất cả CLB trước khi công bố kết quả."],
-  evaluationLocked: ["only an evaluation under review can change", "Chỉ được sửa bản nháp hoặc bản đánh giá đang xem xét."],
-  reopenFirst: ["reopen the finalized evaluation before generating it again", "Vui lòng mở lại bản đánh giá đã chốt trước khi sinh lại dữ liệu."],
-  latestRevision: ["only the latest revision can change", "Chỉ được chỉnh sửa phiên bản mới nhất."],
-  finalizeState: ["this evaluation cannot be finalized now", "Chưa thể chốt đánh giá ở trạng thái hiện tại."],
-  reopenState: ["only a finalized, unpublished evaluation can be reopened", "Chỉ được mở lại đánh giá đã chốt và chưa công bố."],
-  manualDisabled: ["the scheme does not allow scoring this dimension by hand", "Bộ tiêu chí không cho phép chấm tay tiêu chí này."],
-  manualRange: ["a manual score is between 0 and 100", "Điểm chấm tay phải nằm trong khoảng từ 0 đến 100."],
-  manualReason: ["a manual score needs a justification", "Vui lòng nhập lý giải cho điểm chấm tay."],
-  locked: ["account locked", "Tài khoản đã bị khoá. Vui lòng liên hệ ICPDP để được hỗ trợ."],
-  csrf: ["invalid csrf token", "Mã bảo vệ phiên đã hết hạn. Vui lòng tải lại trang rồi thử lại."],
-  upload: ["file upload failed", "Không thể tải tệp lên. Vui lòng thử lại."],
-  storageUnavailable: ["file storage unavailable", "Dịch vụ lưu trữ tệp chưa sẵn sàng. Vui lòng liên hệ ICPDP."],
-  storageMissing: ["file storage is not configured", "Dịch vụ lưu trữ tệp chưa được cấu hình. Vui lòng liên hệ ICPDP."],
-  proposalDocumentRequired: ["event proposal document is required before submission", "Cần tải lên file đề án sự kiện trước khi gửi duyệt."],
-  proposalFileInvalid: ["invalid event proposal file", "File không hợp lệ: sai định dạng cho phép, rỗng hoặc vượt giới hạn dung lượng."],
-  defenseStartRequired: ["valid defense start time is required", "Vui lòng chọn thời gian bắt đầu buổi bảo vệ hợp lệ."],
-  defenseStartInvalid: ["valid start time is required", "Vui lòng chọn thời gian bắt đầu hợp lệ."],
-  defenseFutureStart: ["future defense start time is required", "Thời gian bắt đầu buổi bảo vệ phải ở trong tương lai."],
-  defenseDuration: ["defense duration must be an integer between 15 and 240 minutes", "Thời lượng buổi bảo vệ phải là số nguyên từ 15 đến 240 phút."],
-  defenseDurationGeneric: ["duration must be an integer between 15 and 240 minutes", "Thời lượng buổi bảo vệ phải là số nguyên từ 15 đến 240 phút."],
-  defenseNotice: ["defense must be scheduled at least 48 hours in advance", "Lịch bảo vệ phải được tạo trước thời gian diễn ra ít nhất 48 giờ."],
-  defenseRevisionGap: ["revision deadline must be at least 12 hours before the scheduled defense", "Hạn nộp bản sửa phải trước giờ bảo vệ đã lên lịch ít nhất 12 giờ."],
-  defenseConfirmState: ["only a scheduled defense session can be confirmed", "Chỉ có thể xác nhận tham gia khi buổi bảo vệ đang ở trạng thái Đã tạo lịch."],
-  defenseConfirmDeadline: ["defense confirmation deadline (24h before start) has passed", "Đã quá hạn xác nhận tham gia (trước giờ bắt đầu 24 giờ)."],
-  defenseRescheduleState: ["reschedule can only be requested for a scheduled or confirmed defense", "Chỉ có thể xin dời lịch khi buổi bảo vệ đang ở trạng thái Đã tạo lịch hoặc Đã xác nhận."],
-  defenseRescheduleDeadline: ["reschedule requests must be submitted at least 24 hours before start", "Yêu cầu dời lịch phải được gửi trước giờ bắt đầu ít nhất 24 giờ."],
-  defenseRescheduleReason: ["reschedule reason is required (max 2000 characters)", "Vui lòng nhập lý do xin dời lịch (tối đa 2000 ký tự)."],
-  defenseStartState: ["defense session cannot be started in its current state", "Không thể bắt đầu buổi bảo vệ ở trạng thái hiện tại."],
-  defenseEarlyStart: ["defense can only start at most 30 minutes before the scheduled start time", "Chỉ được bắt đầu buổi bảo vệ sớm tối đa {{minutes}} phút trước giờ hẹn."],
-  defenseOutcome: ["invalid defense outcome", "Kết quả bảo vệ không hợp lệ."],
-  defenseNotFound: ["defense session not found", "Không tìm thấy buổi bảo vệ."],
-  defenseProposalNotFound: ["event proposal not found", "Không tìm thấy đề xuất sự kiện."],
-  defenseRoomNotFound: ["active room not found", "Không tìm thấy phòng học đang hoạt động."],
-  defenseOfficerManage: ["only the assigned ICPDP officer can manage this defense session", "Chỉ cán bộ ICPDP được phân công mới có quyền quản lý buổi bảo vệ này."],
-  defenseOfficerCancel: ["only the assigned ICPDP officer can cancel this defense session", "Chỉ cán bộ ICPDP được phân công mới có quyền hủy buổi bảo vệ này."],
-  defenseOfficerReschedule: ["only the assigned ICPDP officer can respond to this reschedule request", "Chỉ cán bộ ICPDP được phân công mới có quyền phản hồi yêu cầu dời lịch này."],
-  defenseOfficerStart: ["only the assigned ICPDP officer can start the defense session", "Chỉ cán bộ ICPDP được phân công mới có quyền bắt đầu buổi bảo vệ."],
-  defenseOfficerEnd: ["only the assigned ICPDP officer can end the defense session", "Chỉ cán bộ ICPDP được phân công mới có quyền kết thúc buổi bảo vệ."],
-  defenseOfficerNoShow: ["only the assigned ICPDP officer can mark defense no-show", "Chỉ cán bộ ICPDP được phân công mới có quyền đánh dấu vắng mặt."],
-  defenseScheduleState: ["defense session can only be scheduled for an event under review or pending re-defense", "Chỉ có thể tạo lịch bảo vệ cho đề xuất đang xem xét hoặc đang chờ bảo vệ lại."],
-  defenseActiveExists: ["an active or undecided defense session already exists for this proposal", "Đề xuất này đã có một buổi bảo vệ đang hiệu lực hoặc chưa chốt kết quả."],
-  defenseRoomBlackout: ["Room is under maintenance / blackout", "Phòng học đang trong thời gian bảo trì / tạm ngưng sử dụng."],
-  defenseRoomBooked: ["Room has an approved booking or semester allocation", "Phòng học đã có lịch đặt được duyệt hoặc đã phân bổ cho học kỳ trong khung giờ này."],
-  defenseRoomEvent: ["Room is reserved for an approved event", "Phòng học đã được giữ cho một sự kiện đã duyệt trong khung giờ này."],
-  defenseRoomDefense: ["Room is booked for another event defense session", "Phòng học đã được đặt cho một buổi bảo vệ khác trong khung giờ này."],
-  defenseNoCancel: ["no cancellable defense session found", "Không tìm thấy buổi bảo vệ có thể hủy."],
-  defenseNoReschedule: ["no reschedule request is pending for this event", "Không có yêu cầu dời lịch nào đang chờ xử lý cho sự kiện này."],
-  defenseNoStart: ["no startable defense session found", "Không tìm thấy buổi bảo vệ có thể bắt đầu."],
-  defenseNotInProgress: ["defense session is not currently in progress", "Buổi bảo vệ hiện không ở trạng thái đang diễn ra."],
-  defenseNoEnd: ["no defense session in progress found", "Không tìm thấy buổi bảo vệ đang diễn ra để kết thúc."],
-  defenseNoShowTarget: ["no active defense session found to mark as no-show", "Không tìm thấy buổi bảo vệ hiệu lực để đánh dấu vắng mặt."],
-  defenseNoConfirm: ["no pending defense schedule found to confirm", "Không tìm thấy lịch bảo vệ đang chờ xác nhận."],
-  defenseNoRescheduleTarget: ["no active defense schedule found to reschedule", "Không tìm thấy lịch bảo vệ hiệu lực để xin dời lịch."],
-  defenseTitleMissing: ["defense title is required", "Vui lòng nhập tiêu đề buổi bảo vệ."],
-  defenseCancelReasonMissing: ["cancellation reason is required", "Vui lòng nhập lý do hủy lịch bảo vệ."],
-  defenseOfficerRole: ["ICPDP officer role required", "Tài khoản cần có vai trò ICPDP Officer để thực hiện thao tác này."],
-  defenseInvalidPropertyId: ["invalid property id", "Phòng học được chọn không hợp lệ."],
-  defenseInvalidEventId: ["invalid event id", "Mã đề xuất sự kiện không hợp lệ."],
-  defenseInvalidDefenseId: ["invalid defense id", "Mã buổi bảo vệ không hợp lệ."],
-  defenseInvalidClubId: ["invalid club id", "Mã câu lạc bộ không hợp lệ."],
-  defenseInvalidRequest: ["invalid event defense request", "Dữ liệu yêu cầu buổi bảo vệ chưa hợp lệ. Vui lòng kiểm tra lại các trường thông tin."],
-  defenseRejectionReasonRequired: ["rejection reason is required", "Vui lòng nhập lý do từ chối dời lịch."],
-  defenseNoteTooLong: ["note cannot exceed 2000 characters", "Ghi chú không được vượt quá 2.000 ký tự."],
-  defensePanelNoteTooLong: ["defense note cannot exceed 50000 characters", "Biên bản ghi chú bảo vệ không được vượt quá 50.000 ký tự."],
-  decisionReasonRequired: ["decision reason is required", "Vui lòng nhập lý do quyết định."],
-  revisionSectionsRequired: ["revision sections are required", "Vui lòng chọn ít nhất một mục cần sửa đổi."],
-  futureRevisionDeadline: ["future revision deadline is required", "Hạn nộp bản sửa đổi phải ở trong tương lai."],
-  internalEventNotice: ["Internal event must start at least {{hours}} hours from now.", "Thời gian bắt đầu sự kiện nội bộ phải cách hiện tại ít nhất {{hours}} giờ."],
-  internalScheduleLocked: ["published internal event schedule is locked; only cancellation is allowed", "Sự kiện nội bộ đã công bố nên lịch bị khoá; chỉ có thể huỷ sự kiện."],
-  internalEventNotEditable: ["internal event cannot be edited in its current state", "Không thể chỉnh sửa sự kiện nội bộ ở trạng thái hiện tại."],
-  internalDraftOnly: ["only an internal draft can be created", "Chỉ bản nháp sự kiện nội bộ mới có thể chuyển sang trạng thái Đã tạo."],
-  internalRescheduleCreatedOnly: ["only a created internal event can be rescheduled", "Chỉ sự kiện nội bộ ở trạng thái Đã tạo (chưa công bố) mới có thể đổi lịch."],
-  internalFlowRequired: ["internal events without university budget must use the internal event flow", "Sự kiện nội bộ không xin ngân sách trường phải tạo qua luồng Sự kiện nội bộ."],
-  bookingRoomAllocation: ["room allocations cannot be attached to an event proposal", "Không thể gắn lịch phân phòng học cố định vào sự kiện. Chỉ gắn được yêu cầu đặt hội trường, sân khấu, khu vực ngoài trời hoặc thiết bị."],
-  bookingNotAvailable: ["booking does not belong to the club or is no longer available", "Yêu cầu đặt cơ sở vật chất không thuộc CLB hoặc không còn ở trạng thái khả dụng."],
-  bookingAlreadyLinked: ["booking is already attached to another event", "Yêu cầu đặt cơ sở vật chất này đã được gắn với một sự kiện khác. Mỗi yêu cầu chỉ được gắn cho một sự kiện."],
-  bookingPropertyMismatch: ["booking facility does not match the selected event facility", "Cơ sở vật chất của yêu cầu đặt chỗ không khớp với phòng / cơ sở vật chất đã chọn cho sự kiện."],
-  bookingScheduleNotCovered: ["booking time slot does not cover the event schedule", "Khung giờ của yêu cầu đặt cơ sở vật chất chưa bao phủ toàn bộ thời gian diễn ra sự kiện."],
-  bookingInvalidLegacy: ["booking must belong to the club, be available and cover the event schedule", "Yêu cầu đặt cơ sở vật chất phải thuộc CLB, chưa gắn với sự kiện khác, khớp với cơ sở vật chất đã chọn và bao phủ toàn bộ thời gian sự kiện."],
-  bookingDuplicate: ["booking ids must be unique", "Danh sách yêu cầu đặt cơ sở vật chất bị trùng lặp."],
-  occurrencesRange: ["all occurrences must be inside the event dates and the same semester", "Tất cả các buổi của sự kiện phải nằm trong khoảng thời gian sự kiện và cùng một học kỳ."],
-  occurrencesOverlap: ["occurrences must not overlap", "Thời gian các buổi của sự kiện không được chồng lấn nhau."],
-  registrationFormInvalid: ["invalid registration form fields", "Cấu hình biểu mẫu đăng ký không hợp lệ. Vui lòng kiểm tra câu hỏi và các lựa chọn."],
-  propertyNotFound: ["active property not found", "Phòng hoặc cơ sở vật chất đã chọn không tồn tại hoặc đang ngừng hoạt động."],
-  propertyBlackout: ["property is blacked out during the event", "Phòng hoặc cơ sở vật chất đã chọn đang trong thời gian bảo trì / tạm ngưng sử dụng vào khung giờ của sự kiện."],
-  dissolutionSemester: ["event ends after the dissolution semester", "Thời gian kết thúc sự kiện vượt quá học kỳ giải thể của CLB."],
-  eventChanged: ["event changed or is not available in this club; reload and retry", "Dữ liệu sự kiện đã thay đổi hoặc không còn khả dụng. Vui lòng tải lại trang rồi thử lại."],
-  eventNotEditable: ["event cannot be edited or submitted", "Không thể chỉnh sửa hoặc nộp đề xuất ở trạng thái hiện tại."],
-  revisionDeadlinePassed: ["revision deadline has passed", "Đã quá hạn chỉnh sửa đề xuất."],
-  publishApprovedOnly: ["only approved events can be published", "Chỉ sự kiện đã được phê duyệt hoặc đã tạo mới có thể công bố."],
-  cancelStateInvalid: ["event cannot be cancelled in its current state", "Không thể huỷ sự kiện ở trạng thái hiện tại."],
-  cancelFinalized: ["finalized attendance prevents cancellation", "Không thể huỷ sự kiện khi điểm danh đã được chốt."],
-  cancelNoticeHours: ["Approved event cancellation must be requested at least {{hours}} hours before the event starts.", "Yêu cầu huỷ sự kiện đã duyệt phải được gửi trước giờ bắt đầu sự kiện ít nhất {{hours}} giờ."],
-  cancelPendingAlready: ["event cancellation is already awaiting ICPDP confirmation", "Yêu cầu huỷ sự kiện đang chờ ICPDP xác nhận."],
-  cancelActionPaused: ["event action is paused while cancellation is awaiting ICPDP confirmation", "Thao tác trên sự kiện đang tạm dừng trong thời gian chờ ICPDP xác nhận huỷ sự kiện."],
-  cancelFinancePaused: ["sponsored expense action is paused while event cancellation is awaiting ICPDP confirmation", "Thao tác ngân sách tài trợ đang tạm dừng trong thời gian chờ ICPDP xác nhận huỷ sự kiện."],
-  cancelRequestNotFound: ["no open event cancellation request found", "Không tìm thấy yêu cầu huỷ sự kiện đang chờ xử lý."],
-  rescheduleApprovedOnly: ["only an unstarted approved event can be rescheduled", "Chỉ sự kiện đã duyệt và chưa bắt đầu mới có thể đổi lịch."],
-  rescheduleHasCheckIns: ["an event with check-ins cannot be rescheduled", "Không thể đổi lịch sự kiện đã có người điểm danh."],
-  manualCheckInOutsideForbidden: ["only club leaders can manually check in outside the check-in window", "Chỉ Ban Chủ nhiệm mới có quyền điểm danh hộ ngoài khung giờ check-in."],
-} satisfies Record<string, [string, string]>;
+  evaluationZeroPenalty: [
+    'late or missing periodic reports require a zero evaluation score',
+    'Báo cáo định kỳ nộp muộn hoặc quá hạn chưa nộp phải nhận 0 điểm, không được chấm tay ghi đè.',
+  ],
+  evaluationScoreRequired: [
+    'an evaluation needs a total score before finalizing',
+    'Cần có tổng điểm trước khi chốt đánh giá.',
+  ],
+  evaluationReportChanged: [
+    'periodic report status changed; reopen and finalize the evaluation again',
+    'Tình trạng báo cáo đã thay đổi. Hãy mở lại và chốt đánh giá để cập nhật điểm trước khi công bố.',
+  ],
+  unknown: [
+    'The request could not be completed. Please try again.',
+    'Không thể hoàn tất yêu cầu. Vui lòng thử lại.',
+  ],
+  network: [
+    'Network request failed',
+    'Không thể kết nối đến máy chủ. Kiểm tra kết nối mạng rồi thử lại.',
+  ],
+  validation: ['Invalid input', 'Thông tin chưa hợp lệ. Kiểm tra các trường đã nhập rồi thử lại.'],
+  unauthorized: ['authentication required', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'],
+  forbidden: ['Forbidden', 'Tài khoản không có quyền thực hiện thao tác này.'],
+  notFound: ['Not Found', 'Không tìm thấy dữ liệu yêu cầu. Tải lại trang rồi thử lại.'],
+  conflict: [
+    'Conflict',
+    'Dữ liệu hoặc trạng thái không cho phép thao tác này. Tải lại trang để kiểm tra.',
+  ],
+  unavailable: ['Service Unavailable', 'Dịch vụ tạm thời chưa sẵn sàng. Vui lòng thử lại sau.'],
+  server: ['Internal Server Error', 'Máy chủ chưa thể xử lý yêu cầu. Vui lòng thử lại sau.'],
+  rateLimit: ['Too Many Requests', 'Bạn thao tác quá nhanh. Vui lòng chờ một lát rồi thử lại.'],
+  checkInWindow: [
+    'invalid check-in window',
+    'Giờ mở check-in phải trước giờ đóng; giờ đóng không được sau giờ kết thúc sự kiện.',
+  ],
+  registrationWindow: [
+    'registration must open before closing and close no later than the start',
+    'Giờ mở đăng ký phải trước giờ đóng; giờ đóng không được sau giờ bắt đầu sự kiện.',
+  ],
+  walkInRequired: [
+    'an event without registration must allow walk-ins',
+    'Sự kiện không cần đăng ký phải cho phép khách vãng lai.',
+  ],
+  eventStarted: ['event has already started', 'Sự kiện đã bắt đầu.'],
+  eventDates: [
+    'event dates must be in the future and end after the start',
+    'Sự kiện phải bắt đầu trong tương lai và kết thúc sau giờ bắt đầu.',
+  ],
+  eventSemester: [
+    'the event must start and end within one semester of the academic calendar',
+    'Thời gian bắt đầu và kết thúc sự kiện phải nằm trong cùng một học kỳ đã cấu hình.',
+  ],
+  eventNotice: [
+    'Submit at least {{hours}} hours before the event starts.',
+    'Cần nộp đề xuất trước giờ bắt đầu sự kiện ít nhất {{hours}} giờ.',
+  ],
+  eventRequired: [
+    'title, objective and plan are required',
+    'Vui lòng nhập tên sự kiện, mục tiêu và kế hoạch hoạt động.',
+  ],
+  venueRequired: [
+    'choose a property or enter a venue',
+    'Vui lòng chọn cơ sở vật chất hoặc nhập địa điểm.',
+  ],
+  capacity: ['invalid capacity', 'Sức chứa phải là số nguyên lớn hơn 0.'],
+  requestedBudget: [
+    'invalid requested budget',
+    'Kiểm tra hạng mục, mục đích và số tiền nguyên lớn hơn 0 của từng khoản ngân sách.',
+  ],
+  policyMissing: [
+    'policy is not configured',
+    'Chưa có chính sách vận hành có hiệu lực. Vui lòng liên hệ ICPDP để cấu hình.',
+  ],
+  policyDate: [
+    'policy is not configured for this date',
+    'Chưa có chính sách vận hành có hiệu lực vào ngày này. Vui lòng liên hệ ICPDP.',
+  ],
+  clubInactive: [
+    'club is not active for event proposals',
+    'CLB phải đang hoạt động mới được đề xuất sự kiện.',
+  ],
+  scheduleConflict: [
+    'event schedule has blocking conflicts',
+    'Lịch sự kiện bị xung đột chặn với sự kiện hoặc lịch đặt cơ sở vật chất khác.',
+  ],
+  obligations: [
+    'overdue club obligations prevent proposal submission',
+    'CLB cần xử lý các nghĩa vụ quá hạn trước khi nộp đề xuất.',
+  ],
+  evidence: [
+    'evidence requires a valid HTTPS link and type',
+    'Vui lòng chọn loại chứng từ hợp lệ và nhập liên kết bắt đầu bằng https://.',
+  ],
+  expenseLocked: [
+    'expenses are locked for this budget',
+    'Không thể sửa khoản chi ở trạng thái hiện tại. Nếu cần chỉnh sửa, hãy đề nghị ICPDP trả lại quyết toán.',
+  ],
+  settlementEvent: [
+    'settlement requires an ended or cancelled event',
+    'Chỉ được nộp quyết toán khi sự kiện đã kết thúc hoặc bị huỷ.',
+  ],
+  reviewExpenses: [
+    'review every expense exactly once',
+    'Vui lòng thẩm định đầy đủ từng khoản chi, mỗi khoản đúng một lần.',
+  ],
+  expenseReason: [
+    'each expense review requires an outcome and reason',
+    'Mỗi khoản chi cần có kết quả thẩm định và lý do quyết định.',
+  ],
+  unsupported: [
+    'unsupported expenses must be rejected',
+    'Không thể chấp nhận khoản chi chưa có chứng từ.',
+  ],
+  advanceLimit: [
+    'advances exceed approved budget',
+    'Tổng tạm ứng không được vượt ngân sách đã duyệt.',
+  ],
+  advanceDate: [
+    'an advance must be paid before the event ends',
+    'Khoản tạm ứng phải được chuyển trước khi sự kiện kết thúc.',
+  ],
+  topUpAmount: [
+    'a top-up must equal the settlement balance',
+    'Khoản cấp bù phải đúng bằng chênh lệch quyết toán.',
+  ],
+  flowAmount: [
+    'amount exceeds what this budget allows',
+    'Số tiền vượt giới hạn được phép của ngân sách này.',
+  ],
+  targetTerm: [
+    'invalid target term',
+    'Vui lòng nhập tên nhiệm kỳ và thời gian kết thúc sau thời gian bắt đầu.',
+  ],
+  termPast: [
+    'target term must not begin in the past',
+    'Nhiệm kỳ mới không được bắt đầu trong quá khứ.',
+  ],
+  termRequired: [
+    'active term required',
+    'CLB cần có nhiệm kỳ đang hoạt động trước khi lập kế hoạch chuyển giao.',
+  ],
+  planExists: [
+    'an unfinished transition already exists',
+    'CLB đã có kế hoạch chuyển giao chưa hoàn tất. Vui lòng mở kế hoạch hiện có.',
+  ],
+  planLocked: [
+    'plan changed or is locked',
+    'Kế hoạch đã thay đổi hoặc bị khoá. Vui lòng tải lại trang.',
+  ],
+  earlyReason: [
+    'an early handover requires a reason',
+    'Vui lòng nhập lý do chuyển giao trước khi nhiệm kỳ hiện tại kết thúc.',
+  ],
+  boardCandidates: [
+    'every board seat needs one candidate',
+    'Vui lòng chọn đủ ứng viên cho từng ghế ban điều hành theo số lượng được phép.',
+  ],
+  activeCandidates: [
+    'every candidate must be an active club member',
+    'Tất cả ứng viên phải là thành viên đang hoạt động của CLB.',
+  ],
+  duplicateCandidates: [
+    'invalid or duplicate transition candidates',
+    'Danh sách ứng viên chưa hợp lệ hoặc có người được chọn nhiều lần.',
+  ],
+  overlappingLeader: [
+    'a leader candidate already leads another club in an overlapping term',
+    'Ứng viên Chủ nhiệm đang giữ ghế Chủ nhiệm CLB khác trong nhiệm kỳ chồng lấn.',
+  ],
+  obligationAssignee: [
+    'every obligation needs an assignee on the new board',
+    'Mỗi nghĩa vụ tồn đọng cần có người tiếp nhận thuộc ban điều hành kế nhiệm.',
+  ],
+  schemeRequired: [
+    'activate an evaluation scheme for this period first',
+    'Vui lòng kích hoạt bộ tiêu chí đánh giá cho học kỳ này trước.',
+  ],
+  schemeMissing: [
+    'the period has no active evaluation scheme',
+    'Học kỳ này chưa có bộ tiêu chí đánh giá đang áp dụng.',
+  ],
+  finalizeAll: [
+    'finalize the evaluation of every club before publishing',
+    'Cần chốt đánh giá của tất cả CLB trước khi công bố kết quả.',
+  ],
+  evaluationLocked: [
+    'only an evaluation under review can change',
+    'Chỉ được sửa bản nháp hoặc bản đánh giá đang xem xét.',
+  ],
+  reopenFirst: [
+    'reopen the finalized evaluation before generating it again',
+    'Vui lòng mở lại bản đánh giá đã chốt trước khi sinh lại dữ liệu.',
+  ],
+  latestRevision: ['only the latest revision can change', 'Chỉ được chỉnh sửa phiên bản mới nhất.'],
+  finalizeState: [
+    'this evaluation cannot be finalized now',
+    'Chưa thể chốt đánh giá ở trạng thái hiện tại.',
+  ],
+  reopenState: [
+    'only a finalized, unpublished evaluation can be reopened',
+    'Chỉ được mở lại đánh giá đã chốt và chưa công bố.',
+  ],
+  manualDisabled: [
+    'the scheme does not allow scoring this dimension by hand',
+    'Bộ tiêu chí không cho phép chấm tay tiêu chí này.',
+  ],
+  manualRange: [
+    'a manual score is between 0 and 100',
+    'Điểm chấm tay phải nằm trong khoảng từ 0 đến 100.',
+  ],
+  manualReason: [
+    'a manual score needs a justification',
+    'Vui lòng nhập lý giải cho điểm chấm tay.',
+  ],
+  locked: ['account locked', 'Tài khoản đã bị khoá. Vui lòng liên hệ ICPDP để được hỗ trợ.'],
+  csrf: ['invalid csrf token', 'Mã bảo vệ phiên đã hết hạn. Vui lòng tải lại trang rồi thử lại.'],
+  upload: ['file upload failed', 'Không thể tải tệp lên. Vui lòng thử lại.'],
+  storageUnavailable: [
+    'file storage unavailable',
+    'Dịch vụ lưu trữ tệp chưa sẵn sàng. Vui lòng liên hệ ICPDP.',
+  ],
+  storageMissing: [
+    'file storage is not configured',
+    'Dịch vụ lưu trữ tệp chưa được cấu hình. Vui lòng liên hệ ICPDP.',
+  ],
+  proposalDocumentRequired: [
+    'event proposal document is required before submission',
+    'Cần tải lên file đề án sự kiện trước khi gửi duyệt.',
+  ],
+  proposalFileInvalid: [
+    'invalid event proposal file',
+    'File không hợp lệ: sai định dạng cho phép, rỗng hoặc vượt giới hạn dung lượng.',
+  ],
+  defenseStartRequired: [
+    'valid defense start time is required',
+    'Vui lòng chọn thời gian bắt đầu buổi bảo vệ hợp lệ.',
+  ],
+  defenseStartInvalid: ['valid start time is required', 'Vui lòng chọn thời gian bắt đầu hợp lệ.'],
+  defenseFutureStart: [
+    'future defense start time is required',
+    'Thời gian bắt đầu buổi bảo vệ phải ở trong tương lai.',
+  ],
+  defenseDuration: [
+    'defense duration must be an integer between 15 and 240 minutes',
+    'Thời lượng buổi bảo vệ phải là số nguyên từ 15 đến 240 phút.',
+  ],
+  defenseDurationGeneric: [
+    'duration must be an integer between 15 and 240 minutes',
+    'Thời lượng buổi bảo vệ phải là số nguyên từ 15 đến 240 phút.',
+  ],
+  defenseNotice: [
+    'defense must be scheduled at least 48 hours in advance',
+    'Lịch bảo vệ phải được tạo trước thời gian diễn ra ít nhất 48 giờ.',
+  ],
+  defenseRevisionGap: [
+    'revision deadline must be at least 12 hours before the scheduled defense',
+    'Hạn nộp bản sửa phải trước giờ bảo vệ đã lên lịch ít nhất 12 giờ.',
+  ],
+  defenseConfirmState: [
+    'only a scheduled defense session can be confirmed',
+    'Chỉ có thể xác nhận tham gia khi buổi bảo vệ đang ở trạng thái Đã tạo lịch.',
+  ],
+  defenseConfirmDeadline: [
+    'defense confirmation deadline (24h before start) has passed',
+    'Đã quá hạn xác nhận tham gia (trước giờ bắt đầu 24 giờ).',
+  ],
+  defenseRescheduleState: [
+    'reschedule can only be requested for a scheduled or confirmed defense',
+    'Chỉ có thể xin dời lịch khi buổi bảo vệ đang ở trạng thái Đã tạo lịch hoặc Đã xác nhận.',
+  ],
+  defenseRescheduleDeadline: [
+    'reschedule requests must be submitted at least 24 hours before start',
+    'Yêu cầu dời lịch phải được gửi trước giờ bắt đầu ít nhất 24 giờ.',
+  ],
+  defenseRescheduleReason: [
+    'reschedule reason is required (max 2000 characters)',
+    'Vui lòng nhập lý do xin dời lịch (tối đa 2000 ký tự).',
+  ],
+  defenseStartState: [
+    'defense session cannot be started in its current state',
+    'Không thể bắt đầu buổi bảo vệ ở trạng thái hiện tại.',
+  ],
+  defenseEarlyStart: [
+    'defense can only start at most 30 minutes before the scheduled start time',
+    'Chỉ được bắt đầu buổi bảo vệ sớm tối đa {{minutes}} phút trước giờ hẹn.',
+  ],
+  defenseOutcome: ['invalid defense outcome', 'Kết quả bảo vệ không hợp lệ.'],
+  defenseNotFound: ['defense session not found', 'Không tìm thấy buổi bảo vệ.'],
+  defenseProposalNotFound: ['event proposal not found', 'Không tìm thấy đề xuất sự kiện.'],
+  defenseRoomNotFound: ['active room not found', 'Không tìm thấy phòng học đang hoạt động.'],
+  defenseOfficerManage: [
+    'only the assigned ICPDP officer can manage this defense session',
+    'Chỉ cán bộ ICPDP được phân công mới có quyền quản lý buổi bảo vệ này.',
+  ],
+  defenseOfficerCancel: [
+    'only the assigned ICPDP officer can cancel this defense session',
+    'Chỉ cán bộ ICPDP được phân công mới có quyền hủy buổi bảo vệ này.',
+  ],
+  defenseOfficerReschedule: [
+    'only the assigned ICPDP officer can respond to this reschedule request',
+    'Chỉ cán bộ ICPDP được phân công mới có quyền phản hồi yêu cầu dời lịch này.',
+  ],
+  defenseOfficerStart: [
+    'only the assigned ICPDP officer can start the defense session',
+    'Chỉ cán bộ ICPDP được phân công mới có quyền bắt đầu buổi bảo vệ.',
+  ],
+  defenseOfficerEnd: [
+    'only the assigned ICPDP officer can end the defense session',
+    'Chỉ cán bộ ICPDP được phân công mới có quyền kết thúc buổi bảo vệ.',
+  ],
+  defenseOfficerNoShow: [
+    'only the assigned ICPDP officer can mark defense no-show',
+    'Chỉ cán bộ ICPDP được phân công mới có quyền đánh dấu vắng mặt.',
+  ],
+  defenseScheduleState: [
+    'defense session can only be scheduled for an event under review or pending re-defense',
+    'Chỉ có thể tạo lịch bảo vệ cho đề xuất đang xem xét hoặc đang chờ bảo vệ lại.',
+  ],
+  defenseActiveExists: [
+    'an active or undecided defense session already exists for this proposal',
+    'Đề xuất này đã có một buổi bảo vệ đang hiệu lực hoặc chưa chốt kết quả.',
+  ],
+  defenseRoomBlackout: [
+    'Room is under maintenance / blackout',
+    'Phòng học đang trong thời gian bảo trì / tạm ngưng sử dụng.',
+  ],
+  defenseRoomBooked: [
+    'Room has an approved booking or semester allocation',
+    'Phòng học đã có lịch đặt được duyệt hoặc đã phân bổ cho học kỳ trong khung giờ này.',
+  ],
+  defenseRoomEvent: [
+    'Room is reserved for an approved event',
+    'Phòng học đã được giữ cho một sự kiện đã duyệt trong khung giờ này.',
+  ],
+  defenseRoomDefense: [
+    'Room is booked for another event defense session',
+    'Phòng học đã được đặt cho một buổi bảo vệ khác trong khung giờ này.',
+  ],
+  defenseNoCancel: [
+    'no cancellable defense session found',
+    'Không tìm thấy buổi bảo vệ có thể hủy.',
+  ],
+  defenseNoReschedule: [
+    'no reschedule request is pending for this event',
+    'Không có yêu cầu dời lịch nào đang chờ xử lý cho sự kiện này.',
+  ],
+  defenseNoStart: [
+    'no startable defense session found',
+    'Không tìm thấy buổi bảo vệ có thể bắt đầu.',
+  ],
+  defenseNotInProgress: [
+    'defense session is not currently in progress',
+    'Buổi bảo vệ hiện không ở trạng thái đang diễn ra.',
+  ],
+  defenseNoEnd: [
+    'no defense session in progress found',
+    'Không tìm thấy buổi bảo vệ đang diễn ra để kết thúc.',
+  ],
+  defenseNoShowTarget: [
+    'no active defense session found to mark as no-show',
+    'Không tìm thấy buổi bảo vệ hiệu lực để đánh dấu vắng mặt.',
+  ],
+  defenseNoConfirm: [
+    'no pending defense schedule found to confirm',
+    'Không tìm thấy lịch bảo vệ đang chờ xác nhận.',
+  ],
+  defenseNoRescheduleTarget: [
+    'no active defense schedule found to reschedule',
+    'Không tìm thấy lịch bảo vệ hiệu lực để xin dời lịch.',
+  ],
+  defenseTitleMissing: ['defense title is required', 'Vui lòng nhập tiêu đề buổi bảo vệ.'],
+  defenseCancelReasonMissing: [
+    'cancellation reason is required',
+    'Vui lòng nhập lý do hủy lịch bảo vệ.',
+  ],
+  defenseOfficerRole: [
+    'ICPDP officer role required',
+    'Tài khoản cần có vai trò ICPDP Officer để thực hiện thao tác này.',
+  ],
+  defenseInvalidPropertyId: ['invalid property id', 'Phòng học được chọn không hợp lệ.'],
+  defenseInvalidEventId: ['invalid event id', 'Mã đề xuất sự kiện không hợp lệ.'],
+  defenseInvalidDefenseId: ['invalid defense id', 'Mã buổi bảo vệ không hợp lệ.'],
+  defenseInvalidClubId: ['invalid club id', 'Mã câu lạc bộ không hợp lệ.'],
+  defenseInvalidRequest: [
+    'invalid event defense request',
+    'Dữ liệu yêu cầu buổi bảo vệ chưa hợp lệ. Vui lòng kiểm tra lại các trường thông tin.',
+  ],
+  defenseRejectionReasonRequired: [
+    'rejection reason is required',
+    'Vui lòng nhập lý do từ chối dời lịch.',
+  ],
+  defenseNoteTooLong: [
+    'note cannot exceed 2000 characters',
+    'Ghi chú không được vượt quá 2.000 ký tự.',
+  ],
+  defensePanelNoteTooLong: [
+    'defense note cannot exceed 50000 characters',
+    'Biên bản ghi chú bảo vệ không được vượt quá 50.000 ký tự.',
+  ],
+  decisionReasonRequired: ['decision reason is required', 'Vui lòng nhập lý do quyết định.'],
+  revisionSectionsRequired: [
+    'revision sections are required',
+    'Vui lòng chọn ít nhất một mục cần sửa đổi.',
+  ],
+  futureRevisionDeadline: [
+    'future revision deadline is required',
+    'Hạn nộp bản sửa đổi phải ở trong tương lai.',
+  ],
+  internalEventNotice: [
+    'Internal event must start at least {{hours}} hours from now.',
+    'Thời gian bắt đầu sự kiện nội bộ phải cách hiện tại ít nhất {{hours}} giờ.',
+  ],
+  internalScheduleLocked: [
+    'published internal event schedule is locked; only cancellation is allowed',
+    'Sự kiện nội bộ đã công bố nên lịch bị khoá; chỉ có thể huỷ sự kiện.',
+  ],
+  internalEventNotEditable: [
+    'internal event cannot be edited in its current state',
+    'Không thể chỉnh sửa sự kiện nội bộ ở trạng thái hiện tại.',
+  ],
+  internalDraftOnly: [
+    'only an internal draft can be created',
+    'Chỉ bản nháp sự kiện nội bộ mới có thể chuyển sang trạng thái Đã tạo.',
+  ],
+  internalRescheduleCreatedOnly: [
+    'only a created internal event can be rescheduled',
+    'Chỉ sự kiện nội bộ ở trạng thái Đã tạo (chưa công bố) mới có thể đổi lịch.',
+  ],
+  internalFlowRequired: [
+    'internal events without university budget must use the internal event flow',
+    'Sự kiện nội bộ không xin ngân sách trường phải tạo qua luồng Sự kiện nội bộ.',
+  ],
+  bookingRoomAllocation: [
+    'room allocations cannot be attached to an event proposal',
+    'Không thể gắn lịch phân phòng học cố định vào sự kiện. Chỉ gắn được yêu cầu đặt hội trường, sân khấu, khu vực ngoài trời hoặc thiết bị.',
+  ],
+  bookingNotAvailable: [
+    'booking does not belong to the club or is no longer available',
+    'Yêu cầu đặt cơ sở vật chất không thuộc CLB hoặc không còn ở trạng thái khả dụng.',
+  ],
+  bookingAlreadyLinked: [
+    'booking is already attached to another event',
+    'Yêu cầu đặt cơ sở vật chất này đã được gắn với một sự kiện khác. Mỗi yêu cầu chỉ được gắn cho một sự kiện.',
+  ],
+  bookingPropertyMismatch: [
+    'booking facility does not match the selected event facility',
+    'Cơ sở vật chất của yêu cầu đặt chỗ không khớp với phòng / cơ sở vật chất đã chọn cho sự kiện.',
+  ],
+  bookingScheduleNotCovered: [
+    'booking time slot does not cover the event schedule',
+    'Khung giờ của yêu cầu đặt cơ sở vật chất chưa bao phủ toàn bộ thời gian diễn ra sự kiện.',
+  ],
+  bookingInvalidLegacy: [
+    'booking must belong to the club, be available and cover the event schedule',
+    'Yêu cầu đặt cơ sở vật chất phải thuộc CLB, chưa gắn với sự kiện khác, khớp với cơ sở vật chất đã chọn và bao phủ toàn bộ thời gian sự kiện.',
+  ],
+  bookingDuplicate: [
+    'booking ids must be unique',
+    'Danh sách yêu cầu đặt cơ sở vật chất bị trùng lặp.',
+  ],
+  occurrencesRange: [
+    'all occurrences must be inside the event dates and the same semester',
+    'Tất cả các buổi của sự kiện phải nằm trong khoảng thời gian sự kiện và cùng một học kỳ.',
+  ],
+  occurrencesOverlap: [
+    'occurrences must not overlap',
+    'Thời gian các buổi của sự kiện không được chồng lấn nhau.',
+  ],
+  registrationFormInvalid: [
+    'invalid registration form fields',
+    'Cấu hình biểu mẫu đăng ký không hợp lệ. Vui lòng kiểm tra câu hỏi và các lựa chọn.',
+  ],
+  propertyNotFound: [
+    'active property not found',
+    'Phòng hoặc cơ sở vật chất đã chọn không tồn tại hoặc đang ngừng hoạt động.',
+  ],
+  propertyBlackout: [
+    'property is blacked out during the event',
+    'Phòng hoặc cơ sở vật chất đã chọn đang trong thời gian bảo trì / tạm ngưng sử dụng vào khung giờ của sự kiện.',
+  ],
+  dissolutionSemester: [
+    'event ends after the dissolution semester',
+    'Thời gian kết thúc sự kiện vượt quá học kỳ giải thể của CLB.',
+  ],
+  eventChanged: [
+    'event changed or is not available in this club; reload and retry',
+    'Dữ liệu sự kiện đã thay đổi hoặc không còn khả dụng. Vui lòng tải lại trang rồi thử lại.',
+  ],
+  eventNotEditable: [
+    'event cannot be edited or submitted',
+    'Không thể chỉnh sửa hoặc nộp đề xuất ở trạng thái hiện tại.',
+  ],
+  revisionDeadlinePassed: ['revision deadline has passed', 'Đã quá hạn chỉnh sửa đề xuất.'],
+  publishApprovedOnly: [
+    'only approved events can be published',
+    'Chỉ sự kiện đã được phê duyệt hoặc đã tạo mới có thể công bố.',
+  ],
+  cancelStateInvalid: [
+    'event cannot be cancelled in its current state',
+    'Không thể huỷ sự kiện ở trạng thái hiện tại.',
+  ],
+  cancelFinalized: [
+    'finalized attendance prevents cancellation',
+    'Không thể huỷ sự kiện khi điểm danh đã được chốt.',
+  ],
+  cancelNoticeHours: [
+    'Approved event cancellation must be requested at least {{hours}} hours before the event starts.',
+    'Yêu cầu huỷ sự kiện đã duyệt phải được gửi trước giờ bắt đầu sự kiện ít nhất {{hours}} giờ.',
+  ],
+  cancelPendingAlready: [
+    'event cancellation is already awaiting ICPDP confirmation',
+    'Yêu cầu huỷ sự kiện đang chờ ICPDP xác nhận.',
+  ],
+  cancelActionPaused: [
+    'event action is paused while cancellation is awaiting ICPDP confirmation',
+    'Thao tác trên sự kiện đang tạm dừng trong thời gian chờ ICPDP xác nhận huỷ sự kiện.',
+  ],
+  cancelFinancePaused: [
+    'sponsored expense action is paused while event cancellation is awaiting ICPDP confirmation',
+    'Thao tác ngân sách tài trợ đang tạm dừng trong thời gian chờ ICPDP xác nhận huỷ sự kiện.',
+  ],
+  cancelRequestNotFound: [
+    'no open event cancellation request found',
+    'Không tìm thấy yêu cầu huỷ sự kiện đang chờ xử lý.',
+  ],
+  rescheduleApprovedOnly: [
+    'only an unstarted approved event can be rescheduled',
+    'Chỉ sự kiện đã duyệt và chưa bắt đầu mới có thể đổi lịch.',
+  ],
+  rescheduleHasCheckIns: [
+    'an event with check-ins cannot be rescheduled',
+    'Không thể đổi lịch sự kiện đã có người điểm danh.',
+  ],
+  manualCheckInOutsideForbidden: [
+    'only club leaders can manually check in outside the check-in window',
+    'Chỉ Ban Chủ nhiệm mới có quyền điểm danh hộ ngoài khung giờ check-in.',
+  ],
+} satisfies Record<string, [string, string]>
 
-export type ApiErrorKey = keyof typeof messages;
+export type ApiErrorKey = keyof typeof messages
 
 export const apiErrors = {
   en: Object.fromEntries(Object.entries(messages).map(([key, value]) => [key, value[0]])),
   vi: Object.fromEntries(Object.entries(messages).map(([key, value]) => [key, value[1]])),
-};
+}
 
 // API diagnostics stay in English; only their presentation is translated.
 export const apiErrorKeys: Readonly<Record<string, ApiErrorKey>> = Object.fromEntries(
   Object.entries(messages).map(([key, value]) => [value[0], key as ApiErrorKey]),
-);
+)

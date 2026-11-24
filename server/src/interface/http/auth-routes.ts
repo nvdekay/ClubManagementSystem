@@ -1,164 +1,234 @@
-import { timingSafeEqual } from "node:crypto";
-import { Router, type NextFunction, type Request, type Response } from "express";
-import { z } from "zod";
-import type { AuthRepository } from "../../domain/auth.js";
-import type { ClubAccessRepository } from "../../domain/access.js";
-import { DomainError } from "../../domain/errors.js";
-import type { GoogleIdentityProvider } from "../../domain/google-identity.js";
-import type { OAuthFlowService } from "../../domain/oauth-flow.js";
-import type { SessionService } from "../../domain/session.js";
-import { completeGoogleLogin, currentUser } from "../../usecase/auth.js";
-import { ok } from "./response.js";
+import { timingSafeEqual } from 'node:crypto'
+import { Router, type NextFunction, type Request, type Response } from 'express'
+import { z } from 'zod'
+import type { AuthRepository } from '../../domain/auth.js'
+import type { ClubAccessRepository } from '../../domain/access.js'
+import { DomainError } from '../../domain/errors.js'
+import type { GoogleIdentityProvider } from '../../domain/google-identity.js'
+import type { OAuthFlowService } from '../../domain/oauth-flow.js'
+import type { SessionService } from '../../domain/session.js'
+import { completeGoogleLogin, currentUser } from '../../usecase/auth.js'
+import { ok } from './response.js'
 
 export interface AuthRouteDeps {
-  repo: AuthRepository;
-  accessRepo: ClubAccessRepository;
-  sessions: SessionService;
-  google: GoogleIdentityProvider;
-  oauthFlow: OAuthFlowService;
-  clientBaseUrl: string;
-  secureCookies: boolean;
+  repo: AuthRepository
+  accessRepo: ClubAccessRepository
+  sessions: SessionService
+  google: GoogleIdentityProvider
+  oauthFlow: OAuthFlowService
+  clientBaseUrl: string
+  secureCookies: boolean
 }
 
 const callbackQuery = z.object({
-  code: z.string().min(1), state: z.string().min(1),
-});
+  code: z.string().min(1),
+  state: z.string().min(1),
+})
 
 // Đọc giá trị cookie theo tên từ header Cookie
 function cookie(req: Request, name: string): string | undefined {
-  const raw = req.headers.cookie?.split(";").map((part) => part.trim())
-    .find((part) => part.startsWith(`${name}=`));
-  if (!raw) return undefined;
-  try { return decodeURIComponent(raw.slice(name.length + 1)); }
-  catch { return undefined; }
+  const raw = req.headers.cookie
+    ?.split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+  if (!raw) {
+    return undefined
+  }
+  try {
+    return decodeURIComponent(raw.slice(name.length + 1))
+  } catch {
+    return undefined
+  }
 }
 
 // Chỉ cho phép returnTo là đường dẫn nội bộ an toàn, tránh open redirect
 function safeReturnTo(value: unknown): string {
   // new URL xoá tab/xuống dòng ở mọi vị trí, nên "/\t/evil.com" thành "//evil.com": từ chối mọi ký tự <= space.
-  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")
+  if (
+    typeof value !== 'string' ||
+    !value.startsWith('/') ||
+    value.startsWith('//') ||
+    value.includes('\\') ||
     // eslint-disable-next-line no-control-regex
-    || value.includes("\\") || /[\u0000-\u0020]/.test(value) || value.length > 2000) return "/";
-  return value;
+    /[\u0000-\u0020]/.test(value) ||
+    value.length > 2000
+  ) {
+    return '/'
+  }
+  return value
 }
 
 // So sánh CSRF token theo thời gian hằng số
 function sameToken(left: string | undefined, right: string): boolean {
-  if (!left) return false;
-  const a = Buffer.from(left);
-  const b = Buffer.from(right);
-  return a.length === b.length && timingSafeEqual(a, b);
+  if (!left) {
+    return false
+  }
+  const a = Buffer.from(left)
+  const b = Buffer.from(right)
+  return a.length === b.length && timingSafeEqual(a, b)
 }
 
 // Middleware xác thực phiên cookie, kiểm tra tài khoản bị khoá và CSRF cho mutation
-export function authGuard(deps: Pick<AuthRouteDeps, "repo" | "sessions">, csrfRequired = true) {
+export function authGuard(deps: Pick<AuthRouteDeps, 'repo' | 'sessions'>, csrfRequired = true) {
   return async function requireAuth(req: Request, _res: Response, next: NextFunction) {
     try {
-      const resolved = await deps.sessions.resolve(cookie(req, "ucms_session"), new Date());
-      if (!resolved) throw new DomainError("authentication required", "unauthorized");
-      const user = await deps.repo.findUserById(resolved.session.userId);
-      if (!user) throw new DomainError("authentication required", "unauthorized");
-      if (user.accountState === "Locked") {
-        throw new DomainError(user.lockReason || "account locked", "locked");
+      const resolved = await deps.sessions.resolve(cookie(req, 'ucms_session'), new Date())
+      if (!resolved) {
+        throw new DomainError('authentication required', 'unauthorized')
       }
-      if (csrfRequired && !sameToken(req.header("X-CSRF-Token"), resolved.csrfToken)) {
-        throw new DomainError("invalid CSRF token", "forbidden");
+      const user = await deps.repo.findUserById(resolved.session.userId)
+      if (!user) {
+        throw new DomainError('authentication required', 'unauthorized')
       }
-      _res.locals.actor = user;
+      if (user.accountState === 'Locked') {
+        throw new DomainError(user.lockReason || 'account locked', 'locked')
+      }
+      if (csrfRequired && !sameToken(req.header('X-CSRF-Token'), resolved.csrfToken)) {
+        throw new DomainError('invalid CSRF token', 'forbidden')
+      }
+      _res.locals.actor = user
       // Context route đã chuẩn hoá cho audit từ chối SEC-08; body thô không bao giờ được giữ lại.
-      _res.locals.accessContext = { method: req.method, route: `${req.baseUrl ?? ""}${typeof req.route?.path === "string" ? req.route.path : ""}`,
-        params: Object.fromEntries(Object.entries(req.params ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string")) };
-      next();
-    } catch (error) { next(error); }
-  };
+      _res.locals.accessContext = {
+        method: req.method,
+        route: `${req.baseUrl ?? ''}${typeof req.route?.path === 'string' ? req.route.path : ''}`,
+        params: Object.fromEntries(
+          Object.entries(req.params ?? {}).filter(
+            (entry): entry is [string, string] => typeof entry[1] === 'string',
+          ),
+        ),
+      }
+      next()
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 // Mount các route đăng nhập Google OAuth, phiên và đăng xuất
 export function authRoutes(deps: AuthRouteDeps): Router {
-  const router = Router();
+  const router = Router()
   const sessionCookie = {
-    httpOnly: true, sameSite: "lax" as const, secure: deps.secureCookies, path: "/api/v1",
-  };
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: deps.secureCookies,
+    path: '/api/v1',
+  }
   const oauthCookie = {
-    httpOnly: true, sameSite: "lax" as const, secure: deps.secureCookies,
-    path: "/api/v1/auth/callback",
-  };
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: deps.secureCookies,
+    path: '/api/v1/auth/callback',
+  }
   const errorCookie = {
-    httpOnly: true, sameSite: "lax" as const, secure: deps.secureCookies,
-    path: "/api/v1/auth/error",
-  };
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: deps.secureCookies,
+    path: '/api/v1/auth/error',
+  }
 
   // Bắt đầu luồng đăng nhập Google OAuth và chuyển hướng sang Google
-  router.get("/auth/login", async (req, res) => {
+  router.get('/auth/login', async (req, res) => {
     try {
-      const request = await deps.google.begin();
-      const flow = deps.oauthFlow.seal({
-        state: request.state, nonce: request.nonce,
-        codeVerifier: request.codeVerifier, returnTo: safeReturnTo(req.query.returnTo),
-      }, new Date());
-      res.cookie("ucms_oauth", flow, { ...oauthCookie, maxAge: 10 * 60 * 1000 });
-      res.redirect(302, request.url);
+      const request = await deps.google.begin()
+      const flow = deps.oauthFlow.seal(
+        {
+          state: request.state,
+          nonce: request.nonce,
+          codeVerifier: request.codeVerifier,
+          returnTo: safeReturnTo(req.query.returnTo),
+        },
+        new Date(),
+      )
+      res.cookie('ucms_oauth', flow, { ...oauthCookie, maxAge: 10 * 60 * 1000 })
+      res.redirect(302, request.url)
     } catch {
-      await deps.repo.auditLogin({
-        action: "LOGIN_FAILED_GOOGLE", reason: "authorization request failed",
-      }, new Date());
-      res.redirect(302, new URL("/login?error=oauth", deps.clientBaseUrl).toString());
+      await deps.repo.auditLogin(
+        {
+          action: 'LOGIN_FAILED_GOOGLE',
+          reason: 'authorization request failed',
+        },
+        new Date(),
+      )
+      res.redirect(302, new URL('/login?error=oauth', deps.clientBaseUrl).toString())
     }
-  });
+  })
 
   // Callback OAuth: xác minh state, tạo phiên và đặt cookie ucms_session
-  router.get("/auth/callback", async (req, res) => {
-    const flow = deps.oauthFlow.unseal(cookie(req, "ucms_oauth"), new Date());
-    res.clearCookie("ucms_oauth", oauthCookie);
-    const query = callbackQuery.safeParse(req.query);
+  router.get('/auth/callback', async (req, res) => {
+    const flow = deps.oauthFlow.unseal(cookie(req, 'ucms_oauth'), new Date())
+    res.clearCookie('ucms_oauth', oauthCookie)
+    const query = callbackQuery.safeParse(req.query)
     if (!flow || !query.success || !sameToken(query.data.state, flow.state)) {
-      await deps.repo.auditLogin({ action: "LOGIN_FAILED_GOOGLE", reason: "invalid OAuth callback" }, new Date());
-      const target = new URL("/login?error=oauth", deps.clientBaseUrl);
-      res.redirect(302, target.toString());
-      return;
+      await deps.repo.auditLogin(
+        { action: 'LOGIN_FAILED_GOOGLE', reason: 'invalid OAuth callback' },
+        new Date(),
+      )
+      const target = new URL('/login?error=oauth', deps.clientBaseUrl)
+      res.redirect(302, target.toString())
+      return
     }
     try {
-      const identity = await deps.google.complete(query.data.code, flow.codeVerifier, flow.nonce);
-      const session = await completeGoogleLogin(deps.repo, deps.sessions, identity, new Date());
-      res.cookie("ucms_session", session.cookieValue, {
-        ...sessionCookie, expires: session.expiresAt,
-      });
-      res.redirect(302, new URL(flow.returnTo, deps.clientBaseUrl).toString());
+      const identity = await deps.google.complete(query.data.code, flow.codeVerifier, flow.nonce)
+      const session = await completeGoogleLogin(deps.repo, deps.sessions, identity, new Date())
+      res.cookie('ucms_session', session.cookieValue, {
+        ...sessionCookie,
+        expires: session.expiresAt,
+      })
+      res.redirect(302, new URL(flow.returnTo, deps.clientBaseUrl).toString())
     } catch (error) {
-      if (!(error instanceof DomainError) || (error.kind !== "forbidden" && error.kind !== "locked")) {
-        await deps.repo.auditLogin({ action: "LOGIN_FAILED_GOOGLE", reason: "callback failed" }, new Date());
+      if (
+        !(error instanceof DomainError) ||
+        (error.kind !== 'forbidden' && error.kind !== 'locked')
+      ) {
+        await deps.repo.auditLogin(
+          { action: 'LOGIN_FAILED_GOOGLE', reason: 'callback failed' },
+          new Date(),
+        )
       }
-      const code = error instanceof DomainError && error.kind === "locked" ? "locked"
-        : error instanceof DomainError && error.kind === "forbidden" ? "domain" : "oauth";
-      if (code === "locked" && error instanceof DomainError) {
-        res.cookie("ucms_auth_error", deps.oauthFlow.sealError(error.message, new Date()), {
-          ...errorCookie, maxAge: 10 * 60 * 1000,
-        });
+      const code =
+        error instanceof DomainError && error.kind === 'locked'
+          ? 'locked'
+          : error instanceof DomainError && error.kind === 'forbidden'
+            ? 'domain'
+            : 'oauth'
+      if (code === 'locked' && error instanceof DomainError) {
+        res.cookie('ucms_auth_error', deps.oauthFlow.sealError(error.message, new Date()), {
+          ...errorCookie,
+          maxAge: 10 * 60 * 1000,
+        })
       }
-      res.redirect(302, new URL(`/login?error=${code}`, deps.clientBaseUrl).toString());
+      res.redirect(302, new URL(`/login?error=${code}`, deps.clientBaseUrl).toString())
     }
-  });
+  })
 
   // Trả lý do lỗi đăng nhập đã lưu trong cookie tạm
-  router.get("/auth/error", (req, res) => {
-    const reason = deps.oauthFlow.unsealError(cookie(req, "ucms_auth_error"), new Date());
-    res.clearCookie("ucms_auth_error", errorCookie);
-    ok(res, { reason });
-  });
+  router.get('/auth/error', (req, res) => {
+    const reason = deps.oauthFlow.unsealError(cookie(req, 'ucms_auth_error'), new Date())
+    res.clearCookie('ucms_auth_error', errorCookie)
+    ok(res, { reason })
+  })
 
   // Trả người dùng hiện tại cùng workspaces và permissions
-  router.get("/auth/me", async (req, res) => {
-    ok(res, await currentUser(deps.repo, deps.accessRepo, deps.sessions,
-      cookie(req, "ucms_session"), new Date()));
-  });
+  router.get('/auth/me', async (req, res) => {
+    ok(
+      res,
+      await currentUser(
+        deps.repo,
+        deps.accessRepo,
+        deps.sessions,
+        cookie(req, 'ucms_session'),
+        new Date(),
+      ),
+    )
+  })
 
   // Đăng xuất: thu hồi phiên và xoá cookie
-  router.post("/auth/logout", authGuard(deps), async (req, res) => {
-    const value = cookie(req, "ucms_session");
-    await deps.sessions.revoke(value, new Date());
-    res.clearCookie("ucms_session", sessionCookie);
-    ok(res, { loggedOut: true });
-  });
+  router.post('/auth/logout', authGuard(deps), async (req, res) => {
+    const value = cookie(req, 'ucms_session')
+    await deps.sessions.revoke(value, new Date())
+    res.clearCookie('ucms_session', sessionCookie)
+    ok(res, { loggedOut: true })
+  })
 
-  return router;
+  return router
 }

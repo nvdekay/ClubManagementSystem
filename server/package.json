@@ -23,7 +23,7 @@
     "db:init": "node --env-file-if-exists=../.env --import tsx src/infra/db/init.ts",
     "db:verify": "node --env-file-if-exists=../.env --import tsx src/infra/db/verify.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
     "dejavu-fonts-ttf": "^2.37.3",

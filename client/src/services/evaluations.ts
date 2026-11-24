@@ -1,122 +1,165 @@
-import { ApiError, apiFetch } from "@/services/apiError";
-export type EvaluationState = "Draft" | "Data Ready" | "Under Review" | "Finalized" | "Published";
-export type Classification = "EXCELLENT" | "GOOD" | "FAIR" | "NEEDS_IMPROVEMENT";
+import { ApiError, apiFetch } from '@/services/apiError'
+export type EvaluationState = 'Draft' | 'Data Ready' | 'Under Review' | 'Finalized' | 'Published'
+export type Classification = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'NEEDS_IMPROVEMENT'
 
 export interface EvaluationRow {
-  evaluationId?: string;
-  clubId: string;
-  clubName: string;
-  clubState: string;
-  state?: EvaluationState;
-  revisionNo?: number;
-  totalScore?: number;
-  classification?: Classification;
-  insufficientCount: number;
-  manualCount: number;
+  evaluationId?: string
+  clubId: string
+  clubName: string
+  clubState: string
+  state?: EvaluationState
+  revisionNo?: number
+  totalScore?: number
+  classification?: Classification
+  insufficientCount: number
+  manualCount: number
 }
 
 export interface EvaluationOverview {
-  periods: { code: string; startAt: string; endAt: string; hasActiveScheme: boolean }[];
-  periodCode?: string;
-  scheme?: { id: string; version: number };
-  rows: EvaluationRow[];
-  canPublish: boolean;
+  periods: { code: string; startAt: string; endAt: string; hasActiveScheme: boolean }[]
+  periodCode?: string
+  scheme?: { id: string; version: number }
+  rows: EvaluationRow[]
+  canPublish: boolean
 }
 
 export interface Lineage {
-  metric: string;
-  sourceEntity: string;
-  sourceIds: string[];
-  sourcePeriod: string;
-  value: number;
+  metric: string
+  sourceEntity: string
+  sourceIds: string[]
+  sourcePeriod: string
+  value: number
 }
 
 export interface DimensionView {
-  code: string;
-  name: string;
-  weight: number;
-  allowsManual: boolean;
-  score?: number;
-  computedScore?: number;
-  insufficientData: boolean;
-  isManual: boolean;
-  justification?: string;
-  evidence: Lineage[];
+  code: string
+  name: string
+  weight: number
+  allowsManual: boolean
+  score?: number
+  computedScore?: number
+  insufficientData: boolean
+  isManual: boolean
+  justification?: string
+  evidence: Lineage[]
 }
 
 export interface EvaluationDetail {
-  id: string;
-  clubId: string;
-  clubName: string;
-  periodCode: string;
-  schemeVersion: number;
-  state: EvaluationState;
-  revisionNo: number;
-  totalScore?: number;
-  classification?: Classification;
-  generatedAt?: string;
-  finalizedAt?: string;
-  publishedAt?: string;
-  dimensions: DimensionView[];
-  revisions: { id: string; revisionNo: number; state: EvaluationState; totalScore?: number; publishedAt?: string }[];
-  trend: { periodCode: string; totalScore?: number; classification?: Classification }[];
-  thresholds: { excellent: number; good: number; fair: number };
+  id: string
+  clubId: string
+  clubName: string
+  periodCode: string
+  schemeVersion: number
+  state: EvaluationState
+  revisionNo: number
+  totalScore?: number
+  classification?: Classification
+  generatedAt?: string
+  finalizedAt?: string
+  publishedAt?: string
+  dimensions: DimensionView[]
+  revisions: {
+    id: string
+    revisionNo: number
+    state: EvaluationState
+    totalScore?: number
+    publishedAt?: string
+  }[]
+  trend: { periodCode: string; totalScore?: number; classification?: Classification }[]
+  thresholds: { excellent: number; good: number; fair: number }
 }
 
 /** Response không phải 2xx; `pendingReviewClubs` nêu các CLB có báo cáo định kỳ còn chờ UC39. */
 export class EvaluationRequestError extends ApiError {
-  constructor(message: string, readonly pendingReviewClubs: string[] = []) {
-    super(message);
+  constructor(
+    message: string,
+    readonly pendingReviewClubs: string[] = [],
+  ) {
+    super(message)
   }
 }
 
 // Gọi API /admin/evaluations và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/evaluations${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/admin/evaluations${path}`, {
+    credentials: 'same-origin',
+    ...init,
+  })
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as
-      { message?: string; details?: { field?: unknown; clubs?: unknown } } | null;
-    const clubs = body?.details?.field === "periodicReports" && Array.isArray(body.details.clubs)
-      ? body.details.clubs.map(String) : [];
-    throw new EvaluationRequestError(body?.message ?? `HTTP ${response.status}`, clubs);
+    const body = (await response.json().catch(() => null)) as {
+      message?: string
+      details?: { field?: unknown; clubs?: unknown }
+    } | null
+    const clubs =
+      body?.details?.field === 'periodicReports' && Array.isArray(body.details.clubs)
+        ? body.details.clubs.map(String)
+        : []
+    throw new EvaluationRequestError(body?.message ?? `HTTP ${response.status}`, clubs)
   }
-  const body: { data: T } = await response.json();
-  return body.data;
+  const body: { data: T } = await response.json()
+  return body.data
 }
 
 // Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
 function post(csrfToken: string, body?: object): RequestInit {
-  return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}) };
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  }
 }
 
 // GET tổng quan đánh giá CLB theo kỳ
-export function fetchEvaluationOverview(period: string | undefined, signal: AbortSignal): Promise<EvaluationOverview> {
-  return request(period ? `?period=${encodeURIComponent(period)}` : "", { signal });
+export function fetchEvaluationOverview(
+  period: string | undefined,
+  signal: AbortSignal,
+): Promise<EvaluationOverview> {
+  return request(period ? `?period=${encodeURIComponent(period)}` : '', { signal })
 }
 
 // GET chi tiết đánh giá của một CLB
 export function fetchEvaluation(id: string, signal: AbortSignal): Promise<EvaluationDetail> {
-  return request(`/${encodeURIComponent(id)}`, { signal });
+  return request(`/${encodeURIComponent(id)}`, { signal })
 }
 
 // POST /generate: sinh bản đánh giá cho kỳ
-export function generateEvaluations(periodCode: string, csrfToken: string): Promise<EvaluationOverview> {
-  return request("/generate", post(csrfToken, { periodCode }));
+export function generateEvaluations(
+  periodCode: string,
+  csrfToken: string,
+): Promise<EvaluationOverview> {
+  return request('/generate', post(csrfToken, { periodCode }))
 }
 
 // POST /publish: công bố kết quả đánh giá của kỳ
-export function publishEvaluations(periodCode: string, csrfToken: string): Promise<EvaluationOverview> {
-  return request("/publish", post(csrfToken, { periodCode }));
+export function publishEvaluations(
+  periodCode: string,
+  csrfToken: string,
+): Promise<EvaluationOverview> {
+  return request('/publish', post(csrfToken, { periodCode }))
 }
 
 export type EvaluationAction =
-  | { kind: "regenerate" | "finalize" | "reopen" }
-  | { kind: "manual"; dimensionCode: string; manual: { score: number; justification: string } | null };
+  | { kind: 'regenerate' | 'finalize' | 'reopen' }
+  | {
+      kind: 'manual'
+      dimensionCode: string
+      manual: { score: number; justification: string } | null
+    }
 
 // POST tính lại, chốt, mở lại hoặc chấm tay một đánh giá
-export function runEvaluationAction(id: string, action: EvaluationAction, csrfToken: string): Promise<EvaluationDetail> {
-  const path = `/${encodeURIComponent(id)}/${action.kind}`;
-  return request(path, post(csrfToken, action.kind === "manual"
-    ? { dimensionCode: action.dimensionCode, manual: action.manual } : undefined));
+export function runEvaluationAction(
+  id: string,
+  action: EvaluationAction,
+  csrfToken: string,
+): Promise<EvaluationDetail> {
+  const path = `/${encodeURIComponent(id)}/${action.kind}`
+  return request(
+    path,
+    post(
+      csrfToken,
+      action.kind === 'manual'
+        ? { dimensionCode: action.dimensionCode, manual: action.manual }
+        : undefined,
+    ),
+  )
 }

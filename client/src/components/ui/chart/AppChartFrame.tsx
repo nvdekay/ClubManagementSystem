@@ -1,26 +1,39 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react'
 
-import { cn } from "@/utils/cn";
+import { cn } from '@/utils/cn'
 
-import { chartToneFill, type ChartTone } from "./chartScale";
+import { chartToneFill, type ChartTone } from './chartScale'
 
 interface AppChartFrameProps {
-  title: string;
-  description?: string;
+  title: string
+  description?: string
   /** Hiển thị khi có từ hai chuỗi; chỉ một chuỗi thì tiêu đề đã là tên của nó. */
-  legend?: { label: string; tone: ChartTone }[];
-  action?: ReactNode;
+  legend?: { label: string; tone: ChartTone }[]
+  action?: ReactNode
   /** Cùng các số liệu dưới dạng bảng, để không giá trị nào phụ thuộc vào hover. */
-  table?: { label: string; columns: string[]; rows: (string | number)[][] };
-  className?: string;
-  children: ReactNode;
+  table?: { label: string; columns: string[]; rows: (string | number)[][] }
+  className?: string
+  children: ReactNode
 }
 
 // Khung thẻ bao quanh biểu đồ, kèm chú thích và bảng số liệu
 /** Thẻ bao quanh một biểu đồ: tiêu đề, chú thích, biểu đồ và chế độ xem bảng có thể thu gọn. */
-export function AppChartFrame({ title, description, legend, action, table, className, children }: AppChartFrameProps) {
+export function AppChartFrame({
+  title,
+  description,
+  legend,
+  action,
+  table,
+  className,
+  children,
+}: AppChartFrameProps) {
   return (
-    <section className={cn("flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs", className)}>
+    <section
+      className={cn(
+        'flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs',
+        className,
+      )}
+    >
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
           <h3 className="font-heading text-base font-semibold text-text-app">{title}</h3>
@@ -32,7 +45,11 @@ export function AppChartFrame({ title, description, legend, action, table, class
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-app">
           {legend.map((item) => (
             <li key={item.label} className="flex items-center gap-1.5">
-              <span aria-hidden="true" className={cn("size-2.5 rounded-sm", chartToneFill[item.tone])} />{item.label}
+              <span
+                aria-hidden="true"
+                className={cn('size-2.5 rounded-sm', chartToneFill[item.tone])}
+              />
+              {item.label}
             </li>
           ))}
         </ul>
@@ -40,13 +57,29 @@ export function AppChartFrame({ title, description, legend, action, table, class
       <div className="mt-4 flex-1">{children}</div>
       {table && table.rows.length > 0 && (
         <details className="mt-4 text-sm">
-          <summary className="w-fit text-xs font-semibold text-muted-app hover:text-text-app">{table.label}</summary>
+          <summary className="w-fit text-xs font-semibold text-muted-app hover:text-text-app">
+            {table.label}
+          </summary>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="text-muted-app"><tr>{table.columns.map((column) => <th key={column} className="py-1 pr-3 font-medium">{column}</th>)}</tr></thead>
+              <thead className="text-muted-app">
+                <tr>
+                  {table.columns.map((column) => (
+                    <th key={column} className="py-1 pr-3 font-medium">
+                      {column}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
               <tbody className="tabular-nums">
                 {table.rows.map((row, index) => (
-                  <tr key={index} className="border-t border-border-app">{row.map((cell, cellIndex) => <td key={cellIndex} className="py-1 pr-3">{cell}</td>)}</tr>
+                  <tr key={index} className="border-t border-border-app">
+                    {row.map((cell, cellIndex) => (
+                      <td key={cellIndex} className="py-1 pr-3">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -54,5 +87,5 @@ export function AppChartFrame({ title, description, legend, action, table, class
         </details>
       )}
     </section>
-  );
+  )
 }

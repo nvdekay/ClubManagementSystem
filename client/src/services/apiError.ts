@@ -1,63 +1,95 @@
-import i18next from "i18next";
-import { apiErrorKeys, apiErrors, type ApiErrorKey } from "@/i18n/apiErrors";
+import i18next from 'i18next'
+import { apiErrorKeys, apiErrors, type ApiErrorKey } from '@/i18n/apiErrors'
 
 /** Giữ nguyên thông tin chẩn đoán và chọn nội dung hiển thị theo ngôn ngữ hiện tại. */
 export class ApiError extends Error {
-  readonly rawMessage: string;
+  readonly rawMessage: string
 
   constructor(message: string) {
-    super(message);
-    this.rawMessage = message;
-    Object.defineProperty(this, "message", {
+    super(message)
+    this.rawMessage = message
+    Object.defineProperty(this, 'message', {
       configurable: true,
       get: () => localizedApiMessage(this.rawMessage),
-    });
+    })
   }
 }
 
 // Dịch thông điệp lỗi API sang ngôn ngữ đang chọn qua i18n
 function localizedApiMessage(message: string): string {
-  const vietnamese = (i18next.resolvedLanguage ?? i18next.language)?.split("-")[0] === "vi";
-  if (!vietnamese) return message || apiErrors.en.unknown!;
-  const notice = /^submit at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(message);
-  if (notice) return String(i18next.t("apiErrors.eventNotice", { hours: notice[1], defaultValue: apiErrors.vi.eventNotice }));
-  const internalNotice = /^internal event must start at least (\d+(?:\.\d+)?) hours from now$/.exec(message);
+  const vietnamese = (i18next.resolvedLanguage ?? i18next.language)?.split('-')[0] === 'vi'
+  if (!vietnamese) {
+    return message || apiErrors.en.unknown!
+  }
+  const notice = /^submit at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(message)
+  if (notice) {
+    return String(
+      i18next.t('apiErrors.eventNotice', {
+        hours: notice[1],
+        defaultValue: apiErrors.vi.eventNotice,
+      }),
+    )
+  }
+  const internalNotice = /^internal event must start at least (\d+(?:\.\d+)?) hours from now$/.exec(
+    message,
+  )
   if (internalNotice) {
-    return String(i18next.t("apiErrors.internalEventNotice", {
-      hours: internalNotice[1],
-      defaultValue: apiErrors.vi.internalEventNotice,
-    }));
+    return String(
+      i18next.t('apiErrors.internalEventNotice', {
+        hours: internalNotice[1],
+        defaultValue: apiErrors.vi.internalEventNotice,
+      }),
+    )
   }
-  const cancelNotice = /^(?:approved event cancellation must be requested|cancellation request must be submitted) at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(message);
+  const cancelNotice =
+    /^(?:approved event cancellation must be requested|cancellation request must be submitted) at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(
+      message,
+    )
   if (cancelNotice) {
-    return String(i18next.t("apiErrors.cancelNoticeHours", {
-      hours: cancelNotice[1],
-      defaultValue: apiErrors.vi.cancelNoticeHours,
-    }));
+    return String(
+      i18next.t('apiErrors.cancelNoticeHours', {
+        hours: cancelNotice[1],
+        defaultValue: apiErrors.vi.cancelNoticeHours,
+      }),
+    )
   }
-  const earlyStart = /^defense can only start at most (\d+) minutes before the scheduled start time$/.exec(message);
+  const earlyStart =
+    /^defense can only start at most (\d+) minutes before the scheduled start time$/.exec(message)
   if (earlyStart) {
-    return String(i18next.t("apiErrors.defenseEarlyStart", {
-      minutes: earlyStart[1],
-      defaultValue: apiErrors.vi.defenseEarlyStart,
-    }));
+    return String(
+      i18next.t('apiErrors.defenseEarlyStart', {
+        minutes: earlyStart[1],
+        defaultValue: apiErrors.vi.defenseEarlyStart,
+      }),
+    )
   }
-  const key = Object.hasOwn(apiErrorKeys, message) ? apiErrorKeys[message]! : httpErrorKey(message);
-  return String(i18next.t(`apiErrors.${key}`, { defaultValue: apiErrors.vi[key] }));
+  const key = Object.hasOwn(apiErrorKeys, message) ? apiErrorKeys[message]! : httpErrorKey(message)
+  return String(i18next.t(`apiErrors.${key}`, { defaultValue: apiErrors.vi[key] }))
 }
 
 // Quy mã trạng thái HTTP trong thông điệp lỗi về key i18n tương ứng
 function httpErrorKey(message: string): ApiErrorKey {
-  const status = /^HTTP (\d{3})$/.exec(message)?.[1];
+  const status = /^HTTP (\d{3})$/.exec(message)?.[1]
   switch (status) {
-    case "400": case "422": return "validation";
-    case "401": return "unauthorized";
-    case "403": return "forbidden";
-    case "404": return "notFound";
-    case "409": return "conflict";
-    case "429": return "rateLimit";
-    case "502": case "503": case "504": return "unavailable";
-    default: return status && Number(status) >= 500 ? "server" : "unknown";
+    case '400':
+    case '422':
+      return 'validation'
+    case '401':
+      return 'unauthorized'
+    case '403':
+      return 'forbidden'
+    case '404':
+      return 'notFound'
+    case '409':
+      return 'conflict'
+    case '429':
+      return 'rateLimit'
+    case '502':
+    case '503':
+    case '504':
+      return 'unavailable'
+    default:
+      return status && Number(status) >= 500 ? 'server' : 'unknown'
   }
 }
 
@@ -65,9 +97,11 @@ function httpErrorKey(message: string): ApiErrorKey {
 /** Giữ nguyên lỗi huỷ request khi dịch các lỗi mạng của trình duyệt. */
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   try {
-    return await fetch(input, init);
+    return await fetch(input, init)
   } catch (error) {
-    if (error instanceof TypeError) throw new ApiError("Network request failed");
-    throw error;
+    if (error instanceof TypeError) {
+      throw new ApiError('Network request failed')
+    }
+    throw error
   }
 }

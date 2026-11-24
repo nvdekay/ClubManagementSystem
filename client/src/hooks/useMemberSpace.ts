@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { onboardMember,
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  onboardMember,
   MemberSpaceError,
   changeMembershipState,
   executeWithdrawal,
@@ -12,66 +13,118 @@ import { onboardMember,
   type ManagedMembershipState,
   type Membership,
   type WithdrawalRequest,
-} from "@/services/memberSpace";
+} from '@/services/memberSpace'
 
-const key = ["member-space"] as const;
+const key = ['member-space'] as const
 
 // Kiểm tra lỗi có phải do người dùng không phải thành viên CLB
 /** True khi người gọi không (hoặc không còn) là thành viên, nên trang cần dẫn tới trang CLB công khai. */
 export function isNotAMember(error: unknown): boolean {
-  return error instanceof MemberSpaceError && error.status === 403;
+  return error instanceof MemberSpaceError && error.status === 403
 }
 
 // Query các CLB tôi đang tham gia
 export function useMyMemberships(enabled: boolean) {
-  return useQuery({ queryKey: [...key, "mine"], queryFn: ({ signal }) => fetchMyMemberships(signal), enabled, retry: false });
+  return useQuery({
+    queryKey: [...key, 'mine'],
+    queryFn: ({ signal }) => fetchMyMemberships(signal),
+    enabled,
+    retry: false,
+  })
 }
 
 // Query yêu cầu rời CLB của tôi
 export function useMyWithdrawals(enabled: boolean) {
-  return useQuery({ queryKey: [...key, "withdrawals", "mine"], queryFn: ({ signal }) => fetchMyWithdrawals(signal), enabled, retry: false });
+  return useQuery({
+    queryKey: [...key, 'withdrawals', 'mine'],
+    queryFn: ({ signal }) => fetchMyWithdrawals(signal),
+    enabled,
+    retry: false,
+  })
 }
 
 // Query không gian thành viên của một CLB
 export function useMemberSpace(clubId: string | undefined, enabled: boolean) {
-  return useQuery({ queryKey: [...key, "space", clubId], queryFn: ({ signal }) => fetchMemberSpace(clubId!, signal),
-    enabled: enabled && Boolean(clubId), retry: false });
+  return useQuery({
+    queryKey: [...key, 'space', clubId],
+    queryFn: ({ signal }) => fetchMemberSpace(clubId!, signal),
+    enabled: enabled && Boolean(clubId),
+    retry: false,
+  })
 }
 
 // Query danh sách thành viên của CLB
 export function useClubMembers(clubId: string | undefined, enabled: boolean) {
-  return useQuery({ queryKey: [...key, "club", clubId, "members"],
-    queryFn: ({ signal }) => fetchClubMemberships(clubId!, signal), enabled: enabled && Boolean(clubId), retry: false });
+  return useQuery({
+    queryKey: [...key, 'club', clubId, 'members'],
+    queryFn: ({ signal }) => fetchClubMemberships(clubId!, signal),
+    enabled: enabled && Boolean(clubId),
+    retry: false,
+  })
 }
 
 // Query yêu cầu rời CLB gửi tới CLB
 export function useClubWithdrawals(clubId: string | undefined, enabled: boolean) {
-  return useQuery({ queryKey: [...key, "club", clubId, "withdrawals"],
-    queryFn: ({ signal }) => fetchClubWithdrawals(clubId!, signal), enabled: enabled && Boolean(clubId), retry: false });
+  return useQuery({
+    queryKey: [...key, 'club', clubId, 'withdrawals'],
+    queryFn: ({ signal }) => fetchClubWithdrawals(clubId!, signal),
+    enabled: enabled && Boolean(clubId),
+    retry: false,
+  })
 }
 
 // Mutation xử lý thành viên và yêu cầu rời CLB, rồi làm mới cache
 export function useMembershipAction() {
-  const client = useQueryClient();
+  const client = useQueryClient()
   return useMutation({
-    mutationFn: (action: { kind: "request"; membershipId: string; reason: string; requestedEffectiveDate: string;
-      csrfToken: string } | { kind: "execute"; clubId: string; requestId: string; csrfToken: string }
-      | { kind: "state"; clubId: string; membershipId: string; state: ManagedMembershipState; reason?: string;
-        csrfToken: string } | { kind: "onboard"; clubId: string; email: string; reason: string; csrfToken: string },
+    mutationFn: (
+      action:
+        | {
+            kind: 'request'
+            membershipId: string
+            reason: string
+            requestedEffectiveDate: string
+            csrfToken: string
+          }
+        | { kind: 'execute'; clubId: string; requestId: string; csrfToken: string }
+        | {
+            kind: 'state'
+            clubId: string
+            membershipId: string
+            state: ManagedMembershipState
+            reason?: string
+            csrfToken: string
+          }
+        | { kind: 'onboard'; clubId: string; email: string; reason: string; csrfToken: string },
     ): Promise<WithdrawalRequest | Membership> => {
-      if (action.kind === "request") {
-        return requestWithdrawal(action.membershipId, { reason: action.reason,
-          requestedEffectiveDate: action.requestedEffectiveDate }, action.csrfToken);
+      if (action.kind === 'request') {
+        return requestWithdrawal(
+          action.membershipId,
+          { reason: action.reason, requestedEffectiveDate: action.requestedEffectiveDate },
+          action.csrfToken,
+        )
       }
-      if (action.kind === "execute") return executeWithdrawal(action.clubId, action.requestId, action.csrfToken);
-      if (action.kind === "onboard") return onboardMember(action.clubId, { email: action.email, reason: action.reason }, action.csrfToken);
-      return changeMembershipState(action.clubId, action.membershipId,
-        { state: action.state, ...(action.reason ? { reason: action.reason } : {}) }, action.csrfToken);
+      if (action.kind === 'execute') {
+        return executeWithdrawal(action.clubId, action.requestId, action.csrfToken)
+      }
+      if (action.kind === 'onboard') {
+        return onboardMember(
+          action.clubId,
+          { email: action.email, reason: action.reason },
+          action.csrfToken,
+        )
+      }
+      return changeMembershipState(
+        action.clubId,
+        action.membershipId,
+        { state: action.state, ...(action.reason ? { reason: action.reason } : {}) },
+        action.csrfToken,
+      )
     },
     onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key });
-      await client.invalidateQueries({ queryKey: ["dashboard"] });
-      await client.invalidateQueries({ queryKey: ["auth"] });
+      await client.invalidateQueries({ queryKey: key })
+      await client.invalidateQueries({ queryKey: ['dashboard'] })
+      await client.invalidateQueries({ queryKey: ['auth'] })
     },
-  });
+  })
 }

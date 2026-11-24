@@ -1,137 +1,143 @@
-import { ApiError, apiFetch } from "@/services/apiError";
+import { ApiError, apiFetch } from '@/services/apiError'
 export interface ReportInput {
-  actualResult: string;
-  incidents?: string;
-  lessonsLearned?: string;
-  evidence: { note: string; url: string }[];
+  actualResult: string
+  incidents?: string
+  lessonsLearned?: string
+  evidence: { note: string; url: string }[]
 }
 export interface ReportSnapshot {
-  proposal: unknown;
-  attendance: { confirmed: number; attended: number; absent: number };
-  budget: unknown;
-  expenses: unknown;
-  feedback: unknown;
-  policyVersionId: string;
-  dueAt: string;
+  proposal: unknown
+  attendance: { confirmed: number; attended: number; absent: number }
+  budget: unknown
+  expenses: unknown
+  feedback: unknown
+  policyVersionId: string
+  dueAt: string
 }
 export interface PostEventReport extends ReportInput {
-  id: string;
-  eventId: string;
-  clubId: string;
-  eventTitle: string;
-  eventState: string;
-  state: string;
-  versionNo: number;
-  revision: number;
-  lateFlag: boolean;
-  submittedAt?: string;
-  decisionOutcome?: string;
-  decisionReason?: string;
-  findingViolationId?: string;
-  preloadedFigures: ReportSnapshot;
-  task?: { id: string; assigneeId?: string };
+  id: string
+  eventId: string
+  clubId: string
+  eventTitle: string
+  eventState: string
+  state: string
+  versionNo: number
+  revision: number
+  lateFlag: boolean
+  submittedAt?: string
+  decisionOutcome?: string
+  decisionReason?: string
+  findingViolationId?: string
+  preloadedFigures: ReportSnapshot
+  task?: { id: string; assigneeId?: string }
 }
 export interface ReportObligation {
-  eventId: string;
-  eventTitle: string;
-  state: string;
-  revision: number;
-  dueAt: string;
-  overdue: boolean;
-  attendanceFinalized: boolean;
-  report?: PostEventReport;
+  eventId: string
+  eventTitle: string
+  state: string
+  revision: number
+  dueAt: string
+  overdue: boolean
+  attendanceFinalized: boolean
+  report?: PostEventReport
 }
-export interface ReportConfigurationIssue { eventId: string; eventTitle: string; state: string; revision: number; configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" }
+export interface ReportConfigurationIssue {
+  eventId: string
+  eventTitle: string
+  state: string
+  revision: number
+  configurationError: 'REPORT_DEADLINE_NOT_CONFIGURED'
+}
 export interface ReportDetail {
-  obligation: ReportObligation;
-  versions: PostEventReport[];
-  preview: ReportSnapshot;
+  obligation: ReportObligation
+  versions: PostEventReport[]
+  preview: ReportSnapshot
 }
 export interface ExpenseInput {
-  category: string;
-  amount: number;
-  spentAt: string;
-  description?: string;
+  category: string
+  amount: number
+  spentAt: string
+  description?: string
 }
 export interface FinancialEvidence {
-  id: string;
-  type: "INVOICE" | "RECEIPT" | "PROOF_OF_PAYMENT";
-  externalLink: string;
-  uploadedBy: string;
-  uploadedAt: string;
+  id: string
+  type: 'INVOICE' | 'RECEIPT' | 'PROOF_OF_PAYMENT'
+  externalLink: string
+  uploadedBy: string
+  uploadedAt: string
 }
 export interface Expense extends ExpenseInput {
-  id: string;
-  isOutOfCategory: boolean;
-  isOverRemaining: boolean;
-  hasEvidence: boolean;
-  reviewOutcome?: string;
-  reviewReason?: string;
-  evidences: FinancialEvidence[];
+  id: string
+  isOutOfCategory: boolean
+  isOverRemaining: boolean
+  hasEvidence: boolean
+  reviewOutcome?: string
+  reviewReason?: string
+  evidences: FinancialEvidence[]
 }
 export interface FinanceDetail {
-  id: string;
-  clubId: string;
-  eventId: string;
-  eventTitle: string;
-  eventState: string;
-  state: string;
-  revision: number;
-  settlementDueAt?: string;
-  settlementSubmittedAt?: string;
-  isSettlementLate: boolean;
-  acceptedTotal?: number;
-  settlementBalance?: number;
-  recoveryAmount?: number;
-  recoveryDueAt?: string;
-  refundedTotal: number;
-  lines: { category: string; approvedAmount: number }[];
-  expenses: Expense[];
+  id: string
+  clubId: string
+  eventId: string
+  eventTitle: string
+  eventState: string
+  state: string
+  revision: number
+  settlementDueAt?: string
+  settlementSubmittedAt?: string
+  isSettlementLate: boolean
+  acceptedTotal?: number
+  settlementBalance?: number
+  recoveryAmount?: number
+  recoveryDueAt?: string
+  refundedTotal: number
+  lines: { category: string; approvedAmount: number }[]
+  expenses: Expense[]
   totals: {
-    approvedTotal: number;
-    advanceTotal: number;
-    recordedTotal: number;
-    supportedTotal: number;
-    unsupportedTotal: number;
-    remaining: number;
-  };
-  task?: { id: string; assigneeId?: string };
-  history: { action: string; at: string; snapshot: unknown; reason?: string }[];
+    approvedTotal: number
+    advanceTotal: number
+    recordedTotal: number
+    supportedTotal: number
+    unsupportedTotal: number
+    remaining: number
+  }
+  task?: { id: string; assigneeId?: string }
+  history: { action: string; at: string; snapshot: unknown; reason?: string }[]
 }
-export type AccountabilityContext =
-  { kind: "club"; clubId: string } | { kind: "admin" };
+export type AccountabilityContext = { kind: 'club'; clubId: string } | { kind: 'admin' }
 // Gọi API /api/v1 và trả về trường data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1${path}`, {
-    credentials: "same-origin",
+    credentials: 'same-origin',
     ...init,
-  });
+  })
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as {
-      message?: string;
-    } | null;
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`);
+      message?: string
+    } | null
+    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
   }
-  return ((await res.json()) as { data: T }).data;
+  return ((await res.json()) as { data: T }).data
 }
 // Chọn đường dẫn gốc báo cáo sự kiện theo ngữ cảnh CLB hoặc admin
 function reportBase(context: AccountabilityContext) {
-  return context.kind === "club"
+  return context.kind === 'club'
     ? `/clubs/${encodeURIComponent(context.clubId)}/event-reports`
-    : "/admin/event-reports";
+    : '/admin/event-reports'
 }
 // Chọn đường dẫn gốc ngân sách (CLB) hoặc đối soát (admin)
 function financeBase(context: AccountabilityContext, id?: string) {
-  if (context.kind === "club")
-    return `/clubs/${encodeURIComponent(context.clubId)}/budgets${id ? `/${encodeURIComponent(id)}` : ""}`;
-  return `/admin/budgets/${encodeURIComponent(id ?? "")}/reconciliation`;
+  if (context.kind === 'club') {
+    return `/clubs/${encodeURIComponent(context.clubId)}/budgets${id ? `/${encodeURIComponent(id)}` : ''}`
+  }
+  return `/admin/budgets/${encodeURIComponent(id ?? '')}/reconciliation`
 }
 // GET danh sách nghĩa vụ báo cáo sau sự kiện của CLB hoặc admin
 export function fetchReportObligations(
   context: AccountabilityContext,
   signal: AbortSignal,
 ): Promise<(ReportObligation | ReportConfigurationIssue)[]> {
-  return request(reportBase(context), { signal });
+  return request(reportBase(context), { signal })
 }
 // GET chi tiết một báo cáo sau sự kiện
 export function fetchReportDetail(
@@ -141,14 +147,11 @@ export function fetchReportDetail(
 ): Promise<ReportDetail> {
   return request(`${reportBase(context)}/${encodeURIComponent(id)}`, {
     signal,
-  });
+  })
 }
 // GET danh sách ngân sách của CLB
-export function fetchClubFinances(
-  clubId: string,
-  signal: AbortSignal,
-): Promise<FinanceDetail[]> {
-  return request(financeBase({ kind: "club", clubId }), { signal });
+export function fetchClubFinances(clubId: string, signal: AbortSignal): Promise<FinanceDetail[]> {
+  return request(financeBase({ kind: 'club', clubId }), { signal })
 }
 // GET chi tiết ngân sách/đối soát tài chính
 export function fetchFinanceDetail(
@@ -156,7 +159,7 @@ export function fetchFinanceDetail(
   id: string,
   signal: AbortSignal,
 ): Promise<FinanceDetail> {
-  return request(financeBase(context, id), { signal });
+  return request(financeBase(context, id), { signal })
 }
 // POST /actions: thực hiện thao tác (nộp, quyết định...) trên báo cáo sự kiện
 export function reportAction(
@@ -166,10 +169,10 @@ export function reportAction(
   token: string,
 ): Promise<ReportDetail> {
   return request(`${reportBase(context)}/${encodeURIComponent(id)}/actions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
     body: JSON.stringify(body),
-  });
+  })
 }
 // POST thao tác (nộp, đối soát...) trên ngân sách/đối soát
 export function financeAction(
@@ -179,8 +182,8 @@ export function financeAction(
   token: string,
 ): Promise<FinanceDetail> {
   return request(`${financeBase(context, id)}/actions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
     body: JSON.stringify(body),
-  });
+  })
 }

@@ -1,139 +1,184 @@
-import { ApiError, apiFetch } from "@/services/apiError";
-export const VIOLATION_ORIGINS = ["COMPLAINT", "REPORT_FINDING", "OVERDUE_REPORT", "FINANCIAL_EXCEPTION",
-  "UNAUTHORIZED_EVENT", "LATE_BOOKING_CANCELLATION", "OTHER"] as const;
-export type ViolationOrigin = typeof VIOLATION_ORIGINS[number];
-export const VIOLATION_SEVERITIES = ["MINOR", "MODERATE", "SERIOUS"] as const;
-export type ViolationSeverity = typeof VIOLATION_SEVERITIES[number];
+import { ApiError, apiFetch } from '@/services/apiError'
+export const VIOLATION_ORIGINS = [
+  'COMPLAINT',
+  'REPORT_FINDING',
+  'OVERDUE_REPORT',
+  'FINANCIAL_EXCEPTION',
+  'UNAUTHORIZED_EVENT',
+  'LATE_BOOKING_CANCELLATION',
+  'OTHER',
+] as const
+export type ViolationOrigin = (typeof VIOLATION_ORIGINS)[number]
+export const VIOLATION_SEVERITIES = ['MINOR', 'MODERATE', 'SERIOUS'] as const
+export type ViolationSeverity = (typeof VIOLATION_SEVERITIES)[number]
 
 export interface ViolationEvidence {
-  note: string;
-  url?: string;
-  addedBy: string;
-  addedAt: string;
+  note: string
+  url?: string
+  addedBy: string
+  addedAt: string
 }
 
 export interface ViolationSummary {
-  id: string;
-  clubId: string;
-  clubName: string;
-  originType: ViolationOrigin;
-  severity: ViolationSeverity;
-  title: string;
-  state: string;
-  openedAt: string;
-  responseDueAt?: string;
-  responseOverdue: boolean;
-  pendingActions: number;
+  id: string
+  clubId: string
+  clubName: string
+  originType: ViolationOrigin
+  severity: ViolationSeverity
+  title: string
+  state: string
+  openedAt: string
+  responseDueAt?: string
+  responseOverdue: boolean
+  pendingActions: number
 }
 
 export interface CorrectiveAction {
-  submission?: { note: string; evidence: { note: string; url?: string }[]; submittedBy: string; submittedAt: string };
-  id: string;
-  description: string;
-  dueAt: string;
-  state: "Pending" | "Verified" | "Failed";
-  linkedLifecycleAction?: "SUSPEND" | "DISSOLVE";
-  verifiedBy?: string;
-  verifiedAt?: string;
+  submission?: {
+    note: string
+    evidence: { note: string; url?: string }[]
+    submittedBy: string
+    submittedAt: string
+  }
+  id: string
+  description: string
+  dueAt: string
+  state: 'Pending' | 'Verified' | 'Failed'
+  linkedLifecycleAction?: 'SUSPEND' | 'DISSOLVE'
+  verifiedBy?: string
+  verifiedAt?: string
 }
 
 export interface ViolationDetail {
-  id: string;
-  clubId: string;
-  clubName: string;
-  clubState: string;
-  originType: ViolationOrigin;
-  originRefId?: string;
-  severity: ViolationSeverity;
-  title: string;
-  description?: string;
-  evidence: ViolationEvidence[];
-  state: string;
+  id: string
+  clubId: string
+  clubName: string
+  clubState: string
+  originType: ViolationOrigin
+  originRefId?: string
+  severity: ViolationSeverity
+  title: string
+  description?: string
+  evidence: ViolationEvidence[]
+  state: string
   clubResponse?: {
-    requestMessage: string; requestedBy: string; requestedAt: string; dueAt: string;
-    source?: "CLUB" | "RECORDED_BY_ICPDP" | "NO_RESPONSE"; text?: string; respondedAt?: string;
-  };
-  decisionReason?: string;
-  decisionEvidence: ViolationEvidence[];
-  openedBy: string;
-  openedAt: string;
-  decidedAt?: string;
-  responseDueAt?: string;
-  resolvedAt?: string;
-  actions: CorrectiveAction[];
-  source?: { kind: "event" | "budget"; id: string; label: string };
-  names: Record<string, string>;
-  history: { action: string; at: string; actorName?: string; reason?: string }[];
+    requestMessage: string
+    requestedBy: string
+    requestedAt: string
+    dueAt: string
+    source?: 'CLUB' | 'RECORDED_BY_ICPDP' | 'NO_RESPONSE'
+    text?: string
+    respondedAt?: string
+  }
+  decisionReason?: string
+  decisionEvidence: ViolationEvidence[]
+  openedBy: string
+  openedAt: string
+  decidedAt?: string
+  responseDueAt?: string
+  resolvedAt?: string
+  actions: CorrectiveAction[]
+  source?: { kind: 'event' | 'budget'; id: string; label: string }
+  names: Record<string, string>
+  history: { action: string; at: string; actorName?: string; reason?: string }[]
 }
 
 export interface ViolationSources {
-  events: { id: string; title: string; startAt: string; state: string }[];
-  budgets: { id: string; eventTitle: string; state: string }[];
+  events: { id: string; title: string; startAt: string; state: string }[]
+  budgets: { id: string; eventTitle: string; state: string }[]
 }
 
 export interface EvidenceInput {
-  note: string;
-  url?: string;
+  note: string
+  url?: string
 }
 
 export interface OpenViolationInput {
-  clubId: string;
-  originType: ViolationOrigin;
-  originRefId?: string;
-  severity: ViolationSeverity;
-  title: string;
-  description?: string;
-  evidence?: EvidenceInput[];
+  clubId: string
+  originType: ViolationOrigin
+  originRefId?: string
+  severity: ViolationSeverity
+  title: string
+  description?: string
+  evidence?: EvidenceInput[]
 }
 
 export type ViolationStep =
-  | { type: "investigate" }
-  | { type: "addEvidence"; evidence: EvidenceInput }
-  | { type: "requestResponse"; message: string; dueAt?: string }
-  | { type: "recordResponse"; text?: string; noResponse?: boolean }
-  | { type: "decide"; finding: "VIOLATION" | "NO_VIOLATION"; reason: string; evidence?: EvidenceInput[] }
-  | { type: "addActions"; actions: { description: string; dueAt: string; linkedLifecycleAction?: "SUSPEND" | "DISSOLVE" }[] }
-  | { type: "verifyAction"; actionId: string; outcome: "Verified" | "Failed"; note?: string }
-  | { type: "resolve"; note?: string };
+  | { type: 'investigate' }
+  | { type: 'addEvidence'; evidence: EvidenceInput }
+  | { type: 'requestResponse'; message: string; dueAt?: string }
+  | { type: 'recordResponse'; text?: string; noResponse?: boolean }
+  | {
+      type: 'decide'
+      finding: 'VIOLATION' | 'NO_VIOLATION'
+      reason: string
+      evidence?: EvidenceInput[]
+    }
+  | {
+      type: 'addActions'
+      actions: {
+        description: string
+        dueAt: string
+        linkedLifecycleAction?: 'SUSPEND' | 'DISSOLVE'
+      }[]
+    }
+  | { type: 'verifyAction'; actionId: string; outcome: 'Verified' | 'Failed'; note?: string }
+  | { type: 'resolve'; note?: string }
 
 // Gọi API /admin/violations và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/violations${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/admin/violations${path}`, {
+    credentials: 'same-origin',
+    ...init,
+  })
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
+    const body = (await response.json().catch(() => null)) as { message?: string } | null
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
   }
-  const body: { data: T } = await response.json();
-  return body.data;
+  const body: { data: T } = await response.json()
+  return body.data
 }
 
 // Dựng RequestInit POST có CSRF và body JSON
 function post(csrfToken: string, body: object): RequestInit {
-  return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
-    body: JSON.stringify(body) };
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify(body),
+  }
 }
 
 // GET danh sách vi phạm của các CLB
 export function fetchViolations(signal: AbortSignal): Promise<ViolationSummary[]> {
-  return request("", { signal });
+  return request('', { signal })
 }
 
 // GET chi tiết một vi phạm
 export function fetchViolation(id: string, signal: AbortSignal): Promise<ViolationDetail> {
-  return request(`/${encodeURIComponent(id)}`, { signal });
+  return request(`/${encodeURIComponent(id)}`, { signal })
 }
 
 // GET /sources: nguồn dữ liệu để mở vi phạm cho một CLB
-export function fetchViolationSources(clubId: string, signal: AbortSignal): Promise<ViolationSources> {
-  return request(`/sources/${encodeURIComponent(clubId)}`, { signal });
+export function fetchViolationSources(
+  clubId: string,
+  signal: AbortSignal,
+): Promise<ViolationSources> {
+  return request(`/sources/${encodeURIComponent(clubId)}`, { signal })
 }
 
 // POST mở hồ sơ vi phạm mới
-export function openViolation(input: OpenViolationInput, csrfToken: string): Promise<ViolationDetail> {
-  return request("", post(csrfToken, input));
+export function openViolation(
+  input: OpenViolationInput,
+  csrfToken: string,
+): Promise<ViolationDetail> {
+  return request('', post(csrfToken, input))
 }
 
 // POST /steps: thực hiện bước xử lý vi phạm
-export function applyViolationStep(id: string, step: ViolationStep, csrfToken: string): Promise<ViolationDetail> {
-  return request(`/${encodeURIComponent(id)}/steps`, post(csrfToken, step));
+export function applyViolationStep(
+  id: string,
+  step: ViolationStep,
+  csrfToken: string,
+): Promise<ViolationDetail> {
+  return request(`/${encodeURIComponent(id)}/steps`, post(csrfToken, step))
 }

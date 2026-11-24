@@ -1,17 +1,17 @@
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { cn } from "@/utils/cn";
+import { AppSelect } from '@/components/ui/select/AppSelect'
+import { cn } from '@/utils/cn'
 
 interface AppTableLimitSelectProps {
-  value: number;
-  onChange: (limit: number) => void;
+  value: number
+  onChange: (limit: number) => void
   /** Nhãn đã dịch hiển thị trước control. */
-  label: string;
+  label: string
   /** Danh sách tuỳ chọn tuỳ biến — mặc định khớp giới hạn của API (tối đa 100). */
-  options?: number[];
-  className?: string;
+  options?: number[]
+  className?: string
 }
 
-const DEFAULT_OPTIONS = [5, 10, 20, 50, 100];
+const DEFAULT_OPTIONS = [5, 10, 20, 50, 100]
 
 // Ô chọn số dòng mỗi trang của bảng
 export function AppTableLimitSelect({
@@ -22,7 +22,7 @@ export function AppTableLimitSelect({
   className,
 }: AppTableLimitSelectProps) {
   return (
-    <span className={cn("flex flex-wrap items-center gap-2 text-sm text-muted-app", className)}>
+    <span className={cn('flex flex-wrap items-center gap-2 text-sm text-muted-app', className)}>
       {label}
       <AppSelect
         value={value}
@@ -33,5 +33,5 @@ export function AppTableLimitSelect({
         label={label}
       />
     </span>
-  );
+  )
 }

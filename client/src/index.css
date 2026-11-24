@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
 html,
@@ -64,20 +64,26 @@ body {
 
 @theme {
   /* Be Vietnam Pro: designed for Vietnamese diacritics, friendly and modern for a young audience. */
-  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-auth-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
-  --font-auth-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-auth-body: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-auth-heading: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
 
   /* Landing-page motion: an endless logo strip and a slow settle of the hero photo. */
   --animate-marquee: marquee 48s linear infinite;
   --animate-hero-settle: hero-settle 14s cubic-bezier(0.2, 0, 0, 1) both;
   @keyframes marquee {
-    to { translate: -50% 0; }
+    to {
+      translate: -50% 0;
+    }
   }
   @keyframes hero-settle {
-    from { scale: 1.12; }
-    to { scale: 1; }
+    from {
+      scale: 1.12;
+    }
+    to {
+      scale: 1;
+    }
   }
   /* Soft-square corners (dashboard style): controls use lg, panels and cards xl/2xl. */
   --radius-md: 6px;
@@ -202,27 +208,35 @@ body {
 }
 
 @keyframes theme-wipe-grow {
-  from { clip-path: circle(0 at var(--theme-x) var(--theme-y)); }
-  to { clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y)); }
+  from {
+    clip-path: circle(0 at var(--theme-x) var(--theme-y));
+  }
+  to {
+    clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y));
+  }
 }
 
 @keyframes theme-wipe-shrink {
-  from { clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y)); }
-  to { clip-path: circle(0 at var(--theme-x) var(--theme-y)); }
+  from {
+    clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y));
+  }
+  to {
+    clip-path: circle(0 at var(--theme-x) var(--theme-y));
+  }
 }
 
 /* Light → dark: the new (dark) page grows out of the toggle. */
-:root[data-theme-wipe="expand"]::view-transition-new(root) {
+:root[data-theme-wipe='expand']::view-transition-new(root) {
   animation: theme-wipe-grow 550ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* Dark → light: the old (dark) page sits on top and shrinks back into the toggle. */
-:root[data-theme-wipe="collapse"]::view-transition-old(root) {
+:root[data-theme-wipe='collapse']::view-transition-old(root) {
   z-index: 2;
   animation: theme-wipe-shrink 550ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-:root[data-theme-wipe="collapse"]::view-transition-new(root) {
+:root[data-theme-wipe='collapse']::view-transition-new(root) {
   z-index: 1;
 }
 
@@ -239,13 +253,21 @@ body {
 }
 
 @keyframes reveal {
-  from { opacity: 0; translate: 0 2rem; }
-  to { opacity: 1; translate: 0 0; }
+  from {
+    opacity: 0;
+    translate: 0 2rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 
 /* Honour reduced-motion: keep state changes, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -254,7 +276,7 @@ body {
 }
 
 /* Native checkboxes, radios and ranges follow the brand accent instead of the browser's blue. */
-input:is([type="checkbox"], [type="radio"], [type="range"]),
+input:is([type='checkbox'], [type='radio'], [type='range']),
 progress {
   accent-color: var(--color-primary-app);
 }
@@ -264,26 +286,26 @@ progress {
    clickable elements should use role="button" to pick up this rule. */
 button:not(:disabled),
 select:not(:disabled),
-input:is([type="checkbox"], [type="radio"]):not(:disabled),
-label:has(input:is([type="checkbox"], [type="radio"]):not(:disabled)),
-:is([role="checkbox"], [role="radio"], [role="switch"]):not([aria-disabled="true"]),
+input:is([type='checkbox'], [type='radio']):not(:disabled),
+label:has(input:is([type='checkbox'], [type='radio']):not(:disabled)),
+:is([role='checkbox'], [role='radio'], [role='switch']):not([aria-disabled='true']),
 summary,
 a[href],
-input[type="search"]::-webkit-search-cancel-button,
-[role="button"]:not([aria-disabled="true"]),
-[role="combobox"]:not(:disabled):not([aria-disabled="true"]),
-[role="option"]:not([aria-disabled="true"]) {
+input[type='search']::-webkit-search-cancel-button,
+[role='button']:not([aria-disabled='true']),
+[role='combobox']:not(:disabled):not([aria-disabled='true']),
+[role='option']:not([aria-disabled='true']) {
   cursor: pointer;
 }
 
 button:disabled,
 select:disabled,
-input:is([type="checkbox"], [type="radio"]):disabled,
-label:has(input:is([type="checkbox"], [type="radio"]):disabled),
-:is([role="checkbox"], [role="radio"], [role="switch"])[aria-disabled="true"],
-[role="combobox"][aria-disabled="true"],
-[role="option"][aria-disabled="true"],
-[role="button"][aria-disabled="true"] {
+input:is([type='checkbox'], [type='radio']):disabled,
+label:has(input:is([type='checkbox'], [type='radio']):disabled),
+:is([role='checkbox'], [role='radio'], [role='switch'])[aria-disabled='true'],
+[role='combobox'][aria-disabled='true'],
+[role='option'][aria-disabled='true'],
+[role='button'][aria-disabled='true'] {
   cursor: not-allowed;
 }
 

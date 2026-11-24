@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
-import mongoose, { Types, type ClientSession } from "mongoose";
-import { DomainError } from "../../domain/errors.js";
+import { randomUUID } from 'node:crypto'
+import mongoose, { Types, type ClientSession } from 'mongoose'
+import { DomainError } from '../../domain/errors.js'
 import type {
   LeadershipTransition,
   LeadershipTransitionRepository,
@@ -11,379 +11,778 @@ import type {
   TransitionHandover,
   TransitionObligation,
   TransitionTerm,
-} from "../../domain/leadership-transition.js";
-import { otherClubLeaderUserIds } from "./club-board.js";
-import { ucmsModels } from "./ucms-models.js";
+} from '../../domain/leadership-transition.js'
+import { otherClubLeaderUserIds } from './club-board.js'
+import { ucmsModels } from './ucms-models.js'
 
-type Doc = Record<string, unknown>;
+type Doc = Record<string, unknown>
 
 // Ném DomainError loại conflict với thông điệp cho trước
 function conflict(message: string): never {
-  throw new DomainError(message, "conflict");
+  throw new DomainError(message, 'conflict')
 }
 
 // Ném DomainError loại not_found với thông điệp cho trước
 function notFound(message: string): never {
-  throw new DomainError(message, "not_found");
+  throw new DomainError(message, 'not_found')
 }
 
 // Ánh xạ document nhiệm kỳ sang TransitionTerm
 function term(doc: Doc): TransitionTerm {
-  return { id: String(doc._id), name: String(doc.name), startAt: doc.startAt as Date,
-    endAt: doc.endAt as Date, state: String(doc.state) };
+  return {
+    id: String(doc._id),
+    name: String(doc.name),
+    startAt: doc.startAt as Date,
+    endAt: doc.endAt as Date,
+    state: String(doc.state),
+  }
 }
 
 // Lọc mảng, chỉ giữ phần tử là chuỗi
 function stringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : []
 }
 
 // Lọc mảng, chỉ giữ phần tử là object
 function rawObjects(value: unknown): Doc[] {
-  return Array.isArray(value) ? value.filter((item): item is Doc => Boolean(item)
-    && typeof item === "object" && !Array.isArray(item)) : [];
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is Doc => Boolean(item) && typeof item === 'object' && !Array.isArray(item),
+      )
+    : []
 }
 
 // Chuẩn hóa danh sách nghĩa vụ bàn giao của kế hoạch
 function obligations(value: unknown): TransitionObligation[] {
   return rawObjects(value).flatMap((item) => {
-    if (typeof item.id !== "string" || typeof item.type !== "string"
-      || typeof item.description !== "string" || typeof item.assigneeMembershipId !== "string") return [];
-    return [{ id: item.id, type: item.type, description: item.description,
-      assigneeMembershipId: item.assigneeMembershipId,
-      ...(typeof item.entityId === "string" ? { entityId: item.entityId } : {}) }];
-  });
+    if (
+      typeof item.id !== 'string' ||
+      typeof item.type !== 'string' ||
+      typeof item.description !== 'string' ||
+      typeof item.assigneeMembershipId !== 'string'
+    ) {
+      return []
+    }
+    return [
+      {
+        id: item.id,
+        type: item.type,
+        description: item.description,
+        assigneeMembershipId: item.assigneeMembershipId,
+        ...(typeof item.entityId === 'string' ? { entityId: item.entityId } : {}),
+      },
+    ]
+  })
 }
 
 // Chuẩn hóa danh sách ghế ban chủ nhiệm đề xuất
 function boardRoles(value: unknown): TransitionBoardRole[] | undefined {
-  if (!Array.isArray(value)) return undefined;
+  if (!Array.isArray(value)) {
+    return undefined
+  }
   return rawObjects(value).flatMap((item) => {
-    if (typeof item.code !== "string" || typeof item.name !== "string") return [];
-    return [{ code: item.code, name: item.name,
-      ...(typeof item.unit === "string" ? { unit: item.unit } : {}),
-      isLeaderRole: item.isLeaderRole === true, isSingleHolder: item.isSingleHolder !== false,
-      permissionCodes: stringArray(item.permissionCodes) }];
-  });
+    if (typeof item.code !== 'string' || typeof item.name !== 'string') {
+      return []
+    }
+    return [
+      {
+        code: item.code,
+        name: item.name,
+        ...(typeof item.unit === 'string' ? { unit: item.unit } : {}),
+        isLeaderRole: item.isLeaderRole === true,
+        isSingleHolder: item.isSingleHolder !== false,
+        permissionCodes: stringArray(item.permissionCodes),
+      },
+    ]
+  })
 }
 
 // Chuẩn hóa nội dung bàn giao của kế hoạch
 function handover(value: unknown): TransitionHandover {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return { items: [] };
-  const source = value as Doc;
-  const items = rawObjects(source.items).flatMap((item) => typeof item.id === "string"
-    && typeof item.description === "string" ? [{ id: item.id, description: item.description }] : []);
-  const proposedBoardRoles = boardRoles(source.proposedBoardRoles);
-  return { items, ...(proposedBoardRoles ? { proposedBoardRoles } : {}) };
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { items: [] }
+  }
+  const source = value as Doc
+  const items = rawObjects(source.items).flatMap((item) =>
+    typeof item.id === 'string' && typeof item.description === 'string'
+      ? [{ id: item.id, description: item.description }]
+      : [],
+  )
+  const proposedBoardRoles = boardRoles(source.proposedBoardRoles)
+  return { items, ...(proposedBoardRoles ? { proposedBoardRoles } : {}) }
 }
 
 // Chụp snapshot thông tin vị trí (position) của CLB
 export function roleSnapshot(doc: Doc) {
-  return { positionId: String(doc._id), code: String(doc.code), name: String(doc.name),
-    ...(typeof doc.unit === "string" ? { unit: doc.unit } : {}),
-    isBoardSeat: doc.isBoardSeat === true, isLeaderRole: doc.isLeaderRole === true,
+  return {
+    positionId: String(doc._id),
+    code: String(doc.code),
+    name: String(doc.name),
+    ...(typeof doc.unit === 'string' ? { unit: doc.unit } : {}),
+    isBoardSeat: doc.isBoardSeat === true,
+    isLeaderRole: doc.isLeaderRole === true,
     isDefaultMemberRole: doc.isDefaultMemberRole === true,
-    isSingleHolder: doc.isSingleHolder !== false, permissionCodes: stringArray(doc.permissionCodes) };
+    isSingleHolder: doc.isSingleHolder !== false,
+    permissionCodes: stringArray(doc.permissionCodes),
+  }
 }
 
 // Repository kế hoạch chuyển giao nhiệm kỳ ban chủ nhiệm cho ICPDP
 export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepository {
-  const plans = ucmsModels.transitionPlans!;
-  const clubs = ucmsModels.clubs!;
-  const terms = ucmsModels.clubTerms!;
-  const positions = ucmsModels.clubPositions!;
-  const assignments = ucmsModels.clubPositionAssignments!;
-  const memberships = ucmsModels.clubMemberships!;
-  const users = ucmsModels.users!;
-  const versions = ucmsModels.clubRoleStructureVersions!;
-  const tasks = ucmsModels.approvalTasks!;
-  const decisions = ucmsModels.approvalDecisions!;
-  const audits = ucmsModels.auditLogs!;
-  const notifications = ucmsModels.notifications!;
+  const plans = ucmsModels.transitionPlans!
+  const clubs = ucmsModels.clubs!
+  const terms = ucmsModels.clubTerms!
+  const positions = ucmsModels.clubPositions!
+  const assignments = ucmsModels.clubPositionAssignments!
+  const memberships = ucmsModels.clubMemberships!
+  const users = ucmsModels.users!
+  const versions = ucmsModels.clubRoleStructureVersions!
+  const tasks = ucmsModels.approvalTasks!
+  const decisions = ucmsModels.approvalDecisions!
+  const audits = ucmsModels.auditLogs!
+  const notifications = ucmsModels.notifications!
 
   // Dựng chi tiết kế hoạch chuyển giao kèm approval task
-  async function detail(planId: Types.ObjectId,
-    session?: ClientSession): Promise<LeadershipTransition | null> {
+  async function detail(
+    planId: Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<LeadershipTransition | null> {
     const [plan, taskDoc] = await Promise.all([
-      plans.findById(planId).session(session ?? null).lean(),
-      tasks.findOne({ entityType: "TRANSITION_PLAN", entityId: planId })
-        .sort({ openedAt: -1 }).session(session ?? null).lean(),
-    ]);
-    if (!plan || !taskDoc) return null;
+      plans
+        .findById(planId)
+        .session(session ?? null)
+        .lean(),
+      tasks
+        .findOne({ entityType: 'TRANSITION_PLAN', entityId: planId })
+        .sort({ openedAt: -1 })
+        .session(session ?? null)
+        .lean(),
+    ])
+    if (!plan || !taskDoc) {
+      return null
+    }
     const [club, fromTerm, toTerm, decisionDocs] = await Promise.all([
-      clubs.findById(plan.clubId).session(session ?? null).lean(),
-      terms.findById(plan.fromTermId).session(session ?? null).lean(),
-      terms.findById(plan.toTermId).session(session ?? null).lean(),
-      decisions.find({ approvalTaskId: { $in: await tasks.find({ entityType: "TRANSITION_PLAN", entityId: planId }).session(session ?? null).distinct("_id") } }).sort({ at: 1 }).session(session ?? null).lean(),
-    ]);
-    if (!club || !fromTerm || !toTerm) return null;
-    const candidateDocs = rawObjects(plan.candidates);
-    const membershipIds = candidateDocs.flatMap((item) => typeof item.membershipId === "string"
-      && Types.ObjectId.isValid(item.membershipId) ? [new Types.ObjectId(item.membershipId)] : []);
+      clubs
+        .findById(plan.clubId)
+        .session(session ?? null)
+        .lean(),
+      terms
+        .findById(plan.fromTermId)
+        .session(session ?? null)
+        .lean(),
+      terms
+        .findById(plan.toTermId)
+        .session(session ?? null)
+        .lean(),
+      decisions
+        .find({
+          approvalTaskId: {
+            $in: await tasks
+              .find({ entityType: 'TRANSITION_PLAN', entityId: planId })
+              .session(session ?? null)
+              .distinct('_id'),
+          },
+        })
+        .sort({ at: 1 })
+        .session(session ?? null)
+        .lean(),
+    ])
+    if (!club || !fromTerm || !toTerm) {
+      return null
+    }
+    const candidateDocs = rawObjects(plan.candidates)
+    const membershipIds = candidateDocs.flatMap((item) =>
+      typeof item.membershipId === 'string' && Types.ObjectId.isValid(item.membershipId)
+        ? [new Types.ObjectId(item.membershipId)]
+        : [],
+    )
     const [positionDocs, membershipDocs] = await Promise.all([
-      positions.find({ clubId: plan.clubId }).session(session ?? null).lean(),
-      memberships.find({ _id: { $in: membershipIds } }).session(session ?? null).lean(),
-    ]);
-    const userDocs = await users.find({
-      _id: { $in: membershipDocs.map((item) => item.userId) },
-    }).session(session ?? null).lean();
-    const byCode = new Map(positionDocs.map((item) => [String(item.code), item]));
-    const byMembership = new Map(membershipDocs.map((item) => [String(item._id), item]));
-    const byUser = new Map(userDocs.map((item) => [String(item._id), item]));
-    const proposedByCode = new Map((handover(plan.handoverItems).proposedBoardRoles ?? [])
-      .map((item) => [item.code, item]));
+      positions
+        .find({ clubId: plan.clubId })
+        .session(session ?? null)
+        .lean(),
+      memberships
+        .find({ _id: { $in: membershipIds } })
+        .session(session ?? null)
+        .lean(),
+    ])
+    const userDocs = await users
+      .find({
+        _id: { $in: membershipDocs.map((item) => item.userId) },
+      })
+      .session(session ?? null)
+      .lean()
+    const byCode = new Map(positionDocs.map((item) => [String(item.code), item]))
+    const byMembership = new Map(membershipDocs.map((item) => [String(item._id), item]))
+    const byUser = new Map(userDocs.map((item) => [String(item._id), item]))
+    const proposedByCode = new Map(
+      (handover(plan.handoverItems).proposedBoardRoles ?? []).map((item) => [item.code, item]),
+    )
     const candidates: TransitionCandidate[] = candidateDocs.flatMap((item) => {
-      if (typeof item.positionCode !== "string" || typeof item.membershipId !== "string") return [];
-      const position = byCode.get(item.positionCode);
-      const proposedRole = proposedByCode.get(item.positionCode);
-      const membership = byMembership.get(item.membershipId);
-      const user = membership ? byUser.get(String(membership.userId)) : undefined;
-      return (position || proposedRole) && membership && user ? [{ positionCode: item.positionCode,
-        positionName: String(position?.name ?? proposedRole?.name), membershipId: item.membershipId,
-        userId: String(user._id), displayName: String(user.displayName ?? user.email) }] : [];
-    });
+      if (typeof item.positionCode !== 'string' || typeof item.membershipId !== 'string') {
+        return []
+      }
+      const position = byCode.get(item.positionCode)
+      const proposedRole = proposedByCode.get(item.positionCode)
+      const membership = byMembership.get(item.membershipId)
+      const user = membership ? byUser.get(String(membership.userId)) : undefined
+      return (position || proposedRole) && membership && user
+        ? [
+            {
+              positionCode: item.positionCode,
+              positionName: String(position?.name ?? proposedRole?.name),
+              membershipId: item.membershipId,
+              userId: String(user._id),
+              displayName: String(user.displayName ?? user.email),
+            },
+          ]
+        : []
+    })
     const mappedDecisions: TransitionDecision[] = decisionDocs.map((item) => ({
-      id: String(item._id), outcome: item.outcome as TransitionDecision["outcome"],
-      ...(typeof item.reason === "string" ? { reason: item.reason } : {}),
+      id: String(item._id),
+      outcome: item.outcome as TransitionDecision['outcome'],
+      ...(typeof item.reason === 'string' ? { reason: item.reason } : {}),
       followUpObligationIds: stringArray((item.comments as Doc | undefined)?.followUpObligationIds),
-      actorId: String(item.actorId), at: item.at as Date,
-    }));
-    return { id: String(plan._id), clubId: String(plan.clubId), clubName: String(club.name),
-      clubState: String(club.state), fromTerm: term(fromTerm), toTerm: term(toTerm), candidates,
-      outstandingObligations: obligations(plan.outstandingObligations), handover: handover(plan.handoverItems),
-      state: String(plan.state), submittedBy: String(plan.submittedBy), submittedAt: plan.submittedAt as Date,
+      actorId: String(item.actorId),
+      at: item.at as Date,
+    }))
+    return {
+      id: String(plan._id),
+      clubId: String(plan.clubId),
+      clubName: String(club.name),
+      clubState: String(club.state),
+      fromTerm: term(fromTerm),
+      toTerm: term(toTerm),
+      candidates,
+      outstandingObligations: obligations(plan.outstandingObligations),
+      handover: handover(plan.handoverItems),
+      state: String(plan.state),
+      submittedBy: String(plan.submittedBy),
+      submittedAt: plan.submittedAt as Date,
       followUpConditions: obligations(plan.followUpConditions),
-      task: { id: String(taskDoc._id), state: String(taskDoc.state),
+      task: {
+        id: String(taskDoc._id),
+        state: String(taskDoc.state),
         ...(taskDoc.assigneeId ? { assigneeId: String(taskDoc.assigneeId) } : {}),
-        openedAt: taskDoc.openedAt as Date }, decisions: mappedDecisions };
+        openedAt: taskDoc.openedAt as Date,
+      },
+      decisions: mappedDecisions,
+    }
   }
 
   // Xác định người nhận thông báo: người gửi, ban cũ và ứng viên
   async function recipients(plan: Doc, session: ClientSession): Promise<Types.ObjectId[]> {
-    const boardPositions = await positions.find({ clubId: plan.clubId, isBoardSeat: true })
-      .select({ _id: 1 }).session(session).lean();
-    const oldAssignments = await assignments.find({ clubId: plan.clubId, termId: plan.fromTermId,
-      positionId: { $in: boardPositions.map((item) => item._id) } }).session(session).lean();
-    const candidateIds = rawObjects(plan.candidates).flatMap((item) => typeof item.membershipId === "string"
-      && Types.ObjectId.isValid(item.membershipId) ? [new Types.ObjectId(item.membershipId)] : []);
-    const memberDocs = await memberships.find({
-      _id: { $in: [...oldAssignments.map((item) => item.membershipId), ...candidateIds] },
-    }).session(session).lean();
-    return [...new Set([String(plan.submittedBy), ...memberDocs.map((item) => String(item.userId))])]
-      .map((id) => new Types.ObjectId(id));
+    const boardPositions = await positions
+      .find({ clubId: plan.clubId, isBoardSeat: true })
+      .select({ _id: 1 })
+      .session(session)
+      .lean()
+    const oldAssignments = await assignments
+      .find({
+        clubId: plan.clubId,
+        termId: plan.fromTermId,
+        positionId: { $in: boardPositions.map((item) => item._id) },
+      })
+      .session(session)
+      .lean()
+    const candidateIds = rawObjects(plan.candidates).flatMap((item) =>
+      typeof item.membershipId === 'string' && Types.ObjectId.isValid(item.membershipId)
+        ? [new Types.ObjectId(item.membershipId)]
+        : [],
+    )
+    const memberDocs = await memberships
+      .find({
+        _id: { $in: [...oldAssignments.map((item) => item.membershipId), ...candidateIds] },
+      })
+      .session(session)
+      .lean()
+    return [
+      ...new Set([String(plan.submittedBy), ...memberDocs.map((item) => String(item.userId))]),
+    ].map((id) => new Types.ObjectId(id))
   }
 
   // Kiểm tra ghế ban đề xuất hợp lệ và giữ nguyên vai trò President
   function validateProposal(proposed: TransitionBoardRole[], current: Doc[]): void {
     if (!proposed.length || new Set(proposed.map((item) => item.code)).size !== proposed.length) {
-      conflict("proposed board roles are invalid");
+      conflict('proposed board roles are invalid')
     }
-    const leaders = proposed.filter((item) => item.isLeaderRole);
-    const currentLeader = current.find((item) => item.isLeaderRole === true);
+    const leaders = proposed.filter((item) => item.isLeaderRole)
+    const currentLeader = current.find((item) => item.isLeaderRole === true)
     if (leaders.length !== 1 || !currentLeader || leaders[0]?.code !== currentLeader.code) {
-      conflict("the fixed President role must be preserved");
+      conflict('the fixed President role must be preserved')
     }
   }
 
   return {
     // Liệt kê kế hoạch chuyển giao đang chờ ICPDP xử lý
     async listOpen() {
-      const open = await tasks.find({ entityType: "TRANSITION_PLAN", state: { $in: ["Open", "Escalated"] } })
-        .sort({ openedAt: 1 }).lean();
-      return (await Promise.all(open.map((item) => detail(item.entityId as Types.ObjectId))))
-        .filter((item): item is LeadershipTransition => Boolean(item));
+      const open = await tasks
+        .find({ entityType: 'TRANSITION_PLAN', state: { $in: ['Open', 'Escalated'] } })
+        .sort({ openedAt: 1 })
+        .lean()
+      return (
+        await Promise.all(open.map((item) => detail(item.entityId as Types.ObjectId)))
+      ).filter((item): item is LeadershipTransition => Boolean(item))
     },
 
     // Lấy chi tiết một kế hoạch chuyển giao
     async find(planId) {
-      return detail(new Types.ObjectId(planId));
+      return detail(new Types.ObjectId(planId))
     },
 
     // ICPDP officer nhận xử lý (claim) kế hoạch chuyển giao
     async claim(planId, officerId, now) {
-      const id = new Types.ObjectId(planId);
-      const officer = new Types.ObjectId(officerId);
+      const id = new Types.ObjectId(planId)
+      const officer = new Types.ObjectId(officerId)
       await mongoose.connection.transaction(async (session) => {
-        const taskDoc = await tasks.findOne({ entityType: "TRANSITION_PLAN", entityId: id,
-          state: { $in: ["Open", "Escalated"] } }).session(session).lean();
-        if (!taskDoc) return conflict("transition plan is no longer open");
+        const taskDoc = await tasks
+          .findOne({
+            entityType: 'TRANSITION_PLAN',
+            entityId: id,
+            state: { $in: ['Open', 'Escalated'] },
+          })
+          .session(session)
+          .lean()
+        if (!taskDoc) {
+          return conflict('transition plan is no longer open')
+        }
         if (taskDoc.assigneeId && String(taskDoc.assigneeId) !== officerId) {
-          return conflict("transition plan is assigned to another officer");
+          return conflict('transition plan is assigned to another officer')
         }
         if (!taskDoc.assigneeId) {
-          const changed = await tasks.updateOne({ _id: taskDoc._id, assigneeId: { $exists: false } },
-            { $set: { assigneeId: officer } }, { session });
-          if (changed.matchedCount !== 1) return conflict("transition plan was claimed");
+          const changed = await tasks.updateOne(
+            { _id: taskDoc._id, assigneeId: { $exists: false } },
+            { $set: { assigneeId: officer } },
+            { session },
+          )
+          if (changed.matchedCount !== 1) {
+            return conflict('transition plan was claimed')
+          }
         }
-        if (taskDoc.state === "Escalated") {
-          await tasks.updateOne({ _id: taskDoc._id, state: "Escalated" },
-            { $set: { state: "Open", assigneeId: officer } }, { session });
+        if (taskDoc.state === 'Escalated') {
+          await tasks.updateOne(
+            { _id: taskDoc._id, state: 'Escalated' },
+            { $set: { state: 'Open', assigneeId: officer } },
+            { session },
+          )
         }
-        await audits.create([{ entityType: "TransitionPlan", entityId: id,
-          action: "TRANSITION_PLAN_CLAIMED", actorId: officer, actorRole: "ICPDP_OFFICER",
-          correlationId: randomUUID(), at: now }], { session });
-      });
-      const result = await detail(id);
-      if (!result) return notFound("transition plan not found");
-      return result;
+        await audits.create(
+          [
+            {
+              entityType: 'TransitionPlan',
+              entityId: id,
+              action: 'TRANSITION_PLAN_CLAIMED',
+              actorId: officer,
+              actorRole: 'ICPDP_OFFICER',
+              correlationId: randomUUID(),
+              at: now,
+            },
+          ],
+          { session },
+        )
+      })
+      const result = await detail(id)
+      if (!result) {
+        return notFound('transition plan not found')
+      }
+      return result
     },
 
     // ICPDP xác nhận hoặc trả lại kế hoạch; xác nhận thì đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới
     async decide(planId, officerId, input: TransitionDecisionInput, now) {
-      const id = new Types.ObjectId(planId);
-      const officer = new Types.ObjectId(officerId);
+      const id = new Types.ObjectId(planId)
+      const officer = new Types.ObjectId(officerId)
       await mongoose.connection.transaction(async (session) => {
         const [plan, taskDoc] = await Promise.all([
-          plans.findOne({ _id: id, state: "Pending Confirmation" }).session(session).lean(),
-          tasks.findOne({ entityType: "TRANSITION_PLAN", entityId: id, state: "Open",
-            assigneeId: officer }).session(session).lean(),
-        ]);
-        if (!plan || !taskDoc) return conflict("transition plan cannot be decided");
-        const club = await clubs.findById(plan.clubId).session(session).lean();
-        if (!club) return notFound("club not found");
-        if (input.outcome === "Approve" && club.state === "Suspended") {
-          return conflict("transition is held while the club is Suspended");
+          plans.findOne({ _id: id, state: 'Pending Confirmation' }).session(session).lean(),
+          tasks
+            .findOne({
+              entityType: 'TRANSITION_PLAN',
+              entityId: id,
+              state: 'Open',
+              assigneeId: officer,
+            })
+            .session(session)
+            .lean(),
+        ])
+        if (!plan || !taskDoc) {
+          return conflict('transition plan cannot be decided')
         }
-        const notifyUsers = await recipients(plan, session);
-        const correlationId = randomUUID();
-        if (input.outcome === "Request revision") {
-          await decisions.create([{ approvalTaskId: taskDoc._id, outcome: "Request revision",
-            reason: input.reason, comments: { followUpObligationIds: [] }, actorId: officer, at: now }], { session });
-          await plans.updateOne({ _id: id, state: "Pending Confirmation" },
-            { $set: { state: "Returned", decidedBy: officer, decidedAt: now }, $inc: { __v: 1 } }, { session });
-          await tasks.updateOne({ _id: taskDoc._id, state: "Open" },
-            { $set: { state: "Decided", closedAt: now } }, { session });
-          await audits.create([{ entityType: "TransitionPlan", entityId: id,
-            action: "TRANSITION_PLAN_RETURNED", actorId: officer, actorRole: "ICPDP_OFFICER",
-            before: { state: "Pending Confirmation" }, after: { state: "Returned" },
-            reason: input.reason, correlationId, at: now }], { session });
-          if (notifyUsers.length) await notifications.insertMany(notifyUsers.map((recipientUserId) => ({
-            recipientUserId, eventCode: "TRANSITION_PLAN_RETURNED", entityType: "TransitionPlan",
-            entityId: id, channels: ["IN_APP"], payload: { reason: input.reason }, state: "Queued",
-            dueAt: now, attempts: 0, createdAt: now,
-          })), { session });
-          return;
+        const club = await clubs.findById(plan.clubId).session(session).lean()
+        if (!club) {
+          return notFound('club not found')
+        }
+        if (input.outcome === 'Approve' && club.state === 'Suspended') {
+          return conflict('transition is held while the club is Suspended')
+        }
+        const notifyUsers = await recipients(plan, session)
+        const correlationId = randomUUID()
+        if (input.outcome === 'Request revision') {
+          await decisions.create(
+            [
+              {
+                approvalTaskId: taskDoc._id,
+                outcome: 'Request revision',
+                reason: input.reason,
+                comments: { followUpObligationIds: [] },
+                actorId: officer,
+                at: now,
+              },
+            ],
+            { session },
+          )
+          await plans.updateOne(
+            { _id: id, state: 'Pending Confirmation' },
+            { $set: { state: 'Returned', decidedBy: officer, decidedAt: now }, $inc: { __v: 1 } },
+            { session },
+          )
+          await tasks.updateOne(
+            { _id: taskDoc._id, state: 'Open' },
+            { $set: { state: 'Decided', closedAt: now } },
+            { session },
+          )
+          await audits.create(
+            [
+              {
+                entityType: 'TransitionPlan',
+                entityId: id,
+                action: 'TRANSITION_PLAN_RETURNED',
+                actorId: officer,
+                actorRole: 'ICPDP_OFFICER',
+                before: { state: 'Pending Confirmation' },
+                after: { state: 'Returned' },
+                reason: input.reason,
+                correlationId,
+                at: now,
+              },
+            ],
+            { session },
+          )
+          if (notifyUsers.length) {
+            await notifications.insertMany(
+              notifyUsers.map((recipientUserId) => ({
+                recipientUserId,
+                eventCode: 'TRANSITION_PLAN_RETURNED',
+                entityType: 'TransitionPlan',
+                entityId: id,
+                channels: ['IN_APP'],
+                payload: { reason: input.reason },
+                state: 'Queued',
+                dueAt: now,
+                attempts: 0,
+                createdAt: now,
+              })),
+              { session },
+            )
+          }
+          return
         }
 
         const [fromTerm, toTerm, currentPositions] = await Promise.all([
-          terms.findOne({ _id: plan.fromTermId, clubId: plan.clubId, state: "Active" }).session(session).lean(),
-          terms.findOne({ _id: plan.toTermId, clubId: plan.clubId, state: "Planned" }).session(session).lean(),
+          terms
+            .findOne({ _id: plan.fromTermId, clubId: plan.clubId, state: 'Active' })
+            .session(session)
+            .lean(),
+          terms
+            .findOne({ _id: plan.toTermId, clubId: plan.clubId, state: 'Planned' })
+            .session(session)
+            .lean(),
           positions.find({ clubId: plan.clubId, isActive: true }).session(session).lean(),
-        ]);
+        ])
         if (!fromTerm || !toTerm || (toTerm.endAt as Date) <= now) {
-          return conflict("transition terms changed before confirmation");
+          return conflict('transition terms changed before confirmation')
         }
-        const parsedHandover = handover(plan.handoverItems);
-        const proposed = parsedHandover.proposedBoardRoles;
-        if (proposed) validateProposal(proposed, currentPositions);
-        const boardRoleCodes = proposed?.map((item) => item.code)
-          ?? currentPositions.filter((item) => item.isBoardSeat === true || item.isLeaderRole === true).map((item) => String(item.code));
-        const candidateDocs = rawObjects(plan.candidates);
-        const candidateCodes = candidateDocs.flatMap((item) => typeof item.positionCode === "string"
-          ? [item.positionCode] : []);
-        const holderLimits = new Map((proposed ?? currentPositions.filter((p) => p.isBoardSeat === true || p.isLeaderRole === true))
-          .map((p) => [String(p.code), p.isSingleHolder !== false ? 1 : 2]));
-        if (candidateCodes.length !== candidateDocs.length || candidateCodes.some((code) => !boardRoleCodes.includes(code))
-          || boardRoleCodes.some((code) => { const count = candidateCodes.filter((c) => c === code).length; return count < 1 || count > (holderLimits.get(code) ?? 1); })
-          || new Set(candidateDocs.map((c) => String(c.membershipId))).size !== candidateDocs.length) {
-          return conflict("every board role needs eligible distinct candidates within its holder limit");
+        const parsedHandover = handover(plan.handoverItems)
+        const proposed = parsedHandover.proposedBoardRoles
+        if (proposed) {
+          validateProposal(proposed, currentPositions)
+        }
+        const boardRoleCodes =
+          proposed?.map((item) => item.code) ??
+          currentPositions
+            .filter((item) => item.isBoardSeat === true || item.isLeaderRole === true)
+            .map((item) => String(item.code))
+        const candidateDocs = rawObjects(plan.candidates)
+        const candidateCodes = candidateDocs.flatMap((item) =>
+          typeof item.positionCode === 'string' ? [item.positionCode] : [],
+        )
+        const holderLimits = new Map(
+          (
+            proposed ??
+            currentPositions.filter((p) => p.isBoardSeat === true || p.isLeaderRole === true)
+          ).map((p) => [String(p.code), p.isSingleHolder !== false ? 1 : 2]),
+        )
+        if (
+          candidateCodes.length !== candidateDocs.length ||
+          candidateCodes.some((code) => !boardRoleCodes.includes(code)) ||
+          boardRoleCodes.some((code) => {
+            const count = candidateCodes.filter((c) => c === code).length
+            return count < 1 || count > (holderLimits.get(code) ?? 1)
+          }) ||
+          new Set(candidateDocs.map((c) => String(c.membershipId))).size !== candidateDocs.length
+        ) {
+          return conflict(
+            'every board role needs eligible distinct candidates within its holder limit',
+          )
         }
         const candidateMembershipIds = candidateDocs.flatMap((item) =>
-          typeof item.membershipId === "string" && Types.ObjectId.isValid(item.membershipId)
-            ? [new Types.ObjectId(item.membershipId)] : []);
+          typeof item.membershipId === 'string' && Types.ObjectId.isValid(item.membershipId)
+            ? [new Types.ObjectId(item.membershipId)]
+            : [],
+        )
         if (candidateMembershipIds.length !== candidateDocs.length) {
-          return conflict("transition candidate is invalid");
+          return conflict('transition candidate is invalid')
         }
-        const activeMembers = await memberships.find({ _id: { $in: candidateMembershipIds },
-          clubId: plan.clubId, state: "Active" }).session(session).lean();
+        const activeMembers = await memberships
+          .find({ _id: { $in: candidateMembershipIds }, clubId: plan.clubId, state: 'Active' })
+          .session(session)
+          .lean()
         if (activeMembers.length !== candidateDocs.length) {
-          return conflict("every transition candidate must have an Active membership");
+          return conflict('every transition candidate must have an Active membership')
         }
-        const leaderCodes = new Set((proposed ?? currentPositions).filter((p) => p.isLeaderRole === true).map((p) => String(p.code)));
-        const leaderMemberIds = candidateDocs.filter((c) => leaderCodes.has(String(c.positionCode)))
-          .map((c) => new Types.ObjectId(String(c.membershipId)));
+        const leaderCodes = new Set(
+          (proposed ?? currentPositions)
+            .filter((p) => p.isLeaderRole === true)
+            .map((p) => String(p.code)),
+        )
+        const leaderMemberIds = candidateDocs
+          .filter((c) => leaderCodes.has(String(c.positionCode)))
+          .map((c) => new Types.ObjectId(String(c.membershipId)))
         // Chạm vào user của ứng viên Chủ nhiệm để UC08/UC11 đồng thời nêu cùng người đó bị xung đột (BR06).
-        const leaderUserIds = activeMembers.filter((member) => leaderMemberIds.some((memberId) => memberId.equals(String(member._id))))
-          .map((member) => String(member.userId)).sort();
+        const leaderUserIds = activeMembers
+          .filter((member) =>
+            leaderMemberIds.some((memberId) => memberId.equals(String(member._id))),
+          )
+          .map((member) => String(member.userId))
+          .sort()
         for (const userId of leaderUserIds) {
-          await users.updateOne({ _id: new Types.ObjectId(userId) }, { $currentDate: { updatedAt: true } }, { session });
+          await users.updateOne(
+            { _id: new Types.ObjectId(userId) },
+            { $currentDate: { updatedAt: true } },
+            { session },
+          )
         }
-        if ((await otherClubLeaderUserIds(session, plan.clubId as Types.ObjectId, leaderMemberIds, now, toTerm.endAt as Date)).size) {
-          return conflict("a leader candidate already leads another club in an overlapping term (BR06)");
+        if (
+          (
+            await otherClubLeaderUserIds(
+              session,
+              plan.clubId as Types.ObjectId,
+              leaderMemberIds,
+              now,
+              toTerm.endAt as Date,
+            )
+          ).size
+        ) {
+          return conflict(
+            'a leader candidate already leads another club in an overlapping term (BR06)',
+          )
         }
 
-        let effectivePositions = currentPositions;
+        let effectivePositions = currentPositions
         if (proposed) {
-          const proposedCodes = new Set(proposed.map((item) => item.code));
-          await positions.updateMany({ clubId: plan.clubId, isBoardSeat: true,
-            isLeaderRole: false, code: { $nin: [...proposedCodes] } },
-          { $set: { isBoardSeat: false } }, { session });
+          const proposedCodes = new Set(proposed.map((item) => item.code))
+          await positions.updateMany(
+            {
+              clubId: plan.clubId,
+              isBoardSeat: true,
+              isLeaderRole: false,
+              code: { $nin: [...proposedCodes] },
+            },
+            { $set: { isBoardSeat: false } },
+            { session },
+          )
           for (const role of proposed) {
-            const existing = currentPositions.find((item) => item.code === role.code);
+            const existing = currentPositions.find((item) => item.code === role.code)
             if (existing) {
-              await positions.updateOne({ _id: existing._id }, { $set: {
-                name: role.name, ...(role.unit ? { unit: role.unit } : { unit: null }),
-                isBoardSeat: true, isLeaderRole: role.isLeaderRole,
-                isSingleHolder: role.isSingleHolder,
-                permissionCodes: role.isLeaderRole ? [] : role.permissionCodes, isActive: true,
-              } }, { session });
+              await positions.updateOne(
+                { _id: existing._id },
+                {
+                  $set: {
+                    name: role.name,
+                    ...(role.unit ? { unit: role.unit } : { unit: null }),
+                    isBoardSeat: true,
+                    isLeaderRole: role.isLeaderRole,
+                    isSingleHolder: role.isSingleHolder,
+                    permissionCodes: role.isLeaderRole ? [] : role.permissionCodes,
+                    isActive: true,
+                  },
+                },
+                { session },
+              )
             } else {
-              await positions.create([{ clubId: plan.clubId, code: role.code, name: role.name,
-                ...(role.unit ? { unit: role.unit } : {}), isBoardSeat: true,
-                isLeaderRole: role.isLeaderRole, isDefaultMemberRole: false,
-                isSingleHolder: role.isSingleHolder,
-                permissionCodes: role.isLeaderRole ? [] : role.permissionCodes, isActive: true }], { session });
+              await positions.create(
+                [
+                  {
+                    clubId: plan.clubId,
+                    code: role.code,
+                    name: role.name,
+                    ...(role.unit ? { unit: role.unit } : {}),
+                    isBoardSeat: true,
+                    isLeaderRole: role.isLeaderRole,
+                    isDefaultMemberRole: false,
+                    isSingleHolder: role.isSingleHolder,
+                    permissionCodes: role.isLeaderRole ? [] : role.permissionCodes,
+                    isActive: true,
+                  },
+                ],
+                { session },
+              )
             }
           }
-          effectivePositions = await positions.find({ clubId: plan.clubId, isActive: true })
-            .session(session).lean();
-          const previousVersion = await versions.findOne({ clubId: plan.clubId })
-            .sort({ versionNo: -1 }).session(session).lean();
-          await versions.create([{ clubId: plan.clubId,
-            versionNo: Number(previousVersion?.versionNo ?? 0) + 1, effectiveFrom: now,
-            source: "TRANSITION", sourceRefId: id, roles: effectivePositions.map(roleSnapshot),
-            createdBy: officer, reason: input.reason, createdAt: now }], { session });
+          effectivePositions = await positions
+            .find({ clubId: plan.clubId, isActive: true })
+            .session(session)
+            .lean()
+          const previousVersion = await versions
+            .findOne({ clubId: plan.clubId })
+            .sort({ versionNo: -1 })
+            .session(session)
+            .lean()
+          await versions.create(
+            [
+              {
+                clubId: plan.clubId,
+                versionNo: Number(previousVersion?.versionNo ?? 0) + 1,
+                effectiveFrom: now,
+                source: 'TRANSITION',
+                sourceRefId: id,
+                roles: effectivePositions.map(roleSnapshot),
+                createdBy: officer,
+                reason: input.reason,
+                createdAt: now,
+              },
+            ],
+            { session },
+          )
         }
-        const positionByCode = new Map(effectivePositions.map((item) => [String(item.code), item]));
-        await assignments.updateMany({ clubId: plan.clubId, termId: plan.fromTermId,
-          effectiveTo: { $in: [null] } }, { $set: { effectiveTo: now } }, { session });
-        await terms.updateOne({ _id: fromTerm._id, state: "Active" },
-          { $set: { state: "Closed", endAt: now } }, { session });
-        await terms.updateOne({ _id: toTerm._id, state: "Planned" }, { $set: {
-          state: "Active", startAt: now, confirmedBy: officer, confirmedAt: now,
-        } }, { session });
+        const positionByCode = new Map(effectivePositions.map((item) => [String(item.code), item]))
+        await assignments.updateMany(
+          { clubId: plan.clubId, termId: plan.fromTermId, effectiveTo: { $in: [null] } },
+          { $set: { effectiveTo: now } },
+          { session },
+        )
+        await terms.updateOne(
+          { _id: fromTerm._id, state: 'Active' },
+          { $set: { state: 'Closed', endAt: now } },
+          { session },
+        )
+        await terms.updateOne(
+          { _id: toTerm._id, state: 'Planned' },
+          {
+            $set: {
+              state: 'Active',
+              startAt: now,
+              confirmedBy: officer,
+              confirmedAt: now,
+            },
+          },
+          { session },
+        )
         for (const candidate of candidateDocs) {
-          const position = positionByCode.get(String(candidate.positionCode));
-          if (!position) return conflict("candidate position changed before confirmation");
-          await assignments.create([{ clubId: plan.clubId, termId: plan.toTermId,
-            positionId: position._id, membershipId: new Types.ObjectId(String(candidate.membershipId)),
-            effectiveFrom: now, assignedBy: officer, confirmedBy: officer }], { session });
+          const position = positionByCode.get(String(candidate.positionCode))
+          if (!position) {
+            return conflict('candidate position changed before confirmation')
+          }
+          await assignments.create(
+            [
+              {
+                clubId: plan.clubId,
+                termId: plan.toTermId,
+                positionId: position._id,
+                membershipId: new Types.ObjectId(String(candidate.membershipId)),
+                effectiveFrom: now,
+                assignedBy: officer,
+                confirmedBy: officer,
+              },
+            ],
+            { session },
+          )
         }
-        const allObligations = obligations(plan.outstandingObligations);
-        const followUps = allObligations.filter((item) => input.followUpObligationIds.includes(item.id));
-        await decisions.create([{ approvalTaskId: taskDoc._id, outcome: "Approve",
-          ...(input.reason ? { reason: input.reason } : {}),
-          comments: { followUpObligationIds: input.followUpObligationIds }, actorId: officer, at: now }], { session });
-        await plans.updateOne({ _id: id, state: "Pending Confirmation" }, { $set: {
-          state: "Confirmed", decidedBy: officer, decidedAt: now, followUpConditions: followUps,
-        } }, { session });
-        await tasks.updateOne({ _id: taskDoc._id, state: "Open" },
-          { $set: { state: "Decided", closedAt: now } }, { session });
-        await audits.create([{ entityType: "TransitionPlan", entityId: id,
-          action: "TRANSITION_PLAN_CONFIRMED", actorId: officer, actorRole: "ICPDP_OFFICER",
-          before: { state: "Pending Confirmation", fromTermState: "Active", toTermState: "Planned" },
-          after: { state: "Confirmed", fromTermState: "Closed", toTermState: "Active",
-            followUpObligationIds: input.followUpObligationIds }, reason: input.reason,
-          correlationId, at: now }], { session });
-        if (notifyUsers.length) await notifications.insertMany(notifyUsers.map((recipientUserId) => ({
-          recipientUserId, eventCode: "LEADERSHIP_TRANSITION_CONFIRMED", entityType: "TransitionPlan",
-          entityId: id, channels: ["IN_APP"], payload: { followUpCount: followUps.length },
-          state: "Queued", dueAt: now, attempts: 0, createdAt: now,
-        })), { session });
-      });
-      const result = await detail(id);
-      if (!result) return notFound("transition plan not found after decision");
-      return result;
+        const allObligations = obligations(plan.outstandingObligations)
+        const followUps = allObligations.filter((item) =>
+          input.followUpObligationIds.includes(item.id),
+        )
+        await decisions.create(
+          [
+            {
+              approvalTaskId: taskDoc._id,
+              outcome: 'Approve',
+              ...(input.reason ? { reason: input.reason } : {}),
+              comments: { followUpObligationIds: input.followUpObligationIds },
+              actorId: officer,
+              at: now,
+            },
+          ],
+          { session },
+        )
+        await plans.updateOne(
+          { _id: id, state: 'Pending Confirmation' },
+          {
+            $set: {
+              state: 'Confirmed',
+              decidedBy: officer,
+              decidedAt: now,
+              followUpConditions: followUps,
+            },
+          },
+          { session },
+        )
+        await tasks.updateOne(
+          { _id: taskDoc._id, state: 'Open' },
+          { $set: { state: 'Decided', closedAt: now } },
+          { session },
+        )
+        await audits.create(
+          [
+            {
+              entityType: 'TransitionPlan',
+              entityId: id,
+              action: 'TRANSITION_PLAN_CONFIRMED',
+              actorId: officer,
+              actorRole: 'ICPDP_OFFICER',
+              before: {
+                state: 'Pending Confirmation',
+                fromTermState: 'Active',
+                toTermState: 'Planned',
+              },
+              after: {
+                state: 'Confirmed',
+                fromTermState: 'Closed',
+                toTermState: 'Active',
+                followUpObligationIds: input.followUpObligationIds,
+              },
+              reason: input.reason,
+              correlationId,
+              at: now,
+            },
+          ],
+          { session },
+        )
+        if (notifyUsers.length) {
+          await notifications.insertMany(
+            notifyUsers.map((recipientUserId) => ({
+              recipientUserId,
+              eventCode: 'LEADERSHIP_TRANSITION_CONFIRMED',
+              entityType: 'TransitionPlan',
+              entityId: id,
+              channels: ['IN_APP'],
+              payload: { followUpCount: followUps.length },
+              state: 'Queued',
+              dueAt: now,
+              attempts: 0,
+              createdAt: now,
+            })),
+            { session },
+          )
+        }
+      })
+      const result = await detail(id)
+      if (!result) {
+        return notFound('transition plan not found after decision')
+      }
+      return result
     },
-  };
+  }
 }

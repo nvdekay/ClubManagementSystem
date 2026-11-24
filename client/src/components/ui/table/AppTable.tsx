@@ -9,10 +9,10 @@ import {
   tableFeatures,
   type ReactTable,
   type RowData,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table'
 
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 
 // Một bộ tính năng dùng chung cho mọi bảng App — v9 chỉ cung cấp API cho các tính năng đã đăng ký,
 // nên toàn bộ bộ ui/table/ (phân trang, bật/tắt cột) khai báo kiểu dựa trên bộ này.
@@ -25,33 +25,38 @@ export const appTableFeatures = tableFeatures({
   paginatedRowModel: createPaginatedRowModel(),
   sortedRowModel: createSortedRowModel(),
   sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text },
-});
-export type AppTableFeatures = typeof appTableFeatures;
+})
+export type AppTableFeatures = typeof appTableFeatures
 
 interface AppTableProps<T extends RowData> {
-  table: ReactTable<AppTableFeatures, T>;
+  table: ReactTable<AppTableFeatures, T>
   /** Hiển thị trong phần thân khi không có dòng nào — header vẫn hiện. */
-  emptyMessage: string;
+  emptyMessage: string
   /** Lần tải đầu: hiển thị một trang các dòng skeleton thay vì trạng thái rỗng. */
-  loading?: boolean;
+  loading?: boolean
 }
 
 // Bảng dữ liệu hiển thị từ một table instance
 export function AppTable<T extends RowData>({ table, emptyMessage, loading }: AppTableProps<T>) {
-  const rows = table.getRowModel().rows;
+  const rows = table.getRowModel().rows
   return (
-    <div aria-busy={loading} className="overflow-x-auto rounded-xl border border-border-app bg-bg-app">
+    <div
+      aria-busy={loading}
+      className="overflow-x-auto rounded-xl border border-border-app bg-bg-app"
+    >
       {/* min-w: trên điện thoại wrapper cuộn ngang thay vì ép cột đến mức email bị ngắt từng chữ. */}
       <table className="w-full min-w-3xl text-sm">
         <thead className="bg-surface-app">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                const sorted = header.column.getIsSorted();
+                const sorted = header.column.getIsSorted()
                 return (
                   <th
                     key={header.id}
-                    aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined}
+                    aria-sort={
+                      sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined
+                    }
                     className="px-4 py-2.5 text-left text-xs font-medium text-muted-app"
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
@@ -61,14 +66,14 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
                         className="inline-flex items-center gap-1 font-medium"
                       >
                         <table.FlexRender header={header} />
-                        {sorted === "asc" && <span aria-hidden>↑</span>}
-                        {sorted === "desc" && <span aria-hidden>↓</span>}
+                        {sorted === 'asc' && <span aria-hidden>↑</span>}
+                        {sorted === 'desc' && <span aria-hidden>↓</span>}
                       </button>
                     ) : (
                       <table.FlexRender header={header} />
                     )}
                   </th>
-                );
+                )
               })}
             </tr>
           ))}
@@ -86,9 +91,14 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
             ))
           ) : rows.length === 0 ? (
             <tr className="border-t border-border-app">
-              <td colSpan={table.getVisibleLeafColumns().length} className="px-4 py-10 sm:text-center">
+              <td
+                colSpan={table.getVisibleLeafColumns().length}
+                className="px-4 py-10 sm:text-center"
+              >
                 {/* Ghim vào phần đang nhìn thấy của khung cuộn để điện thoại không bao giờ bị cắt mất thông báo. */}
-                <div className="sticky left-4 max-w-[calc(100vw-6rem)] sm:max-w-none"><AppEmptyState message={emptyMessage} /></div>
+                <div className="sticky left-4 max-w-[calc(100vw-6rem)] sm:max-w-none">
+                  <AppEmptyState message={emptyMessage} />
+                </div>
               </td>
             </tr>
           ) : (
@@ -105,5 +115,5 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
         </tbody>
       </table>
     </div>
-  );
+  )
 }

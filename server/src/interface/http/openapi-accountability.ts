@@ -1,8 +1,8 @@
-import { z } from "zod";
-import type { createDocument } from "zod-openapi";
-import { financeActionBody, financePath } from "./event-finance-routes.js";
-import { reportActionBody, reportPath } from "./post-event-report-routes.js";
-const date = z.string().datetime();
+import { z } from 'zod'
+import type { createDocument } from 'zod-openapi'
+import { financeActionBody, financePath } from './event-finance-routes.js'
+import { reportActionBody, reportPath } from './post-event-report-routes.js'
+const date = z.string().datetime()
 const totals = z.object({
   approvedTotal: z.number(),
   advanceTotal: z.number(),
@@ -10,14 +10,14 @@ const totals = z.object({
   supportedTotal: z.number(),
   unsupportedTotal: z.number(),
   remaining: z.number(),
-});
+})
 const evidence = z.object({
   id: z.string(),
   type: z.string(),
   externalLink: z.string(),
   uploadedBy: z.string(),
   uploadedAt: date,
-});
+})
 const finance = z.object({
   id: z.string(),
   clubId: z.string(),
@@ -34,9 +34,7 @@ const finance = z.object({
   recoveryAmount: z.number().optional(),
   recoveryDueAt: date.optional(),
   refundedTotal: z.number(),
-  lines: z.array(
-    z.object({ category: z.string(), approvedAmount: z.number() }),
-  ),
+  lines: z.array(z.object({ category: z.string(), approvedAmount: z.number() })),
   totals,
   expenses: z.array(
     z.object({
@@ -53,9 +51,7 @@ const finance = z.object({
       evidences: z.array(evidence),
     }),
   ),
-  task: z
-    .object({ id: z.string(), assigneeId: z.string().optional() })
-    .optional(),
+  task: z.object({ id: z.string(), assigneeId: z.string().optional() }).optional(),
   history: z.array(
     z.object({
       action: z.string(),
@@ -64,7 +60,7 @@ const finance = z.object({
       reason: z.string().optional(),
     }),
   ),
-});
+})
 const snapshot = z.object({
   proposal: z.unknown(),
   attendance: z.object({
@@ -78,7 +74,7 @@ const snapshot = z.object({
   feedback: z.unknown(),
   policyVersionId: z.string(),
   dueAt: date,
-});
+})
 const report = z.object({
   id: z.string(),
   eventId: z.string(),
@@ -98,10 +94,8 @@ const report = z.object({
   decisionReason: z.string().optional(),
   findingViolationId: z.string().optional(),
   preloadedFigures: snapshot,
-  task: z
-    .object({ id: z.string(), assigneeId: z.string().optional() })
-    .optional(),
-});
+  task: z.object({ id: z.string(), assigneeId: z.string().optional() }).optional(),
+})
 const obligation = z.object({
   eventId: z.string(),
   eventTitle: z.string(),
@@ -111,19 +105,19 @@ const obligation = z.object({
   overdue: z.boolean(),
   attendanceFinalized: z.boolean(),
   report: report.optional(),
-});
+})
 const detail = z.object({
   obligation,
   versions: z.array(report),
   preview: snapshot,
-});
+})
 // Bọc schema dữ liệu vào response 200 theo envelope chuẩn
 function responses(schema: z.ZodType) {
   return {
-    "200": {
-      description: "Success",
+    '200': {
+      description: 'Success',
       content: {
-        "application/json": {
+        'application/json': {
           schema: z.object({
             statusCode: z.number(),
             message: z.string(),
@@ -133,76 +127,82 @@ function responses(schema: z.ZodType) {
         },
       },
     },
-    "400": { description: "Invalid request" },
-    "401": { description: "Authentication required" },
-    "403": { description: "Permission required" },
-    "404": { description: "Record not found" },
-    "409": { description: "State or revision conflict" },
-  };
+    '400': { description: 'Invalid request' },
+    '401': { description: 'Authentication required' },
+    '403': { description: 'Permission required' },
+    '404': { description: 'Record not found' },
+    '409': { description: 'State or revision conflict' },
+  }
 }
 export const accountabilityOpenApiPaths: NonNullable<
-  Parameters<typeof createDocument>[0]["paths"]
+  Parameters<typeof createDocument>[0]['paths']
 > = {
-  "/clubs/{clubId}/budgets": {
+  '/clubs/{clubId}/budgets': {
     get: {
-      summary: "Club expense workspace",
+      summary: 'Club expense workspace',
       requestParams: { path: financePath.pick({ clubId: true }) },
       responses: responses(z.array(finance)),
     },
   },
-};
-for (const base of [
-  "/clubs/{clubId}/budgets/{id}",
-  "/admin/budgets/{id}/reconciliation",
-]) {
-  const path = base.startsWith("/clubs")
-    ? financePath
-    : financePath.pick({ id: true });
+}
+for (const base of ['/clubs/{clubId}/budgets/{id}', '/admin/budgets/{id}/reconciliation']) {
+  const path = base.startsWith('/clubs') ? financePath : financePath.pick({ id: true })
   accountabilityOpenApiPaths[base] = {
     get: {
-      summary: "Budget expenses, evidence and settlement history",
+      summary: 'Budget expenses, evidence and settlement history',
       requestParams: { path },
       responses: responses(finance),
     },
-  };
+  }
   accountabilityOpenApiPaths[`${base}/actions`] = {
     post: {
-      summary: "Expense, evidence, submit or officer reconciliation action",
+      summary: 'Expense, evidence, submit or officer reconciliation action',
       requestParams: { path },
       requestBody: {
-        content: { "application/json": { schema: financeActionBody } },
+        content: { 'application/json': { schema: financeActionBody } },
       },
       responses: responses(finance),
     },
-  };
+  }
 }
-for (const base of ["/clubs/{clubId}/event-reports", "/admin/event-reports"]) {
-  const club = base.startsWith("/clubs");
+for (const base of ['/clubs/{clubId}/event-reports', '/admin/event-reports']) {
+  const club = base.startsWith('/clubs')
   accountabilityOpenApiPaths[base] = {
     get: {
-      summary: "Post-event reporting obligations",
-      ...(club
-        ? { requestParams: { path: reportPath.pick({ clubId: true }) } }
-        : {}),
-      responses: responses(z.array(z.union([obligation, z.object({ eventId: z.string(), eventTitle: z.string(), state: z.string(), revision: z.number(), configurationError: z.literal("REPORT_DEADLINE_NOT_CONFIGURED") })]))),
+      summary: 'Post-event reporting obligations',
+      ...(club ? { requestParams: { path: reportPath.pick({ clubId: true }) } } : {}),
+      responses: responses(
+        z.array(
+          z.union([
+            obligation,
+            z.object({
+              eventId: z.string(),
+              eventTitle: z.string(),
+              state: z.string(),
+              revision: z.number(),
+              configurationError: z.literal('REPORT_DEADLINE_NOT_CONFIGURED'),
+            }),
+          ]),
+        ),
+      ),
     },
-  };
-  const path = club ? reportPath : reportPath.pick({ id: true });
+  }
+  const path = club ? reportPath : reportPath.pick({ id: true })
   accountabilityOpenApiPaths[`${base}/{id}`] = {
     get: {
-      summary: "Report versions and live preview",
+      summary: 'Report versions and live preview',
       requestParams: { path },
       responses: responses(detail),
     },
-  };
+  }
   accountabilityOpenApiPaths[`${base}/{id}/actions`] = {
     post: {
-      summary: "Save, submit, claim or decide a report",
+      summary: 'Save, submit, claim or decide a report',
       requestParams: { path },
       requestBody: {
-        content: { "application/json": { schema: reportActionBody } },
+        content: { 'application/json': { schema: reportActionBody } },
       },
       responses: responses(detail),
     },
-  };
+  }
 }

@@ -1,15 +1,21 @@
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
+import prettier from 'eslint-config-prettier/flat'
 
 export default tseslint.config(
-  { ignores: ['**/dist/'] },
+  { ignores: ['**/dist/', '**/coverage/'] },
   eslint.configs.recommended,
   tseslint.configs.recommended,
+  prettier,
   {
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       'func-style': ['error', 'declaration'],
+      curly: ['error', 'all'],
     },
   },
   {
@@ -22,24 +28,32 @@ export default tseslint.config(
         'error',
         {
           selector: 'Literal[value=/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]',
-          message: 'Hex colors are banned in code. Define a token in client/src/index.css and use var(--…).',
+          message:
+            'Hex colors are banned in code. Define a token in client/src/index.css and use var(--…).',
         },
         {
-          selector: 'TemplateElement[value.raw=/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]',
-          message: 'Hex colors are banned in code. Define a token in client/src/index.css and use var(--…).',
+          selector:
+            'TemplateElement[value.raw=/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]',
+          message:
+            'Hex colors are banned in code. Define a token in client/src/index.css and use var(--…).',
         },
         {
           selector: "JSXAttribute[name.name='className'] TemplateLiteral",
-          message: 'No template literals in className. Use cn(base, { override: condition }) — default class + conditional override only.',
+          message:
+            'No template literals in className. Use cn(base, { override: condition }) — default class + conditional override only.',
         },
         // cursor: pointer comes from a global rule in client/src/index.css (button, a[href], [role="button"], [role="option"]).
         {
-          selector: "JSXAttribute[name.name='className'] Literal[value=/(^|\\s)cursor-pointer(\\s|$)/]",
-          message: 'Do not add cursor-pointer per component — the global rule in client/src/index.css covers button, a[href], [role="button"], and [role="option"].',
+          selector:
+            "JSXAttribute[name.name='className'] Literal[value=/(^|\\s)cursor-pointer(\\s|$)/]",
+          message:
+            'Do not add cursor-pointer per component — the global rule in client/src/index.css covers button, a[href], [role="button"], and [role="option"].',
         },
         {
-          selector: "JSXOpeningElement[name.name=/^(?!(a|button|input|select|option|summary|label|textarea|details|area)$)[a-z]/]:has(JSXAttribute[name.name='onClick']):not(:has(JSXAttribute[name.name='role'][value.value=/^(button|option)$/]))",
-          message: 'Anything clickable must show cursor: pointer. Use a real <button>/<a href>, or add role="button" (or role="option" inside a listbox) so the global cursor rule in client/src/index.css applies. Other interactive roles need their own entry in that CSS rule and in this selector.',
+          selector:
+            "JSXOpeningElement[name.name=/^(?!(a|button|input|select|option|summary|label|textarea|details|area)$)[a-z]/]:has(JSXAttribute[name.name='onClick']):not(:has(JSXAttribute[name.name='role'][value.value=/^(button|option)$/]))",
+          message:
+            'Anything clickable must show cursor: pointer. Use a real <button>/<a href>, or add role="button" (or role="option" inside a listbox) so the global cursor rule in client/src/index.css applies. Other interactive roles need their own entry in that CSS rule and in this selector.',
         },
       ],
     },

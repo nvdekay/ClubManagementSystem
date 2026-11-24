@@ -1,64 +1,68 @@
-import { ApiError, apiFetch } from "@/services/apiError";
+import { ApiError, apiFetch } from '@/services/apiError'
 export interface AuthUser {
-  id: string;
-  email: string;
-  displayName: string;
-  avatarUrl?: string;
-  accountState: "Active" | "Locked";
-  lockReason?: string;
+  id: string
+  email: string
+  displayName: string
+  avatarUrl?: string
+  accountState: 'Active' | 'Locked'
+  lockReason?: string
 }
 
 export interface Workspace {
-  kind: "student" | "icpdp" | "club";
-  clubId?: string;
-  clubName?: string;
-  role?: "leader" | "member" | "founder";
-  permissions: string[];
+  kind: 'student' | 'icpdp' | 'club'
+  clubId?: string
+  clubName?: string
+  role?: 'leader' | 'member' | 'founder'
+  permissions: string[]
 }
 
 export interface Me {
-  user: AuthUser;
-  csrfToken: string;
-  systemRoles: string[];
-  workspaces: Workspace[];
+  user: AuthUser
+  csrfToken: string
+  systemRoles: string[]
+  workspaces: Workspace[]
 }
 
 // GET /auth/me: lấy phiên đăng nhập, workspace và quyền; null nếu chưa đăng nhập
 export async function fetchMe(signal: AbortSignal): Promise<Me | null> {
-  const response = await apiFetch("/api/v1/auth/me", { signal, credentials: "same-origin" });
+  const response = await apiFetch('/api/v1/auth/me', { signal, credentials: 'same-origin' })
   // Các route Auth cố ý không có cho đến khi cấu hình xong thông tin OAuth.
-  if (response.status === 401 || response.status === 404) return null;
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
+  if (response.status === 401 || response.status === 404) {
+    return null
   }
-  const body: { data: Me } = await response.json();
-  return body.data;
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { message?: string } | null
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
+  }
+  const body: { data: Me } = await response.json()
+  return body.data
 }
 
 // POST /auth/logout: đăng xuất và huỷ phiên
 export async function logout(csrfToken: string): Promise<void> {
-  const response = await apiFetch("/api/v1/auth/logout", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "X-CSRF-Token": csrfToken },
-  });
+  const response = await apiFetch('/api/v1/auth/logout', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'X-CSRF-Token': csrfToken },
+  })
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
+    const body = (await response.json().catch(() => null)) as { message?: string } | null
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
   }
 }
 
 // Dựng URL bắt đầu đăng nhập Google OAuth kèm returnTo
 export function googleLoginUrl(returnTo: string): string {
-  const params = new URLSearchParams({ returnTo });
-  return `/api/v1/auth/login?${params.toString()}`;
+  const params = new URLSearchParams({ returnTo })
+  return `/api/v1/auth/login?${params.toString()}`
 }
 
 // GET /auth/error: lấy lý do đăng nhập thất bại gần nhất
 export async function fetchLoginError(signal: AbortSignal): Promise<string | null> {
-  const response = await apiFetch("/api/v1/auth/error", { signal, credentials: "same-origin" });
-  if (!response.ok) return null;
-  const body: { data: { reason: string | null } } = await response.json();
-  return body.data.reason;
+  const response = await apiFetch('/api/v1/auth/error', { signal, credentials: 'same-origin' })
+  if (!response.ok) {
+    return null
+  }
+  const body: { data: { reason: string | null } } = await response.json()
+  return body.data.reason
 }

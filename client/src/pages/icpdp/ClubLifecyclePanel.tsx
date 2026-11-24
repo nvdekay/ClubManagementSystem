@@ -1,210 +1,431 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { appToast } from "@/components/ui/toast/AppToast";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useClubLifecycle, useClubLifecycleAction } from "@/hooks/useClubLifecycle";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { cn } from "@/utils/cn";
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { appToast } from '@/components/ui/toast/AppToast'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useClubLifecycle, useClubLifecycleAction } from '@/hooks/useClubLifecycle'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { cn } from '@/utils/cn'
 
-type Decision = "suspend" | "reactivate" | "dissolve";
-const choiceClass = "inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app sm:min-h-9";
-const activeChoiceClass = "bg-segment-app text-text-app shadow-xs";
+type Decision = 'suspend' | 'reactivate' | 'dissolve'
+const choiceClass =
+  'inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app sm:min-h-9'
+const activeChoiceClass = 'bg-segment-app text-text-app shadow-xs'
 
 interface ClubLifecyclePanelProps {
-  clubId: string;
-  csrfToken: string;
+  clubId: string
+  csrfToken: string
 }
 
 // Panel ICPDP xem lịch sử và tạm ngưng, giải thể hoặc kích hoạt lại CLB
 export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProps) {
-  const { t, i18n } = useTranslation();
-  const detail = useClubLifecycle(clubId);
-  const action = useClubLifecycleAction();
-  const [decision, setDecision] = useState<Decision | null>(null);
-  const [reason, setReason] = useState("");
-  const [timed, setTimed] = useState(true);
-  const [until, setUntil] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const { t, i18n } = useTranslation()
+  const detail = useClubLifecycle(clubId)
+  const action = useClubLifecycleAction()
+  const [decision, setDecision] = useState<Decision | null>(null)
+  const [reason, setReason] = useState('')
+  const [timed, setTimed] = useState(true)
+  const [until, setUntil] = useState('')
+  const [error, setError] = useState<string | null>(null)
   // Ngày kết thúc là một ngày trọn vẹn: kích hoạt lại vào đầu ngày đó theo giờ địa phương.
-  const untilIso = decision === "suspend" && timed && until ? new Date(`${until}T00:00:00`).toISOString() : undefined;
-  const field = useFieldValidation(decision ? {
-    reason: reason.trim() ? null : t("clubLifecycle.reasonRequired"),
-    until: decision === "suspend" && timed && (!untilIso || new Date(untilIso) <= new Date())
-      ? t("clubLifecycle.untilRequired") : null,
-  } : {});
+  const untilIso =
+    decision === 'suspend' && timed && until
+      ? new Date(`${until}T00:00:00`).toISOString()
+      : undefined
+  const field = useFieldValidation(
+    decision
+      ? {
+          reason: reason.trim() ? null : t('clubLifecycle.reasonRequired'),
+          until:
+            decision === 'suspend' && timed && (!untilIso || new Date(untilIso) <= new Date())
+              ? t('clubLifecycle.untilRequired')
+              : null,
+        }
+      : {},
+  )
 
   function date(value: string): string {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
+    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
   }
 
   function actionLabel(value: string): string {
     switch (value) {
-      case "CLUB_SUSPENDED": return t("clubLifecycle.action_CLUB_SUSPENDED");
-      case "CLUB_REACTIVATED": return t("clubLifecycle.action_CLUB_REACTIVATED");
-      case "CLUB_DISSOLUTION_DECIDED": return t("clubLifecycle.action_CLUB_DISSOLUTION_DECIDED");
-      case "CLUB_DISSOLVING": return t("clubLifecycle.action_CLUB_DISSOLVING");
-      case "CLUB_DISSOLVED": return t("clubLifecycle.action_CLUB_DISSOLVED");
-      case "CLUB_LIFECYCLE_FAILED": return t("clubLifecycle.action_CLUB_LIFECYCLE_FAILED");
-      default: return value;
+      case 'CLUB_SUSPENDED':
+        return t('clubLifecycle.action_CLUB_SUSPENDED')
+      case 'CLUB_REACTIVATED':
+        return t('clubLifecycle.action_CLUB_REACTIVATED')
+      case 'CLUB_DISSOLUTION_DECIDED':
+        return t('clubLifecycle.action_CLUB_DISSOLUTION_DECIDED')
+      case 'CLUB_DISSOLVING':
+        return t('clubLifecycle.action_CLUB_DISSOLVING')
+      case 'CLUB_DISSOLVED':
+        return t('clubLifecycle.action_CLUB_DISSOLVED')
+      case 'CLUB_LIFECYCLE_FAILED':
+        return t('clubLifecycle.action_CLUB_LIFECYCLE_FAILED')
+      default:
+        return value
     }
   }
 
   function budgetState(value: string): string {
     switch (value) {
-      case "Approved": return t("budgets.stateApproved");
-      case "Disbursed": return t("budgets.stateDisbursed");
-      case "Settlement Submitted": return t("budgets.stateSettlementSubmitted");
-      case "Reconciliation Pending": return t("budgets.stateReconciliationPending");
-      case "Recovery Pending": return t("budgets.stateRecoveryPending");
-      default: return value;
+      case 'Approved':
+        return t('budgets.stateApproved')
+      case 'Disbursed':
+        return t('budgets.stateDisbursed')
+      case 'Settlement Submitted':
+        return t('budgets.stateSettlementSubmitted')
+      case 'Reconciliation Pending':
+        return t('budgets.stateReconciliationPending')
+      case 'Recovery Pending':
+        return t('budgets.stateRecoveryPending')
+      default:
+        return value
     }
   }
 
   // Chọn loại quyết định vòng đời và đặt lại form
   function choose(value: Decision) {
-    setDecision(value);
-    setReason("");
-    setError(null);
-    field.reset();
+    setDecision(value)
+    setReason('')
+    setError(null)
+    field.reset()
   }
 
   // Xác nhận và gửi quyết định vòng đời CLB
   async function confirm() {
-    if (!decision || !field.touchAll()) return;
-    setError(null);
+    if (!decision || !field.touchAll()) {
+      return
+    }
+    setError(null)
     try {
-      const result = await action.mutateAsync(decision === "suspend"
-        ? { kind: "suspend", id: clubId, reason, until: untilIso, csrfToken }
-        : { kind: decision, id: clubId, reason, csrfToken });
-      if (decision === "suspend" && "cancelledEvents" in result) {
-        appToast.success(t("clubLifecycle.suspended", { events: result.cancelledEvents,
-          registrations: result.cancelledRegistrations, bookings: result.cancelledBookings }));
-      } else if (decision === "dissolve" && "effectiveSemester" in result && "cancelledEvents" in result) {
-        appToast.success(t("clubLifecycle.dissolved", { semester: result.effectiveSemester,
-          events: result.cancelledEvents, bookings: result.cancelledBookings }));
-        if ("unreconciledBudgets" in result && Number(result.unreconciledBudgets) > 0) {
-          appToast.warning(t("clubLifecycle.dissolvedUnreconciled", { count: Number(result.unreconciledBudgets) }));
+      const result = await action.mutateAsync(
+        decision === 'suspend'
+          ? { kind: 'suspend', id: clubId, reason, until: untilIso, csrfToken }
+          : { kind: decision, id: clubId, reason, csrfToken },
+      )
+      if (decision === 'suspend' && 'cancelledEvents' in result) {
+        appToast.success(
+          t('clubLifecycle.suspended', {
+            events: result.cancelledEvents,
+            registrations: result.cancelledRegistrations,
+            bookings: result.cancelledBookings,
+          }),
+        )
+      } else if (
+        decision === 'dissolve' &&
+        'effectiveSemester' in result &&
+        'cancelledEvents' in result
+      ) {
+        appToast.success(
+          t('clubLifecycle.dissolved', {
+            semester: result.effectiveSemester,
+            events: result.cancelledEvents,
+            bookings: result.cancelledBookings,
+          }),
+        )
+        if ('unreconciledBudgets' in result && Number(result.unreconciledBudgets) > 0) {
+          appToast.warning(
+            t('clubLifecycle.dissolvedUnreconciled', { count: Number(result.unreconciledBudgets) }),
+          )
         }
       } else {
-        appToast.success(t("clubLifecycle.reactivated"));
+        appToast.success(t('clubLifecycle.reactivated'))
       }
-      setDecision(null);
+      setDecision(null)
     } catch (failure) {
-      setError(`${t("clubLifecycle.failed")} ${(failure as Error).message}`);
+      setError(`${t('clubLifecycle.failed')} ${(failure as Error).message}`)
     }
   }
 
-  if (detail.isPending) return <AppSkeleton className="mt-4 h-64 w-full" />;
-  if (detail.isError || !detail.data) {
-    return <AppNotice tone="danger" role="alert" className="mt-4" title={t("clubLifecycle.detailLoadError")}>
-      <AppButton variant="secondary" onClick={() => void detail.refetch()}>{t("clubLifecycle.retry")}</AppButton>
-    </AppNotice>;
+  if (detail.isPending) {
+    return <AppSkeleton className="mt-4 h-64 w-full" />
   }
-  const { club, nextSemester } = detail.data;
-  const canSuspend = club.state === "Active";
-  const canReactivate = club.state === "Suspended";
-  const canDissolve = ["Active", "Suspended"].includes(club.state) && !club.dissolution;
-  const outstanding = club.dissolution?.outstanding;
+  if (detail.isError || !detail.data) {
+    return (
+      <AppNotice
+        tone="danger"
+        role="alert"
+        className="mt-4"
+        title={t('clubLifecycle.detailLoadError')}
+      >
+        <AppButton variant="secondary" onClick={() => void detail.refetch()}>
+          {t('clubLifecycle.retry')}
+        </AppButton>
+      </AppNotice>
+    )
+  }
+  const { club, nextSemester } = detail.data
+  const canSuspend = club.state === 'Active'
+  const canReactivate = club.state === 'Suspended'
+  const canDissolve = ['Active', 'Suspended'].includes(club.state) && !club.dissolution
+  const outstanding = club.dissolution?.outstanding
   // E1: cảnh báo khi đang chọn giải thể và suốt thời gian CLB còn đang trong quá trình giải thể.
-  const showUnreconciled = club.unreconciledBudgets.length > 0 && club.state !== "Dissolved"
-    && (decision === "dissolve" || Boolean(club.dissolution));
+  const showUnreconciled =
+    club.unreconciledBudgets.length > 0 &&
+    club.state !== 'Dissolved' &&
+    (decision === 'dissolve' || Boolean(club.dissolution))
 
   return (
     <div className="space-y-6 pt-4">
-      {club.suspension && <AppNotice tone="warning">{t("clubLifecycle.suspendedSince", {
-        date: date(club.suspension.suspendedAt), reason: club.suspension.reason })} · {club.suspension.until
-        ? t("clubLifecycle.until", { date: date(club.suspension.until) }) : t("clubLifecycle.indefinite")}</AppNotice>}
-      {club.dissolution && <AppNotice tone="danger">{t("clubLifecycle.dissolutionScheduled", {
-        semester: club.dissolution.effectiveSemester, from: date(club.dissolution.effectiveFrom),
-        to: date(club.dissolution.effectiveTo), reason: club.dissolution.reason })}</AppNotice>}
-      {showUnreconciled && <AppNotice tone="warning" title={t("clubLifecycle.unreconciledTitle")}>
-        <p>{t("clubLifecycle.unreconciledHint")}</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">{club.unreconciledBudgets.map((item) =>
-          <li key={item.id}>{t("clubLifecycle.budgetLine", { event: item.eventTitle, state: budgetState(item.state) })}</li>)}</ul>
-      </AppNotice>}
-      {club.dissolution?.archivedAt && outstanding && <AppNotice
-        tone={outstanding.periodicReports.length || outstanding.postEventReports.length || outstanding.budgets.length ? "warning" : "info"}
-        title={t("clubLifecycle.outstandingTitle", { date: date(club.dissolution.archivedAt) })}>
-        {outstanding.periodicReports.length || outstanding.postEventReports.length || outstanding.budgets.length
-          ? <ul className="list-disc space-y-1 pl-5">
-            {outstanding.periodicReports.length > 0 && <li>{t("clubLifecycle.outstandingPeriodic",
-              { periods: outstanding.periodicReports.join(", ") })}</li>}
-            {outstanding.postEventReports.length > 0 && <li>{t("clubLifecycle.outstandingPostEvent",
-              { events: outstanding.postEventReports.map((item) => item.title).join(", ") })}</li>}
-            {outstanding.budgets.length > 0 && <li>{t("clubLifecycle.outstandingBudgets",
-              { budgets: outstanding.budgets.map((item) => item.eventTitle).join(", ") })}</li>}
+      {club.suspension && (
+        <AppNotice tone="warning">
+          {t('clubLifecycle.suspendedSince', {
+            date: date(club.suspension.suspendedAt),
+            reason: club.suspension.reason,
+          })}{' '}
+          ·{' '}
+          {club.suspension.until
+            ? t('clubLifecycle.until', { date: date(club.suspension.until) })
+            : t('clubLifecycle.indefinite')}
+        </AppNotice>
+      )}
+      {club.dissolution && (
+        <AppNotice tone="danger">
+          {t('clubLifecycle.dissolutionScheduled', {
+            semester: club.dissolution.effectiveSemester,
+            from: date(club.dissolution.effectiveFrom),
+            to: date(club.dissolution.effectiveTo),
+            reason: club.dissolution.reason,
+          })}
+        </AppNotice>
+      )}
+      {showUnreconciled && (
+        <AppNotice tone="warning" title={t('clubLifecycle.unreconciledTitle')}>
+          <p>{t('clubLifecycle.unreconciledHint')}</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {club.unreconciledBudgets.map((item) => (
+              <li key={item.id}>
+                {t('clubLifecycle.budgetLine', {
+                  event: item.eventTitle,
+                  state: budgetState(item.state),
+                })}
+              </li>
+            ))}
           </ul>
-          : <p>{t("clubLifecycle.outstandingNone")}</p>}
-      </AppNotice>}
+        </AppNotice>
+      )}
+      {club.dissolution?.archivedAt && outstanding && (
+        <AppNotice
+          tone={
+            outstanding.periodicReports.length ||
+            outstanding.postEventReports.length ||
+            outstanding.budgets.length
+              ? 'warning'
+              : 'info'
+          }
+          title={t('clubLifecycle.outstandingTitle', { date: date(club.dissolution.archivedAt) })}
+        >
+          {outstanding.periodicReports.length ||
+          outstanding.postEventReports.length ||
+          outstanding.budgets.length ? (
+            <ul className="list-disc space-y-1 pl-5">
+              {outstanding.periodicReports.length > 0 && (
+                <li>
+                  {t('clubLifecycle.outstandingPeriodic', {
+                    periods: outstanding.periodicReports.join(', '),
+                  })}
+                </li>
+              )}
+              {outstanding.postEventReports.length > 0 && (
+                <li>
+                  {t('clubLifecycle.outstandingPostEvent', {
+                    events: outstanding.postEventReports.map((item) => item.title).join(', '),
+                  })}
+                </li>
+              )}
+              {outstanding.budgets.length > 0 && (
+                <li>
+                  {t('clubLifecycle.outstandingBudgets', {
+                    budgets: outstanding.budgets.map((item) => item.eventTitle).join(', '),
+                  })}
+                </li>
+              )}
+            </ul>
+          ) : (
+            <p>{t('clubLifecycle.outstandingNone')}</p>
+          )}
+        </AppNotice>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <div><h3 className="text-sm font-semibold">{t("clubLifecycle.openCampaigns")}</h3>
-          {club.openCampaigns.length ? <ul className="mt-1 space-y-1 text-sm">{club.openCampaigns.map((item) =>
-            <li key={item.id}>{item.title} · {date(item.windowEnd)}</li>)}</ul>
-            : <div className="mt-1"><AppEmptyState message={t("clubLifecycle.none")} /></div>}</div>
-        <div><h3 className="text-sm font-semibold">{t("clubLifecycle.upcomingEvents")}</h3>
-          {club.upcomingEvents.length ? <ul className="mt-1 space-y-1 text-sm">{club.upcomingEvents.map((item) =>
-            <li key={item.id}>{item.title} · {date(item.startAt)} · {t("clubLifecycle.registrations", { count: item.registrations })}</li>)}</ul>
-            : <div className="mt-1"><AppEmptyState message={t("clubLifecycle.none")} /></div>}</div>
-        <div><h3 className="text-sm font-semibold">{t("clubLifecycle.activeTerm")}</h3>
-          <p className="mt-1 text-sm">{club.activeTerm ? `${club.activeTerm.name} · ${date(club.activeTerm.startAt)} – ${date(club.activeTerm.endAt)}`
-            : t("clubLifecycle.none")}</p></div>
+        <div>
+          <h3 className="text-sm font-semibold">{t('clubLifecycle.openCampaigns')}</h3>
+          {club.openCampaigns.length ? (
+            <ul className="mt-1 space-y-1 text-sm">
+              {club.openCampaigns.map((item) => (
+                <li key={item.id}>
+                  {item.title} · {date(item.windowEnd)}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-1">
+              <AppEmptyState message={t('clubLifecycle.none')} />
+            </div>
+          )}
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold">{t('clubLifecycle.upcomingEvents')}</h3>
+          {club.upcomingEvents.length ? (
+            <ul className="mt-1 space-y-1 text-sm">
+              {club.upcomingEvents.map((item) => (
+                <li key={item.id}>
+                  {item.title} · {date(item.startAt)} ·{' '}
+                  {t('clubLifecycle.registrations', { count: item.registrations })}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-1">
+              <AppEmptyState message={t('clubLifecycle.none')} />
+            </div>
+          )}
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold">{t('clubLifecycle.activeTerm')}</h3>
+          <p className="mt-1 text-sm">
+            {club.activeTerm
+              ? `${club.activeTerm.name} · ${date(club.activeTerm.startAt)} – ${date(club.activeTerm.endAt)}`
+              : t('clubLifecycle.none')}
+          </p>
+        </div>
       </section>
 
-      {(canSuspend || canReactivate || canDissolve) && <div className="flex flex-wrap gap-2">
-        {canSuspend && <AppButton variant={decision === "suspend" ? "primary" : "secondary"} onClick={() => choose("suspend")}>
-          {t("clubLifecycle.suspend")}</AppButton>}
-        {canReactivate && <AppButton variant={decision === "reactivate" ? "primary" : "secondary"} onClick={() => choose("reactivate")}>
-          {t("clubLifecycle.reactivate")}</AppButton>}
-        {canDissolve && <AppButton variant={decision === "dissolve" ? "primary" : "secondary"}
-          className={cn({ "text-danger-app": decision !== "dissolve" })} onClick={() => choose("dissolve")}>
-          {t("clubLifecycle.dissolve")}</AppButton>}
-      </div>}
-
-      {decision && <section className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs">
-        <p className="text-sm text-muted-app">{decision === "suspend" ? t("clubLifecycle.suspendHint")
-          : decision === "reactivate" ? t("clubLifecycle.reactivateHint")
-            : nextSemester ? t("clubLifecycle.dissolveHint", { semester: nextSemester.code }) : t("clubLifecycle.noNextSemester")}</p>
-        {decision === "suspend" && <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">{t("clubLifecycle.duration")}</legend>
-          <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">{[true, false].map((value) => (
-            <button key={String(value)} type="button" aria-pressed={timed === value} onClick={() => setTimed(value)}
-              className={cn(choiceClass, { [activeChoiceClass]: timed === value })}>
-              {value ? t("clubLifecycle.durationUntil") : t("clubLifecycle.durationOpen")}</button>))}
-          </div>
-          {timed && <label className="block text-sm font-medium text-text-app">{t("clubLifecycle.untilDate")}<AppRequiredMark />
-            <AppInput type="date" className="mt-1.5 block font-normal" value={until} {...field.control("until")}
-              onChange={(event) => setUntil(event.target.value)} />
-            <AppFieldError message={field.error("until")} /></label>}
-        </fieldset>}
-        <label className="block text-sm font-medium text-text-app">{t("clubLifecycle.reason")}<AppRequiredMark />
-          <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" maxLength={2000} value={reason}
-            {...field.control("reason")} onChange={(event) => setReason(event.target.value)} />
-          <AppFieldError message={field.error("reason")} /></label>
-        {error && <p role="alert" className="text-sm text-danger-app">{error}</p>}
-        <div className="flex flex-wrap gap-3">
-          <AppButton disabled={action.isPending || (decision === "dissolve" && !nextSemester)} onClick={() => void confirm()}>
-            {action.isPending ? t("clubLifecycle.working") : t("clubLifecycle.confirm")}</AppButton>
-          <AppButton variant="ghost" onClick={() => setDecision(null)}>{t("clubLifecycle.cancel")}</AppButton>
+      {(canSuspend || canReactivate || canDissolve) && (
+        <div className="flex flex-wrap gap-2">
+          {canSuspend && (
+            <AppButton
+              variant={decision === 'suspend' ? 'primary' : 'secondary'}
+              onClick={() => choose('suspend')}
+            >
+              {t('clubLifecycle.suspend')}
+            </AppButton>
+          )}
+          {canReactivate && (
+            <AppButton
+              variant={decision === 'reactivate' ? 'primary' : 'secondary'}
+              onClick={() => choose('reactivate')}
+            >
+              {t('clubLifecycle.reactivate')}
+            </AppButton>
+          )}
+          {canDissolve && (
+            <AppButton
+              variant={decision === 'dissolve' ? 'primary' : 'secondary'}
+              className={cn({ 'text-danger-app': decision !== 'dissolve' })}
+              onClick={() => choose('dissolve')}
+            >
+              {t('clubLifecycle.dissolve')}
+            </AppButton>
+          )}
         </div>
-      </section>}
+      )}
 
-      <section><h3 className="font-heading text-sm font-semibold">{t("clubLifecycle.history")}</h3>
-        {club.history.length ? <ol className="mt-3 space-y-3 border-l-2 border-border-app pl-4">{club.history.map((item, index) => (
-          <li key={`${item.action}-${item.at}-${index}`} className="text-sm">
-            <p><span className="font-medium">{actionLabel(item.action)}</span> · {date(item.at)} · {item.actorName
-              ? t("clubLifecycle.by", { name: item.actorName }) : t("clubLifecycle.system")}</p>
-            {item.reason && <p className="mt-0.5 text-muted-app">{item.reason}</p>}
-          </li>))}</ol> : <div className="mt-2"><AppEmptyState message={t("clubLifecycle.noHistory")} /></div>}
+      {decision && (
+        <section className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs">
+          <p className="text-sm text-muted-app">
+            {decision === 'suspend'
+              ? t('clubLifecycle.suspendHint')
+              : decision === 'reactivate'
+                ? t('clubLifecycle.reactivateHint')
+                : nextSemester
+                  ? t('clubLifecycle.dissolveHint', { semester: nextSemester.code })
+                  : t('clubLifecycle.noNextSemester')}
+          </p>
+          {decision === 'suspend' && (
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">{t('clubLifecycle.duration')}</legend>
+              <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
+                {[true, false].map((value) => (
+                  <button
+                    key={String(value)}
+                    type="button"
+                    aria-pressed={timed === value}
+                    onClick={() => setTimed(value)}
+                    className={cn(choiceClass, { [activeChoiceClass]: timed === value })}
+                  >
+                    {value ? t('clubLifecycle.durationUntil') : t('clubLifecycle.durationOpen')}
+                  </button>
+                ))}
+              </div>
+              {timed && (
+                <label className="block text-sm font-medium text-text-app">
+                  {t('clubLifecycle.untilDate')}
+                  <AppRequiredMark />
+                  <AppInput
+                    type="date"
+                    className="mt-1.5 block font-normal"
+                    value={until}
+                    {...field.control('until')}
+                    onChange={(event) => setUntil(event.target.value)}
+                  />
+                  <AppFieldError message={field.error('until')} />
+                </label>
+              )}
+            </fieldset>
+          )}
+          <label className="block text-sm font-medium text-text-app">
+            {t('clubLifecycle.reason')}
+            <AppRequiredMark />
+            <AppTextarea
+              className="mt-1.5 min-h-24 w-full font-normal"
+              maxLength={2000}
+              value={reason}
+              {...field.control('reason')}
+              onChange={(event) => setReason(event.target.value)}
+            />
+            <AppFieldError message={field.error('reason')} />
+          </label>
+          {error && (
+            <p role="alert" className="text-sm text-danger-app">
+              {error}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3">
+            <AppButton
+              disabled={action.isPending || (decision === 'dissolve' && !nextSemester)}
+              onClick={() => void confirm()}
+            >
+              {action.isPending ? t('clubLifecycle.working') : t('clubLifecycle.confirm')}
+            </AppButton>
+            <AppButton variant="ghost" onClick={() => setDecision(null)}>
+              {t('clubLifecycle.cancel')}
+            </AppButton>
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h3 className="font-heading text-sm font-semibold">{t('clubLifecycle.history')}</h3>
+        {club.history.length ? (
+          <ol className="mt-3 space-y-3 border-l-2 border-border-app pl-4">
+            {club.history.map((item, index) => (
+              <li key={`${item.action}-${item.at}-${index}`} className="text-sm">
+                <p>
+                  <span className="font-medium">{actionLabel(item.action)}</span> · {date(item.at)}{' '}
+                  ·{' '}
+                  {item.actorName
+                    ? t('clubLifecycle.by', { name: item.actorName })
+                    : t('clubLifecycle.system')}
+                </p>
+                {item.reason && <p className="mt-0.5 text-muted-app">{item.reason}</p>}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="mt-2">
+            <AppEmptyState message={t('clubLifecycle.noHistory')} />
+          </div>
+        )}
       </section>
     </div>
-  );
+  )
 }

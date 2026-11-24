@@ -1,4 +1,4 @@
-import type { MailTransport } from "../../domain/notification.js";
+import type { MailTransport } from '../../domain/notification.js'
 
 // Transport email dev: chỉ ghi log người nhận và tiêu đề thay vì gửi thật
 /**
@@ -8,11 +8,11 @@ import type { MailTransport } from "../../domain/notification.js";
  */
 export function logMailTransport(write: (line: string) => void = console.log): MailTransport {
   return {
-    name: "log",
+    name: 'log',
     // Ghi một dòng JSON log cho email và coi như đã gửi
     async send(email) {
-      write(JSON.stringify({ mail: "log", to: email.to, subject: email.subject }));
-      return { providerResponse: "logged" };
+      write(JSON.stringify({ mail: 'log', to: email.to, subject: email.subject }))
+      return { providerResponse: 'logged' }
     },
-  };
+  }
 }

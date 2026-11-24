@@ -106,8 +106,34 @@ Mở http://localhost:5173, đăng nhập bằng email đã đặt ở `BOOTSTRA
 ## Kiểm tra
 
 ```bash
-npm run check            # constitution + lint + typecheck + test — Definition of Done
+npm run check            # constitution + lint + format + typecheck + test — Definition of Done
 ```
+
+### Lint và format
+
+Chạy tại thư mục gốc:
+
+```bash
+npm run lint            # kiểm tra ESLint ở cả server và client
+npm run lint:fix        # tự sửa các lỗi ESLint có hỗ trợ autofix
+npm run format          # format toàn bộ code và cấu hình được hỗ trợ
+npm run format:check    # kiểm tra format, không sửa file
+```
+
+Khi dọn code, chạy `npm run lint:fix` rồi `npm run format`; sau đó chạy `npm run check`.
+ESLint giữ các quy tắc TypeScript, React Hooks và ranh giới UI hiện có, đồng thời yêu cầu
+dấu ngoặc nhọn cho mọi nhánh `if`/`else` và vòng lặp. Lệnh lint báo lỗi nếu còn warning.
+
+Prettier thống nhất thụt 2 dấu cách, nháy đơn trong JavaScript/TypeScript, không chấm phẩy,
+dấu phẩy cuối và xuống dòng theo độ rộng mục tiêu 100 ký tự. Cấu hình nằm trong
+[`.prettierrc.json`](.prettierrc.json); [`.editorconfig`](.editorconfig) giữ UTF-8 và xuống dòng LF.
+Hai lệnh format áp dụng cho code, test và cấu hình trong `server/`, `client/`, các file JSON/MJS
+ở gốc và cấu hình VS Code. File sinh tự động (`*.generated.*`), lockfile, build output và tài liệu
+được bỏ qua qua [`.prettierignore`](.prettierignore).
+
+Trong VS Code, cài hai extension được repo đề xuất: **ESLint** và **Prettier - Code formatter**.
+Workspace đã bật format khi lưu và tự sửa ESLint khi lưu file JavaScript/TypeScript.
+CI gọi `npm run check`, nên code chưa đúng format sẽ làm bước kiểm tra thất bại.
 
 ## Bố cục
 
