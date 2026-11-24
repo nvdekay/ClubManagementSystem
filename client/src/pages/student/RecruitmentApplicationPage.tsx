@@ -1,349 +1,754 @@
-import { useRef, useState } from "react";
-import { Link, useParams } from "react-router";
-import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useAuth } from "@/hooks/useAuth";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { useMyCampaignApplication, useRecruitmentApplicationAction } from "@/hooks/useRecruitmentApplications";
-import { usePublicRecruitmentCampaign } from "@/hooks/useRecruitmentCampaigns";
-import type { RecruitmentApplication } from "@/services/recruitmentApplications";
-import type { RecruitmentAnswer } from "@/services/recruitmentApplications";
-import { cn } from "@/utils/cn";
-import { useConfirm } from "@/hooks/useConfirm";
-import { isHttpUrl } from "@/utils/validation";
+import { useRef, useState } from 'react'
+import { Link, useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useAuth } from '@/hooks/useAuth'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
+import {
+  useMyCampaignApplication,
+  useRecruitmentApplicationAction,
+} from '@/hooks/useRecruitmentApplications'
+import { usePublicRecruitmentCampaign } from '@/hooks/useRecruitmentCampaigns'
+import type { RecruitmentApplication } from '@/services/recruitmentApplications'
+import type { RecruitmentAnswer } from '@/services/recruitmentApplications'
+import { cn } from '@/utils/cn'
+import { useConfirm } from '@/hooks/useConfirm'
+import { isHttpUrl } from '@/utils/validation'
 
 // Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
-function stateLabel(state: RecruitmentApplication["state"], t: TFunction): string {
+function stateLabel(state: RecruitmentApplication['state'], t: TFunction): string {
   switch (state) {
-    case "Draft": return t("recruitmentApplications.stateDraft");
-    case "Submitted": return t("recruitmentApplications.stateSubmitted");
-    case "Screening": return t("recruitmentApplications.stateScreening");
-    case "Shortlisted": return t("recruitmentApplications.stateShortlisted");
-    case "Accepted": return t("recruitmentApplications.stateAccepted");
-    case "Rejected": return t("recruitmentApplications.stateRejected");
-    case "Waitlisted": return t("recruitmentApplications.stateWaitlisted");
-    case "Onboarded": return t("recruitmentApplications.stateOnboarded");
-    case "Withdrawn": return t("recruitmentApplications.stateWithdrawn");
-    case "Declined": return t("recruitmentApplications.stateDeclined");
+    case 'Draft':
+      return t('recruitmentApplications.stateDraft')
+    case 'Submitted':
+      return t('recruitmentApplications.stateSubmitted')
+    case 'Screening':
+      return t('recruitmentApplications.stateScreening')
+    case 'Shortlisted':
+      return t('recruitmentApplications.stateShortlisted')
+    case 'Accepted':
+      return t('recruitmentApplications.stateAccepted')
+    case 'Rejected':
+      return t('recruitmentApplications.stateRejected')
+    case 'Waitlisted':
+      return t('recruitmentApplications.stateWaitlisted')
+    case 'Onboarded':
+      return t('recruitmentApplications.stateOnboarded')
+    case 'Withdrawn':
+      return t('recruitmentApplications.stateWithdrawn')
+    case 'Declined':
+      return t('recruitmentApplications.stateDeclined')
   }
 }
 
 // Màu badge theo trạng thái hồ sơ ứng tuyển
-function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
-  if (state === "Accepted" || state === "Onboarded") return "success";
-  if (state === "Rejected" || state === "Declined") return "danger";
-  if (state === "Waitlisted") return "warning";
-  if (state === "Draft" || state === "Withdrawn") return "neutral";
-  return "info";
+function stateTone(state: RecruitmentApplication['state']): AppBadgeTone {
+  if (state === 'Accepted' || state === 'Onboarded') {
+    return 'success'
+  }
+  if (state === 'Rejected' || state === 'Declined') {
+    return 'danger'
+  }
+  if (state === 'Waitlisted') {
+    return 'warning'
+  }
+  if (state === 'Draft' || state === 'Withdrawn') {
+    return 'neutral'
+  }
+  return 'info'
 }
 
 // Kiểm tra giá trị có phải hồ sơ ứng tuyển hay không
 function isApplication(value: unknown): value is RecruitmentApplication {
-  return Boolean(value && typeof value === "object" && "id" in value && "attachments" in value);
+  return Boolean(value && typeof value === 'object' && 'id' in value && 'attachments' in value)
 }
 
 // Trang sinh viên điền, lưu nháp, nộp và rút hồ sơ ứng tuyển vào CLB
 export function RecruitmentApplicationPage() {
-  const { campaignId } = useParams();
-  const { t, i18n } = useTranslation();
-  const askConfirm = useConfirm();
-  const auth = useAuth();
-  const campaignQuery = usePublicRecruitmentCampaign(campaignId);
-  const applicationQuery = useMyCampaignApplication(campaignId, Boolean(auth.data));
-  const action = useRecruitmentApplicationAction();
-  const [formState, setFormState] = useState<{ campaignId: string; position: string;
-    answers: Record<string, RecruitmentAnswer> } | null>(null);
-  const [createdApplication, setCreatedApplication] = useState<RecruitmentApplication | null>(null);
-  const [notice, setNotice] = useState("");
-  const [pageError, setPageError] = useState("");
+  const { campaignId } = useParams()
+  const { t, i18n } = useTranslation()
+  const askConfirm = useConfirm()
+  const auth = useAuth()
+  const campaignQuery = usePublicRecruitmentCampaign(campaignId)
+  const applicationQuery = useMyCampaignApplication(campaignId, Boolean(auth.data))
+  const action = useRecruitmentApplicationAction()
+  const [formState, setFormState] = useState<{
+    campaignId: string
+    position: string
+    answers: Record<string, RecruitmentAnswer>
+  } | null>(null)
+  const [createdApplication, setCreatedApplication] = useState<RecruitmentApplication | null>(null)
+  const [notice, setNotice] = useState('')
+  const [pageError, setPageError] = useState('')
   // Nhấp đúp sẽ chạy hai hộp xác nhận và hai lần lưu nháp đồng thời (lỗi 409).
-  const submitting = useRef(false);
-  const campaign = campaignQuery.data;
-  const application = applicationQuery.data ?? createdApplication;
+  const submitting = useRef(false)
+  const campaign = campaignQuery.data
+  const application = applicationQuery.data ?? createdApplication
   // UC15: khi CLB bị tạm ngưng, form vẫn xem được nhưng không thể tạo hay nộp gì.
-  const paused = campaignQuery.data?.clubSuspended === true;
-  const editable = (!application || application.state === "Draft") && !paused;
-  const canWithdraw = Boolean(application && ["Submitted", "Screening", "Shortlisted"].includes(application.state));
-  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
+  const paused = campaignQuery.data?.clubSuspended === true
+  const editable = (!application || application.state === 'Draft') && !paused
+  const canWithdraw = Boolean(
+    application && ['Submitted', 'Screening', 'Shortlisted'].includes(application.state),
+  )
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-US'
 
-  const form = campaign && formState?.campaignId === campaign.id ? formState : null;
-  const position = form?.position || application?.position || campaign?.positions[0] || "";
-  const answers = form?.answers ?? application?.answers ?? {};
-  const attachedKeys = new Set((application?.attachments ?? []).map((item) => item.fieldKey));
-  const validation = useFieldValidation(Object.fromEntries((campaign?.formSchema ?? []).map((field) => {
-    if (field.type === "file") return [field.key, field.required && !attachedKeys.has(field.key) ? t("common.fileRequired") : null];
-    const answer = answers[field.key] ?? "";
-    if (!([answer].flat().some((value) => value.trim()))) {
-      return [field.key, field.required ? t(field.type === "select" || field.type === "multiselect"
-        ? "common.chooseRequired" : "common.fieldRequired") : null];
-    }
-    // Định dạng link chỉ được kiểm tra ở câu hỏi bắt buộc; câu trả lời tuỳ chọn để server kiểm tra.
-    return [field.key, field.required && field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
-  })));
+  const form = campaign && formState?.campaignId === campaign.id ? formState : null
+  const position = form?.position || application?.position || campaign?.positions[0] || ''
+  const answers = form?.answers ?? application?.answers ?? {}
+  const attachedKeys = new Set((application?.attachments ?? []).map((item) => item.fieldKey))
+  const validation = useFieldValidation(
+    Object.fromEntries(
+      (campaign?.formSchema ?? []).map((field) => {
+        if (field.type === 'file') {
+          return [
+            field.key,
+            field.required && !attachedKeys.has(field.key) ? t('common.fileRequired') : null,
+          ]
+        }
+        const answer = answers[field.key] ?? ''
+        if (![answer].flat().some((value) => value.trim())) {
+          return [
+            field.key,
+            field.required
+              ? t(
+                  field.type === 'select' || field.type === 'multiselect'
+                    ? 'common.chooseRequired'
+                    : 'common.fieldRequired',
+                )
+              : null,
+          ]
+        }
+        // Định dạng link chỉ được kiểm tra ở câu hỏi bắt buộc; câu trả lời tuỳ chọn để server kiểm tra.
+        return [
+          field.key,
+          field.required && field.type === 'url' && typeof answer === 'string' && !isHttpUrl(answer)
+            ? t('common.invalidUrl')
+            : null,
+        ]
+      }),
+    ),
+  )
 
   // Cập nhật câu trả lời của một câu hỏi trong form
   function changeAnswer(key: string, value: RecruitmentAnswer) {
-    if (!campaign) return;
-    setFormState((current) => ({ campaignId: campaign.id,
+    if (!campaign) {
+      return
+    }
+    setFormState((current) => ({
+      campaignId: campaign.id,
       position: current?.campaignId === campaign.id ? current.position : position,
-      answers: { ...(current?.campaignId === campaign.id ? current.answers : answers), [key]: value } }));
-    setNotice("");
+      answers: {
+        ...(current?.campaignId === campaign.id ? current.answers : answers),
+        [key]: value,
+      },
+    }))
+    setNotice('')
   }
 
   // Tạo hồ sơ nháp nếu chưa có và trả mã hồ sơ
   async function ensureApplication(): Promise<string | null> {
-    if (!auth.data || !campaign) return null;
-    if (application) return application.id;
+    if (!auth.data || !campaign) {
+      return null
+    }
+    if (application) {
+      return application.id
+    }
     try {
-      const result = await action.mutateAsync({ kind: "create", campaignId: campaign.id,
-        position, csrfToken: auth.data.csrfToken });
-      if (!isApplication(result)) return null;
-      setCreatedApplication(result);
-      return result.id;
+      const result = await action.mutateAsync({
+        kind: 'create',
+        campaignId: campaign.id,
+        position,
+        csrfToken: auth.data.csrfToken,
+      })
+      if (!isApplication(result)) {
+        return null
+      }
+      setCreatedApplication(result)
+      return result.id
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : t("recruitmentApplications.actionError"));
-      return null;
+      setPageError(
+        error instanceof Error ? error.message : t('recruitmentApplications.actionError'),
+      )
+      return null
     }
   }
 
   // Lưu bản nháp hồ sơ ứng tuyển
   async function saveDraft(): Promise<string | null> {
-    if (!auth.data || !campaign) return null;
-    setPageError("");
-    setNotice("");
-    const applicationId = await ensureApplication();
-    if (!applicationId) return null;
+    if (!auth.data || !campaign) {
+      return null
+    }
+    setPageError('')
+    setNotice('')
+    const applicationId = await ensureApplication()
+    if (!applicationId) {
+      return null
+    }
     try {
-      const result = await action.mutateAsync({ kind: "save", applicationId,
-        position, answers, csrfToken: auth.data.csrfToken });
-      if (isApplication(result)) setCreatedApplication(result);
-      setNotice(t("recruitmentApplications.saved"));
-      return applicationId;
+      const result = await action.mutateAsync({
+        kind: 'save',
+        applicationId,
+        position,
+        answers,
+        csrfToken: auth.data.csrfToken,
+      })
+      if (isApplication(result)) {
+        setCreatedApplication(result)
+      }
+      setNotice(t('recruitmentApplications.saved'))
+      return applicationId
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : t("recruitmentApplications.actionError"));
-      return null;
+      setPageError(
+        error instanceof Error ? error.message : t('recruitmentApplications.actionError'),
+      )
+      return null
     }
   }
 
   // Tải tệp đính kèm lên cho một câu hỏi của form
   async function upload(fieldKey: string, file: File | undefined) {
-    if (!auth.data || !campaign || !file) return;
-    const field = campaign.formSchema.find((item) => item.key === fieldKey);
-    if (!field) return;
-    setPageError("");
-    setNotice("");
-    const applicationId = await ensureApplication();
-    if (!applicationId) return;
+    if (!auth.data || !campaign || !file) {
+      return
+    }
+    const field = campaign.formSchema.find((item) => item.key === fieldKey)
+    if (!field) {
+      return
+    }
+    setPageError('')
+    setNotice('')
+    const applicationId = await ensureApplication()
+    if (!applicationId) {
+      return
+    }
     try {
-      const result = await action.mutateAsync({ kind: "upload", applicationId, field,
-        file, csrfToken: auth.data.csrfToken });
-      if (isApplication(result)) setCreatedApplication(result);
-      setNotice(t("recruitmentApplications.uploaded"));
+      const result = await action.mutateAsync({
+        kind: 'upload',
+        applicationId,
+        field,
+        file,
+        csrfToken: auth.data.csrfToken,
+      })
+      if (isApplication(result)) {
+        setCreatedApplication(result)
+      }
+      setNotice(t('recruitmentApplications.uploaded'))
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : t("recruitmentApplications.actionError"));
+      setPageError(
+        error instanceof Error ? error.message : t('recruitmentApplications.actionError'),
+      )
     }
   }
 
   // Xác nhận rồi nộp hồ sơ ứng tuyển
   async function submit() {
-    if (!auth.data || !campaign || submitting.current) return;
+    if (!auth.data || !campaign || submitting.current) {
+      return
+    }
     // Kiểm tra câu trả lời trước khi hỏi xác nhận, để không tạo gì khi form chưa đầy đủ.
     if (!validation.touchAll()) {
       // Phần tóm tắt hữu ích với form dài, khi câu hỏi bị đánh dấu có thể nằm ngoài màn hình.
-      const missing = campaign.formSchema.filter((field) => field.required && (field.type === "file"
-        ? !attachedKeys.has(field.key)
-        : !([answers[field.key] ?? ""].flat().some((value) => value.trim())))).map((field) => field.label);
-      setNotice("");
-      setPageError(missing.length ? t("recruitmentApplications.requiredMissing", { fields: missing.join(", ") }) : "");
-      return;
+      const missing = campaign.formSchema
+        .filter(
+          (field) =>
+            field.required &&
+            (field.type === 'file'
+              ? !attachedKeys.has(field.key)
+              : ![answers[field.key] ?? ''].flat().some((value) => value.trim())),
+        )
+        .map((field) => field.label)
+      setNotice('')
+      setPageError(
+        missing.length
+          ? t('recruitmentApplications.requiredMissing', { fields: missing.join(', ') })
+          : '',
+      )
+      return
     }
-    submitting.current = true;
+    submitting.current = true
     try {
-      if (!(await askConfirm(t("recruitmentApplications.submitConfirm")))) return;
-      const applicationId = await saveDraft();
-      if (!applicationId) return;
-      setPageError("");
-      const result = await action.mutateAsync({ kind: "submit", applicationId,
-        csrfToken: auth.data.csrfToken });
-      if (isApplication(result)) setCreatedApplication(result);
-      setNotice(t("recruitmentApplications.submitted"));
+      if (!(await askConfirm(t('recruitmentApplications.submitConfirm')))) {
+        return
+      }
+      const applicationId = await saveDraft()
+      if (!applicationId) {
+        return
+      }
+      setPageError('')
+      const result = await action.mutateAsync({
+        kind: 'submit',
+        applicationId,
+        csrfToken: auth.data.csrfToken,
+      })
+      if (isApplication(result)) {
+        setCreatedApplication(result)
+      }
+      setNotice(t('recruitmentApplications.submitted'))
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : t("recruitmentApplications.actionError"));
+      setPageError(
+        error instanceof Error ? error.message : t('recruitmentApplications.actionError'),
+      )
     } finally {
-      submitting.current = false;
+      submitting.current = false
     }
   }
 
   // Xác nhận rồi rút hồ sơ ứng tuyển
   async function withdraw() {
-    if (!auth.data || !application || !(await askConfirm(t("recruitmentApplications.withdrawConfirm")))) return;
-    setPageError("");
+    if (
+      !auth.data ||
+      !application ||
+      !(await askConfirm(t('recruitmentApplications.withdrawConfirm')))
+    ) {
+      return
+    }
+    setPageError('')
     try {
-      const result = await action.mutateAsync({ kind: "withdraw", applicationId: application.id,
-        csrfToken: auth.data.csrfToken });
-      if (isApplication(result)) setCreatedApplication(result);
-      setNotice(t("recruitmentApplications.withdrawn"));
+      const result = await action.mutateAsync({
+        kind: 'withdraw',
+        applicationId: application.id,
+        csrfToken: auth.data.csrfToken,
+      })
+      if (isApplication(result)) {
+        setCreatedApplication(result)
+      }
+      setNotice(t('recruitmentApplications.withdrawn'))
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : t("recruitmentApplications.actionError"));
+      setPageError(
+        error instanceof Error ? error.message : t('recruitmentApplications.actionError'),
+      )
     }
   }
 
   // Tải tệp đính kèm của hồ sơ qua URL có chữ ký
   async function download(attachmentId: string) {
-    if (!application) return;
+    if (!application) {
+      return
+    }
     try {
-      const result = await action.mutateAsync({ kind: "access", applicationId: application.id, attachmentId });
-      if (result && typeof result === "object" && "url" in result && typeof result.url === "string") {
-        window.location.assign(result.url);
+      const result = await action.mutateAsync({
+        kind: 'access',
+        applicationId: application.id,
+        attachmentId,
+      })
+      if (
+        result &&
+        typeof result === 'object' &&
+        'url' in result &&
+        typeof result.url === 'string'
+      ) {
+        window.location.assign(result.url)
       }
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : t("recruitmentApplications.actionError"));
+      setPageError(
+        error instanceof Error ? error.message : t('recruitmentApplications.actionError'),
+      )
     }
   }
 
   if (auth.isPending || campaignQuery.isPending || (auth.data && applicationQuery.isPending)) {
-    return <div className="space-y-5"><AppSkeleton className="h-16 w-2/3" />
-      <AppSkeleton className="h-[34rem] w-full" /></div>;
+    return (
+      <div className="space-y-5">
+        <AppSkeleton className="h-16 w-2/3" />
+        <AppSkeleton className="h-[34rem] w-full" />
+      </div>
+    )
   }
-  if (!auth.data) return <AppNotice className="max-w-3xl">
-    <p>{t("recruitmentApplications.signInFirst")}</p>
-    <Link className="inline-block font-medium text-primary-app hover:underline" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
-      {t("recruitmentApplications.signInLink")}</Link>
-  </AppNotice>;
+  if (!auth.data) {
+    return (
+      <AppNotice className="max-w-3xl">
+        <p>{t('recruitmentApplications.signInFirst')}</p>
+        <Link
+          className="inline-block font-medium text-primary-app hover:underline"
+          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
+        >
+          {t('recruitmentApplications.signInLink')}
+        </Link>
+      </AppNotice>
+    )
+  }
   // 404 nghĩa là chiến dịch không còn công khai (đã đóng hoặc hoàn tất): thử lại cũng không khắc phục được.
-  const campaignGone = (campaignQuery.error as { status?: number } | null)?.status === 404;
-  if (campaignQuery.isError || !campaign) return <AppNotice tone="danger" className="max-w-3xl">
-    <p role="alert" className="font-semibold text-danger-app">{campaignGone || !campaignQuery.error
-      ? t("recruitmentApplications.unavailable") : campaignQuery.error.message}</p>
-    {campaignGone ? <Link className="inline-block font-medium text-primary-app hover:underline" to="/workspace/recruitment">
-      {t("recruitmentApplications.backToApplications")}</Link>
-      : <AppButton variant="secondary" onClick={() => void campaignQuery.refetch()}>{t("recruitmentApplications.retry")}</AppButton>}
-  </AppNotice>;
-  if (applicationQuery.isError) return <AppNotice tone="danger" className="max-w-3xl">
-    <p role="alert" className="font-semibold text-danger-app">{applicationQuery.error.message || t("recruitmentApplications.loadError")}</p>
-    <AppButton variant="secondary" onClick={() => void applicationQuery.refetch()}>{t("recruitmentApplications.retry")}</AppButton>
-  </AppNotice>;
+  const campaignGone = (campaignQuery.error as { status?: number } | null)?.status === 404
+  if (campaignQuery.isError || !campaign) {
+    return (
+      <AppNotice tone="danger" className="max-w-3xl">
+        <p role="alert" className="font-semibold text-danger-app">
+          {campaignGone || !campaignQuery.error
+            ? t('recruitmentApplications.unavailable')
+            : campaignQuery.error.message}
+        </p>
+        {campaignGone ? (
+          <Link
+            className="inline-block font-medium text-primary-app hover:underline"
+            to="/workspace/recruitment"
+          >
+            {t('recruitmentApplications.backToApplications')}
+          </Link>
+        ) : (
+          <AppButton variant="secondary" onClick={() => void campaignQuery.refetch()}>
+            {t('recruitmentApplications.retry')}
+          </AppButton>
+        )}
+      </AppNotice>
+    )
+  }
+  if (applicationQuery.isError) {
+    return (
+      <AppNotice tone="danger" className="max-w-3xl">
+        <p role="alert" className="font-semibold text-danger-app">
+          {applicationQuery.error.message || t('recruitmentApplications.loadError')}
+        </p>
+        <AppButton variant="secondary" onClick={() => void applicationQuery.refetch()}>
+          {t('recruitmentApplications.retry')}
+        </AppButton>
+      </AppNotice>
+    )
+  }
 
-  const appAttachments = application?.attachments ?? [];
+  const appAttachments = application?.attachments ?? []
   // <select> gốc: nằm trong <fieldset> bị disabled và nhận thêm thuộc tính kiểm tra hợp lệ; có style giống nút kích hoạt của AppSelect.
-  const selectClass = "mt-1.5 block h-11 w-full rounded-lg border border-border-app bg-bg-app px-3 text-sm font-normal text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none aria-[invalid=true]:border-danger-app sm:h-9";
-  return <>
-    <PageHeader title={campaign.title} back={{ to: `/clubs/${campaign.clubId}`, label: t("recruitmentApplications.back") }}
-      actions={application && <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state, t)}</AppBadge>} />
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section aria-labelledby="recruitment-form-title" className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6 lg:order-1">
-        <p className="text-xs font-medium text-muted-app">{t("recruitmentApplications.answers")}</p>
-        <h2 id="recruitment-form-title" className="mt-0.5 font-heading text-lg font-semibold">{t("recruitmentApplications.formTitle")}</h2>
-        <div className="mt-5 space-y-3">
-          {paused && <AppNotice tone="warning" role="status" title={t("recruitmentApplications.clubSuspendedTitle")}>
-            <p>{t("recruitmentApplications.clubSuspended")}</p></AppNotice>}
-          {notice && <AppNotice tone="success" role="status">{notice}</AppNotice>}
-          {pageError && <AppNotice tone="danger" role="alert">{pageError}</AppNotice>}
-          {application?.decisionReason && <AppNotice><p><strong>{t("recruitmentApplications.decisionReason")}: </strong>{application.decisionReason}</p></AppNotice>}
-        </div>
-
-        <form noValidate className="mt-6 space-y-5" onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
-          <fieldset disabled={!editable || action.isPending} className="space-y-5 disabled:opacity-80">
-            <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.positions")}<AppRequiredMark />
-              <select className={selectClass} value={position} required
-                onChange={(event) => setFormState({ campaignId: campaign.id,
-                  position: event.target.value, answers })}>
-                {campaign.positions.map((item) => <option key={item} value={item}>{item}</option>)}
-              </select></label>
-            {campaign.formSchema.map((field) => {
-              const label = <span>{field.label}{field.required ? <AppRequiredMark />
-                : <span className="ml-2 text-xs font-normal text-muted-app">{t("recruitmentApplications.optional")}</span>}</span>;
-              const value = answers[field.key];
-              const error = <AppFieldError message={validation.error(field.key)} />;
-              const attachment = appAttachments.find((item) => item.fieldKey === field.key);
-              if (field.type === "file") return <div key={field.key} className="border-t border-border-app pt-6">
-                <p className="text-sm font-medium text-text-app">{label}</p>
-                <p className="mt-1 text-xs text-muted-app">{t("recruitmentApplications.fileHint")}</p>
-                {attachment ? <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border-app bg-surface-app px-3 py-2">
-                  <AppIcon name="file" className="text-muted-app" />
-                  <span className="min-w-0 flex-1 text-sm break-all">{attachment.fileName}</span>
-                  <AppButton type="button" variant="secondary" disabled={action.isPending}
-                    onClick={() => void download(attachment.id)}>{t("recruitmentApplications.download")}</AppButton>
-                </div> : <div className="mt-3"><AppEmptyState message={t("recruitmentApplications.noFile")} /></div>}
-                {editable && <label className="mt-3 block text-sm font-medium text-text-app">{t("recruitmentApplications.selectFile")}
-                  <input className="mt-1.5 block w-full rounded-lg border border-dashed border-border-app bg-bg-app p-3 text-sm file:mr-3 file:rounded-md file:border file:border-border-app file:bg-surface-app file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-text-app" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
-                    onChange={(event) => { validation.touch(field.key); void upload(field.key, event.target.files?.[0]); }} />
-                </label>}
-                {error}
-              </div>;
-              if (field.type === "select") return <label key={field.key} className="block text-sm font-medium text-text-app">{label}
-                <select className={selectClass} {...validation.control(field.key, field.required)}
-                  value={typeof value === "string" ? value : ""}
-                  onChange={(event) => { changeAnswer(field.key, event.target.value); validation.touch(field.key); }}>
-                  <option value="">{t("recruitmentApplications.selectAnswer")}</option>
-                  {(field.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>{error}</label>;
-              if (field.type === "multiselect") {
-                const values = Array.isArray(value) ? value : [];
-                return <fieldset key={field.key}
-                  onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) validation.touch(field.key); }}>
-                  <legend className="text-sm font-medium text-text-app">{label}</legend>
-                  <div className="mt-1.5 grid gap-2 sm:grid-cols-2">{(field.options ?? []).map((option) => <label key={option}
-                    className={cn("flex min-h-11 items-start gap-2.5 rounded-lg border border-border-app px-3 py-2.5 text-sm transition-colors hover:bg-surface-app", {
-                      "border-brand-app bg-primary-soft-app": values.includes(option),
-                    })}>
-                    <input type="checkbox" className="mt-0.5 size-4 accent-primary-app" checked={values.includes(option)} onChange={(event) => changeAnswer(field.key,
-                      event.target.checked ? [...values, option] : values.filter((item) => item !== option))} />{option}
-                  </label>)}</div>
-                  {error}
-                </fieldset>;
-              }
-              if (field.type === "textarea") return <label key={field.key} className="block text-sm font-medium text-text-app">{label}
-                <AppTextarea className="mt-1.5 block min-h-28 w-full font-normal" maxLength={10_000} {...validation.control(field.key, field.required)}
-                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} />{error}</label>;
-              return <label key={field.key} className="block text-sm font-medium text-text-app">{label}
-                <AppInput className="mt-1.5 block w-full font-normal" type={field.type === "url" ? "url" : "text"} maxLength={10_000}
-                  {...validation.control(field.key, field.required)}
-                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} />{error}</label>;
-            })}
-          </fieldset>
-          <div className="flex flex-wrap gap-3 border-t border-border-app pt-6">
-            {editable && <>
-              <AppButton type="button" disabled={action.isPending} onClick={() => void submit()}>
-                <AppIcon name="send" className="size-4" />
-                {action.isPending ? t("recruitmentApplications.submitting") : t("recruitmentApplications.submit")}</AppButton>
-              <AppButton type="submit" variant="secondary" disabled={action.isPending}>
-                {action.isPending ? t("recruitmentApplications.saving") : t("recruitmentApplications.saveDraft")}</AppButton>
-            </>}
-            {canWithdraw && <AppButton type="button" variant="secondary" disabled={action.isPending}
-              onClick={() => void withdraw()}>{t("recruitmentApplications.withdraw")}</AppButton>}
-            <Link to="/workspace/recruitment" className="inline-flex min-h-11 items-center justify-center rounded-lg px-3.5 text-sm font-medium text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9">
-              {t("recruitmentApplications.backToApplications")}</Link>
+  const selectClass =
+    'mt-1.5 block h-11 w-full rounded-lg border border-border-app bg-bg-app px-3 text-sm font-normal text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none aria-[invalid=true]:border-danger-app sm:h-9'
+  return (
+    <>
+      <PageHeader
+        title={campaign.title}
+        back={{ to: `/clubs/${campaign.clubId}`, label: t('recruitmentApplications.back') }}
+        actions={
+          application && (
+            <AppBadge tone={stateTone(application.state)}>
+              {stateLabel(application.state, t)}
+            </AppBadge>
+          )
+        }
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <section
+          aria-labelledby="recruitment-form-title"
+          className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6 lg:order-1"
+        >
+          <p className="text-xs font-medium text-muted-app">
+            {t('recruitmentApplications.answers')}
+          </p>
+          <h2 id="recruitment-form-title" className="mt-0.5 font-heading text-lg font-semibold">
+            {t('recruitmentApplications.formTitle')}
+          </h2>
+          <div className="mt-5 space-y-3">
+            {paused && (
+              <AppNotice
+                tone="warning"
+                role="status"
+                title={t('recruitmentApplications.clubSuspendedTitle')}
+              >
+                <p>{t('recruitmentApplications.clubSuspended')}</p>
+              </AppNotice>
+            )}
+            {notice && (
+              <AppNotice tone="success" role="status">
+                {notice}
+              </AppNotice>
+            )}
+            {pageError && (
+              <AppNotice tone="danger" role="alert">
+                {pageError}
+              </AppNotice>
+            )}
+            {application?.decisionReason && (
+              <AppNotice>
+                <p>
+                  <strong>{t('recruitmentApplications.decisionReason')}: </strong>
+                  {application.decisionReason}
+                </p>
+              </AppNotice>
+            )}
           </div>
-        </form>
-      </section>
 
-      <aside aria-label={t("recruitmentApplications.campaign")} className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs lg:sticky lg:top-22 lg:order-2">
-        <p className="font-heading text-base font-semibold">{t("recruitmentApplications.campaign")}</p>
-        <dl className="grid grid-cols-2 gap-4 lg:grid-cols-1">
-          <div><dt className="text-sm text-muted-app">{t("recruitmentApplications.closes")}</dt>
-            <dd className="mt-1 font-semibold">{new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(campaign.windowEnd))}</dd></div>
-          <div><dt className="text-sm text-muted-app">{t("recruitmentApplications.places")}</dt><dd className="mt-1 font-semibold">{campaign.capacity}</dd></div>
-        </dl>
-        {campaign.criteria && <div className="border-t border-border-app pt-4"><h2 className="text-sm font-semibold">{t("recruitmentApplications.criteria")}</h2>
-          <p className="mt-1 text-sm whitespace-pre-wrap text-muted-app">{campaign.criteria}</p></div>}
-        <div className="border-t border-border-app pt-4"><h2 className="text-sm font-semibold">{t("recruitmentApplications.rounds")}</h2>
-          <ol className="mt-3 space-y-2">{campaign.selectionSteps.map((step, index) => <li key={`${step.name}-${index}`}
-            className="flex items-center gap-3 text-sm">
-            <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border-app text-xs font-semibold text-muted-app">{index + 1}</span>
-            <span className="min-w-0 break-words">{step.name}</span></li>)}</ol></div>
-      </aside>
-    </div>
-  </>;
+          <form
+            noValidate
+            className="mt-6 space-y-5"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void saveDraft()
+            }}
+          >
+            <fieldset
+              disabled={!editable || action.isPending}
+              className="space-y-5 disabled:opacity-80"
+            >
+              <label className="block text-sm font-medium text-text-app">
+                {t('recruitmentApplications.positions')}
+                <AppRequiredMark />
+                <select
+                  className={selectClass}
+                  value={position}
+                  required
+                  onChange={(event) =>
+                    setFormState({ campaignId: campaign.id, position: event.target.value, answers })
+                  }
+                >
+                  {campaign.positions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {campaign.formSchema.map((field) => {
+                const label = (
+                  <span>
+                    {field.label}
+                    {field.required ? (
+                      <AppRequiredMark />
+                    ) : (
+                      <span className="ml-2 text-xs font-normal text-muted-app">
+                        {t('recruitmentApplications.optional')}
+                      </span>
+                    )}
+                  </span>
+                )
+                const value = answers[field.key]
+                const error = <AppFieldError message={validation.error(field.key)} />
+                const attachment = appAttachments.find((item) => item.fieldKey === field.key)
+                if (field.type === 'file') {
+                  return (
+                    <div key={field.key} className="border-t border-border-app pt-6">
+                      <p className="text-sm font-medium text-text-app">{label}</p>
+                      <p className="mt-1 text-xs text-muted-app">
+                        {t('recruitmentApplications.fileHint')}
+                      </p>
+                      {attachment ? (
+                        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border-app bg-surface-app px-3 py-2">
+                          <AppIcon name="file" className="text-muted-app" />
+                          <span className="min-w-0 flex-1 text-sm break-all">
+                            {attachment.fileName}
+                          </span>
+                          <AppButton
+                            type="button"
+                            variant="secondary"
+                            disabled={action.isPending}
+                            onClick={() => void download(attachment.id)}
+                          >
+                            {t('recruitmentApplications.download')}
+                          </AppButton>
+                        </div>
+                      ) : (
+                        <div className="mt-3">
+                          <AppEmptyState message={t('recruitmentApplications.noFile')} />
+                        </div>
+                      )}
+                      {editable && (
+                        <label className="mt-3 block text-sm font-medium text-text-app">
+                          {t('recruitmentApplications.selectFile')}
+                          <input
+                            className="mt-1.5 block w-full rounded-lg border border-dashed border-border-app bg-bg-app p-3 text-sm file:mr-3 file:rounded-md file:border file:border-border-app file:bg-surface-app file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-text-app"
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg,.docx"
+                            onChange={(event) => {
+                              validation.touch(field.key)
+                              void upload(field.key, event.target.files?.[0])
+                            }}
+                          />
+                        </label>
+                      )}
+                      {error}
+                    </div>
+                  )
+                }
+                if (field.type === 'select') {
+                  return (
+                    <label key={field.key} className="block text-sm font-medium text-text-app">
+                      {label}
+                      <select
+                        className={selectClass}
+                        {...validation.control(field.key, field.required)}
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(event) => {
+                          changeAnswer(field.key, event.target.value)
+                          validation.touch(field.key)
+                        }}
+                      >
+                        <option value="">{t('recruitmentApplications.selectAnswer')}</option>
+                        {(field.options ?? []).map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      {error}
+                    </label>
+                  )
+                }
+                if (field.type === 'multiselect') {
+                  const values = Array.isArray(value) ? value : []
+                  return (
+                    <fieldset
+                      key={field.key}
+                      onBlur={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget)) {
+                          validation.touch(field.key)
+                        }
+                      }}
+                    >
+                      <legend className="text-sm font-medium text-text-app">{label}</legend>
+                      <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+                        {(field.options ?? []).map((option) => (
+                          <label
+                            key={option}
+                            className={cn(
+                              'flex min-h-11 items-start gap-2.5 rounded-lg border border-border-app px-3 py-2.5 text-sm transition-colors hover:bg-surface-app',
+                              {
+                                'border-brand-app bg-primary-soft-app': values.includes(option),
+                              },
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 size-4 accent-primary-app"
+                              checked={values.includes(option)}
+                              onChange={(event) =>
+                                changeAnswer(
+                                  field.key,
+                                  event.target.checked
+                                    ? [...values, option]
+                                    : values.filter((item) => item !== option),
+                                )
+                              }
+                            />
+                            {option}
+                          </label>
+                        ))}
+                      </div>
+                      {error}
+                    </fieldset>
+                  )
+                }
+                if (field.type === 'textarea') {
+                  return (
+                    <label key={field.key} className="block text-sm font-medium text-text-app">
+                      {label}
+                      <AppTextarea
+                        className="mt-1.5 block min-h-28 w-full font-normal"
+                        maxLength={10_000}
+                        {...validation.control(field.key, field.required)}
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(event) => changeAnswer(field.key, event.target.value)}
+                      />
+                      {error}
+                    </label>
+                  )
+                }
+                return (
+                  <label key={field.key} className="block text-sm font-medium text-text-app">
+                    {label}
+                    <AppInput
+                      className="mt-1.5 block w-full font-normal"
+                      type={field.type === 'url' ? 'url' : 'text'}
+                      maxLength={10_000}
+                      {...validation.control(field.key, field.required)}
+                      value={typeof value === 'string' ? value : ''}
+                      onChange={(event) => changeAnswer(field.key, event.target.value)}
+                    />
+                    {error}
+                  </label>
+                )
+              })}
+            </fieldset>
+            <div className="flex flex-wrap gap-3 border-t border-border-app pt-6">
+              {editable && (
+                <>
+                  <AppButton
+                    type="button"
+                    disabled={action.isPending}
+                    onClick={() => void submit()}
+                  >
+                    <AppIcon name="send" className="size-4" />
+                    {action.isPending
+                      ? t('recruitmentApplications.submitting')
+                      : t('recruitmentApplications.submit')}
+                  </AppButton>
+                  <AppButton type="submit" variant="secondary" disabled={action.isPending}>
+                    {action.isPending
+                      ? t('recruitmentApplications.saving')
+                      : t('recruitmentApplications.saveDraft')}
+                  </AppButton>
+                </>
+              )}
+              {canWithdraw && (
+                <AppButton
+                  type="button"
+                  variant="secondary"
+                  disabled={action.isPending}
+                  onClick={() => void withdraw()}
+                >
+                  {t('recruitmentApplications.withdraw')}
+                </AppButton>
+              )}
+              <Link
+                to="/workspace/recruitment"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg px-3.5 text-sm font-medium text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9"
+              >
+                {t('recruitmentApplications.backToApplications')}
+              </Link>
+            </div>
+          </form>
+        </section>
+
+        <aside
+          aria-label={t('recruitmentApplications.campaign')}
+          className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs lg:sticky lg:top-22 lg:order-2"
+        >
+          <p className="font-heading text-base font-semibold">
+            {t('recruitmentApplications.campaign')}
+          </p>
+          <dl className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+            <div>
+              <dt className="text-sm text-muted-app">{t('recruitmentApplications.closes')}</dt>
+              <dd className="mt-1 font-semibold">
+                {new Intl.DateTimeFormat(dateLocale, {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                }).format(new Date(campaign.windowEnd))}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm text-muted-app">{t('recruitmentApplications.places')}</dt>
+              <dd className="mt-1 font-semibold">{campaign.capacity}</dd>
+            </div>
+          </dl>
+          {campaign.criteria && (
+            <div className="border-t border-border-app pt-4">
+              <h2 className="text-sm font-semibold">{t('recruitmentApplications.criteria')}</h2>
+              <p className="mt-1 text-sm whitespace-pre-wrap text-muted-app">{campaign.criteria}</p>
+            </div>
+          )}
+          <div className="border-t border-border-app pt-4">
+            <h2 className="text-sm font-semibold">{t('recruitmentApplications.rounds')}</h2>
+            <ol className="mt-3 space-y-2">
+              {campaign.selectionSteps.map((step, index) => (
+                <li key={`${step.name}-${index}`} className="flex items-center gap-3 text-sm">
+                  <span
+                    aria-hidden="true"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border-app text-xs font-semibold text-muted-app"
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 break-words">{step.name}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </>
+  )
 }

@@ -1,16 +1,16 @@
-import { ApiError, apiFetch } from "@/services/apiError";
+import { ApiError, apiFetch } from '@/services/apiError'
 export interface User {
-  id: string;
-  email: string;
-  name: string;
+  id: string
+  email: string
+  name: string
   /** Mốc thời gian ISO — Date được serialize thành chuỗi trong JSON. */
-  createdAt: string;
+  createdAt: string
 }
 
 export interface UserPage {
-  items: User[];
+  items: User[]
   /** Tổng số kết quả khớp trên mọi trang — dùng để tính số trang của bảng. */
-  total: number;
+  total: number
 }
 
 // GET /users: danh sách người dùng có tìm kiếm và phân trang
@@ -20,34 +20,42 @@ export async function fetchUsers({
   offset,
   signal,
 }: {
-  search?: string;
-  limit?: number;
-  offset?: number;
-  signal: AbortSignal;
+  search?: string
+  limit?: number
+  offset?: number
+  signal: AbortSignal
 }): Promise<UserPage> {
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  if (limit) params.set("limit", String(limit));
-  if (offset) params.set("offset", String(offset));
-  const qs = params.size ? `?${params}` : "";
-  const res = await apiFetch(`/api/v1/users${qs}`, { signal });
-  if (!res.ok) throw new ApiError(`HTTP ${res.status}`);
-  const body: { data: UserPage } = await res.json();
-  return body.data;
+  const params = new URLSearchParams()
+  if (search) {
+    params.set('search', search)
+  }
+  if (limit) {
+    params.set('limit', String(limit))
+  }
+  if (offset) {
+    params.set('offset', String(offset))
+  }
+  const qs = params.size ? `?${params}` : ''
+  const res = await apiFetch(`/api/v1/users${qs}`, { signal })
+  if (!res.ok) {
+    throw new ApiError(`HTTP ${res.status}`)
+  }
+  const body: { data: UserPage } = await res.json()
+  return body.data
 }
 
 // POST /users: tạo người dùng mới
 export async function createUser(input: { email: string; name: string }): Promise<User> {
-  const res = await apiFetch("/api/v1/users", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await apiFetch('/api/v1/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
-  });
+  })
   if (!res.ok) {
     // Nội dung lỗi không phải lúc nào cũng là JSON (lỗi proxy, trang 404 HTML) — đừng để .json() ném lỗi.
-    const body = (await res.json().catch(() => null)) as { message?: string } | null;
-    throw new ApiError(body?.message ?? "");
+    const body = (await res.json().catch(() => null)) as { message?: string } | null
+    throw new ApiError(body?.message ?? '')
   }
-  const body: { data: User } = await res.json();
-  return body.data;
+  const body: { data: User } = await res.json()
+  return body.data
 }

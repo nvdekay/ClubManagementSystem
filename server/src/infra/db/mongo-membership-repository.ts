@@ -1,370 +1,753 @@
-import { randomUUID } from "node:crypto";
-import mongoose, { Types } from "mongoose";
-import { DomainError } from "../../domain/errors.js";
-import type { ClubMembershipRecord, ClubRosterMember, MembershipRepository, MembershipStatusChange,
-  MembershipState, MembershipWithdrawalRequest } from "../../domain/membership.js";
-import { isBeforeToday } from "../../domain/membership.js";
-import { clubUserIdsWithPermission } from "./club-permission-holders.js";
-import { ucmsModels } from "./ucms-models.js";
+import { randomUUID } from 'node:crypto'
+import mongoose, { Types } from 'mongoose'
+import { DomainError } from '../../domain/errors.js'
+import type {
+  ClubMembershipRecord,
+  ClubRosterMember,
+  MembershipRepository,
+  MembershipStatusChange,
+  MembershipState,
+  MembershipWithdrawalRequest,
+} from '../../domain/membership.js'
+import { isBeforeToday } from '../../domain/membership.js'
+import { clubUserIdsWithPermission } from './club-permission-holders.js'
+import { ucmsModels } from './ucms-models.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function objectArray(value: unknown): Record<string, unknown>[] {
-  return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> =>
-    Boolean(item) && typeof item === "object" && !Array.isArray(item)) : [];
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === 'object' && !Array.isArray(item),
+      )
+    : []
 }
 
 // Ép giá trị về Date
 function date(value: unknown): Date {
-  return value instanceof Date ? value : new Date(String(value));
+  return value instanceof Date ? value : new Date(String(value))
 }
 
 // Chuẩn hóa lịch sử đổi trạng thái của thành viên
 function history(value: unknown): MembershipStatusChange[] {
   return objectArray(value).flatMap((entry) => {
     // actorId được ghi dưới dạng ObjectId; các mục cũ có thể là string — chấp nhận cả hai.
-    if (!("fromState" in entry) || typeof entry.toState !== "string" || (!entry.actorId && entry.actorRole !== "SYSTEM")) return [];
-    return [{ fromState: String(entry.fromState) as MembershipState,
-      toState: entry.toState as MembershipState, effectiveDate: date(entry.effectiveDate),
-      ...(typeof entry.reason === "string" ? { reason: entry.reason } : {}),
-      actorId: entry.actorId ? String(entry.actorId) : null, ...(entry.actorRole === "SYSTEM" ? { actorRole: "SYSTEM" as const } : {}), at: date(entry.at) }];
-  });
+    if (
+      !('fromState' in entry) ||
+      typeof entry.toState !== 'string' ||
+      (!entry.actorId && entry.actorRole !== 'SYSTEM')
+    ) {
+      return []
+    }
+    return [
+      {
+        fromState: String(entry.fromState) as MembershipState,
+        toState: entry.toState as MembershipState,
+        effectiveDate: date(entry.effectiveDate),
+        ...(typeof entry.reason === 'string' ? { reason: entry.reason } : {}),
+        actorId: entry.actorId ? String(entry.actorId) : null,
+        ...(entry.actorRole === 'SYSTEM' ? { actorRole: 'SYSTEM' as const } : {}),
+        at: date(entry.at),
+      },
+    ]
+  })
 }
 
 // Ánh xạ document thành viên sang ClubMembershipRecord
 function mapMembership(doc: Record<string, unknown>): ClubMembershipRecord {
-  return { id: String(doc._id), clubId: String(doc.clubId), userId: String(doc.userId),
-    state: String(doc.state) as MembershipState, joinedAt: date(doc.joinedAt),
+  return {
+    id: String(doc._id),
+    clubId: String(doc.clubId),
+    userId: String(doc.userId),
+    state: String(doc.state) as MembershipState,
+    joinedAt: date(doc.joinedAt),
     ...(doc.leftAt ? { leftAt: date(doc.leftAt) } : {}),
     ...(doc.departmentId ? { departmentId: String(doc.departmentId) } : {}),
-    ...(typeof doc.defaultRole === "string" ? { defaultRole: doc.defaultRole } : {}),
+    ...(typeof doc.defaultRole === 'string' ? { defaultRole: doc.defaultRole } : {}),
     ...(doc.sourceApplicationId ? { sourceApplicationId: String(doc.sourceApplicationId) } : {}),
-    ...(typeof doc.banReason === "string" ? { banReason: doc.banReason } : {}),
-    statusHistory: history(doc.statusHistory) };
+    ...(typeof doc.banReason === 'string' ? { banReason: doc.banReason } : {}),
+    statusHistory: history(doc.statusHistory),
+  }
 }
 
 // Ánh xạ document đơn xin rút sang MembershipWithdrawalRequest
 function mapRequest(doc: Record<string, unknown>): MembershipWithdrawalRequest {
-  return { id: String(doc._id), membershipId: String(doc.membershipId),
-    clubId: String(doc.clubId), userId: String(doc.userId), reason: String(doc.reason),
+  return {
+    id: String(doc._id),
+    membershipId: String(doc.membershipId),
+    clubId: String(doc.clubId),
+    userId: String(doc.userId),
+    reason: String(doc.reason),
     requestedEffectiveDate: date(doc.requestedEffectiveDate),
-    state: String(doc.state) as MembershipWithdrawalRequest["state"], createdAt: date(doc.createdAt),
+    state: String(doc.state) as MembershipWithdrawalRequest['state'],
+    createdAt: date(doc.createdAt),
     ...(doc.executedBy ? { executedBy: String(doc.executedBy) } : {}),
-    ...(doc.executedAt ? { executedAt: date(doc.executedAt) } : {}) };
+    ...(doc.executedAt ? { executedAt: date(doc.executedAt) } : {}),
+  }
 }
 
 // Đổi lỗi trùng khoá Mongo (11000) thành DomainError conflict
 function duplicate(error: unknown): never {
   if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
-    throw new DomainError("membership conflicts with an existing record", "conflict");
+    throw new DomainError('membership conflicts with an existing record', 'conflict')
   }
-  throw error;
+  throw error
 }
 
 // Repository thành viên CLB và đơn xin rút khỏi CLB
 export function mongoMembershipRepository(): MembershipRepository {
-  const memberships = ucmsModels.clubMemberships!;
-  const requests = ucmsModels.membershipWithdrawalRequests!;
-  const clubs = ucmsModels.clubs!;
-  const users = ucmsModels.users!;
-  const terms = ucmsModels.clubTerms!;
-  const positions = ucmsModels.clubPositions!;
-  const assignments = ucmsModels.clubPositionAssignments!;
-  const audits = ucmsModels.auditLogs!;
-  const notifications = ucmsModels.notifications!;
+  const memberships = ucmsModels.clubMemberships!
+  const requests = ucmsModels.membershipWithdrawalRequests!
+  const clubs = ucmsModels.clubs!
+  const users = ucmsModels.users!
+  const terms = ucmsModels.clubTerms!
+  const positions = ucmsModels.clubPositions!
+  const assignments = ucmsModels.clubPositionAssignments!
+  const audits = ucmsModels.auditLogs!
+  const notifications = ucmsModels.notifications!
 
   // Kiểm tra thành viên đang giữ ghế ban đã được xác nhận tại thời điểm cho trước
-  async function hasConfirmedBoardSeat(membershipId: Types.ObjectId, clubId: Types.ObjectId,
-    at: Date, session?: mongoose.ClientSession): Promise<boolean> {
-    const docs = await assignments.find({ membershipId, clubId, confirmedBy: { $exists: true, $ne: null },
-      effectiveFrom: { $lte: at }, $or: [{ effectiveTo: { $exists: false } },
-        { effectiveTo: null }, { effectiveTo: { $gt: at } }] })
-      .select("positionId").session(session ?? null).lean();
-    if (!docs.length) return false;
-    return Boolean(await positions.exists({ _id: { $in: docs.map((item) => item.positionId) },
-      clubId, isActive: true, $or: [{ isBoardSeat: true }, { isLeaderRole: true }] }).session(session ?? null));
+  async function hasConfirmedBoardSeat(
+    membershipId: Types.ObjectId,
+    clubId: Types.ObjectId,
+    at: Date,
+    session?: mongoose.ClientSession,
+  ): Promise<boolean> {
+    const docs = await assignments
+      .find({
+        membershipId,
+        clubId,
+        confirmedBy: { $exists: true, $ne: null },
+        effectiveFrom: { $lte: at },
+        $or: [
+          { effectiveTo: { $exists: false } },
+          { effectiveTo: null },
+          { effectiveTo: { $gt: at } },
+        ],
+      })
+      .select('positionId')
+      .session(session ?? null)
+      .lean()
+    if (!docs.length) {
+      return false
+    }
+    return Boolean(
+      await positions
+        .exists({
+          _id: { $in: docs.map((item) => item.positionId) },
+          clubId,
+          isActive: true,
+          $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+        })
+        .session(session ?? null),
+    )
   }
 
   // Kết thúc các phân công vị trí của thành viên từ ngày hiệu lực
-  async function closeAssignments(membershipId: Types.ObjectId, clubId: Types.ObjectId,
-    effectiveDate: Date, session: mongoose.ClientSession): Promise<void> {
-    const activeRange = { $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null },
-      { effectiveTo: { $gt: effectiveDate } }] };
-    await assignments.updateMany({ clubId, membershipId, effectiveFrom: { $lte: effectiveDate },
-      ...activeRange }, { $set: { effectiveTo: effectiveDate } }, { session });
-    const future = await assignments.find({ clubId, membershipId, effectiveFrom: { $gt: effectiveDate },
-      ...activeRange }).select("_id effectiveFrom").session(session).lean();
+  async function closeAssignments(
+    membershipId: Types.ObjectId,
+    clubId: Types.ObjectId,
+    effectiveDate: Date,
+    session: mongoose.ClientSession,
+  ): Promise<void> {
+    const activeRange = {
+      $or: [
+        { effectiveTo: { $exists: false } },
+        { effectiveTo: null },
+        { effectiveTo: { $gt: effectiveDate } },
+      ],
+    }
+    await assignments.updateMany(
+      { clubId, membershipId, effectiveFrom: { $lte: effectiveDate }, ...activeRange },
+      { $set: { effectiveTo: effectiveDate } },
+      { session },
+    )
+    const future = await assignments
+      .find({ clubId, membershipId, effectiveFrom: { $gt: effectiveDate }, ...activeRange })
+      .select('_id effectiveFrom')
+      .session(session)
+      .lean()
     for (const assignment of future) {
-      await assignments.updateOne({ _id: assignment._id },
-        { $set: { effectiveTo: assignment.effectiveFrom } }, { session });
+      await assignments.updateOne(
+        { _id: assignment._id },
+        { $set: { effectiveTo: assignment.effectiveFrom } },
+        { session },
+      )
     }
   }
 
   // Dựng view thành viên kèm tên CLB, tên người dùng và đơn rút đang chờ
   async function membershipView(doc: Record<string, unknown>, includeHistory = true) {
     const [club, user, pending] = await Promise.all([
-      clubs.findById(doc.clubId).select("name").lean(),
-      users.findById(doc.userId).select("displayName").lean(),
-      requests.findOne({ membershipId: doc._id, state: { $in: ["Pending", "Held"] } })
-        .sort({ createdAt: -1 }).lean(),
-    ]);
-    const result = mapMembership(doc);
-    return { ...result, ...(club ? { clubName: String(club.name) } : {}),
+      clubs.findById(doc.clubId).select('name').lean(),
+      users.findById(doc.userId).select('displayName').lean(),
+      requests
+        .findOne({ membershipId: doc._id, state: { $in: ['Pending', 'Held'] } })
+        .sort({ createdAt: -1 })
+        .lean(),
+    ])
+    const result = mapMembership(doc)
+    return {
+      ...result,
+      ...(club ? { clubName: String(club.name) } : {}),
       ...(user ? { displayName: String(user.displayName) } : {}),
       ...(pending ? { pendingWithdrawal: mapRequest(pending) } : {}),
-      ...(includeHistory ? {} : { statusHistory: [] }) };
+      ...(includeHistory ? {} : { statusHistory: [] }),
+    }
   }
 
   // Tạo thông báo liên quan đến thành viên
-  async function notify(input: { recipient: Types.ObjectId; entityId: Types.ObjectId;
-    eventCode: string; clubId: Types.ObjectId; now: Date; payload?: Record<string, unknown>;
-    entityType?: string; session: mongoose.ClientSession }) {
-    await notifications.create([{
-      recipientUserId: input.recipient, eventCode: input.eventCode,
-      entityType: input.entityType ?? "ClubMembership",
-      entityId: input.entityId, channels: ["IN_APP"],
-      payload: { clubId: String(input.clubId), ...input.payload }, state: "Queued",
-      dueAt: input.now, attempts: 0, createdAt: input.now,
-    }], { session: input.session });
+  async function notify(input: {
+    recipient: Types.ObjectId
+    entityId: Types.ObjectId
+    eventCode: string
+    clubId: Types.ObjectId
+    now: Date
+    payload?: Record<string, unknown>
+    entityType?: string
+    session: mongoose.ClientSession
+  }) {
+    await notifications.create(
+      [
+        {
+          recipientUserId: input.recipient,
+          eventCode: input.eventCode,
+          entityType: input.entityType ?? 'ClubMembership',
+          entityId: input.entityId,
+          channels: ['IN_APP'],
+          payload: { clubId: String(input.clubId), ...input.payload },
+          state: 'Queued',
+          dueAt: input.now,
+          attempts: 0,
+          createdAt: input.now,
+        },
+      ],
+      { session: input.session },
+    )
   }
 
   return {
     // Liệt kê tư cách thành viên Active/Inactive của sinh viên
     async listMine(userId) {
-      const docs = await memberships.find({ userId: new Types.ObjectId(userId), state: { $in: ["Active", "Inactive"] } })
-        .sort({ joinedAt: -1, _id: -1 }).lean();
-      return Promise.all(docs.map((doc) => membershipView(doc)));
+      const docs = await memberships
+        .find({ userId: new Types.ObjectId(userId), state: { $in: ['Active', 'Inactive'] } })
+        .sort({ joinedAt: -1, _id: -1 })
+        .lean()
+      return Promise.all(docs.map((doc) => membershipView(doc)))
     },
 
     // Liệt kê roster thành viên của CLB kèm vị trí hiện tại
     async listClub(clubId, now): Promise<ClubRosterMember[]> {
-      const club = new Types.ObjectId(clubId);
+      const club = new Types.ObjectId(clubId)
       const [docs, activeTerms, positionDocs] = await Promise.all([
-        memberships.find({ clubId: club, state: { $in: ["Active", "Inactive"] } })
-          .sort({ state: 1, joinedAt: 1 }).lean(),
-        terms.find({ clubId: club, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } }).select("_id").lean(),
-        positions.find({ clubId: club, isActive: true }).sort({ isLeaderRole: -1, isBoardSeat: -1, name: 1 })
-          .select("name isLeaderRole").lean(),
-      ]);
+        memberships
+          .find({ clubId: club, state: { $in: ['Active', 'Inactive'] } })
+          .sort({ state: 1, joinedAt: 1 })
+          .lean(),
+        terms
+          .find({ clubId: club, state: 'Active', startAt: { $lte: now }, endAt: { $gt: now } })
+          .select('_id')
+          .lean(),
+        positions
+          .find({ clubId: club, isActive: true })
+          .sort({ isLeaderRole: -1, isBoardSeat: -1, name: 1 })
+          .select('name isLeaderRole')
+          .lean(),
+      ])
       const [views, userDocs, assignmentDocs] = await Promise.all([
         Promise.all(docs.map((doc) => membershipView(doc))),
-        users.find({ _id: { $in: docs.map((doc) => doc.userId) } }).select("email").lean(),
-        activeTerms.length ? assignments.find({ clubId: club, termId: { $in: activeTerms.map((term) => term._id) },
-          effectiveFrom: { $lte: now }, $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null },
-            { effectiveTo: { $gt: now } }] }).select("membershipId positionId confirmedBy").lean() : [],
-      ]);
-      const emailById = new Map(userDocs.map((user) => [String(user._id), String(user.email ?? "")]));
+        users
+          .find({ _id: { $in: docs.map((doc) => doc.userId) } })
+          .select('email')
+          .lean(),
+        activeTerms.length
+          ? assignments
+              .find({
+                clubId: club,
+                termId: { $in: activeTerms.map((term) => term._id) },
+                effectiveFrom: { $lte: now },
+                $or: [
+                  { effectiveTo: { $exists: false } },
+                  { effectiveTo: null },
+                  { effectiveTo: { $gt: now } },
+                ],
+              })
+              .select('membershipId positionId confirmedBy')
+              .lean()
+          : [],
+      ])
+      const emailById = new Map(
+        userDocs.map((user) => [String(user._id), String(user.email ?? '')]),
+      )
       // Đang giữ = có hiệu lực trong nhiệm kỳ Active; ghế Leader chỉ tính khi đã xác nhận (cùng quy tắc với quyền truy cập).
-      const leaderIds = new Set(positionDocs.filter((position) => position.isLeaderRole).map((position) => String(position._id)));
-      const held = new Map<string, Set<string>>();
+      const leaderIds = new Set(
+        positionDocs
+          .filter((position) => position.isLeaderRole)
+          .map((position) => String(position._id)),
+      )
+      const held = new Map<string, Set<string>>()
       for (const assignment of assignmentDocs) {
-        const positionId = String(assignment.positionId);
-        if (leaderIds.has(positionId) && !assignment.confirmedBy) continue;
-        const key = String(assignment.membershipId);
-        held.set(key, (held.get(key) ?? new Set()).add(positionId));
+        const positionId = String(assignment.positionId)
+        if (leaderIds.has(positionId) && !assignment.confirmedBy) {
+          continue
+        }
+        const key = String(assignment.membershipId)
+        held.set(key, (held.get(key) ?? new Set()).add(positionId))
       }
-      return views.map((view) => ({ ...view, email: emailById.get(view.userId) ?? "",
-        positions: positionDocs.filter((position) => held.get(view.id)?.has(String(position._id)))
-          .map((position) => String(position.name)) }));
+      return views.map((view) => ({
+        ...view,
+        email: emailById.get(view.userId) ?? '',
+        positions: positionDocs
+          .filter((position) => held.get(view.id)?.has(String(position._id)))
+          .map((position) => String(position.name)),
+      }))
     },
 
     // Thêm thành viên thủ công vào CLB
     async onboardManually(input) {
-      const clubId = new Types.ObjectId(input.clubId);
-      const actorId = new Types.ObjectId(input.actorId);
-      let membershipId: Types.ObjectId | undefined;
+      const clubId = new Types.ObjectId(input.clubId)
+      const actorId = new Types.ObjectId(input.actorId)
+      let membershipId: Types.ObjectId | undefined
       try {
         await mongoose.connection.transaction(async (session) => {
-          const club = await clubs.findOneAndUpdate({ _id: clubId, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
-          if (!club) throw new DomainError("club is not active", "conflict");
-          const student = await users.findOne({ email: input.email }).collation({ locale: "en", strength: 2 })
-            .session(session).select({ accountState: 1 }).lean();
-          if (!student) throw new DomainError("no account uses this email yet; the student must sign in once first", "not_found", { field: "email" });
-          if (student.accountState !== "Active") throw new DomainError("this student's account is not active", "conflict", { field: "email" });
-          const userId = student._id as Types.ObjectId;
+          const club = await clubs
+            .findOneAndUpdate({ _id: clubId, state: 'Active' }, { $inc: { __v: 1 } }, { session })
+            .lean()
+          if (!club) {
+            throw new DomainError('club is not active', 'conflict')
+          }
+          const student = await users
+            .findOne({ email: input.email })
+            .collation({ locale: 'en', strength: 2 })
+            .session(session)
+            .select({ accountState: 1 })
+            .lean()
+          if (!student) {
+            throw new DomainError(
+              'no account uses this email yet; the student must sign in once first',
+              'not_found',
+              { field: 'email' },
+            )
+          }
+          if (student.accountState !== 'Active') {
+            throw new DomainError("this student's account is not active", 'conflict', {
+              field: 'email',
+            })
+          }
+          const userId = student._id as Types.ObjectId
           const [banned, current, memberRole] = await Promise.all([
-            memberships.exists({ clubId, userId, state: "Banned" }).session(session),
-            memberships.exists({ clubId, userId, state: { $in: ["Active", "Inactive"] } }).session(session),
-            positions.findOne({ clubId, isDefaultMemberRole: true, isActive: true }).session(session).select("code").lean(),
-          ]);
+            memberships.exists({ clubId, userId, state: 'Banned' }).session(session),
+            memberships
+              .exists({ clubId, userId, state: { $in: ['Active', 'Inactive'] } })
+              .session(session),
+            positions
+              .findOne({ clubId, isDefaultMemberRole: true, isActive: true })
+              .session(session)
+              .select('code')
+              .lean(),
+          ])
           // E2 / BR46: sinh viên bị cấm không bao giờ được nhận lại, kể cả onboarding thủ công.
-          if (banned) throw new DomainError("banned students cannot be onboarded", "forbidden");
-          if (current) throw new DomainError("student already has an active membership", "conflict");
-          if (!memberRole) throw new DomainError("default Members role is not configured", "conflict");
-          const [created] = await memberships.create([{
-            clubId, userId, state: "Active", joinedAt: input.now, defaultRole: String(memberRole.code),
-            statusHistory: [{ state: "Active", at: input.now, actorId, reason: input.reason }],
-          }], { session });
-          membershipId = new Types.ObjectId(String(created!._id));
-          await audits.create([{
-            entityType: "ClubMembership", entityId: membershipId, action: "CLUB_MEMBERSHIP_MANUALLY_ONBOARDED",
-            actorId, actorRole: "Club Leader", after: { state: "Active", userId, defaultRole: String(memberRole.code) },
-            reason: input.reason, correlationId: randomUUID(), at: input.now,
-          }], { session });
-          await notify({ recipient: userId, entityId: membershipId, eventCode: "CLUB_MEMBERSHIP_ONBOARDED",
-            clubId, now: input.now, payload: { membershipId: String(membershipId) }, session });
-        });
-      } catch (error) { if (error instanceof DomainError) throw error; duplicate(error); }
-      const created = await memberships.findById(membershipId).lean();
-      if (!created) throw new DomainError("membership not found", "not_found");
-      return membershipView(created);
+          if (banned) {
+            throw new DomainError('banned students cannot be onboarded', 'forbidden')
+          }
+          if (current) {
+            throw new DomainError('student already has an active membership', 'conflict')
+          }
+          if (!memberRole) {
+            throw new DomainError('default Members role is not configured', 'conflict')
+          }
+          const [created] = await memberships.create(
+            [
+              {
+                clubId,
+                userId,
+                state: 'Active',
+                joinedAt: input.now,
+                defaultRole: String(memberRole.code),
+                statusHistory: [{ state: 'Active', at: input.now, actorId, reason: input.reason }],
+              },
+            ],
+            { session },
+          )
+          membershipId = new Types.ObjectId(String(created!._id))
+          await audits.create(
+            [
+              {
+                entityType: 'ClubMembership',
+                entityId: membershipId,
+                action: 'CLUB_MEMBERSHIP_MANUALLY_ONBOARDED',
+                actorId,
+                actorRole: 'Club Leader',
+                after: { state: 'Active', userId, defaultRole: String(memberRole.code) },
+                reason: input.reason,
+                correlationId: randomUUID(),
+                at: input.now,
+              },
+            ],
+            { session },
+          )
+          await notify({
+            recipient: userId,
+            entityId: membershipId,
+            eventCode: 'CLUB_MEMBERSHIP_ONBOARDED',
+            clubId,
+            now: input.now,
+            payload: { membershipId: String(membershipId) },
+            session,
+          })
+        })
+      } catch (error) {
+        if (error instanceof DomainError) {
+          throw error
+        }
+        duplicate(error)
+      }
+      const created = await memberships.findById(membershipId).lean()
+      if (!created) {
+        throw new DomainError('membership not found', 'not_found')
+      }
+      return membershipView(created)
     },
 
     // Đổi trạng thái thành viên và ghi lại lịch sử
     async changeState(input) {
-      const clubId = new Types.ObjectId(input.clubId);
-      const membershipId = new Types.ObjectId(input.membershipId);
-      const actorId = new Types.ObjectId(input.actorId);
+      const clubId = new Types.ObjectId(input.clubId)
+      const membershipId = new Types.ObjectId(input.membershipId)
+      const actorId = new Types.ObjectId(input.actorId)
       try {
         await mongoose.connection.transaction(async (session) => {
-          const current = await memberships.findOne({ _id: membershipId, clubId })
-            .session(session).lean();
-          if (!current) throw new DomainError("membership not found", "not_found");
-          const fromState = String(current.state) as MembershipState;
-          if (fromState === "Left" || fromState === "Banned") {
-            throw new DomainError("membership state is final", "conflict");
+          const current = await memberships
+            .findOne({ _id: membershipId, clubId })
+            .session(session)
+            .lean()
+          if (!current) {
+            throw new DomainError('membership not found', 'not_found')
           }
-          const allowed = (fromState === "Active" && ["Inactive", "Banned"].includes(input.state))
-            || (fromState === "Inactive" && ["Active", "Banned"].includes(input.state));
-          if (!allowed) throw new DomainError("invalid membership state transition", "conflict");
-          if (input.state === "Banned" && !input.reason) throw new DomainError("ban reason is required", "validation");
-          if (input.state !== "Active" && await hasConfirmedBoardSeat(membershipId, clubId,
-            input.effectiveDate, session)) {
-            throw new DomainError("replace the confirmed board seat before ending this membership", "conflict");
+          const fromState = String(current.state) as MembershipState
+          if (fromState === 'Left' || fromState === 'Banned') {
+            throw new DomainError('membership state is final', 'conflict')
           }
-          const historyItem = { fromState, toState: input.state, effectiveDate: input.effectiveDate,
-            ...(input.reason ? { reason: input.reason } : {}), actorId, at: input.now };
-          const changed = await memberships.updateOne({ _id: membershipId, clubId, state: fromState }, {
-            $set: { state: input.state, ...(input.state === "Banned" ? { banReason: input.reason } : {}) },
-            $push: { statusHistory: historyItem },
-          }, { session });
-          if (changed.modifiedCount !== 1) throw new DomainError("membership changed before update", "conflict");
-          if (input.state === "Banned") {
-            await closeAssignments(membershipId, clubId, input.effectiveDate, session);
-            await memberships.updateOne({ _id: membershipId }, { $unset: { defaultRole: "" } }, { session });
+          const allowed =
+            (fromState === 'Active' && ['Inactive', 'Banned'].includes(input.state)) ||
+            (fromState === 'Inactive' && ['Active', 'Banned'].includes(input.state))
+          if (!allowed) {
+            throw new DomainError('invalid membership state transition', 'conflict')
           }
-          await audits.create([{
-            entityType: "ClubMembership", entityId: membershipId,
-            action: "CLUB_MEMBERSHIP_STATE_CHANGED", actorId, actorRole: "Club Member",
-            before: { state: fromState }, after: { state: input.state,
-              effectiveDate: input.effectiveDate, ...(input.reason ? { reason: input.reason } : {}) },
-            correlationId: randomUUID(), at: input.now,
-          }], { session });
-          await notify({ recipient: new Types.ObjectId(String(current.userId)), entityId: membershipId,
-            eventCode: `CLUB_MEMBERSHIP_${input.state.toUpperCase()}`, clubId, now: input.now,
-            payload: { membershipId: String(membershipId), state: input.state }, session });
-        });
-      } catch (error) { duplicate(error); }
-      const updated = await memberships.findById(membershipId).lean();
-      if (!updated) throw new DomainError("membership not found", "not_found");
-      return membershipView(updated);
+          if (input.state === 'Banned' && !input.reason) {
+            throw new DomainError('ban reason is required', 'validation')
+          }
+          if (
+            input.state !== 'Active' &&
+            (await hasConfirmedBoardSeat(membershipId, clubId, input.effectiveDate, session))
+          ) {
+            throw new DomainError(
+              'replace the confirmed board seat before ending this membership',
+              'conflict',
+            )
+          }
+          const historyItem = {
+            fromState,
+            toState: input.state,
+            effectiveDate: input.effectiveDate,
+            ...(input.reason ? { reason: input.reason } : {}),
+            actorId,
+            at: input.now,
+          }
+          const changed = await memberships.updateOne(
+            { _id: membershipId, clubId, state: fromState },
+            {
+              $set: {
+                state: input.state,
+                ...(input.state === 'Banned' ? { banReason: input.reason } : {}),
+              },
+              $push: { statusHistory: historyItem },
+            },
+            { session },
+          )
+          if (changed.modifiedCount !== 1) {
+            throw new DomainError('membership changed before update', 'conflict')
+          }
+          if (input.state === 'Banned') {
+            await closeAssignments(membershipId, clubId, input.effectiveDate, session)
+            await memberships.updateOne(
+              { _id: membershipId },
+              { $unset: { defaultRole: '' } },
+              { session },
+            )
+          }
+          await audits.create(
+            [
+              {
+                entityType: 'ClubMembership',
+                entityId: membershipId,
+                action: 'CLUB_MEMBERSHIP_STATE_CHANGED',
+                actorId,
+                actorRole: 'Club Member',
+                before: { state: fromState },
+                after: {
+                  state: input.state,
+                  effectiveDate: input.effectiveDate,
+                  ...(input.reason ? { reason: input.reason } : {}),
+                },
+                correlationId: randomUUID(),
+                at: input.now,
+              },
+            ],
+            { session },
+          )
+          await notify({
+            recipient: new Types.ObjectId(String(current.userId)),
+            entityId: membershipId,
+            eventCode: `CLUB_MEMBERSHIP_${input.state.toUpperCase()}`,
+            clubId,
+            now: input.now,
+            payload: { membershipId: String(membershipId), state: input.state },
+            session,
+          })
+        })
+      } catch (error) {
+        duplicate(error)
+      }
+      const updated = await memberships.findById(membershipId).lean()
+      if (!updated) {
+        throw new DomainError('membership not found', 'not_found')
+      }
+      return membershipView(updated)
     },
 
     // Thành viên gửi đơn xin rút khỏi CLB
     async requestWithdrawal(input) {
-      const membershipId = new Types.ObjectId(input.membershipId);
-      const userId = new Types.ObjectId(input.userId);
-      let requestId: Types.ObjectId | undefined;
+      const membershipId = new Types.ObjectId(input.membershipId)
+      const userId = new Types.ObjectId(input.userId)
+      let requestId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
-        const membership = await memberships.findOne({ _id: membershipId, userId,
-          state: { $in: ["Active", "Inactive"] } }).session(session).lean();
-        if (!membership) throw new DomainError("active membership not found", "not_found");
-        const exists = await requests.exists({ membershipId, state: { $in: ["Pending", "Held"] } }).session(session);
-        if (exists) throw new DomainError("a withdrawal request is already pending", "conflict");
-        const held = await hasConfirmedBoardSeat(membershipId, new Types.ObjectId(String(membership.clubId)),
-          input.now, session);
-        const [created] = await requests.create([{
-          membershipId, clubId: membership.clubId, userId, reason: input.reason,
-          requestedEffectiveDate: input.requestedEffectiveDate, state: held ? "Held" : "Pending",
-          createdAt: input.now,
-        }], { session, ordered: true });
-        requestId = new Types.ObjectId(String(created!._id));
-        await audits.create([{
-          entityType: "MembershipWithdrawalRequest", entityId: requestId,
-          action: "MEMBERSHIP_WITHDRAWAL_REQUESTED", actorId: userId, actorRole: "Student",
-          after: { membershipId, requestedEffectiveDate: input.requestedEffectiveDate,
-            state: held ? "Held" : "Pending" }, correlationId: randomUUID(), at: input.now,
-        }], { session, ordered: true });
-        const recipients = await clubUserIdsWithPermission(new Types.ObjectId(String(membership.clubId)),
-          "club.member.manage", input.now, session);
-        for (const recipient of recipients) {
-          await notify({ recipient, entityId: requestId, eventCode: "MEMBERSHIP_WITHDRAWAL_REQUESTED",
-            clubId: new Types.ObjectId(String(membership.clubId)), now: input.now,
-            entityType: "MembershipWithdrawalRequest",
-            payload: { requestId: String(requestId), membershipId: String(membershipId), state: held ? "Held" : "Pending" }, session });
+        const membership = await memberships
+          .findOne({ _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } })
+          .session(session)
+          .lean()
+        if (!membership) {
+          throw new DomainError('active membership not found', 'not_found')
         }
-      });
-      const created = await requests.findById(requestId).lean();
-      if (!created) throw new DomainError("withdrawal request not found", "not_found");
-      return mapRequest(created);
+        const exists = await requests
+          .exists({ membershipId, state: { $in: ['Pending', 'Held'] } })
+          .session(session)
+        if (exists) {
+          throw new DomainError('a withdrawal request is already pending', 'conflict')
+        }
+        const held = await hasConfirmedBoardSeat(
+          membershipId,
+          new Types.ObjectId(String(membership.clubId)),
+          input.now,
+          session,
+        )
+        const [created] = await requests.create(
+          [
+            {
+              membershipId,
+              clubId: membership.clubId,
+              userId,
+              reason: input.reason,
+              requestedEffectiveDate: input.requestedEffectiveDate,
+              state: held ? 'Held' : 'Pending',
+              createdAt: input.now,
+            },
+          ],
+          { session, ordered: true },
+        )
+        requestId = new Types.ObjectId(String(created!._id))
+        await audits.create(
+          [
+            {
+              entityType: 'MembershipWithdrawalRequest',
+              entityId: requestId,
+              action: 'MEMBERSHIP_WITHDRAWAL_REQUESTED',
+              actorId: userId,
+              actorRole: 'Student',
+              after: {
+                membershipId,
+                requestedEffectiveDate: input.requestedEffectiveDate,
+                state: held ? 'Held' : 'Pending',
+              },
+              correlationId: randomUUID(),
+              at: input.now,
+            },
+          ],
+          { session, ordered: true },
+        )
+        const recipients = await clubUserIdsWithPermission(
+          new Types.ObjectId(String(membership.clubId)),
+          'club.member.manage',
+          input.now,
+          session,
+        )
+        for (const recipient of recipients) {
+          await notify({
+            recipient,
+            entityId: requestId,
+            eventCode: 'MEMBERSHIP_WITHDRAWAL_REQUESTED',
+            clubId: new Types.ObjectId(String(membership.clubId)),
+            now: input.now,
+            entityType: 'MembershipWithdrawalRequest',
+            payload: {
+              requestId: String(requestId),
+              membershipId: String(membershipId),
+              state: held ? 'Held' : 'Pending',
+            },
+            session,
+          })
+        }
+      })
+      const created = await requests.findById(requestId).lean()
+      if (!created) {
+        throw new DomainError('withdrawal request not found', 'not_found')
+      }
+      return mapRequest(created)
     },
 
     // Liệt kê đơn xin rút của sinh viên
     async listMyWithdrawalRequests(userId) {
-      const docs = await requests.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).lean();
-      const clubDocs = await clubs.find({ _id: { $in: docs.map((doc) => doc.clubId) } }).select("_id name").lean();
-      const names = new Map(clubDocs.map((club) => [String(club._id), String(club.name)]));
-      return docs.map((doc) => ({ ...mapRequest(doc), clubName: names.get(String(doc.clubId)) }));
+      const docs = await requests
+        .find({ userId: new Types.ObjectId(userId) })
+        .sort({ createdAt: -1 })
+        .lean()
+      const clubDocs = await clubs
+        .find({ _id: { $in: docs.map((doc) => doc.clubId) } })
+        .select('_id name')
+        .lean()
+      const names = new Map(clubDocs.map((club) => [String(club._id), String(club.name)]))
+      return docs.map((doc) => ({ ...mapRequest(doc), clubName: names.get(String(doc.clubId)) }))
     },
 
     // Liệt kê đơn xin rút của một CLB kèm tên thành viên
     async listClubWithdrawalRequests(clubId) {
-      const docs = await requests.find({ clubId: new Types.ObjectId(clubId) }).sort({ createdAt: -1 }).lean();
-      const usersForRequests = await users.find({ _id: { $in: docs.map((doc) => doc.userId) } })
-        .select("_id displayName").lean();
-      const names = new Map(usersForRequests.map((user) => [String(user._id), String(user.displayName)]));
-      return docs.map((doc) => ({ ...mapRequest(doc), memberName: names.get(String(doc.userId)) }));
+      const docs = await requests
+        .find({ clubId: new Types.ObjectId(clubId) })
+        .sort({ createdAt: -1 })
+        .lean()
+      const usersForRequests = await users
+        .find({ _id: { $in: docs.map((doc) => doc.userId) } })
+        .select('_id displayName')
+        .lean()
+      const names = new Map(
+        usersForRequests.map((user) => [String(user._id), String(user.displayName)]),
+      )
+      return docs.map((doc) => ({ ...mapRequest(doc), memberName: names.get(String(doc.userId)) }))
     },
 
     // Thực thi đơn xin rút: kết thúc tư cách thành viên và các phân công vị trí
     async executeWithdrawal(input) {
-      const clubId = new Types.ObjectId(input.clubId);
-      const requestId = new Types.ObjectId(input.requestId);
-      const actorId = new Types.ObjectId(input.actorId);
+      const clubId = new Types.ObjectId(input.clubId)
+      const requestId = new Types.ObjectId(input.requestId)
+      const actorId = new Types.ObjectId(input.actorId)
       await mongoose.connection.transaction(async (session) => {
-        const request = await requests.findOne({ _id: requestId, clubId,
-          state: { $in: ["Pending", "Held"] } }).session(session).lean();
-        if (!request) throw new DomainError("pending withdrawal request not found", "not_found");
-        const requestedDate = date(request.requestedEffectiveDate);
-        if (requestedDate > input.now) throw new DomainError("withdrawal request is not effective yet", "conflict");
-        const effectiveDate = isBeforeToday(requestedDate, input.now) ? input.now : requestedDate;
-        const membershipId = new Types.ObjectId(String(request.membershipId));
-        const member = await memberships.findOne({ _id: membershipId, userId: request.userId,
-          state: { $in: ["Active", "Inactive"] } }).session(session).lean();
-        if (!member) throw new DomainError("membership is no longer eligible to leave", "conflict");
-        if (await hasConfirmedBoardSeat(membershipId, clubId, effectiveDate, session)) {
-          if (request.state !== "Held") await requests.updateOne({ _id: requestId }, { $set: { state: "Held" } }, { session });
-          throw new DomainError("replace the confirmed board seat before executing this request", "conflict");
+        const request = await requests
+          .findOne({ _id: requestId, clubId, state: { $in: ['Pending', 'Held'] } })
+          .session(session)
+          .lean()
+        if (!request) {
+          throw new DomainError('pending withdrawal request not found', 'not_found')
         }
-        const statusItem = { fromState: String(member.state), toState: "Left", effectiveDate,
-          reason: request.reason, actorId, at: input.now };
-        const changed = await memberships.updateOne({ _id: membershipId, state: member.state }, {
-          $set: { state: "Left", leftAt: effectiveDate }, $unset: { defaultRole: "" },
-          $push: { statusHistory: statusItem },
-        }, { session });
-        if (changed.modifiedCount !== 1) throw new DomainError("membership changed before execution", "conflict");
-        await closeAssignments(membershipId, clubId, effectiveDate, session);
-        await requests.updateOne({ _id: requestId, state: { $in: ["Pending", "Held"] } }, {
-          $set: { state: "Executed", executedBy: actorId, executedAt: input.now },
-        }, { session });
-        await audits.create([{
-          entityType: "ClubMembership", entityId: membershipId,
-          action: "CLUB_MEMBERSHIP_LEFT", actorId, actorRole: "Club Member",
-          before: { state: String(member.state) }, after: { state: "Left", effectiveDate, requestId },
-          correlationId: randomUUID(), at: input.now,
-        }, {
-          entityType: "MembershipWithdrawalRequest", entityId: requestId,
-          action: "MEMBERSHIP_WITHDRAWAL_EXECUTED", actorId, actorRole: "Club Member",
-          before: { state: String(request.state) }, after: { state: "Executed", membershipId },
-          correlationId: randomUUID(), at: input.now,
-        }], { session, ordered: true });
-        await notify({ recipient: new Types.ObjectId(String(member.userId)), entityId: membershipId,
-          eventCode: "CLUB_MEMBERSHIP_LEFT", clubId, now: input.now,
-          payload: { membershipId: String(membershipId), state: "Left", requestId: String(requestId) }, session });
-      });
-      const request = await requests.findById(requestId).lean();
-      const membership = request ? await memberships.findById(request.membershipId).lean() : null;
-      if (!membership) throw new DomainError("membership not found", "not_found");
-      return membershipView(membership);
+        const requestedDate = date(request.requestedEffectiveDate)
+        if (requestedDate > input.now) {
+          throw new DomainError('withdrawal request is not effective yet', 'conflict')
+        }
+        const effectiveDate = isBeforeToday(requestedDate, input.now) ? input.now : requestedDate
+        const membershipId = new Types.ObjectId(String(request.membershipId))
+        const member = await memberships
+          .findOne({
+            _id: membershipId,
+            userId: request.userId,
+            state: { $in: ['Active', 'Inactive'] },
+          })
+          .session(session)
+          .lean()
+        if (!member) {
+          throw new DomainError('membership is no longer eligible to leave', 'conflict')
+        }
+        if (await hasConfirmedBoardSeat(membershipId, clubId, effectiveDate, session)) {
+          if (request.state !== 'Held') {
+            await requests.updateOne({ _id: requestId }, { $set: { state: 'Held' } }, { session })
+          }
+          throw new DomainError(
+            'replace the confirmed board seat before executing this request',
+            'conflict',
+          )
+        }
+        const statusItem = {
+          fromState: String(member.state),
+          toState: 'Left',
+          effectiveDate,
+          reason: request.reason,
+          actorId,
+          at: input.now,
+        }
+        const changed = await memberships.updateOne(
+          { _id: membershipId, state: member.state },
+          {
+            $set: { state: 'Left', leftAt: effectiveDate },
+            $unset: { defaultRole: '' },
+            $push: { statusHistory: statusItem },
+          },
+          { session },
+        )
+        if (changed.modifiedCount !== 1) {
+          throw new DomainError('membership changed before execution', 'conflict')
+        }
+        await closeAssignments(membershipId, clubId, effectiveDate, session)
+        await requests.updateOne(
+          { _id: requestId, state: { $in: ['Pending', 'Held'] } },
+          {
+            $set: { state: 'Executed', executedBy: actorId, executedAt: input.now },
+          },
+          { session },
+        )
+        await audits.create(
+          [
+            {
+              entityType: 'ClubMembership',
+              entityId: membershipId,
+              action: 'CLUB_MEMBERSHIP_LEFT',
+              actorId,
+              actorRole: 'Club Member',
+              before: { state: String(member.state) },
+              after: { state: 'Left', effectiveDate, requestId },
+              correlationId: randomUUID(),
+              at: input.now,
+            },
+            {
+              entityType: 'MembershipWithdrawalRequest',
+              entityId: requestId,
+              action: 'MEMBERSHIP_WITHDRAWAL_EXECUTED',
+              actorId,
+              actorRole: 'Club Member',
+              before: { state: String(request.state) },
+              after: { state: 'Executed', membershipId },
+              correlationId: randomUUID(),
+              at: input.now,
+            },
+          ],
+          { session, ordered: true },
+        )
+        await notify({
+          recipient: new Types.ObjectId(String(member.userId)),
+          entityId: membershipId,
+          eventCode: 'CLUB_MEMBERSHIP_LEFT',
+          clubId,
+          now: input.now,
+          payload: {
+            membershipId: String(membershipId),
+            state: 'Left',
+            requestId: String(requestId),
+          },
+          session,
+        })
+      })
+      const request = await requests.findById(requestId).lean()
+      const membership = request ? await memberships.findById(request.membershipId).lean() : null
+      if (!membership) {
+        throw new DomainError('membership not found', 'not_found')
+      }
+      return membershipView(membership)
     },
-  };
+  }
 }

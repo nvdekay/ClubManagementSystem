@@ -1,333 +1,752 @@
-import { useState, type ReactNode } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useAuth } from "@/hooks/useAuth";
-import { useEvaluation, useEvaluationAction, useEvaluationOverview, useEvaluationPeriodAction } from "@/hooks/useEvaluations";
-import { EvaluationRequestError, type Classification, type DimensionView, type EvaluationState } from "@/services/evaluations";
-import { useConfirm } from "@/hooks/useConfirm";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { useState, type ReactNode } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSelect } from '@/components/ui/select/AppSelect'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useAuth } from '@/hooks/useAuth'
+import {
+  useEvaluation,
+  useEvaluationAction,
+  useEvaluationOverview,
+  useEvaluationPeriodAction,
+} from '@/hooks/useEvaluations'
+import {
+  EvaluationRequestError,
+  type Classification,
+  type DimensionView,
+  type EvaluationState,
+} from '@/services/evaluations'
+import { useConfirm } from '@/hooks/useConfirm'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
 
-const metricKeys = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers", "completedEvents",
-  "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount", "feedbackAverage",
-  "reportsDue", "reportsOnTime", "reportReturns", "bookingsGranted", "bookingsUsed", "budgets", "budgetsClean", "leaderSeated", "membersLeft", "violationPenalty", "openViolations", "periodicReportOverdue"] as const;
-type MetricKey = typeof metricKeys[number];
-type DimensionCode = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8";
+const metricKeys = [
+  'registrations',
+  'attendances',
+  'uniqueAttendees',
+  'outsiderAttendees',
+  'activeMembers',
+  'completedEvents',
+  'publicCompletedEvents',
+  'cancelledEvents',
+  'acceptedInvitations',
+  'applications',
+  'feedbackCount',
+  'feedbackAverage',
+  'reportsDue',
+  'reportsOnTime',
+  'reportReturns',
+  'bookingsGranted',
+  'bookingsUsed',
+  'budgets',
+  'budgetsClean',
+  'leaderSeated',
+  'membersLeft',
+  'violationPenalty',
+  'openViolations',
+  'periodicReportOverdue',
+] as const
+type MetricKey = (typeof metricKeys)[number]
+type DimensionCode = 'D1' | 'D2' | 'D3' | 'D4' | 'D5' | 'D6' | 'D7' | 'D8'
 
 // Dịch trạng thái đánh giá CLB sang nhãn hiển thị
 function stateLabel(t: TFunction, state: EvaluationState | undefined): string {
   switch (state) {
-    case "Draft": return t("evaluations.stateDraft");
-    case "Data Ready": return t("evaluations.stateDataReady");
-    case "Under Review": return t("evaluations.stateUnderReview");
-    case "Finalized": return t("evaluations.stateFinalized");
-    case "Published": return t("evaluations.statePublished");
-    default: return t("evaluations.notGenerated");
+    case 'Draft':
+      return t('evaluations.stateDraft')
+    case 'Data Ready':
+      return t('evaluations.stateDataReady')
+    case 'Under Review':
+      return t('evaluations.stateUnderReview')
+    case 'Finalized':
+      return t('evaluations.stateFinalized')
+    case 'Published':
+      return t('evaluations.statePublished')
+    default:
+      return t('evaluations.notGenerated')
   }
 }
 
 // Chọn màu badge theo trạng thái đánh giá
 function stateTone(state: EvaluationState | undefined): AppBadgeTone {
-  return state === "Published" ? "success" : state === "Finalized" ? "info" : state === "Under Review" ? "warning" : "neutral";
+  return state === 'Published'
+    ? 'success'
+    : state === 'Finalized'
+      ? 'info'
+      : state === 'Under Review'
+        ? 'warning'
+        : 'neutral'
 }
 
 // Dịch xếp loại đánh giá sang nhãn hiển thị
 function ratingLabel(t: TFunction, value: Classification): string {
   switch (value) {
-    case "EXCELLENT": return t("evaluations.ratingEXCELLENT");
-    case "GOOD": return t("evaluations.ratingGOOD");
-    case "FAIR": return t("evaluations.ratingFAIR");
-    default: return t("evaluations.ratingNEEDS_IMPROVEMENT");
+    case 'EXCELLENT':
+      return t('evaluations.ratingEXCELLENT')
+    case 'GOOD':
+      return t('evaluations.ratingGOOD')
+    case 'FAIR':
+      return t('evaluations.ratingFAIR')
+    default:
+      return t('evaluations.ratingNEEDS_IMPROVEMENT')
   }
 }
 
 // Chọn màu badge theo xếp loại đánh giá
 function ratingTone(value: Classification): AppBadgeTone {
-  return value === "EXCELLENT" ? "success" : value === "GOOD" ? "info" : value === "FAIR" ? "warning" : "danger";
+  return value === 'EXCELLENT'
+    ? 'success'
+    : value === 'GOOD'
+      ? 'info'
+      : value === 'FAIR'
+        ? 'warning'
+        : 'danger'
 }
 
 // Dịch mã chỉ số dữ liệu sang nhãn hiển thị
 function metricLabel(t: TFunction, metric: string): string {
-  return metricKeys.includes(metric as MetricKey) ? t(`evaluations.metric_${metric as MetricKey}`) : metric;
+  return metricKeys.includes(metric as MetricKey)
+    ? t(`evaluations.metric_${metric as MetricKey}`)
+    : metric
 }
 
 // Lấy tên tiêu chí đánh giá, dịch nếu là tiêu chí chuẩn
 function dimensionName(t: TFunction, dimension: DimensionView): string {
-  return /^D[1-8]$/.test(dimension.code) ? t(`evaluationSchemes.dim_${dimension.code as DimensionCode}`) : dimension.name;
+  return /^D[1-8]$/.test(dimension.code)
+    ? t(`evaluationSchemes.dim_${dimension.code as DimensionCode}`)
+    : dimension.name
 }
 
 // Cổng kiểm tra đăng nhập và quyền officer cho các trang đánh giá
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
-  const { t } = useTranslation();
-  const auth = useAuth();
-  if (auth.isPending) return <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-16 w-full" />)}</div>;
-  if (!auth.data) return <AppNotice>
-    <p>{t("evaluations.signIn")}</p>
-    <Link className="inline-block font-semibold text-primary-app hover:underline"
-      to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("evaluations.signInLink")}</Link>
-  </AppNotice>;
-  if (!auth.data.systemRoles.includes("ICPDP_OFFICER")) {
-    return <AppNotice tone="danger" role="alert">{t("evaluations.unauthorized")}</AppNotice>;
+  const { t } = useTranslation()
+  const auth = useAuth()
+  if (auth.isPending) {
+    return (
+      <div className="space-y-2">
+        {[0, 1, 2].map((item) => (
+          <AppSkeleton key={item} className="h-16 w-full" />
+        ))}
+      </div>
+    )
   }
-  return <>{children(auth.data.csrfToken)}</>;
+  if (!auth.data) {
+    return (
+      <AppNotice>
+        <p>{t('evaluations.signIn')}</p>
+        <Link
+          className="inline-block font-semibold text-primary-app hover:underline"
+          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
+        >
+          {t('evaluations.signInLink')}
+        </Link>
+      </AppNotice>
+    )
+  }
+  if (!auth.data.systemRoles.includes('ICPDP_OFFICER')) {
+    return (
+      <AppNotice tone="danger" role="alert">
+        {t('evaluations.unauthorized')}
+      </AppNotice>
+    )
+  }
+  return <>{children(auth.data.csrfToken)}</>
 }
 
 // Tổng quan đánh giá các CLB theo kỳ và thao tác chốt/công bố hàng loạt
 function Overview({ csrfToken }: { csrfToken: string }) {
-  const { t } = useTranslation();
-  const askConfirm = useConfirm();
-  const [params, setParams] = useSearchParams();
-  const overview = useEvaluationOverview(params.get("period") ?? undefined, true);
-  const action = useEvaluationPeriodAction();
+  const { t } = useTranslation()
+  const askConfirm = useConfirm()
+  const [params, setParams] = useSearchParams()
+  const overview = useEvaluationOverview(params.get('period') ?? undefined, true)
+  const action = useEvaluationPeriodAction()
 
-  if (overview.isPending) return <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-14 w-full" />)}</div>;
-  if (overview.isError) return <AppNotice tone="danger" role="alert" title={overview.error.message || t("evaluations.loadError")}>
-    <AppButton variant="secondary" onClick={() => void overview.refetch()}>{t("evaluations.retry")}</AppButton></AppNotice>;
-  const data = overview.data;
-  if (!data.periodCode) return <AppNotice>{t("evaluations.noPeriods")}</AppNotice>;
-  const periodCode = data.periodCode;
+  if (overview.isPending) {
+    return (
+      <div className="space-y-2">
+        {[0, 1, 2].map((item) => (
+          <AppSkeleton key={item} className="h-14 w-full" />
+        ))}
+      </div>
+    )
+  }
+  if (overview.isError) {
+    return (
+      <AppNotice
+        tone="danger"
+        role="alert"
+        title={overview.error.message || t('evaluations.loadError')}
+      >
+        <AppButton variant="secondary" onClick={() => void overview.refetch()}>
+          {t('evaluations.retry')}
+        </AppButton>
+      </AppNotice>
+    )
+  }
+  const data = overview.data
+  if (!data.periodCode) {
+    return <AppNotice>{t('evaluations.noPeriods')}</AppNotice>
+  }
+  const periodCode = data.periodCode
 
   return (
     <>
       <div className="mb-6 flex flex-wrap items-end gap-4">
-        <div className="text-sm font-medium text-text-app">{t("evaluations.period")}
-          <AppSelect className="mt-1.5 block w-56 font-normal" label={t("evaluations.period")} value={periodCode}
-            onChange={(value) => setParams({ period: value })} options={data.periods.map((item) => ({ value: item.code, label: item.code }))} /></div>
-        {data.scheme && <AppBadge tone="info">{t("evaluations.schemeVersion", { version: data.scheme.version })}</AppBadge>}
+        <div className="text-sm font-medium text-text-app">
+          {t('evaluations.period')}
+          <AppSelect
+            className="mt-1.5 block w-56 font-normal"
+            label={t('evaluations.period')}
+            value={periodCode}
+            onChange={(value) => setParams({ period: value })}
+            options={data.periods.map((item) => ({ value: item.code, label: item.code }))}
+          />
+        </div>
+        {data.scheme && (
+          <AppBadge tone="info">
+            {t('evaluations.schemeVersion', { version: data.scheme.version })}
+          </AppBadge>
+        )}
       </div>
-      {!data.scheme ? <AppNotice className="mb-6">
-        <p>{t("evaluations.noScheme")}</p>
-        <Link to="/workspace/evaluation-schemes" className="mt-2 inline-block font-semibold text-primary-app hover:underline">{t("evaluations.schemeLink")}</Link>
-      </AppNotice> : <div className="mb-8">
-        <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-          <p className="text-sm text-muted-app">{t("evaluations.publishHint")}</p>
-          <AppButton className="mt-4" disabled={action.isPending || !data.canPublish}
-            onClick={async () => { if (await askConfirm(t("evaluations.confirmPublish", { period: periodCode }))) action.mutate({ kind: "publish", periodCode, csrfToken }); }}>
-            {action.isPending && action.variables?.kind === "publish" ? t("evaluations.publishing") : t("evaluations.publish")}</AppButton>
-        </section>
-      </div>}
-      {action.isError && <AppNotice tone="danger" role="alert" className="mb-6">
-        {action.error instanceof EvaluationRequestError && action.error.pendingReviewClubs.length ? <>
-          <p>{t("evaluations.reportsPending", { clubs: action.error.pendingReviewClubs.join(", ") })}</p>
-          <Link to="/workspace/periodic-reports" className="mt-2 inline-block font-semibold text-primary-app hover:underline">
-            {t("evaluations.reportsLink")}</Link>
-        </> : action.error.message}</AppNotice>}
-      {data.rows.length ? <div className="overflow-x-auto rounded-xl border border-border-app bg-bg-app">
-        <table className="w-full min-w-[40rem] text-left text-sm">
-          <thead className="bg-surface-app"><tr className="text-xs text-muted-app">
-            <th scope="col" className="px-4 py-2.5 font-medium">{t("evaluations.club")}</th>
-            <th scope="col" className="px-4 py-2.5 font-medium">{t("evaluations.status")}</th>
-            <th scope="col" className="px-4 py-2.5 text-right font-medium">{t("evaluations.total")}</th>
-            <th scope="col" className="px-4 py-2.5 font-medium">{t("evaluations.rating")}</th>
-            <th scope="col" className="px-4 py-2.5"><span className="sr-only">{t("evaluations.open")}</span></th>
-          </tr></thead>
-          <tbody>{data.rows.map((row) =>
-            <tr key={row.clubId} className="border-t border-border-app align-middle hover:bg-surface-app">
-              <td className="px-4 py-3"><p className="font-medium break-words">{row.clubName}</p>
-                <p className="text-xs text-muted-app">
-                  {[row.revisionNo && row.revisionNo > 1 ? t("evaluations.revision", { number: row.revisionNo }) : "",
-                    row.insufficientCount ? t("evaluations.missingData", { count: row.insufficientCount }) : "",
-                    row.manualCount ? t("evaluations.manualScores", { count: row.manualCount }) : ""].filter(Boolean).join(" · ")}</p></td>
-              <td className="px-4 py-3"><AppBadge tone={stateTone(row.state)}>{stateLabel(t, row.state)}</AppBadge></td>
-              <td className="px-4 py-3 text-right font-semibold tabular-nums">{row.totalScore ?? "—"}</td>
-              <td className="px-4 py-3">{row.classification ? <AppBadge tone={ratingTone(row.classification)}>{ratingLabel(t, row.classification)}</AppBadge> : "—"}</td>
-              <td className="px-4 py-2 text-right">{row.evaluationId && <Link to={`/workspace/evaluations/${row.evaluationId}`}
-                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border-app bg-bg-app px-3 font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9">{t("evaluations.open")}<AppIcon name="chevronRight" className="size-4" /></Link>}</td>
-            </tr>)}</tbody>
-        </table>
-      </div> : <AppEmptyState variant="boxed" message={t("evaluations.none")} />}
+      {!data.scheme ? (
+        <AppNotice className="mb-6">
+          <p>{t('evaluations.noScheme')}</p>
+          <Link
+            to="/workspace/evaluation-schemes"
+            className="mt-2 inline-block font-semibold text-primary-app hover:underline"
+          >
+            {t('evaluations.schemeLink')}
+          </Link>
+        </AppNotice>
+      ) : (
+        <div className="mb-8">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <p className="text-sm text-muted-app">{t('evaluations.publishHint')}</p>
+            <AppButton
+              className="mt-4"
+              disabled={action.isPending || !data.canPublish}
+              onClick={async () => {
+                if (await askConfirm(t('evaluations.confirmPublish', { period: periodCode }))) {
+                  action.mutate({ kind: 'publish', periodCode, csrfToken })
+                }
+              }}
+            >
+              {action.isPending && action.variables?.kind === 'publish'
+                ? t('evaluations.publishing')
+                : t('evaluations.publish')}
+            </AppButton>
+          </section>
+        </div>
+      )}
+      {action.isError && (
+        <AppNotice tone="danger" role="alert" className="mb-6">
+          {action.error instanceof EvaluationRequestError &&
+          action.error.pendingReviewClubs.length ? (
+            <>
+              <p>
+                {t('evaluations.reportsPending', {
+                  clubs: action.error.pendingReviewClubs.join(', '),
+                })}
+              </p>
+              <Link
+                to="/workspace/periodic-reports"
+                className="mt-2 inline-block font-semibold text-primary-app hover:underline"
+              >
+                {t('evaluations.reportsLink')}
+              </Link>
+            </>
+          ) : (
+            action.error.message
+          )}
+        </AppNotice>
+      )}
+      {data.rows.length ? (
+        <div className="overflow-x-auto rounded-xl border border-border-app bg-bg-app">
+          <table className="w-full min-w-[40rem] text-left text-sm">
+            <thead className="bg-surface-app">
+              <tr className="text-xs text-muted-app">
+                <th scope="col" className="px-4 py-2.5 font-medium">
+                  {t('evaluations.club')}
+                </th>
+                <th scope="col" className="px-4 py-2.5 font-medium">
+                  {t('evaluations.status')}
+                </th>
+                <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                  {t('evaluations.total')}
+                </th>
+                <th scope="col" className="px-4 py-2.5 font-medium">
+                  {t('evaluations.rating')}
+                </th>
+                <th scope="col" className="px-4 py-2.5">
+                  <span className="sr-only">{t('evaluations.open')}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((row) => (
+                <tr
+                  key={row.clubId}
+                  className="border-t border-border-app align-middle hover:bg-surface-app"
+                >
+                  <td className="px-4 py-3">
+                    <p className="font-medium break-words">{row.clubName}</p>
+                    <p className="text-xs text-muted-app">
+                      {[
+                        row.revisionNo && row.revisionNo > 1
+                          ? t('evaluations.revision', { number: row.revisionNo })
+                          : '',
+                        row.insufficientCount
+                          ? t('evaluations.missingData', { count: row.insufficientCount })
+                          : '',
+                        row.manualCount
+                          ? t('evaluations.manualScores', { count: row.manualCount })
+                          : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <AppBadge tone={stateTone(row.state)}>{stateLabel(t, row.state)}</AppBadge>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                    {row.totalScore ?? '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {row.classification ? (
+                      <AppBadge tone={ratingTone(row.classification)}>
+                        {ratingLabel(t, row.classification)}
+                      </AppBadge>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    {row.evaluationId && (
+                      <Link
+                        to={`/workspace/evaluations/${row.evaluationId}`}
+                        className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border-app bg-bg-app px-3 font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9"
+                      >
+                        {t('evaluations.open')}
+                        <AppIcon name="chevronRight" className="size-4" />
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <AppEmptyState variant="boxed" message={t('evaluations.none')} />
+      )}
     </>
-  );
+  )
 }
 
 // Trang ICPDP danh sách đánh giá hoạt động CLB
 export function EvaluationsPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   return (
     <>
-      <PageHeader title={t("evaluations.title")} description={t("evaluations.description")} />
+      <PageHeader title={t('evaluations.title')} description={t('evaluations.description')} />
       <Gate>{(csrfToken) => <Overview csrfToken={csrfToken} />}</Gate>
     </>
-  );
+  )
 }
 
 // Một dòng tiêu chí: xem dữ liệu và chấm điểm thủ công
-function DimensionRow({ dimension, editable, busy, onSave }: { dimension: DimensionView; editable: boolean; busy: boolean;
-  onSave: (manual: { score: number; justification: string } | null) => Promise<boolean> }) {
-  const { t } = useTranslation();
-  const [showData, setShowData] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [score, setScore] = useState(String(dimension.score ?? ""));
-  const [justification, setJustification] = useState(dimension.justification ?? "");
-  const value = Number(score);
-  const penalized = dimension.evidence.some((item) => item.metric === "periodicReportOverdue" && item.value > 0);
+function DimensionRow({
+  dimension,
+  editable,
+  busy,
+  onSave,
+}: {
+  dimension: DimensionView
+  editable: boolean
+  busy: boolean
+  onSave: (manual: { score: number; justification: string } | null) => Promise<boolean>
+}) {
+  const { t } = useTranslation()
+  const [showData, setShowData] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [score, setScore] = useState(String(dimension.score ?? ''))
+  const [justification, setJustification] = useState(dimension.justification ?? '')
+  const value = Number(score)
+  const penalized = dimension.evidence.some(
+    (item) => item.metric === 'periodicReportOverdue' && item.value > 0,
+  )
   const field = useFieldValidation({
-    score: !score.trim() ? t("common.fieldRequired") : !Number.isFinite(value) ? t("common.invalidNumber")
-      : value < 0 ? t("common.numberMin", { min: 0 }) : value > 100 ? t("common.numberMax", { max: 100 }) : null,
-    justification: justification.trim() ? null : t("common.fieldRequired"),
-  });
+    score: !score.trim()
+      ? t('common.fieldRequired')
+      : !Number.isFinite(value)
+        ? t('common.invalidNumber')
+        : value < 0
+          ? t('common.numberMin', { min: 0 })
+          : value > 100
+            ? t('common.numberMax', { max: 100 })
+            : null,
+    justification: justification.trim() ? null : t('common.fieldRequired'),
+  })
 
   // Lưu điểm thủ công kèm lý do của tiêu chí
   async function save() {
-    if (!field.touchAll()) return;
-    if (await onSave({ score: value, justification: justification.trim() })) { setEditing(false); field.reset(); }
+    if (!field.touchAll()) {
+      return
+    }
+    if (await onSave({ score: value, justification: justification.trim() })) {
+      setEditing(false)
+      field.reset()
+    }
   }
 
   return (
     <li className="px-5 py-4">
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1 basis-56">
-          <p className="font-medium"><span className="font-mono text-muted-app">{dimension.code}</span> {dimensionName(t, dimension)}</p>
-          <p className="text-xs text-muted-app">{t("evaluations.weight")}: {dimension.weight}%
-            {dimension.computedScore !== undefined && dimension.isManual && ` · ${t("evaluations.computed")}: ${dimension.computedScore}`}</p>
-          {dimension.isManual && dimension.justification && <p className="mt-1 text-sm break-words">{dimension.justification}</p>}
+          <p className="font-medium">
+            <span className="font-mono text-muted-app">{dimension.code}</span>{' '}
+            {dimensionName(t, dimension)}
+          </p>
+          <p className="text-xs text-muted-app">
+            {t('evaluations.weight')}: {dimension.weight}%
+            {dimension.computedScore !== undefined &&
+              dimension.isManual &&
+              ` · ${t('evaluations.computed')}: ${dimension.computedScore}`}
+          </p>
+          {dimension.isManual && dimension.justification && (
+            <p className="mt-1 text-sm break-words">{dimension.justification}</p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {dimension.isManual && <AppBadge tone="warning">{t("evaluations.manualBadge")}</AppBadge>}
-          {dimension.score !== undefined ? <span className="font-heading text-base font-semibold tabular-nums">{dimension.score}</span>
-            : <AppBadge>{t("evaluations.insufficient")}</AppBadge>}
+          {dimension.isManual && <AppBadge tone="warning">{t('evaluations.manualBadge')}</AppBadge>}
+          {dimension.score !== undefined ? (
+            <span className="font-heading text-base font-semibold tabular-nums">
+              {dimension.score}
+            </span>
+          ) : (
+            <AppBadge>{t('evaluations.insufficient')}</AppBadge>
+          )}
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-4 text-sm">
-        <button type="button" className="font-semibold text-primary-app hover:underline" aria-expanded={showData}
-          onClick={() => setShowData((value) => !value)}>{showData ? t("evaluations.hideData") : t("evaluations.showData")}</button>
-        {editable && !penalized && dimension.allowsManual && !editing && <button type="button" className="font-semibold text-primary-app hover:underline"
-          onClick={() => setEditing(true)}>{t("evaluations.scoreByHand")}</button>}
-        {editable && dimension.isManual && !editing && <button type="button" className="font-semibold text-primary-app hover:underline"
-          disabled={busy} onClick={() => void onSave(null)}>{t("evaluations.clearManual")}</button>}
+        <button
+          type="button"
+          className="font-semibold text-primary-app hover:underline"
+          aria-expanded={showData}
+          onClick={() => setShowData((value) => !value)}
+        >
+          {showData ? t('evaluations.hideData') : t('evaluations.showData')}
+        </button>
+        {editable && !penalized && dimension.allowsManual && !editing && (
+          <button
+            type="button"
+            className="font-semibold text-primary-app hover:underline"
+            onClick={() => setEditing(true)}
+          >
+            {t('evaluations.scoreByHand')}
+          </button>
+        )}
+        {editable && dimension.isManual && !editing && (
+          <button
+            type="button"
+            className="font-semibold text-primary-app hover:underline"
+            disabled={busy}
+            onClick={() => void onSave(null)}
+          >
+            {t('evaluations.clearManual')}
+          </button>
+        )}
       </div>
-      {showData && <dl className="mt-3 grid gap-x-6 gap-y-2 rounded-xl bg-surface-app p-3 text-sm sm:grid-cols-2">{dimension.evidence.map((item) =>
-        <div key={item.metric} className="flex justify-between gap-3">
-          <dt className="text-muted-app" title={t("evaluations.source", { source: item.sourceEntity })}>{metricLabel(t, item.metric)}</dt>
-          <dd className="font-semibold tabular-nums">{item.value}</dd>
-        </div>)}</dl>}
-      {editing && <div className="mt-3 grid gap-3 rounded-xl border border-border-app p-3 sm:grid-cols-[8rem_1fr]">
-        <label className="block text-sm font-medium text-text-app">{t("evaluations.manualScore")}<AppRequiredMark />
-          <AppInput type="number" min={0} max={100} step={0.5} className="mt-1.5 w-full font-normal tabular-nums" value={score}
-            {...field.control("score")} onChange={(e) => setScore(e.target.value)} />
-          <AppFieldError message={field.error("score")} /></label>
-        <label className="block text-sm font-medium text-text-app">{t("evaluations.justification")}<AppRequiredMark />
-          <AppTextarea className="mt-1.5 min-h-20 w-full font-normal" value={justification} maxLength={2000}
-            placeholder={t("evaluations.justificationHint")} {...field.control("justification")}
-            onChange={(e) => setJustification(e.target.value)} />
-          <AppFieldError message={field.error("justification")} /></label>
-        <div className="flex flex-wrap gap-2 sm:col-span-2">
-          <AppButton disabled={busy} onClick={() => void save()}>{t("evaluations.saveManual")}</AppButton>
-          <AppButton variant="secondary" onClick={() => { setEditing(false); field.reset(); }}>{t("evaluations.cancel")}</AppButton>
+      {showData && (
+        <dl className="mt-3 grid gap-x-6 gap-y-2 rounded-xl bg-surface-app p-3 text-sm sm:grid-cols-2">
+          {dimension.evidence.map((item) => (
+            <div key={item.metric} className="flex justify-between gap-3">
+              <dt
+                className="text-muted-app"
+                title={t('evaluations.source', { source: item.sourceEntity })}
+              >
+                {metricLabel(t, item.metric)}
+              </dt>
+              <dd className="font-semibold tabular-nums">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {editing && (
+        <div className="mt-3 grid gap-3 rounded-xl border border-border-app p-3 sm:grid-cols-[8rem_1fr]">
+          <label className="block text-sm font-medium text-text-app">
+            {t('evaluations.manualScore')}
+            <AppRequiredMark />
+            <AppInput
+              type="number"
+              min={0}
+              max={100}
+              step={0.5}
+              className="mt-1.5 w-full font-normal tabular-nums"
+              value={score}
+              {...field.control('score')}
+              onChange={(e) => setScore(e.target.value)}
+            />
+            <AppFieldError message={field.error('score')} />
+          </label>
+          <label className="block text-sm font-medium text-text-app">
+            {t('evaluations.justification')}
+            <AppRequiredMark />
+            <AppTextarea
+              className="mt-1.5 min-h-20 w-full font-normal"
+              value={justification}
+              maxLength={2000}
+              placeholder={t('evaluations.justificationHint')}
+              {...field.control('justification')}
+              onChange={(e) => setJustification(e.target.value)}
+            />
+            <AppFieldError message={field.error('justification')} />
+          </label>
+          <div className="flex flex-wrap gap-2 sm:col-span-2">
+            <AppButton disabled={busy} onClick={() => void save()}>
+              {t('evaluations.saveManual')}
+            </AppButton>
+            <AppButton
+              variant="secondary"
+              onClick={() => {
+                setEditing(false)
+                field.reset()
+              }}
+            >
+              {t('evaluations.cancel')}
+            </AppButton>
+          </div>
         </div>
-      </div>}
+      )}
     </li>
-  );
+  )
 }
 
 // Chi tiết một đánh giá CLB và các bước chốt, công bố
 function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
-  const { t, i18n } = useTranslation();
-  const askConfirm = useConfirm();
-  const query = useEvaluation(id, true);
-  const action = useEvaluationAction();
-  const navigate = useNavigate();
-  const back = { to: "/workspace/evaluations", label: t("evaluations.back") };
-  if (query.isPending) return <div className="space-y-4"><AppSkeleton className="h-10 w-1/2" /><AppSkeleton className="h-96 w-full" /></div>;
-  if (query.isError) return <>
-    <PageHeader title={t("evaluations.evaluation")} back={back} />
-    <AppNotice tone="danger" role="alert" title={query.error.message || t("evaluations.loadError")}>
-      <AppButton variant="secondary" onClick={() => void query.refetch()}>{t("evaluations.retry")}</AppButton></AppNotice>
-  </>;
-  const item = query.data;
-  const penalized = item.dimensions.some((dimension) => dimension.evidence.some((entry) => entry.metric === "periodicReportOverdue" && entry.value > 0));
-  const editable = ["Draft", "Data Ready", "Under Review"].includes(item.state);
-  const isLatest = (item.revisions[0]?.revisionNo ?? item.revisionNo) === item.revisionNo;
+  const { t, i18n } = useTranslation()
+  const askConfirm = useConfirm()
+  const query = useEvaluation(id, true)
+  const action = useEvaluationAction()
+  const navigate = useNavigate()
+  const back = { to: '/workspace/evaluations', label: t('evaluations.back') }
+  if (query.isPending) {
+    return (
+      <div className="space-y-4">
+        <AppSkeleton className="h-10 w-1/2" />
+        <AppSkeleton className="h-96 w-full" />
+      </div>
+    )
+  }
+  if (query.isError) {
+    return (
+      <>
+        <PageHeader title={t('evaluations.evaluation')} back={back} />
+        <AppNotice
+          tone="danger"
+          role="alert"
+          title={query.error.message || t('evaluations.loadError')}
+        >
+          <AppButton variant="secondary" onClick={() => void query.refetch()}>
+            {t('evaluations.retry')}
+          </AppButton>
+        </AppNotice>
+      </>
+    )
+  }
+  const item = query.data
+  const penalized = item.dimensions.some((dimension) =>
+    dimension.evidence.some((entry) => entry.metric === 'periodicReportOverdue' && entry.value > 0),
+  )
+  const editable = ['Draft', 'Data Ready', 'Under Review'].includes(item.state)
+  const isLatest = (item.revisions[0]?.revisionNo ?? item.revisionNo) === item.revisionNo
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
+    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
   }
 
   // Chạy một bước của đánh giá sau khi xác nhận nếu cần
-  async function run(next: Parameters<typeof action.mutateAsync>[0]["action"], confirmText?: string): Promise<boolean> {
-    if (confirmText && !(await askConfirm(confirmText))) return false;
+  async function run(
+    next: Parameters<typeof action.mutateAsync>[0]['action'],
+    confirmText?: string,
+  ): Promise<boolean> {
+    if (confirmText && !(await askConfirm(confirmText))) {
+      return false
+    }
     try {
-      const result = await action.mutateAsync({ id, action: next, csrfToken });
+      const result = await action.mutateAsync({ id, action: next, csrfToken })
       // Bản chỉnh sửa của kết quả đã công bố là một đánh giá mới có id riêng.
-      if (result.id !== id) navigate(`/workspace/evaluations/${result.id}`);
-      return true;
-    } catch { return false; }
+      if (result.id !== id) {
+        navigate(`/workspace/evaluations/${result.id}`)
+      }
+      return true
+    } catch {
+      return false
+    }
   }
 
   return (
     <>
-      <PageHeader title={item.clubName} back={back}
-        description={`${item.periodCode} · ${t("evaluations.revision", { number: item.revisionNo })} · ${t("evaluations.schemeVersion", { version: item.schemeVersion })}`}
-        actions={<AppBadge tone={stateTone(item.state)}>{stateLabel(t, item.state)}</AppBadge>} />
+      <PageHeader
+        title={item.clubName}
+        back={back}
+        description={`${item.periodCode} · ${t('evaluations.revision', { number: item.revisionNo })} · ${t('evaluations.schemeVersion', { version: item.schemeVersion })}`}
+        actions={<AppBadge tone={stateTone(item.state)}>{stateLabel(t, item.state)}</AppBadge>}
+      />
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="min-w-0">
-          {penalized && <AppNotice tone="warning" className="mb-4">{t("evaluations.reportPenalty")}</AppNotice>}
-          <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">{item.dimensions.map((dimension) =>
-            <DimensionRow key={`${dimension.code}-${dimension.score}-${dimension.isManual}`} dimension={dimension} editable={editable && isLatest}
-              busy={action.isPending}
-              onSave={(manual) => run({ kind: "manual", dimensionCode: dimension.code, manual })} />)}</ul>
+          {penalized && (
+            <AppNotice tone="warning" className="mb-4">
+              {t('evaluations.reportPenalty')}
+            </AppNotice>
+          )}
+          <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+            {item.dimensions.map((dimension) => (
+              <DimensionRow
+                key={`${dimension.code}-${dimension.score}-${dimension.isManual}`}
+                dimension={dimension}
+                editable={editable && isLatest}
+                busy={action.isPending}
+                onSave={(manual) => run({ kind: 'manual', dimensionCode: dimension.code, manual })}
+              />
+            ))}
+          </ul>
         </section>
 
         <aside className="min-w-0 space-y-6 xl:sticky xl:top-24">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <p className="text-xs text-muted-app">{t("evaluations.total")}</p>
-            {item.totalScore !== undefined ? <p className="mt-1 font-heading text-3xl font-semibold tabular-nums">{item.totalScore}</p>
-              : <p className="mt-1 text-sm text-muted-app">{editable ? t("evaluations.finalizeHint") : t("evaluations.noTotal")}</p>}
-            {item.classification && <AppBadge className="mt-2" tone={ratingTone(item.classification)}>{ratingLabel(t, item.classification)}</AppBadge>}
-            <p className="mt-3 text-xs text-muted-app">{t("evaluations.totalHint")}</p>
-            <p className="mt-1 text-xs text-muted-app">{t("evaluations.bands", { ...item.thresholds })}</p>
-            {isLatest && <div className="mt-5 space-y-2">
-              {editable && <AppButton className="w-full" disabled={action.isPending}
-                onClick={() => void run({ kind: "finalize" }, t("evaluations.confirmFinalize"))}>{t("evaluations.finalize")}</AppButton>}
-              {item.state === "Finalized" && <AppButton className="w-full" variant="secondary" disabled={action.isPending}
-                onClick={() => void run({ kind: "reopen" })}>{t("evaluations.reopen")}</AppButton>}
-              {item.state === "Published" && <>
-                <p className="text-xs text-muted-app">{t("evaluations.reviseHint")}</p>
-                <AppButton className="w-full" variant="secondary" disabled={action.isPending}
-                  onClick={() => void run({ kind: "regenerate" }, t("evaluations.confirmRevise"))}>{t("evaluations.revise")}</AppButton>
-              </>}
-            </div>}
-            {action.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{action.error.message}</p>}
+            <p className="text-xs text-muted-app">{t('evaluations.total')}</p>
+            {item.totalScore !== undefined ? (
+              <p className="mt-1 font-heading text-3xl font-semibold tabular-nums">
+                {item.totalScore}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-app">
+                {editable ? t('evaluations.finalizeHint') : t('evaluations.noTotal')}
+              </p>
+            )}
+            {item.classification && (
+              <AppBadge className="mt-2" tone={ratingTone(item.classification)}>
+                {ratingLabel(t, item.classification)}
+              </AppBadge>
+            )}
+            <p className="mt-3 text-xs text-muted-app">{t('evaluations.totalHint')}</p>
+            <p className="mt-1 text-xs text-muted-app">
+              {t('evaluations.bands', { ...item.thresholds })}
+            </p>
+            {isLatest && (
+              <div className="mt-5 space-y-2">
+                {editable && (
+                  <AppButton
+                    className="w-full"
+                    disabled={action.isPending}
+                    onClick={() => void run({ kind: 'finalize' }, t('evaluations.confirmFinalize'))}
+                  >
+                    {t('evaluations.finalize')}
+                  </AppButton>
+                )}
+                {item.state === 'Finalized' && (
+                  <AppButton
+                    className="w-full"
+                    variant="secondary"
+                    disabled={action.isPending}
+                    onClick={() => void run({ kind: 'reopen' })}
+                  >
+                    {t('evaluations.reopen')}
+                  </AppButton>
+                )}
+                {item.state === 'Published' && (
+                  <>
+                    <p className="text-xs text-muted-app">{t('evaluations.reviseHint')}</p>
+                    <AppButton
+                      className="w-full"
+                      variant="secondary"
+                      disabled={action.isPending}
+                      onClick={() =>
+                        void run({ kind: 'regenerate' }, t('evaluations.confirmRevise'))
+                      }
+                    >
+                      {t('evaluations.revise')}
+                    </AppButton>
+                  </>
+                )}
+              </div>
+            )}
+            {action.isError && (
+              <p role="alert" className="mt-3 text-sm text-danger-app">
+                {action.error.message}
+              </p>
+            )}
           </section>
-          {action.isSuccess && <AppNotice role="status">{t("evaluations.success")}</AppNotice>}
+          {action.isSuccess && <AppNotice role="status">{t('evaluations.success')}</AppNotice>}
 
-          {item.revisions.length > 1 && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t("evaluations.revisions")}</h2>
-            <ul className="mt-3 space-y-2 text-sm">{item.revisions.map((revision) =>
-              <li key={revision.id} className="flex flex-wrap items-center justify-between gap-2">
-                <Link to={`/workspace/evaluations/${revision.id}`} className="font-semibold text-primary-app hover:underline">
-                  {t("evaluations.revision", { number: revision.revisionNo })}</Link>
-                <span className="text-muted-app">{revision.totalScore ?? "—"} · {stateLabel(t, revision.state)}
-                  {revision.publishedAt && ` · ${date(revision.publishedAt)}`}</span>
-              </li>)}</ul>
-          </section>}
+          {item.revisions.length > 1 && (
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t('evaluations.revisions')}</h2>
+              <ul className="mt-3 space-y-2 text-sm">
+                {item.revisions.map((revision) => (
+                  <li
+                    key={revision.id}
+                    className="flex flex-wrap items-center justify-between gap-2"
+                  >
+                    <Link
+                      to={`/workspace/evaluations/${revision.id}`}
+                      className="font-semibold text-primary-app hover:underline"
+                    >
+                      {t('evaluations.revision', { number: revision.revisionNo })}
+                    </Link>
+                    <span className="text-muted-app">
+                      {revision.totalScore ?? '—'} · {stateLabel(t, revision.state)}
+                      {revision.publishedAt && ` · ${date(revision.publishedAt)}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t("evaluations.trend")}</h2>
-            {item.trend.length ? <ul className="mt-3 space-y-2 text-sm">{item.trend.map((entry) =>
-              <li key={entry.periodCode} className="flex justify-between gap-2"><span>{entry.periodCode}</span>
-                <span className="font-semibold tabular-nums">{entry.totalScore ?? "—"}{entry.classification && ` · ${ratingLabel(t, entry.classification)}`}</span></li>)}</ul>
-              : <div className="mt-2"><AppEmptyState message={t("evaluations.noTrend")} /></div>}
+            <h2 className="font-heading text-base font-semibold">{t('evaluations.trend')}</h2>
+            {item.trend.length ? (
+              <ul className="mt-3 space-y-2 text-sm">
+                {item.trend.map((entry) => (
+                  <li key={entry.periodCode} className="flex justify-between gap-2">
+                    <span>{entry.periodCode}</span>
+                    <span className="font-semibold tabular-nums">
+                      {entry.totalScore ?? '—'}
+                      {entry.classification && ` · ${ratingLabel(t, entry.classification)}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="mt-2">
+                <AppEmptyState message={t('evaluations.noTrend')} />
+              </div>
+            )}
           </section>
         </aside>
       </div>
     </>
-  );
+  )
 }
 
 // Trang ICPDP chi tiết đánh giá một CLB
 export function EvaluationDetailPage() {
-  const { id } = useParams();
-  return <Gate>{(csrfToken) => id ? <EvaluationDetailView id={id} csrfToken={csrfToken} /> : null}</Gate>;
+  const { id } = useParams()
+  return (
+    <Gate>
+      {(csrfToken) => (id ? <EvaluationDetailView id={id} csrfToken={csrfToken} /> : null)}
+    </Gate>
+  )
 }

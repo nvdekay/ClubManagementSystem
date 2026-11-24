@@ -1,78 +1,120 @@
-import type { AuthRepository } from "../domain/auth.js";
-import { DomainError } from "../domain/errors.js";
+import type { AuthRepository } from '../domain/auth.js'
+import { DomainError } from '../domain/errors.js'
 import {
-  PROPERTY_TYPES, validatePropertyDetails,
-  type PropertyDetails, type PropertyInput, type PropertyRepository,
-} from "../domain/property.js";
-import type { AccessActor } from "./access.js";
+  PROPERTY_TYPES,
+  validatePropertyDetails,
+  type PropertyDetails,
+  type PropertyInput,
+  type PropertyRepository,
+} from '../domain/property.js'
+import type { AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i;
+const objectId = /^[0-9a-f]{24}$/i
 
 // Kiểm actor là ICPDP officer và trả id
-async function officer(auth: Pick<AuthRepository, "systemRoleCodes">,
-  actor: AccessActor | null): Promise<string> {
-  if (!actor) throw new DomainError("authentication required", "unauthorized");
-  if (actor.accountState === "Locked") {
-    throw new DomainError(actor.lockReason || "account locked", "locked");
+async function officer(
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+): Promise<string> {
+  if (!actor) {
+    throw new DomainError('authentication required', 'unauthorized')
   }
-  if (!objectId.test(actor.id)) throw new DomainError("invalid actor", "validation");
-  if (!(await auth.systemRoleCodes(actor.id)).includes("ICPDP_OFFICER")) {
-    throw new DomainError("ICPDP officer role required", "forbidden");
+  if (actor.accountState === 'Locked') {
+    throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  return actor.id;
+  if (!objectId.test(actor.id)) {
+    throw new DomainError('invalid actor', 'validation')
+  }
+  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
+    throw new DomainError('ICPDP officer role required', 'forbidden')
+  }
+  return actor.id
 }
 
 // Kiểm định dạng id tài sản
 function propertyId(value: string): string {
-  if (!objectId.test(value)) throw new DomainError("invalid property id", "validation");
-  return value;
+  if (!objectId.test(value)) {
+    throw new DomainError('invalid property id', 'validation')
+  }
+  return value
 }
 
 // ICPDP xem danh sách tài sản (phòng, thiết bị)
-export async function listProperties(repo: PropertyRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null) {
-  await officer(auth, actor);
-  return repo.list();
+export async function listProperties(
+  repo: PropertyRepository,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+) {
+  await officer(auth, actor)
+  return repo.list()
 }
 
 // ICPDP tạo tài sản mới theo loại
-export async function createProperty(repo: PropertyRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, input: PropertyInput, now: Date) {
-  const actorId = await officer(auth, actor);
+export async function createProperty(
+  repo: PropertyRepository,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+  input: PropertyInput,
+  now: Date,
+) {
+  const actorId = await officer(auth, actor)
   if (!PROPERTY_TYPES.includes(input.type)) {
-    throw new DomainError("invalid property type", "validation", { field: "type" });
+    throw new DomainError('invalid property type', 'validation', { field: 'type' })
   }
-  return repo.create({ type: input.type, ...validatePropertyDetails(input.type, input) }, actorId, now);
+  return repo.create(
+    { type: input.type, ...validatePropertyDetails(input.type, input) },
+    actorId,
+    now,
+  )
 }
 
 // ICPDP cập nhật thông tin một tài sản
-export async function updateProperty(repo: PropertyRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
-  details: PropertyDetails, now: Date) {
-  const actorId = await officer(auth, actor);
-  const current = await repo.find(propertyId(id));
-  if (!current) throw new DomainError("property not found", "not_found");
-  return repo.update(current.id, validatePropertyDetails(current.type, details), actorId, now);
+export async function updateProperty(
+  repo: PropertyRepository,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+  id: string,
+  details: PropertyDetails,
+  now: Date,
+) {
+  const actorId = await officer(auth, actor)
+  const current = await repo.find(propertyId(id))
+  if (!current) {
+    throw new DomainError('property not found', 'not_found')
+  }
+  return repo.update(current.id, validatePropertyDetails(current.type, details), actorId, now)
 }
 
 // ICPDP bật hoặc tắt trạng thái hoạt động của tài sản
-export async function setPropertyActive(repo: PropertyRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
-  isActive: boolean, now: Date) {
-  const actorId = await officer(auth, actor);
-  return repo.setActive(propertyId(id), isActive, actorId, now);
+export async function setPropertyActive(
+  repo: PropertyRepository,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+  id: string,
+  isActive: boolean,
+  now: Date,
+) {
+  const actorId = await officer(auth, actor)
+  return repo.setActive(propertyId(id), isActive, actorId, now)
 }
 
 // ICPDP xóa tài sản chưa từng được đặt
 /** BR41: property từng được booking thì chỉ bị vô hiệu hoá, không bao giờ xoá. */
-export async function deleteProperty(repo: PropertyRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {
-  const actorId = await officer(auth, actor);
-  const current = await repo.find(propertyId(id));
-  if (!current) throw new DomainError("property not found", "not_found");
-  if (await repo.hasBookings(current.id)) {
-    throw new DomainError("property has bookings; deactivate it instead", "conflict");
+export async function deleteProperty(
+  repo: PropertyRepository,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+  id: string,
+  now: Date,
+) {
+  const actorId = await officer(auth, actor)
+  const current = await repo.find(propertyId(id))
+  if (!current) {
+    throw new DomainError('property not found', 'not_found')
   }
-  await repo.remove(current.id, actorId, now);
-  return { deleted: true as const };
+  if (await repo.hasBookings(current.id)) {
+    throw new DomainError('property has bookings; deactivate it instead', 'conflict')
+  }
+  await repo.remove(current.id, actorId, now)
+  return { deleted: true as const }
 }

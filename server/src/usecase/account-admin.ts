@@ -1,56 +1,74 @@
-import { z } from "zod";
+import { z } from 'zod'
 import {
-  SYSTEM_ROLE_CODES, type AccountAdminRepository, type AdminUserPage, type SystemRoleCode,
-} from "../domain/account-admin.js";
-import { DomainError } from "../domain/errors.js";
-import type { SessionService } from "../domain/session.js";
-import type { AccessActor } from "./access.js";
+  SYSTEM_ROLE_CODES,
+  type AccountAdminRepository,
+  type AdminUserPage,
+  type SystemRoleCode,
+} from '../domain/account-admin.js'
+import { DomainError } from '../domain/errors.js'
+import type { SessionService } from '../domain/session.js'
+import type { AccessActor } from './access.js'
 
-const objectId = z.string().regex(/^[0-9a-f]{24}$/i);
-const reasonSchema = z.string().trim().min(1).max(1000);
-const searchSchema = z.string().trim().max(100);
+const objectId = z.string().regex(/^[0-9a-f]{24}$/i)
+const reasonSchema = z.string().trim().min(1).max(1000)
+const searchSchema = z.string().trim().max(100)
 const pageSchema = z.object({
   page: z.coerce.number().int().min(1).max(100_000).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(50),
-});
+})
 
 // Kiểm actor là ICPDP officer được quản trị tài khoản
-async function requireAdmin(repo: AccountAdminRepository, actor: AccessActor | null): Promise<string> {
-  if (!actor) throw new DomainError("authentication required", "unauthorized");
-  if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
-  if (!objectId.safeParse(actor.id).success) throw new DomainError("invalid actor", "validation");
-  const roles = await repo.systemRoles(actor.id);
-  if (!roles.includes("ICPDP_OFFICER")) {
-    throw new DomainError("account administration denied", "forbidden");
+async function requireAdmin(
+  repo: AccountAdminRepository,
+  actor: AccessActor | null,
+): Promise<string> {
+  if (!actor) {
+    throw new DomainError('authentication required', 'unauthorized')
   }
-  return actor.id;
+  if (actor.accountState === 'Locked') {
+    throw new DomainError(actor.lockReason || 'account locked', 'locked')
+  }
+  if (!objectId.safeParse(actor.id).success) {
+    throw new DomainError('invalid actor', 'validation')
+  }
+  const roles = await repo.systemRoles(actor.id)
+  if (!roles.includes('ICPDP_OFFICER')) {
+    throw new DomainError('account administration denied', 'forbidden')
+  }
+  return actor.id
 }
 
 // Kiểm id người dùng đích hợp lệ
 function parseTarget(targetId: string): string {
-  const parsed = objectId.safeParse(targetId);
-  if (!parsed.success) throw new DomainError("invalid target user", "validation");
-  return parsed.data;
+  const parsed = objectId.safeParse(targetId)
+  if (!parsed.success) {
+    throw new DomainError('invalid target user', 'validation')
+  }
+  return parsed.data
 }
 
 // Kiểm mã role thuộc nhóm role hệ thống được quản lý
 function parseRole(roleCode: string): SystemRoleCode {
   if (!SYSTEM_ROLE_CODES.some((code) => code === roleCode)) {
-    throw new DomainError("only system roles can be managed here", "validation");
+    throw new DomainError('only system roles can be managed here', 'validation')
   }
-  return roleCode as SystemRoleCode;
+  return roleCode as SystemRoleCode
 }
 
 // Tìm và phân trang người dùng cho trang quản trị tài khoản
 export async function searchAdminUsers(
-  repo: AccountAdminRepository, actor: AccessActor | null, rawSearch: unknown,
+  repo: AccountAdminRepository,
+  actor: AccessActor | null,
+  rawSearch: unknown,
   rawPage: { page?: unknown; pageSize?: unknown } = {},
 ): Promise<AdminUserPage> {
-  await requireAdmin(repo, actor);
-  const parsed = searchSchema.safeParse(rawSearch ?? "");
-  const paging = pageSchema.safeParse(rawPage);
-  if (!parsed.success || !paging.success) throw new DomainError("invalid search", "validation");
-  return repo.listUsers(parsed.data, paging.data.page, paging.data.pageSize);
+  await requireAdmin(repo, actor)
+  const parsed = searchSchema.safeParse(rawSearch ?? '')
+  const paging = pageSchema.safeParse(rawPage)
+  if (!parsed.success || !paging.success) {
+    throw new DomainError('invalid search', 'validation')
+  }
+  return repo.listUsers(parsed.data, paging.data.page, paging.data.pageSize)
 }
 
 // Cấp hoặc thu hồi role hệ thống của người dùng và hủy phiên của họ
@@ -60,28 +78,40 @@ export async function changeSystemRole(
   actor: AccessActor | null,
   targetId: string,
   roleCode: string,
-  action: "grant" | "revoke",
+  action: 'grant' | 'revoke',
   rawReason: unknown,
   now: Date,
 ): Promise<void> {
-  const actorId = await requireAdmin(repo, actor);
-  const target = parseTarget(targetId);
-  const role = parseRole(roleCode);
-  const reason = action === "revoke" ? reasonSchema.safeParse(rawReason) : null;
-  if (reason && !reason.success) throw new DomainError("reason is required", "validation");
-  if (!await repo.findUser(target)) throw new DomainError("user not found", "not_found");
-  if (action === "revoke" && target === actorId && role === "ICPDP_OFFICER") {
-    throw new DomainError("cannot revoke your last admin role", "forbidden");
+  const actorId = await requireAdmin(repo, actor)
+  const target = parseTarget(targetId)
+  const role = parseRole(roleCode)
+  const reason = action === 'revoke' ? reasonSchema.safeParse(rawReason) : null
+  if (reason && !reason.success) {
+    throw new DomainError('reason is required', 'validation')
+  }
+  if (!(await repo.findUser(target))) {
+    throw new DomainError('user not found', 'not_found')
+  }
+  if (action === 'revoke' && target === actorId && role === 'ICPDP_OFFICER') {
+    throw new DomainError('cannot revoke your last admin role', 'forbidden')
   }
   // D1: ICPDP_HEAD chỉ do ICPDP officer giữ; thu hồi role officer thì cũng bỏ luôn role này.
-  if (action === "grant" && role === "ICPDP_HEAD" && !(await repo.systemRoles(target)).includes("ICPDP_OFFICER")) {
-    throw new DomainError("grant ICPDP_OFFICER before ICPDP_HEAD", "conflict");
+  if (
+    action === 'grant' &&
+    role === 'ICPDP_HEAD' &&
+    !(await repo.systemRoles(target)).includes('ICPDP_OFFICER')
+  ) {
+    throw new DomainError('grant ICPDP_OFFICER before ICPDP_HEAD', 'conflict')
   }
   await repo.applyRoleChange({
-    actorId, targetId: target, roleCode: role, action,
-    reason: reason?.success ? reason.data : undefined, now,
-  });
-  await sessions.revokeUser(target, now);
+    actorId,
+    targetId: target,
+    roleCode: role,
+    action,
+    reason: reason?.success ? reason.data : undefined,
+    now,
+  })
+  await sessions.revokeUser(target, now)
 }
 
 // Khóa hoặc mở khóa tài khoản (có thể gắn vụ vi phạm) và hủy phiên
@@ -95,16 +125,28 @@ export async function setAccountLock(
   now: Date,
   violationId?: string,
 ): Promise<void> {
-  const actorId = await requireAdmin(repo, actor);
-  const target = parseTarget(targetId);
-  const reason = reasonSchema.safeParse(rawReason);
-  if (!reason.success) throw new DomainError("reason is required", "validation");
-  if (!await repo.findUser(target)) throw new DomainError("user not found", "not_found");
-  if (locked && target === actorId) throw new DomainError("cannot lock your own account", "forbidden");
-  if (violationId !== undefined && (!locked || !/^[0-9a-f]{24}$/i.test(violationId))) {
-    throw new DomainError("a violation case can only be linked to a lock", "validation");
+  const actorId = await requireAdmin(repo, actor)
+  const target = parseTarget(targetId)
+  const reason = reasonSchema.safeParse(rawReason)
+  if (!reason.success) {
+    throw new DomainError('reason is required', 'validation')
   }
-  await repo.setLock({ actorId, targetId: target, locked, reason: reason.data, now,
-    ...(violationId ? { violationId } : {}) });
-  await sessions.revokeUser(target, now);
+  if (!(await repo.findUser(target))) {
+    throw new DomainError('user not found', 'not_found')
+  }
+  if (locked && target === actorId) {
+    throw new DomainError('cannot lock your own account', 'forbidden')
+  }
+  if (violationId !== undefined && (!locked || !/^[0-9a-f]{24}$/i.test(violationId))) {
+    throw new DomainError('a violation case can only be linked to a lock', 'validation')
+  }
+  await repo.setLock({
+    actorId,
+    targetId: target,
+    locked,
+    reason: reason.data,
+    now,
+    ...(violationId ? { violationId } : {}),
+  })
+  await sessions.revokeUser(target, now)
 }

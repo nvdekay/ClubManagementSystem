@@ -19,13 +19,18 @@
     "db:verify": "npm run db:verify --workspace=server",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "bash scripts/lint.sh",
-    "check": "bash scripts/check-constitution.sh && npm run lint && npm run typecheck && npm test"
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier --write \"{client,server}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,html}\" \"*.{json,mjs}\" \".vscode/*.json\"",
+    "format:check": "prettier --check \"{client,server}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,html}\" \"*.{json,mjs}\" \".vscode/*.json\"",
+    "check": "bash scripts/check-constitution.sh && npm run lint && npm run format:check && npm run typecheck && npm test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "concurrently": "^10.0.5",
     "eslint": "^10.8.1",
+    "eslint-config-prettier": "10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "3.10.1",
     "typescript-eslint": "^8.66.0"
   }
 }

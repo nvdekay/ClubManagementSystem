@@ -1,94 +1,130 @@
-import { DomainError } from "../domain/errors.js";
-import type { ClubFieldRepository } from "../domain/club-field.js";
+import { DomainError } from '../domain/errors.js'
+import type { ClubFieldRepository } from '../domain/club-field.js'
 import {
-  APPLICATION_DOCUMENT_TYPES, FOUNDER_ROLES, FOUNDING_POSITIONS, MAX_VICE_LEADERS,
+  APPLICATION_DOCUMENT_TYPES,
+  FOUNDER_ROLES,
+  FOUNDING_POSITIONS,
+  MAX_VICE_LEADERS,
   foundingSubmissionIssues,
-  type ApplicationDocument, type ApplicationDocumentType, type ApplicationFileStorage,
-  type ClubApplicationDraft, type ClubApplicationRecord, type ClubApplicationRepository,
-  type ClubApplicationVersion, type ApplicantDecisionFeedback, type FounderProfile,
-  type FounderRole, type FoundingIssue,
-} from "../domain/club-application.js";
-import type { FoundingRequirements, PolicyRepository } from "../domain/policy.js";
-import { similarClubHints, type SimilarClubHint } from "../domain/similar-club.js";
-import type { AccessActor } from "./access.js";
-import { foundingRequirementsAt } from "./policy.js";
+  type ApplicationDocument,
+  type ApplicationDocumentType,
+  type ApplicationFileStorage,
+  type ClubApplicationDraft,
+  type ClubApplicationRecord,
+  type ClubApplicationRepository,
+  type ClubApplicationVersion,
+  type ApplicantDecisionFeedback,
+  type FounderProfile,
+  type FounderRole,
+  type FoundingIssue,
+} from '../domain/club-application.js'
+import type { FoundingRequirements, PolicyRepository } from '../domain/policy.js'
+import { similarClubHints, type SimilarClubHint } from '../domain/similar-club.js'
+import type { AccessActor } from './access.js'
+import { foundingRequirementsAt } from './policy.js'
 
-const objectId = /^[0-9a-f]{24}$/i;
-const docxMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-const documentRules: Record<ApplicationDocumentType, { mimeTypes: ReadonlySet<string>;
-  maxBytes: number; visibility: "private" | "public" }> = {
-  PROPOSAL: { mimeTypes: new Set(["application/pdf", docxMime]), maxBytes: 10 * 1024 * 1024,
-    visibility: "private" },
-  LOGO: { mimeTypes: new Set(["image/png", "image/jpeg"]), maxBytes: 2 * 1024 * 1024,
-    visibility: "public" },
-};
+const objectId = /^[0-9a-f]{24}$/i
+const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+const documentRules: Record<
+  ApplicationDocumentType,
+  { mimeTypes: ReadonlySet<string>; maxBytes: number; visibility: 'private' | 'public' }
+> = {
+  PROPOSAL: {
+    mimeTypes: new Set(['application/pdf', docxMime]),
+    maxBytes: 10 * 1024 * 1024,
+    visibility: 'private',
+  },
+  LOGO: {
+    mimeTypes: new Set(['image/png', 'image/jpeg']),
+    maxBytes: 2 * 1024 * 1024,
+    visibility: 'public',
+  },
+}
 
 // Kiểm nội dung file khớp magic bytes của loại MIME khai báo
 function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
-  if (mimeType === "application/pdf") return bytes.subarray(0, 5).toString() === "%PDF-";
-  if (mimeType === "image/png") return bytes.subarray(0, 8).equals(
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-  if (mimeType === "image/jpeg") return bytes.length >= 3 &&
-    bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (mimeType === docxMime) {
-    return bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) &&
-      bytes.includes(Buffer.from("[Content_Types].xml"));
+  if (mimeType === 'application/pdf') {
+    return bytes.subarray(0, 5).toString() === '%PDF-'
   }
-  return false;
+  if (mimeType === 'image/png') {
+    return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+  }
+  if (mimeType === 'image/jpeg') {
+    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  }
+  if (mimeType === docxMime) {
+    return (
+      bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) &&
+      bytes.includes(Buffer.from('[Content_Types].xml'))
+    )
+  }
+  return false
 }
 
 export interface DraftInput {
-  clubName: string;
-  fieldId: string;
-  summary: string;
-  objectives: string;
-  fanpageUrl: string;
-  contactEmail: string;
-  founders: { userId: string; role: string }[];
+  clubName: string
+  fieldId: string
+  summary: string
+  objectives: string
+  fanpageUrl: string
+  contactEmail: string
+  founders: { userId: string; role: string }[]
 }
 
 // Kiểm actor đăng nhập, chưa bị khóa và trả id chủ đơn
 function owner(actor: AccessActor | null): string {
-  if (!actor) throw new DomainError("authentication required", "unauthorized");
-  if (actor.accountState === "Locked") {
-    throw new DomainError(actor.lockReason || "account locked", "locked");
+  if (!actor) {
+    throw new DomainError('authentication required', 'unauthorized')
   }
-  if (!objectId.test(actor.id)) throw new DomainError("invalid actor", "validation");
-  return actor.id;
+  if (actor.accountState === 'Locked') {
+    throw new DomainError(actor.lockReason || 'account locked', 'locked')
+  }
+  if (!objectId.test(actor.id)) {
+    throw new DomainError('invalid actor', 'validation')
+  }
+  return actor.id
 }
 
 // Kiểm định dạng id đơn lập CLB
 function applicationId(id: string): string {
-  if (!objectId.test(id)) throw new DomainError("invalid application id", "validation");
-  return id;
+  if (!objectId.test(id)) {
+    throw new DomainError('invalid application id', 'validation')
+  }
+  return id
 }
 
 // Chỉ cho sửa đơn ở trạng thái Draft hoặc Revision Requested
 function editable(record: ClubApplicationRecord): void {
-  if (record.state !== "Draft" && record.state !== "Revision Requested") {
-    throw new DomainError("application cannot be edited in this state", "conflict");
+  if (record.state !== 'Draft' && record.state !== 'Revision Requested') {
+    throw new DomainError('application cannot be edited in this state', 'conflict')
   }
 }
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // Cắt khoảng trắng và kiểm độ dài tối đa của văn bản
 function text(value: string, max: number): string {
-  const normalized = value.trim();
-  if (normalized.length > max) throw new DomainError("application text is too long", "validation");
-  return normalized;
+  const normalized = value.trim()
+  if (normalized.length > max) {
+    throw new DomainError('application text is too long', 'validation')
+  }
+  return normalized
 }
 
 // Kiểm và chuẩn hóa URL fanpage http(s)
 function httpUrl(value: string): string {
-  const normalized = text(value, 2_000);
-  if (!normalized) return "";
+  const normalized = text(value, 2_000)
+  if (!normalized) {
+    return ''
+  }
   try {
-    const parsed = new URL(normalized);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
-    return parsed.toString();
+    const parsed = new URL(normalized)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error()
+    }
+    return parsed.toString()
   } catch {
-    throw new DomainError("invalid fanpage URL", "validation");
+    throw new DomainError('invalid fanpage URL', 'validation')
   }
 }
 
@@ -97,240 +133,389 @@ function httpUrl(value: string): string {
  * Resolve lĩnh vực đã chọn theo catalog. Lĩnh vực bị ẩn sau khi đã lưu vẫn nằm trong
  * bản nháp (để sửa các phần khác vẫn được) nhưng chặn việc nộp cho tới khi sinh viên chọn lại.
  */
-async function resolvedField(fields: ClubFieldRepository, fieldId: string,
-  current?: ClubApplicationDraft): Promise<{ fieldId: string; field: string }> {
-  if (!objectId.test(fieldId)) throw new DomainError("club field is required", "validation");
-  const found = await fields.find(fieldId);
-  if (!found || (!found.isActive && current?.fieldId !== fieldId)) {
-    throw new DomainError("club field is not available", "validation");
+async function resolvedField(
+  fields: ClubFieldRepository,
+  fieldId: string,
+  current?: ClubApplicationDraft,
+): Promise<{ fieldId: string; field: string }> {
+  if (!objectId.test(fieldId)) {
+    throw new DomainError('club field is required', 'validation')
   }
-  return { fieldId, field: found.name };
+  const found = await fields.find(fieldId)
+  if (!found || (!found.isActive && current?.fieldId !== fieldId)) {
+    throw new DomainError('club field is not available', 'validation')
+  }
+  return { fieldId, field: found.name }
 }
 
 // Kiểm và dựng bản nháp đơn lập CLB từ dữ liệu nhập
-async function draftFrom(fields: ClubFieldRepository, input: DraftInput,
-  documents: ApplicationDocument[], current?: ClubApplicationDraft): Promise<ClubApplicationDraft> {
-  const clubName = text(input.clubName, 200);
-  if (!clubName) throw new DomainError("club name is required", "validation");
-  const contactEmail = text(input.contactEmail, 320).toLowerCase();
+async function draftFrom(
+  fields: ClubFieldRepository,
+  input: DraftInput,
+  documents: ApplicationDocument[],
+  current?: ClubApplicationDraft,
+): Promise<ClubApplicationDraft> {
+  const clubName = text(input.clubName, 200)
+  if (!clubName) {
+    throw new DomainError('club name is required', 'validation')
+  }
+  const contactEmail = text(input.contactEmail, 320).toLowerCase()
   if (contactEmail && !emailPattern.test(contactEmail)) {
-    throw new DomainError("invalid contact email", "validation");
+    throw new DomainError('invalid contact email', 'validation')
   }
-  if (input.founders.length > 100 || input.founders.some((founder) => !objectId.test(founder.userId)
-    || !FOUNDER_ROLES.some((role) => role === founder.role))) {
-    throw new DomainError("invalid founding member", "validation");
+  if (
+    input.founders.length > 100 ||
+    input.founders.some(
+      (founder) =>
+        !objectId.test(founder.userId) || !FOUNDER_ROLES.some((role) => role === founder.role),
+    )
+  ) {
+    throw new DomainError('invalid founding member', 'validation')
   }
-  return { clubName, ...await resolvedField(fields, input.fieldId.trim(), current),
-    summary: text(input.summary, 1_000), objectives: text(input.objectives, 5_000),
-    fanpageUrl: httpUrl(input.fanpageUrl), contactEmail,
-    founders: input.founders.map((founder) => ({ userId: founder.userId.toLowerCase(),
-      role: founder.role as FounderRole })),
-    documents: [...documents] };
+  return {
+    clubName,
+    ...(await resolvedField(fields, input.fieldId.trim(), current)),
+    summary: text(input.summary, 1_000),
+    objectives: text(input.objectives, 5_000),
+    fanpageUrl: httpUrl(input.fanpageUrl),
+    contactEmail,
+    founders: input.founders.map((founder) => ({
+      userId: founder.userId.toLowerCase(),
+      role: founder.role as FounderRole,
+    })),
+    documents: [...documents],
+  }
 }
 
 // Lấy đơn thuộc về chủ đơn, không có thì báo not_found
-async function owned(repo: ClubApplicationRepository, id: string,
-  ownerId: string): Promise<ClubApplicationRecord> {
-  const record = await repo.findOwned(applicationId(id), ownerId);
-  if (!record) throw new DomainError("application not found", "not_found");
-  return record;
+async function owned(
+  repo: ClubApplicationRepository,
+  id: string,
+  ownerId: string,
+): Promise<ClubApplicationRecord> {
+  const record = await repo.findOwned(applicationId(id), ownerId)
+  if (!record) {
+    throw new DomainError('application not found', 'not_found')
+  }
+  return record
 }
 
 // Sinh viên tạo bản nháp đơn lập CLB
-export async function createApplicationDraft(repo: ClubApplicationRepository,
-  fields: ClubFieldRepository, actor: AccessActor | null, input: DraftInput,
-  now: Date): Promise<ClubApplicationRecord> {
-  return repo.createDraft(owner(actor), await draftFrom(fields, input, []), now);
+export async function createApplicationDraft(
+  repo: ClubApplicationRepository,
+  fields: ClubFieldRepository,
+  actor: AccessActor | null,
+  input: DraftInput,
+  now: Date,
+): Promise<ClubApplicationRecord> {
+  return repo.createDraft(owner(actor), await draftFrom(fields, input, []), now)
 }
 
 // Sinh viên lưu bản nháp đơn, kiểm xung đột phiên bản
-export async function saveApplicationDraft(repo: ClubApplicationRepository,
-  fields: ClubFieldRepository, actor: AccessActor | null, id: string, input: DraftInput,
-  expectedDraftRevision: number): Promise<ClubApplicationRecord> {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  editable(record);
+export async function saveApplicationDraft(
+  repo: ClubApplicationRepository,
+  fields: ClubFieldRepository,
+  actor: AccessActor | null,
+  id: string,
+  input: DraftInput,
+  expectedDraftRevision: number,
+): Promise<ClubApplicationRecord> {
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  editable(record)
   if (record.draftRevision !== expectedDraftRevision) {
-    throw new DomainError("application draft changed; reload before saving", "conflict");
+    throw new DomainError('application draft changed; reload before saving', 'conflict')
   }
-  return repo.saveDraft(record.id, ownerId,
-    await draftFrom(fields, input, record.draft.documents, record.draft), expectedDraftRevision);
+  return repo.saveDraft(
+    record.id,
+    ownerId,
+    await draftFrom(fields, input, record.draft.documents, record.draft),
+    expectedDraftRevision,
+  )
 }
 
 // Liệt kê các đơn lập CLB của chính mình
-export async function listMyApplications(repo: ClubApplicationRepository,
-  actor: AccessActor | null): Promise<ClubApplicationRecord[]> {
-  return repo.listMine(owner(actor));
+export async function listMyApplications(
+  repo: ClubApplicationRepository,
+  actor: AccessActor | null,
+): Promise<ClubApplicationRecord[]> {
+  return repo.listMine(owner(actor))
 }
 
 // Xem chi tiết đơn của mình kèm các phiên bản, quyết định và hồ sơ founder
-export async function getMyApplication(repo: ClubApplicationRepository,
-  actor: AccessActor | null, id: string): Promise<{
-  application: ClubApplicationRecord; versions: ClubApplicationVersion[];
-  decisions: ApplicantDecisionFeedback[]; founders: FounderProfile[];
+export async function getMyApplication(
+  repo: ClubApplicationRepository,
+  actor: AccessActor | null,
+  id: string,
+): Promise<{
+  application: ClubApplicationRecord
+  versions: ClubApplicationVersion[]
+  decisions: ApplicantDecisionFeedback[]
+  founders: FounderProfile[]
 }> {
-  const record = await owned(repo, id, owner(actor));
-  const [versions, decisions] = await Promise.all([repo.versions(record.id), repo.decisionFeedback(record.id)]);
-  const founderIds = [record.draft, ...versions.map((version) => version.snapshot)]
-    .flatMap((draft) => draft.founders.map((founder) => founder.userId));
-  return { application: record, versions, decisions, founders: await repo.founderProfiles(founderIds) };
+  const record = await owned(repo, id, owner(actor))
+  const [versions, decisions] = await Promise.all([
+    repo.versions(record.id),
+    repo.decisionFeedback(record.id),
+  ])
+  const founderIds = [record.draft, ...versions.map((version) => version.snapshot)].flatMap(
+    (draft) => draft.founders.map((founder) => founder.userId),
+  )
+  return {
+    application: record,
+    versions,
+    decisions,
+    founders: await repo.founderProfiles(founderIds),
+  }
 }
 
 // Tìm thành viên sáng lập theo email chính xác
 /** Resolve thành viên sáng lập theo email chính xác để sinh viên không phải gõ id tài khoản thô. */
-export async function lookupFounder(repo: ClubApplicationRepository, actor: AccessActor | null,
-  email: string): Promise<FounderProfile> {
-  owner(actor);
-  const normalized = email.trim().toLowerCase();
+export async function lookupFounder(
+  repo: ClubApplicationRepository,
+  actor: AccessActor | null,
+  email: string,
+): Promise<FounderProfile> {
+  owner(actor)
+  const normalized = email.trim().toLowerCase()
   if (!normalized || normalized.length > 254 || !emailPattern.test(normalized)) {
-    throw new DomainError("invalid email", "validation");
+    throw new DomainError('invalid email', 'validation')
   }
-  const profile = await repo.findActiveUserByEmail(normalized);
-  if (!profile) throw new DomainError("no active account uses this email", "not_found");
-  return profile;
+  const profile = await repo.findActiveUserByEmail(normalized)
+  if (!profile) {
+    throw new DomainError('no active account uses this email', 'not_found')
+  }
+  return profile
 }
 
 // Trả yêu cầu thành lập, danh sách lĩnh vực và vị trí sáng lập cho form đơn
-export async function applicationConfiguration(policy: PolicyRepository,
-  fields: ClubFieldRepository, actor: AccessActor | null, now: Date) {
-  owner(actor);
+export async function applicationConfiguration(
+  policy: PolicyRepository,
+  fields: ClubFieldRepository,
+  actor: AccessActor | null,
+  now: Date,
+) {
+  owner(actor)
   return {
     requirements: await foundingRequirementsAt(policy, now),
     fields: await fields.listActive(),
-    positions: FOUNDING_POSITIONS.map(({ code, name, founderRole }) => ({ code, name, founderRole })),
+    positions: FOUNDING_POSITIONS.map(({ code, name, founderRole }) => ({
+      code,
+      name,
+      founderRole,
+    })),
     maxViceLeaders: MAX_VICE_LEADERS,
-  };
+  }
 }
 
-type ExtendedIssue = FoundingIssue
-  | "fieldUnavailable" | "leaderHoldsAnotherClub";
+type ExtendedIssue = FoundingIssue | 'fieldUnavailable' | 'leaderHoldsAnotherClub'
 
 // Gom các vấn đề chặn việc nộp đơn, gồm lĩnh vực và leader đã giữ CLB khác
 /** Các vấn đề của domain cộng với những kiểm tra cần catalog hoặc các CLB khác. */
-async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFieldRepository,
-  draft: ClubApplicationDraft, applicantId: string, requirements: FoundingRequirements,
-  now: Date): Promise<ExtendedIssue[]> {
-  const issues: ExtendedIssue[] = foundingSubmissionIssues(draft, applicantId, requirements);
-  if (draft.fieldId && objectId.test(draft.fieldId) && !(await fields.find(draft.fieldId))?.isActive) {
-    issues.push("fieldUnavailable");
+async function submissionIssues(
+  repo: ClubApplicationRepository,
+  fields: ClubFieldRepository,
+  draft: ClubApplicationDraft,
+  applicantId: string,
+  requirements: FoundingRequirements,
+  now: Date,
+): Promise<ExtendedIssue[]> {
+  const issues: ExtendedIssue[] = foundingSubmissionIssues(draft, applicantId, requirements)
+  if (
+    draft.fieldId &&
+    objectId.test(draft.fieldId) &&
+    !(await fields.find(draft.fieldId))?.isActive
+  ) {
+    issues.push('fieldUnavailable')
   }
-  const leader = draft.founders.find((founder) => founder.role === "LEADER");
+  const leader = draft.founders.find((founder) => founder.role === 'LEADER')
   if (leader && (await repo.activeLeaderUserIds([leader.userId], now)).length) {
-    issues.push("leaderHoldsAnotherClub");
+    issues.push('leaderHoldsAnotherClub')
   }
-  return issues;
+  return issues
 }
 
 // Gợi ý các CLB công khai giống bản nháp, chỉ mang tính tham khảo
 /** Chỉ mang tính tham khảo (UC07): các CLB public giống bản nháp này; không bao giờ chặn việc lưu hay nộp. */
-async function publicSimilarClubs(repo: ClubApplicationRepository,
-  record: ClubApplicationRecord): Promise<SimilarClubHint[]> {
-  const { clubName, field, summary, objectives } = record.draft;
-  return similarClubHints({ name: clubName, field, text: `${summary} ${objectives}` },
-    await repo.publicSimilarityCandidates(record.id));
+async function publicSimilarClubs(
+  repo: ClubApplicationRepository,
+  record: ClubApplicationRecord,
+): Promise<SimilarClubHint[]> {
+  const { clubName, field, summary, objectives } = record.draft
+  return similarClubHints(
+    { name: clubName, field, text: `${summary} ${objectives}` },
+    await repo.publicSimilarityCandidates(record.id),
+  )
 }
 
 // Xem trước các vấn đề, trùng tên và CLB tương tự trước khi nộp đơn
-export async function previewApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
-  fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date) {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  editable(record);
-  const requirements = await foundingRequirementsAt(policy, now);
-  return { requirements,
+export async function previewApplication(
+  repo: ClubApplicationRepository,
+  policy: PolicyRepository,
+  fields: ClubFieldRepository,
+  actor: AccessActor | null,
+  id: string,
+  now: Date,
+) {
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  editable(record)
+  const requirements = await foundingRequirementsAt(policy, now)
+  return {
+    requirements,
     issues: await submissionIssues(repo, fields, record.draft, ownerId, requirements, now),
     activeNameConflict: await repo.activeClubNameExists(record.draft.clubName),
-    similarClubs: await publicSimilarClubs(repo, record) };
+    similarClubs: await publicSimilarClubs(repo, record),
+  }
 }
 
 // Nộp đơn lập CLB sau khi kiểm đủ điều kiện và tạo phiên bản đã nộp
-export async function submitApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
-  fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date): Promise<{
-  version: ClubApplicationVersion; activeNameConflict: boolean; similarClubs: SimilarClubHint[];
+export async function submitApplication(
+  repo: ClubApplicationRepository,
+  policy: PolicyRepository,
+  fields: ClubFieldRepository,
+  actor: AccessActor | null,
+  id: string,
+  now: Date,
+): Promise<{
+  version: ClubApplicationVersion
+  activeNameConflict: boolean
+  similarClubs: SimilarClubHint[]
 }> {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  editable(record);
-  const requirements = await foundingRequirementsAt(policy, now);
-  const issues = await submissionIssues(repo, fields, record.draft, ownerId, requirements, now);
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  editable(record)
+  const requirements = await foundingRequirementsAt(policy, now)
+  const issues = await submissionIssues(repo, fields, record.draft, ownerId, requirements, now)
   if (issues.length) {
-    throw new DomainError("club application is incomplete", "validation", {
-      issues, required: requirements.minFoundingMembers,
-    });
+    throw new DomainError('club application is incomplete', 'validation', {
+      issues,
+      required: requirements.minFoundingMembers,
+    })
   }
-  if (!await repo.usersExist(record.draft.founders.map((founder) => founder.userId))) {
-    throw new DomainError("founding member not found", "validation");
+  if (!(await repo.usersExist(record.draft.founders.map((founder) => founder.userId)))) {
+    throw new DomainError('founding member not found', 'validation')
   }
-  const activeNameConflict = await repo.activeClubNameExists(record.draft.clubName);
-  const similarClubs = await publicSimilarClubs(repo, record);
-  const version = await repo.submit({ id: record.id, ownerId,
-    snapshot: record.draft, expectedDraftRevision: record.draftRevision,
-    policyVersionId: requirements.policyVersionId, now });
-  return { version, activeNameConflict, similarClubs };
+  const activeNameConflict = await repo.activeClubNameExists(record.draft.clubName)
+  const similarClubs = await publicSimilarClubs(repo, record)
+  const version = await repo.submit({
+    id: record.id,
+    ownerId,
+    snapshot: record.draft,
+    expectedDraftRevision: record.draftRevision,
+    policyVersionId: requirements.policyVersionId,
+    now,
+  })
+  return { version, activeNameConflict, similarClubs }
 }
 
 // Sinh viên rút đơn lập CLB đang chờ hoặc cần sửa
-export async function withdrawApplication(repo: ClubApplicationRepository,
-  actor: AccessActor | null, id: string, now: Date): Promise<ClubApplicationRecord> {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  if (!["Submitted", "Under Review", "Revision Requested"].includes(record.state)) {
-    throw new DomainError("application cannot be withdrawn in this state", "conflict");
+export async function withdrawApplication(
+  repo: ClubApplicationRepository,
+  actor: AccessActor | null,
+  id: string,
+  now: Date,
+): Promise<ClubApplicationRecord> {
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  if (!['Submitted', 'Under Review', 'Revision Requested'].includes(record.state)) {
+    throw new DomainError('application cannot be withdrawn in this state', 'conflict')
   }
-  return repo.withdraw(record.id, ownerId, now);
+  return repo.withdraw(record.id, ownerId, now)
 }
 
 // Tải tài liệu (đề án, logo) lên đơn sau khi kiểm loại, dung lượng và nội dung
-export async function uploadApplicationDocument(repo: ClubApplicationRepository,
-  storage: ApplicationFileStorage | null, actor: AccessActor | null, id: string,
-  documentType: string, fileName: string, mimeType: string, bytes: Buffer,
-  now: Date): Promise<ApplicationDocument> {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  editable(record);
-  if (!storage) throw new DomainError("file storage is not configured", "unavailable");
-  const type = APPLICATION_DOCUMENT_TYPES.find((value) => value === documentType);
-  if (!type) throw new DomainError("invalid application document type", "validation");
-  const rule = documentRules[type];
-  if (!fileName.trim() || fileName.length > 255 || !rule.mimeTypes.has(mimeType) ||
-    bytes.length === 0 || bytes.length > rule.maxBytes || !fileSignatureMatches(mimeType, bytes)) {
-    throw new DomainError("invalid application document", "validation", {
-      documentType: type, maxBytes: rule.maxBytes, mimeTypes: [...rule.mimeTypes],
-    });
+export async function uploadApplicationDocument(
+  repo: ClubApplicationRepository,
+  storage: ApplicationFileStorage | null,
+  actor: AccessActor | null,
+  id: string,
+  documentType: string,
+  fileName: string,
+  mimeType: string,
+  bytes: Buffer,
+  now: Date,
+): Promise<ApplicationDocument> {
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  editable(record)
+  if (!storage) {
+    throw new DomainError('file storage is not configured', 'unavailable')
   }
-  const document = await storage.upload({ ownerId, applicationId: record.id,
-    documentType: type, fileName: fileName.trim(), mimeType, bytes,
-    visibility: rule.visibility, now });
+  const type = APPLICATION_DOCUMENT_TYPES.find((value) => value === documentType)
+  if (!type) {
+    throw new DomainError('invalid application document type', 'validation')
+  }
+  const rule = documentRules[type]
+  if (
+    !fileName.trim() ||
+    fileName.length > 255 ||
+    !rule.mimeTypes.has(mimeType) ||
+    bytes.length === 0 ||
+    bytes.length > rule.maxBytes ||
+    !fileSignatureMatches(mimeType, bytes)
+  ) {
+    throw new DomainError('invalid application document', 'validation', {
+      documentType: type,
+      maxBytes: rule.maxBytes,
+      mimeTypes: [...rule.mimeTypes],
+    })
+  }
+  const document = await storage.upload({
+    ownerId,
+    applicationId: record.id,
+    documentType: type,
+    fileName: fileName.trim(),
+    mimeType,
+    bytes,
+    visibility: rule.visibility,
+    now,
+  })
   // Mỗi loại một file: bản upload mới thay thế bản trước.
-  const replaced = record.draft.documents.filter((item) => item.documentType === type);
-  await repo.addDocument(record.id, ownerId, document);
-  for (const previous of replaced) await repo.removeDocument(record.id, ownerId, previous.id);
-  return document;
+  const replaced = record.draft.documents.filter((item) => item.documentType === type)
+  await repo.addDocument(record.id, ownerId, document)
+  for (const previous of replaced) {
+    await repo.removeDocument(record.id, ownerId, previous.id)
+  }
+  return document
 }
 
 // Xóa một tài liệu khỏi bản nháp đơn
-export async function removeApplicationDocument(repo: ClubApplicationRepository,
-  actor: AccessActor | null, id: string, documentId: string): Promise<ClubApplicationRecord> {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  editable(record);
+export async function removeApplicationDocument(
+  repo: ClubApplicationRepository,
+  actor: AccessActor | null,
+  id: string,
+  documentId: string,
+): Promise<ClubApplicationRecord> {
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  editable(record)
   if (!record.draft.documents.some((document) => document.id === documentId)) {
-    throw new DomainError("document not found", "not_found");
+    throw new DomainError('document not found', 'not_found')
   }
-  return repo.removeDocument(record.id, ownerId, documentId);
+  return repo.removeDocument(record.id, ownerId, documentId)
 }
 
 // Cấp URL tạm để chủ đơn xem tài liệu của đơn
-export async function applicationDocumentAccess(repo: ClubApplicationRepository,
-  storage: ApplicationFileStorage | null, actor: AccessActor | null, id: string,
-  documentId: string): Promise<{ fileName: string; url: string }> {
-  const ownerId = owner(actor);
-  const record = await owned(repo, id, ownerId);
-  const versions = await repo.versions(record.id);
-  const document = [...record.draft.documents,
-    ...versions.flatMap((version) => version.snapshot.documents)]
-    .find((item) => item.id === documentId);
-  if (!document) throw new DomainError("document not found", "not_found");
-  if (!storage) throw new DomainError("file storage is not configured", "unavailable");
-  return { fileName: document.fileName, url: await storage.accessUrl(document.assetId) };
+export async function applicationDocumentAccess(
+  repo: ClubApplicationRepository,
+  storage: ApplicationFileStorage | null,
+  actor: AccessActor | null,
+  id: string,
+  documentId: string,
+): Promise<{ fileName: string; url: string }> {
+  const ownerId = owner(actor)
+  const record = await owned(repo, id, ownerId)
+  const versions = await repo.versions(record.id)
+  const document = [
+    ...record.draft.documents,
+    ...versions.flatMap((version) => version.snapshot.documents),
+  ].find((item) => item.id === documentId)
+  if (!document) {
+    throw new DomainError('document not found', 'not_found')
+  }
+  if (!storage) {
+    throw new DomainError('file storage is not configured', 'unavailable')
+  }
+  return { fileName: document.fileName, url: await storage.accessUrl(document.assetId) }
 }

@@ -1,1 +1,3 @@
-export interface ApplicationExpiryRepository { expire(now: Date): Promise<number> }
+export interface ApplicationExpiryRepository {
+  expire(now: Date): Promise<number>
+}

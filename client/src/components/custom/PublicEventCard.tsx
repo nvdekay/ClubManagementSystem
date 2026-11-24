@@ -1,53 +1,74 @@
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 
-import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import type { PublicEvent, PublicEventStatus } from "@/services/discovery";
+import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import type { PublicEvent, PublicEventStatus } from '@/services/discovery'
 
 interface PublicEventCardProps {
-  event: PublicEvent;
+  event: PublicEvent
 }
 
 // Dựng URL ảnh bìa sự kiện đã thu nhỏ qua Cloudinary
 /** Ảnh bìa Cloudinary được yêu cầu đúng kích thước thẻ (gấp đôi cho màn hình mật độ cao) và tự chọn định dạng. */
 function coverUrl(url: string): string {
-  const marker = "/image/upload/";
-  if (!url.includes("res.cloudinary.com") || !url.includes(marker)) return url;
-  return url.replace(marker, `${marker}c_fill,w_720,h_400,f_auto,q_auto/`);
+  const marker = '/image/upload/'
+  if (!url.includes('res.cloudinary.com') || !url.includes(marker)) {
+    return url
+  }
+  return url.replace(marker, `${marker}c_fill,w_720,h_400,f_auto,q_auto/`)
 }
 
 // Định dạng khoảng ngày của sự kiện dd/MM/yyyy
 /** Khoảng ngày kiểu PDP: "08/09/2026 - 19/09/2026" (chỉ một ngày khi sự kiện diễn ra trong một ngày). */
 export function eventDateRange(startAt: string, endAt: string): string {
-  const format = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const start = format.format(new Date(startAt));
-  const end = format.format(new Date(endAt));
-  return start === end ? start : `${start} - ${end}`;
+  const format = new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+  const start = format.format(new Date(startAt))
+  const end = format.format(new Date(endAt))
+  return start === end ? start : `${start} - ${end}`
 }
 
 // Badge trạng thái sự kiện công khai (đang diễn ra, sắp tới, đã kết thúc)
 export function EventStatusBadge({ status }: { status: PublicEventStatus }) {
-  const { t } = useTranslation();
-  const tone: AppBadgeTone = status === "ongoing" ? "success" : status === "upcoming" ? "info" : "neutral";
-  const label = status === "ongoing" ? t("discovery.statusOngoing")
-    : status === "upcoming" ? t("discovery.statusUpcoming") : t("discovery.statusEnded");
-  return <AppBadge tone={tone}>{label}</AppBadge>;
+  const { t } = useTranslation()
+  const tone: AppBadgeTone =
+    status === 'ongoing' ? 'success' : status === 'upcoming' ? 'info' : 'neutral'
+  const label =
+    status === 'ongoing'
+      ? t('discovery.statusOngoing')
+      : status === 'upcoming'
+        ? t('discovery.statusUpcoming')
+        : t('discovery.statusEnded')
+  return <AppBadge tone={tone}>{label}</AppBadge>
 }
 
 // Thẻ sự kiện trong danh sách sự kiện công khai
 export function PublicEventCard({ event }: PublicEventCardProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   return (
     <article className="group relative flex h-full flex-col">
       <div className="relative h-40 overflow-hidden rounded-xl bg-primary-soft-app">
         {event.coverImageUrl ? (
-          <img src={coverUrl(event.coverImageUrl)} alt="" loading="lazy" decoding="async"
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-110 group-hover:rotate-2" />
+          <img
+            src={coverUrl(event.coverImageUrl)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-110 group-hover:rotate-2"
+          />
         ) : (
-          <div aria-hidden="true" className="flex size-full flex-col items-center justify-center gap-2 text-primary-app">
+          <div
+            aria-hidden="true"
+            className="flex size-full flex-col items-center justify-center gap-2 text-primary-app"
+          >
             <AppIcon name="calendar" className="size-9" />
-            <span className="px-4 text-center text-xs font-semibold tracking-wide uppercase">{event.clubName}</span>
+            <span className="px-4 text-center text-xs font-semibold tracking-wide uppercase">
+              {event.clubName}
+            </span>
           </div>
         )}
       </div>
@@ -69,12 +90,17 @@ export function PublicEventCard({ event }: PublicEventCardProps) {
         <span className="line-clamp-2">{event.venueText || event.clubName}</span>
       </p>
       {/* Liên kết phủ toàn bộ thẻ (như stretched link của PDP) trong khi chữ của nó vẫn là tên truy cập được. */}
-      <Link to={`/events/${event.id}`}
-        className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-accent-app after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-ring-app">
-        <span>{t("discovery.eventDetails")}</span>
+      <Link
+        to={`/events/${event.id}`}
+        className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-accent-app after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-ring-app"
+      >
+        <span>{t('discovery.eventDetails')}</span>
         <span className="sr-only">: {event.title}</span>
-        <AppIcon name="chevronRight" className="size-4 transition-transform group-hover:translate-x-0.5" />
+        <AppIcon
+          name="chevronRight"
+          className="size-4 transition-transform group-hover:translate-x-0.5"
+        />
       </Link>
     </article>
-  );
+  )
 }

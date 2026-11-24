@@ -1,122 +1,178 @@
-import { useState, type FormEvent } from "react";
-import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
-import { Link } from "react-router";
+import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { Link } from 'react-router'
 
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { appToast } from "@/components/ui/toast/AppToast";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useAuth } from "@/hooks/useAuth";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { appToast } from '@/components/ui/toast/AppToast'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useAuth } from '@/hooks/useAuth'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
-  useClubFields, useCreateClubField, useRemoveClubField, useUpdateClubField,
-} from "@/hooks/useClubFields";
-import { DuplicateClubFieldError, type ClubFieldInput, type ClubFieldUsage } from "@/services/clubFields";
+  useClubFields,
+  useCreateClubField,
+  useRemoveClubField,
+  useUpdateClubField,
+} from '@/hooks/useClubFields'
+import {
+  DuplicateClubFieldError,
+  type ClubFieldInput,
+  type ClubFieldUsage,
+} from '@/services/clubFields'
 
 interface FieldDraft {
-  name: string;
-  sortOrder: string;
+  name: string
+  sortOrder: string
 }
 
 // Kiểm tra và chuyển nháp lĩnh vực thành dữ liệu gửi lên, null nếu không hợp lệ
 function parsed(draft: FieldDraft): ClubFieldInput | null {
-  const name = draft.name.trim();
-  const sortOrder = Number(draft.sortOrder);
-  if (!name || name.length > 100 || !Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 10_000) {
-    return null;
+  const name = draft.name.trim()
+  const sortOrder = Number(draft.sortOrder)
+  if (
+    !name ||
+    name.length > 100 ||
+    !Number.isInteger(sortOrder) ||
+    sortOrder < 0 ||
+    sortOrder > 10_000
+  ) {
+    return null
   }
-  return { name, sortOrder };
+  return { name, sortOrder }
 }
 
 // Lỗi inline cho tên lĩnh vực bắt buộc
 /** Lỗi hiển thị ngay cho trường tên bắt buộc; thứ tự (tuỳ chọn) chỉ được `parsed` kiểm tra khi submit. */
 function draftErrors(t: TFunction, draft: FieldDraft | null) {
-  if (!draft) return {};
-  return { name: draft.name.trim() ? null : t("common.fieldRequired") };
+  if (!draft) {
+    return {}
+  }
+  return { name: draft.name.trim() ? null : t('common.fieldRequired') }
 }
 
 interface FieldRowProps {
-  field: ClubFieldUsage;
-  csrfToken: string;
+  field: ClubFieldUsage
+  csrfToken: string
 }
 
 // Một dòng lĩnh vực CLB: sửa tại chỗ, xoá hoặc ngừng dùng
 function FieldRow({ field, csrfToken }: FieldRowProps) {
-  const { t } = useTranslation();
-  const [draft, setDraft] = useState<FieldDraft | null>(null);
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const update = useUpdateClubField();
-  const form = useFieldValidation(draftErrors(t, draft));
-  const remove = useRemoveClubField();
-  const inUse = field.clubCount + field.applicationCount > 0;
-  const counts = { clubs: field.clubCount, applications: field.applicationCount };
+  const { t } = useTranslation()
+  const [draft, setDraft] = useState<FieldDraft | null>(null)
+  const [confirming, setConfirming] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const update = useUpdateClubField()
+  const form = useFieldValidation(draftErrors(t, draft))
+  const remove = useRemoveClubField()
+  const inUse = field.clubCount + field.applicationCount > 0
+  const counts = { clubs: field.clubCount, applications: field.applicationCount }
 
   // Lưu chỉnh sửa lĩnh vực CLB
   async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!draft) return;
-    const input = parsed(draft);
-    if (!form.touchAll()) return;
-    if (!input) { setError(t("clubFields.invalid")); return; }
-    setError(null);
+    event.preventDefault()
+    if (!draft) {
+      return
+    }
+    const input = parsed(draft)
+    if (!form.touchAll()) {
+      return
+    }
+    if (!input) {
+      setError(t('clubFields.invalid'))
+      return
+    }
+    setError(null)
     try {
-      await update.mutateAsync({ id: field.id, input, csrfToken });
-      setDraft(null);
-      form.reset();
-      appToast.success(t("clubFields.updated"));
+      await update.mutateAsync({ id: field.id, input, csrfToken })
+      setDraft(null)
+      form.reset()
+      appToast.success(t('clubFields.updated'))
     } catch (failure) {
-      setError(failure instanceof DuplicateClubFieldError ? t("clubFields.duplicate")
-        : `${t("clubFields.failed")} ${(failure as Error).message}`);
+      setError(
+        failure instanceof DuplicateClubFieldError
+          ? t('clubFields.duplicate')
+          : `${t('clubFields.failed')} ${(failure as Error).message}`,
+      )
     }
   }
 
   // Xoá lĩnh vực, hoặc ngừng dùng nếu đã được CLB sử dụng
   async function confirmRemove() {
     try {
-      const result = await remove.mutateAsync({ id: field.id, csrfToken });
-      appToast.success(t(result === "deleted" ? "clubFields.deleted" : "clubFields.deactivated"));
+      const result = await remove.mutateAsync({ id: field.id, csrfToken })
+      appToast.success(t(result === 'deleted' ? 'clubFields.deleted' : 'clubFields.deactivated'))
     } catch (failure) {
-      setError(`${t("clubFields.failed")} ${(failure as Error).message}`);
+      setError(`${t('clubFields.failed')} ${(failure as Error).message}`)
     } finally {
-      setConfirming(false);
+      setConfirming(false)
     }
   }
 
   if (draft) {
     return (
       <li className="px-5 py-4">
-        <form noValidate className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]" onSubmit={(event) => void save(event)}>
-          <label className="block text-sm font-medium text-text-app">{t("clubFields.name")}<AppRequiredMark />
-            <AppInput className="mt-1.5 block w-full font-normal" maxLength={100} value={draft.name} autoFocus
-              {...form.control("name")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-            <AppFieldError message={form.error("name")} />
+        <form
+          noValidate
+          className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]"
+          onSubmit={(event) => void save(event)}
+        >
+          <label className="block text-sm font-medium text-text-app">
+            {t('clubFields.name')}
+            <AppRequiredMark />
+            <AppInput
+              className="mt-1.5 block w-full font-normal"
+              maxLength={100}
+              value={draft.name}
+              autoFocus
+              {...form.control('name')}
+              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            />
+            <AppFieldError message={form.error('name')} />
           </label>
-          <label className="block text-sm font-medium text-text-app">{t("clubFields.order")}
-            <AppInput className="mt-1.5 block w-full font-normal" type="number" min="0" max="10000" value={draft.sortOrder}
-              onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
+          <label className="block text-sm font-medium text-text-app">
+            {t('clubFields.order')}
+            <AppInput
+              className="mt-1.5 block w-full font-normal"
+              type="number"
+              min="0"
+              max="10000"
+              value={draft.sortOrder}
+              onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
+            />
           </label>
           <div className="flex flex-wrap gap-2 sm:mt-6.5">
             <AppButton type="submit" disabled={update.isPending}>
-              {update.isPending ? t("clubFields.saving") : t("clubFields.save")}
+              {update.isPending ? t('clubFields.saving') : t('clubFields.save')}
             </AppButton>
-            <AppButton type="button" variant="ghost" onClick={() => { setDraft(null); setError(null); form.reset(); }}>
-              {t("clubFields.cancel")}
+            <AppButton
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setDraft(null)
+                setError(null)
+                form.reset()
+              }}
+            >
+              {t('clubFields.cancel')}
             </AppButton>
           </div>
         </form>
-        {inUse && <p className="mt-2 text-xs text-muted-app">{t("clubFields.renameHint")}</p>}
-        {error && <p role="alert" className="mt-2 text-sm text-danger-app">{error}</p>}
+        {inUse && <p className="mt-2 text-xs text-muted-app">{t('clubFields.renameHint')}</p>}
+        {error && (
+          <p role="alert" className="mt-2 text-sm text-danger-app">
+            {error}
+          </p>
+        )}
       </li>
-    );
+    )
   }
 
   return (
@@ -125,128 +181,189 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium break-words">{field.name}</p>
-            {!field.isActive && <AppBadge tone="warning">{t("clubFields.hidden")}</AppBadge>}
+            {!field.isActive && <AppBadge tone="warning">{t('clubFields.hidden')}</AppBadge>}
           </div>
           <p className="mt-1 text-sm text-muted-app">
-            {t("clubFields.order")}: {field.sortOrder} · {t("clubFields.usage", counts)}
+            {t('clubFields.order')}: {field.sortOrder} · {t('clubFields.usage', counts)}
           </p>
-          {!field.isActive && <p className="mt-1 text-xs text-muted-app">{t("clubFields.hiddenHint")}</p>}
+          {!field.isActive && (
+            <p className="mt-1 text-xs text-muted-app">{t('clubFields.hiddenHint')}</p>
+          )}
         </div>
         {field.isActive && !confirming && (
           <div className="flex flex-wrap gap-2">
-            <AppButton variant="secondary"
-              onClick={() => setDraft({ name: field.name, sortOrder: String(field.sortOrder) })}>
-              {t("clubFields.edit")}
+            <AppButton
+              variant="secondary"
+              onClick={() => setDraft({ name: field.name, sortOrder: String(field.sortOrder) })}
+            >
+              {t('clubFields.edit')}
             </AppButton>
-            <AppButton variant="ghost" className="text-muted-app hover:text-text-app" onClick={() => setConfirming(true)}>{t("clubFields.delete")}</AppButton>
+            <AppButton
+              variant="ghost"
+              className="text-muted-app hover:text-text-app"
+              onClick={() => setConfirming(true)}
+            >
+              {t('clubFields.delete')}
+            </AppButton>
           </div>
         )}
       </div>
       {confirming && (
-        <AppNotice className="mt-3" tone="warning" role="alert"
-          title={t("clubFields.confirmDelete", { name: field.name })}>
-          <p>{inUse ? t("clubFields.confirmInUse", counts) : t("clubFields.confirmUnused")}</p>
+        <AppNotice
+          className="mt-3"
+          tone="warning"
+          role="alert"
+          title={t('clubFields.confirmDelete', { name: field.name })}
+        >
+          <p>{inUse ? t('clubFields.confirmInUse', counts) : t('clubFields.confirmUnused')}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <AppButton disabled={remove.isPending} onClick={() => void confirmRemove()}>
-              {remove.isPending ? t("clubFields.deleting") : t("clubFields.confirm")}
+              {remove.isPending ? t('clubFields.deleting') : t('clubFields.confirm')}
             </AppButton>
-            <AppButton variant="ghost" onClick={() => setConfirming(false)}>{t("clubFields.cancel")}</AppButton>
+            <AppButton variant="ghost" onClick={() => setConfirming(false)}>
+              {t('clubFields.cancel')}
+            </AppButton>
           </div>
         </AppNotice>
       )}
-      {error && <p role="alert" className="mt-2 text-sm text-danger-app">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-danger-app">
+          {error}
+        </p>
+      )}
     </li>
-  );
+  )
 }
 
 // Form thêm lĩnh vực CLB mới
 function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: number }) {
-  const { t } = useTranslation();
-  const [draft, setDraft] = useState<FieldDraft>({ name: "", sortOrder: "" });
-  const [error, setError] = useState<string | null>(null);
-  const create = useCreateClubField();
-  const field = useFieldValidation(draftErrors(t, draft));
+  const { t } = useTranslation()
+  const [draft, setDraft] = useState<FieldDraft>({ name: '', sortOrder: '' })
+  const [error, setError] = useState<string | null>(null)
+  const create = useCreateClubField()
+  const field = useFieldValidation(draftErrors(t, draft))
 
   // Tạo lĩnh vực CLB mới từ form
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const input = parsed({ ...draft, sortOrder: draft.sortOrder || String(nextOrder) });
-    if (!field.touchAll()) return;
-    if (!input) { setError(t("clubFields.invalid")); return; }
-    setError(null);
+    event.preventDefault()
+    const input = parsed({ ...draft, sortOrder: draft.sortOrder || String(nextOrder) })
+    if (!field.touchAll()) {
+      return
+    }
+    if (!input) {
+      setError(t('clubFields.invalid'))
+      return
+    }
+    setError(null)
     try {
-      await create.mutateAsync({ input, csrfToken });
-      setDraft({ name: "", sortOrder: "" });
-      field.reset();
-      appToast.success(t("clubFields.created"));
+      await create.mutateAsync({ input, csrfToken })
+      setDraft({ name: '', sortOrder: '' })
+      field.reset()
+      appToast.success(t('clubFields.created'))
     } catch (failure) {
-      setError(failure instanceof DuplicateClubFieldError ? t("clubFields.duplicate")
-        : `${t("clubFields.failed")} ${(failure as Error).message}`);
+      setError(
+        failure instanceof DuplicateClubFieldError
+          ? t('clubFields.duplicate')
+          : `${t('clubFields.failed')} ${(failure as Error).message}`,
+      )
     }
   }
 
   return (
-    <form noValidate className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs sm:p-5" onSubmit={(event) => void submit(event)}>
-      <h2 className="font-heading text-base font-semibold">{t("clubFields.addTitle")}</h2>
+    <form
+      noValidate
+      className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs sm:p-5"
+      onSubmit={(event) => void submit(event)}
+    >
+      <h2 className="font-heading text-base font-semibold">{t('clubFields.addTitle')}</h2>
       <div className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]">
-        <label className="block text-sm font-medium text-text-app">{t("clubFields.name")}<AppRequiredMark />
-          <AppInput className="mt-1.5 block w-full font-normal" maxLength={100} value={draft.name}
-            {...field.control("name")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-          <AppFieldError message={field.error("name")} />
+        <label className="block text-sm font-medium text-text-app">
+          {t('clubFields.name')}
+          <AppRequiredMark />
+          <AppInput
+            className="mt-1.5 block w-full font-normal"
+            maxLength={100}
+            value={draft.name}
+            {...field.control('name')}
+            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+          />
+          <AppFieldError message={field.error('name')} />
         </label>
-        <label className="block text-sm font-medium text-text-app">{t("clubFields.order")}
-          <AppInput className="mt-1.5 block w-full font-normal" type="number" min="0" max="10000"
-            placeholder={String(nextOrder)} value={draft.sortOrder}
-            onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
+        <label className="block text-sm font-medium text-text-app">
+          {t('clubFields.order')}
+          <AppInput
+            className="mt-1.5 block w-full font-normal"
+            type="number"
+            min="0"
+            max="10000"
+            placeholder={String(nextOrder)}
+            value={draft.sortOrder}
+            onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
+          />
         </label>
         <AppButton type="submit" disabled={create.isPending} className="sm:mt-6.5">
           <AppIcon name="plus" className="size-4" />
-          {create.isPending ? t("clubFields.adding") : t("clubFields.add")}
+          {create.isPending ? t('clubFields.adding') : t('clubFields.add')}
         </AppButton>
       </div>
-      <p className="text-xs text-muted-app">{t("clubFields.orderHint")}</p>
-      {error && <p role="alert" className="text-sm text-danger-app">{error}</p>}
+      <p className="text-xs text-muted-app">{t('clubFields.orderHint')}</p>
+      {error && (
+        <p role="alert" className="text-sm text-danger-app">
+          {error}
+        </p>
+      )}
     </form>
-  );
+  )
 }
 
 // Trang ICPDP quản lý danh mục lĩnh vực hoạt động của CLB
 export function ClubFieldsPage() {
-  const { t } = useTranslation();
-  const auth = useAuth();
-  const isOfficer = auth.data?.systemRoles.includes("ICPDP_OFFICER") ?? false;
-  const fields = useClubFields(isOfficer);
-  const csrfToken = auth.data?.csrfToken ?? "";
+  const { t } = useTranslation()
+  const auth = useAuth()
+  const isOfficer = auth.data?.systemRoles.includes('ICPDP_OFFICER') ?? false
+  const fields = useClubFields(isOfficer)
+  const csrfToken = auth.data?.csrfToken ?? ''
   const nextOrder = fields.data?.length
-    ? Math.min(10_000, Math.max(...fields.data.map((field) => field.sortOrder)) + 10) : 10;
+    ? Math.min(10_000, Math.max(...fields.data.map((field) => field.sortOrder)) + 10)
+    : 10
 
   return (
     <>
-      <PageHeader title={t("clubFields.title")} description={t("clubFields.description")} />
+      <PageHeader title={t('clubFields.title')} description={t('clubFields.description')} />
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : auth.isError ? (
         <AppNotice tone="danger" role="alert" title={auth.error.message}>
-          <AppButton onClick={() => void auth.refetch()}>{t("clubFields.retry")}</AppButton>
+          <AppButton onClick={() => void auth.refetch()}>{t('clubFields.retry')}</AppButton>
         </AppNotice>
       ) : !auth.data ? (
         <AppNotice>
-          <p>{t("clubFields.signIn")}</p>
-          <Link className="font-semibold text-primary-app hover:underline"
-            to="/login?returnTo=%2Fworkspace%2Fclub-fields">{t("clubFields.signInLink")}</Link>
+          <p>{t('clubFields.signIn')}</p>
+          <Link
+            className="font-semibold text-primary-app hover:underline"
+            to="/login?returnTo=%2Fworkspace%2Fclub-fields"
+          >
+            {t('clubFields.signInLink')}
+          </Link>
         </AppNotice>
       ) : !isOfficer ? (
-        <AppNotice tone="danger" role="alert">{t("clubFields.forbidden")}</AppNotice>
+        <AppNotice tone="danger" role="alert">
+          {t('clubFields.forbidden')}
+        </AppNotice>
       ) : fields.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : fields.isError ? (
-        <AppNotice tone="danger" role="alert" title={`${t("clubFields.loadError")} ${fields.error.message}`}>
-          <AppButton onClick={() => void fields.refetch()}>{t("clubFields.retry")}</AppButton>
+        <AppNotice
+          tone="danger"
+          role="alert"
+          title={`${t('clubFields.loadError')} ${fields.error.message}`}
+        >
+          <AppButton onClick={() => void fields.refetch()}>{t('clubFields.retry')}</AppButton>
         </AppNotice>
       ) : (
         <div className="space-y-6">
           {fields.data.length === 0 ? (
-            <AppEmptyState variant="boxed" message={t("clubFields.empty")} />
+            <AppEmptyState variant="boxed" message={t('clubFields.empty')} />
           ) : (
             <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {fields.data.map((field) => (
@@ -258,5 +375,5 @@ export function ClubFieldsPage() {
         </div>
       )}
     </>
-  );
+  )
 }

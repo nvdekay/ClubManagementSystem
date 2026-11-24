@@ -1,40 +1,51 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   claimLeadershipTransition,
   decideLeadershipTransition,
   fetchLeadershipTransition,
   fetchLeadershipTransitionQueue,
   type TransitionDecisionInput,
-} from "@/services/leadershipTransitions";
+} from '@/services/leadershipTransitions'
 
-const key = ["leadership-transitions"] as const;
+const key = ['leadership-transitions'] as const
 
 // Query hàng đợi chuyển giao lãnh đạo cho ICPDP
 export function useLeadershipTransitionQueue(enabled: boolean) {
-  return useQuery({ queryKey: [...key, "queue"],
-    queryFn: ({ signal }) => fetchLeadershipTransitionQueue(signal), enabled, retry: false });
+  return useQuery({
+    queryKey: [...key, 'queue'],
+    queryFn: ({ signal }) => fetchLeadershipTransitionQueue(signal),
+    enabled,
+    retry: false,
+  })
 }
 
 // Query chi tiết một yêu cầu chuyển giao lãnh đạo
 export function useLeadershipTransition(id: string | undefined, enabled: boolean) {
-  return useQuery({ queryKey: [...key, "detail", id],
+  return useQuery({
+    queryKey: [...key, 'detail', id],
     queryFn: ({ signal }) => fetchLeadershipTransition(id!, signal),
-    enabled: enabled && Boolean(id), retry: false });
+    enabled: enabled && Boolean(id),
+    retry: false,
+  })
 }
 
 // Mutation nhận xử lý hoặc quyết định chuyển giao, rồi làm mới cache
 export function useLeadershipTransitionAction() {
-  const client = useQueryClient();
+  const client = useQueryClient()
   return useMutation({
-    mutationFn: (action: { kind: "claim"; id: string; csrfToken: string }
-      | { kind: "decide"; id: string; csrfToken: string; input: TransitionDecisionInput }) =>
-      action.kind === "claim" ? claimLeadershipTransition(action.id, action.csrfToken)
+    mutationFn: (
+      action:
+        | { kind: 'claim'; id: string; csrfToken: string }
+        | { kind: 'decide'; id: string; csrfToken: string; input: TransitionDecisionInput },
+    ) =>
+      action.kind === 'claim'
+        ? claimLeadershipTransition(action.id, action.csrfToken)
         : decideLeadershipTransition(action.id, action.input, action.csrfToken),
     onSuccess: async (result) => {
-      client.setQueryData([...key, "detail", result.id], result);
-      await client.invalidateQueries({ queryKey: key });
-      await client.invalidateQueries({ queryKey: ["dashboard"] });
-      await client.invalidateQueries({ queryKey: ["auth"] });
+      client.setQueryData([...key, 'detail', result.id], result)
+      await client.invalidateQueries({ queryKey: key })
+      await client.invalidateQueries({ queryKey: ['dashboard'] })
+      await client.invalidateQueries({ queryKey: ['auth'] })
     },
-  });
+  })
 }

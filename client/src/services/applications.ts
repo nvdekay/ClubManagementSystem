@@ -1,221 +1,270 @@
-import { ApiError, apiFetch } from "@/services/apiError";
-export type FounderRole = "LEADER" | "VICE_LEADER" | "MEMBER";
-export type ApplicationDocumentType = "PROPOSAL" | "LOGO";
+import { ApiError, apiFetch } from '@/services/apiError'
+export type FounderRole = 'LEADER' | 'VICE_LEADER' | 'MEMBER'
+export type ApplicationDocumentType = 'PROPOSAL' | 'LOGO'
 
 export interface FoundingMember {
-  userId: string;
-  role: FounderRole;
+  userId: string
+  role: FounderRole
 }
 
 export interface ApplicationDocument {
-  id: string;
-  documentType: ApplicationDocumentType;
-  fileName: string;
-  mimeType: string;
-  bytes: number;
+  id: string
+  documentType: ApplicationDocumentType
+  fileName: string
+  mimeType: string
+  bytes: number
   /** Chỉ có với logo đề xuất, được lưu công khai để xem trước. */
-  publicUrl?: string;
-  uploadedAt: string;
+  publicUrl?: string
+  uploadedAt: string
 }
 
 export interface DraftInput {
-  clubName: string;
-  fieldId: string;
-  summary: string;
-  objectives: string;
-  fanpageUrl: string;
-  contactEmail: string;
-  founders: FoundingMember[];
+  clubName: string
+  fieldId: string
+  summary: string
+  objectives: string
+  fanpageUrl: string
+  contactEmail: string
+  founders: FoundingMember[]
 }
 
 export interface ApplicationDraft extends DraftInput {
   /** Tên trong danh mục của lĩnh vực đã chọn, do server phân giải. */
-  field: string;
-  documents: ApplicationDocument[];
+  field: string
+  documents: ApplicationDocument[]
 }
 
 /** Gợi ý tham khảo về CLB tương tự (UC07/UC08); không bao giờ chặn việc nộp hay xét duyệt. */
 export interface SimilarClubHint {
-  kind: "CLUB" | "APPLICATION";
-  id: string;
-  name: string;
-  field: string;
-  state: string;
-  score: number;
-  level: "HIGH" | "MEDIUM";
+  kind: 'CLUB' | 'APPLICATION'
+  id: string
+  name: string
+  field: string
+  state: string
+  score: number
+  level: 'HIGH' | 'MEDIUM'
   /** Độ tương đồng từng thành phần trong khoảng 0–1; `content` là null khi một bên không có mô tả. */
-  reasons: { name: number; content: number | null; field: number; sharedWords: string[] };
+  reasons: { name: number; content: number | null; field: number; sharedWords: string[] }
 }
 
-export type FoundingField = "summary" | "objectives" | "proposal" | "logo" | "fanpageUrl" | "contactEmail";
+export type FoundingField =
+  'summary' | 'objectives' | 'proposal' | 'logo' | 'fanpageUrl' | 'contactEmail'
 
 /** Mọi thứ chặn việc nộp, theo bản xem trước của server hoặc khi nộp bị từ chối. */
-export type FoundingIssue = "clubName" | "field" | FoundingField | "foundersTooFew" | "applicantNotFounder"
-  | "duplicateFounder" | "leaderCount" | "viceLeaderCount" | "fieldUnavailable" | "leaderHoldsAnotherClub";
+export type FoundingIssue =
+  | 'clubName'
+  | 'field'
+  | FoundingField
+  | 'foundersTooFew'
+  | 'applicantNotFounder'
+  | 'duplicateFounder'
+  | 'leaderCount'
+  | 'viceLeaderCount'
+  | 'fieldUnavailable'
+  | 'leaderHoldsAnotherClub'
 
 export interface FoundingRequirements {
-  policyVersionId: string;
-  minFoundingMembers: number;
-  required: Record<FoundingField, boolean>;
+  policyVersionId: string
+  minFoundingMembers: number
+  required: Record<FoundingField, boolean>
 }
 
 export interface ClubFieldOption {
-  id: string;
-  name: string;
-  sortOrder: number;
-  isActive: boolean;
+  id: string
+  name: string
+  sortOrder: number
+  isActive: boolean
 }
 
 export interface ApplicationRecord {
-  id: string;
-  founderUserId: string;
-  state: string;
-  currentVersionNo: number;
-  draftRevision: number;
-  draft: ApplicationDraft;
-  submittedAt?: string;
-  revisionDeadlineAt?: string;
-  createdAt: string;
+  id: string
+  founderUserId: string
+  state: string
+  currentVersionNo: number
+  draftRevision: number
+  draft: ApplicationDraft
+  submittedAt?: string
+  revisionDeadlineAt?: string
+  createdAt: string
 }
 
 /** Thành viên sáng lập hiển thị bằng tên và email thay vì id tài khoản thô. */
 export interface FounderProfile {
-  id: string;
-  displayName: string;
-  email: string;
+  id: string
+  displayName: string
+  email: string
 }
 
 /** Quyết định của ICPDP hiển thị cho người nộp hồ sơ (không kèm ghi chú xét duyệt nội bộ). */
 export interface ApplicantDecision {
-  outcome: "Approve" | "Request revision" | "Reject";
-  reason?: string;
-  sections: string[];
-  decidedAt: string;
+  outcome: 'Approve' | 'Request revision' | 'Reject'
+  reason?: string
+  sections: string[]
+  decidedAt: string
 }
 
 export interface ApplicationVersion {
-  id: string;
-  applicationId: string;
-  versionNo: number;
-  policyVersionId: string;
-  snapshot: ApplicationDraft;
-  submittedAt: string;
+  id: string
+  applicationId: string
+  versionNo: number
+  policyVersionId: string
+  snapshot: ApplicationDraft
+  submittedAt: string
 }
 
 export interface ApplicationConfig {
-  requirements: FoundingRequirements;
-  fields: ClubFieldOption[];
-  positions: { code: string; name: string; founderRole: FounderRole }[];
-  maxViceLeaders: number;
+  requirements: FoundingRequirements
+  fields: ClubFieldOption[]
+  positions: { code: string; name: string; founderRole: FounderRole }[]
+  maxViceLeaders: number
 }
 
 /** Được ném khi response không phải 2xx; giữ status và `details` của server (vd lỗi về thành viên sáng lập). */
 export interface ApplicationRequestError extends Error {
-  status: number;
-  details?: { issues?: FoundingIssue[]; required?: number };
+  status: number
+  details?: { issues?: FoundingIssue[]; required?: number }
 }
 
 export interface ApplicationDetail {
-  application: ApplicationRecord;
-  versions: ApplicationVersion[];
-  decisions: ApplicantDecision[];
-  founders: FounderProfile[];
+  application: ApplicationRecord
+  versions: ApplicationVersion[]
+  decisions: ApplicantDecision[]
+  founders: FounderProfile[]
 }
 
 // Gọi API /applications và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/applications${path}`, {
-    credentials: "same-origin", ...init,
-  });
+    credentials: 'same-origin',
+    ...init,
+  })
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as
-      { message?: string; details?: unknown } | null;
+    const body = (await response.json().catch(() => null)) as {
+      message?: string
+      details?: unknown
+    } | null
     // Giữ status để nơi gọi phân biệt "không tìm thấy" với các lỗi khác.
     throw Object.assign(new ApiError(body?.message ?? `HTTP ${response.status}`), {
       status: response.status,
-      ...(body?.details && typeof body.details === "object" ? { details: body.details } : {}),
-    });
+      ...(body?.details && typeof body.details === 'object' ? { details: body.details } : {}),
+    })
   }
-  const body: { data: T } = await response.json();
-  return body.data;
+  const body: { data: T } = await response.json()
+  return body.data
 }
 
 // Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
 function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}) };
+  return {
+    method,
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  }
 }
 
 // GET /applications/config: cấu hình form hồ sơ thành lập CLB
 export function fetchApplicationConfig(signal: AbortSignal): Promise<ApplicationConfig> {
-  return request<ApplicationConfig>("/config", { signal });
+  return request<ApplicationConfig>('/config', { signal })
 }
 
 // GET /applications/mine: hồ sơ thành lập CLB của tôi
 export function fetchMyApplications(signal: AbortSignal): Promise<ApplicationRecord[]> {
-  return request<ApplicationRecord[]>("/mine", { signal });
+  return request<ApplicationRecord[]>('/mine', { signal })
 }
 
 // GET chi tiết một hồ sơ thành lập CLB
 export function fetchApplication(id: string, signal: AbortSignal): Promise<ApplicationDetail> {
-  return request<ApplicationDetail>(`/${encodeURIComponent(id)}`, { signal });
+  return request<ApplicationDetail>(`/${encodeURIComponent(id)}`, { signal })
 }
 
 // GET /preview: xem trước hồ sơ trước khi nộp
-export function previewApplication(id: string, signal: AbortSignal): Promise<{
-  requirements: FoundingRequirements; issues: FoundingIssue[]; activeNameConflict: boolean;
-  similarClubs: SimilarClubHint[];
+export function previewApplication(
+  id: string,
+  signal: AbortSignal,
+): Promise<{
+  requirements: FoundingRequirements
+  issues: FoundingIssue[]
+  activeNameConflict: boolean
+  similarClubs: SimilarClubHint[]
 }> {
-  return request(`/${encodeURIComponent(id)}/preview`, { signal });
+  return request(`/${encodeURIComponent(id)}/preview`, { signal })
 }
 
 // POST tạo bản nháp hồ sơ thành lập CLB
 export function createDraft(input: DraftInput, csrfToken: string): Promise<ApplicationRecord> {
-  return request("", mutation("POST", csrfToken, input));
+  return request('', mutation('POST', csrfToken, input))
 }
 
 // PATCH /draft: lưu bản nháp hồ sơ theo draftRevision
-export function saveDraft(id: string, input: DraftInput, draftRevision: number,
-  csrfToken: string): Promise<ApplicationRecord> {
-  return request(`/${encodeURIComponent(id)}/draft`, mutation("PATCH", csrfToken,
-    { ...input, draftRevision }));
+export function saveDraft(
+  id: string,
+  input: DraftInput,
+  draftRevision: number,
+  csrfToken: string,
+): Promise<ApplicationRecord> {
+  return request(
+    `/${encodeURIComponent(id)}/draft`,
+    mutation('PATCH', csrfToken, { ...input, draftRevision }),
+  )
 }
 
 // POST /submit: nộp hồ sơ để ICPDP xét duyệt
-export function submitDraft(id: string, csrfToken: string): Promise<{
-  version: ApplicationVersion; activeNameConflict: boolean; similarClubs: SimilarClubHint[];
+export function submitDraft(
+  id: string,
+  csrfToken: string,
+): Promise<{
+  version: ApplicationVersion
+  activeNameConflict: boolean
+  similarClubs: SimilarClubHint[]
 }> {
-  return request(`/${encodeURIComponent(id)}/submit`, mutation("POST", csrfToken));
+  return request(`/${encodeURIComponent(id)}/submit`, mutation('POST', csrfToken))
 }
 
 // POST /withdraw: rút hồ sơ đã tạo
 export function withdrawDraft(id: string, csrfToken: string): Promise<ApplicationRecord> {
-  return request(`/${encodeURIComponent(id)}/withdraw`, mutation("POST", csrfToken));
+  return request(`/${encodeURIComponent(id)}/withdraw`, mutation('POST', csrfToken))
 }
 
 // POST /documents: tải tài liệu đính kèm lên hồ sơ
-export function uploadDocument(id: string, documentType: ApplicationDocumentType, file: File,
-  csrfToken: string): Promise<ApplicationDocument> {
+export function uploadDocument(
+  id: string,
+  documentType: ApplicationDocumentType,
+  file: File,
+  csrfToken: string,
+): Promise<ApplicationDocument> {
   return request(`/${encodeURIComponent(id)}/documents`, {
-    method: "POST", headers: { "Content-Type": file.type,
-      "X-CSRF-Token": csrfToken, "X-Document-Type": encodeURIComponent(documentType),
-      "X-Filename": encodeURIComponent(file.name) }, body: file,
-  });
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type,
+      'X-CSRF-Token': csrfToken,
+      'X-Document-Type': encodeURIComponent(documentType),
+      'X-Filename': encodeURIComponent(file.name),
+    },
+    body: file,
+  })
 }
 
 // DELETE tài liệu đính kèm khỏi hồ sơ
-export function removeDocument(id: string, documentId: string,
-  csrfToken: string): Promise<ApplicationRecord> {
-  return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}`,
-    mutation("DELETE", csrfToken));
+export function removeDocument(
+  id: string,
+  documentId: string,
+  csrfToken: string,
+): Promise<ApplicationRecord> {
+  return request(
+    `/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}`,
+    mutation('DELETE', csrfToken),
+  )
 }
 
 // GET /founder-lookup: tra cứu thành viên sáng lập theo email
 export function lookupFounder(email: string): Promise<FounderProfile> {
-  return request(`/founder-lookup?email=${encodeURIComponent(email)}`);
+  return request(`/founder-lookup?email=${encodeURIComponent(email)}`)
 }
 
 // GET đường dẫn truy cập tài liệu đính kèm của hồ sơ
-export function documentAccess(id: string, documentId: string): Promise<{ url: string; fileName: string }> {
-  return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}/access`);
+export function documentAccess(
+  id: string,
+  documentId: string,
+): Promise<{ url: string; fileName: string }> {
+  return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}/access`)
 }

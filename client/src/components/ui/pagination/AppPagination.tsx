@@ -1,22 +1,22 @@
-import { AppButton } from "@/components/ui/button/AppButton";
-import { cn } from "@/utils/cn";
+import { AppButton } from '@/components/ui/button/AppButton'
+import { cn } from '@/utils/cn'
 
 interface AppPaginationProps {
   /** Trang hiện tại, đánh số từ 0. */
-  pageIndex: number;
-  pageCount: number;
-  onPageChange: (pageIndex: number) => void;
+  pageIndex: number
+  pageCount: number
+  onPageChange: (pageIndex: number) => void
   /** aria-label đã dịch theo ngôn ngữ — bản thân các mũi tên chỉ là icon. */
-  prevLabel: string;
-  nextLabel: string;
+  prevLabel: string
+  nextLabel: string
   /** aria-label cho nút số trang, nhận số trang tính từ 1. */
-  pageLabel: (page: number) => string;
+  pageLabel: (page: number) => string
   /** aria-label cho landmark <nav>, ví dụ "Pagination". */
-  navLabel: string;
-  className?: string;
+  navLabel: string
+  className?: string
 }
 
-const GAP = "gap";
+const GAP = 'gap'
 
 // Chọn các số trang cần hiển thị, chèn dấu ... khi bỏ qua
 /**
@@ -24,9 +24,9 @@ const GAP = "gap";
  * Giới hạn tối đa 7 số trên một hàng, để trang 1 trên 500 vẫn nằm trong một dòng ở điện thoại.
  */
 function pageItems(pageIndex: number, pageCount: number): (number | typeof GAP)[] {
-  const wanted = [0, pageIndex - 1, pageIndex, pageIndex + 1, pageCount - 1];
-  const shown = [...new Set(wanted)].filter((p) => p >= 0 && p < pageCount).sort((a, b) => a - b);
-  return shown.flatMap((p, i) => (i > 0 && p - shown[i - 1] > 1 ? [GAP, p] : [p]));
+  const wanted = [0, pageIndex - 1, pageIndex, pageIndex + 1, pageCount - 1]
+  const shown = [...new Set(wanted)].filter((p) => p >= 0 && p < pageCount).sort((a, b) => a - b)
+  return shown.flatMap((p, i) => (i > 0 && p - shown[i - 1] > 1 ? [GAP, p] : [p]))
 }
 
 // Mũi tên chuyển trang trái hoặc phải
@@ -42,13 +42,13 @@ function ChevronIcon({ left }: { left?: boolean }) {
       strokeLinejoin="round"
       className="size-4"
     >
-      <path d={left ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
+      <path d={left ? 'm15 18-6-6 6-6' : 'm9 18 6-6-6-6'} />
     </svg>
-  );
+  )
 }
 
 // AppButton đã đặt chiều cao 44px cho thiết bị cảm ứng; ở đây chỉ cố định chiều rộng và chữ số.
-const CONTROL = "min-w-11 px-2 text-sm tabular-nums sm:min-w-9";
+const CONTROL = 'min-w-11 px-2 text-sm tabular-nums sm:min-w-9'
 
 // Thanh phân trang
 export function AppPagination({
@@ -62,10 +62,12 @@ export function AppPagination({
   className,
 }: AppPaginationProps) {
   // Không có gì để chuyển trang — một nút "1 / 1" bị vô hiệu đứng một mình chỉ gây nhiễu, không phải control.
-  if (pageCount <= 1) return null;
+  if (pageCount <= 1) {
+    return null
+  }
 
   return (
-    <nav aria-label={navLabel} className={cn("flex flex-wrap items-center gap-1", className)}>
+    <nav aria-label={navLabel} className={cn('flex flex-wrap items-center gap-1', className)}>
       <AppButton
         variant="secondary"
         aria-label={prevLabel}
@@ -77,7 +79,7 @@ export function AppPagination({
       </AppButton>
       {pageItems(pageIndex, pageCount).map((item, i) =>
         item === GAP ? (
-          <span key={`${GAP}-${i}`} aria-hidden className={cn(CONTROL, "text-muted-app")}>
+          <span key={`${GAP}-${i}`} aria-hidden className={cn(CONTROL, 'text-muted-app')}>
             …
           </span>
         ) : (
@@ -85,9 +87,9 @@ export function AppPagination({
             key={item}
             variant="secondary"
             aria-label={pageLabel(item + 1)}
-            aria-current={item === pageIndex ? "page" : undefined}
+            aria-current={item === pageIndex ? 'page' : undefined}
             onClick={() => onPageChange(item)}
-            className={cn(CONTROL, { "border-text-app font-semibold": item === pageIndex })}
+            className={cn(CONTROL, { 'border-text-app font-semibold': item === pageIndex })}
           >
             {item + 1}
           </AppButton>
@@ -103,5 +105,5 @@ export function AppPagination({
         <ChevronIcon />
       </AppButton>
     </nav>
-  );
+  )
 }

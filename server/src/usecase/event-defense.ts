@@ -1,6 +1,6 @@
-import type { ClubAccessRepository } from "../domain/access.js";
-import type { AuthRepository } from "../domain/auth.js";
-import { DomainError } from "../domain/errors.js";
+import type { ClubAccessRepository } from '../domain/access.js'
+import type { AuthRepository } from '../domain/auth.js'
+import { DomainError } from '../domain/errors.js'
 import {
   MAX_DEFENSE_DURATION_MINUTES,
   MIN_DEFENSE_DURATION_MINUTES,
@@ -8,244 +8,285 @@ import {
   type EventDefenseRepository,
   type RespondRescheduleInput,
   type ScheduleDefenseInput,
-} from "../domain/event-defense.js";
+} from '../domain/event-defense.js'
 import {
   approvedBudget,
   type EventProposalReviewRepository,
   type EventReviewDecisionInput,
-} from "../domain/event-proposal-review.js";
-import { assertClubAccess, type AccessActor } from "./access.js";
-import { normalizedEventDecision } from "./event-proposal-review.js";
+} from '../domain/event-proposal-review.js'
+import { assertClubAccess, type AccessActor } from './access.js'
+import { normalizedEventDecision } from './event-proposal-review.js'
 
-const OBJECT_ID = /^[0-9a-f]{24}$/i;
-const MINUTE_MS = 60 * 1000;
+const OBJECT_ID = /^[0-9a-f]{24}$/i
+const MINUTE_MS = 60 * 1000
 
 // Kiểm actor là ICPDP officer và trả id
-async function requireOfficer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
-  if (!actor) throw new DomainError("authentication required", "unauthorized");
-  if (actor.accountState === "Locked") {
-    throw new DomainError(actor.lockReason || "account locked", "locked");
+async function requireOfficer(
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+): Promise<string> {
+  if (!actor) {
+    throw new DomainError('authentication required', 'unauthorized')
   }
-  if (!OBJECT_ID.test(actor.id)) throw new DomainError("invalid actor", "validation");
-  if (!(await auth.systemRoleCodes(actor.id)).includes("ICPDP_OFFICER")) {
-    throw new DomainError("ICPDP officer role required", "forbidden");
+  if (actor.accountState === 'Locked') {
+    throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  return actor.id;
+  if (!OBJECT_ID.test(actor.id)) {
+    throw new DomainError('invalid actor', 'validation')
+  }
+  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
+    throw new DomainError('ICPDP officer role required', 'forbidden')
+  }
+  return actor.id
 }
 
 // Kiểm định dạng ObjectId của một định danh
 function validObjectId(value: string, label: string): string {
-  if (!OBJECT_ID.test(value)) throw new DomainError(`invalid ${label}`, "validation");
-  return value;
+  if (!OBJECT_ID.test(value)) {
+    throw new DomainError(`invalid ${label}`, 'validation')
+  }
+  return value
 }
 
 // Cắt khoảng trắng và bắt buộc có giá trị, không quá độ dài tối đa
 function trimmedRequired(value: string | undefined, label: string, maxLength: number): string {
-  const text = value?.trim() ?? "";
-  if (!text) throw new DomainError(`${label} is required`, "validation");
-  if (text.length > maxLength) {
-    throw new DomainError(`${label} cannot exceed ${maxLength} characters`, "validation");
+  const text = value?.trim() ?? ''
+  if (!text) {
+    throw new DomainError(`${label} is required`, 'validation')
   }
-  return text;
+  if (text.length > maxLength) {
+    throw new DomainError(`${label} cannot exceed ${maxLength} characters`, 'validation')
+  }
+  return text
 }
 
 // Cắt khoảng trắng chuỗi tùy chọn và kiểm độ dài tối đa
 function trimmedOptional(value: string | undefined, maxLength: number): string | undefined {
-  const text = value?.trim();
-  if (!text) return undefined;
-  if (text.length > maxLength) {
-    throw new DomainError(`note cannot exceed ${maxLength} characters`, "validation");
+  const text = value?.trim()
+  if (!text) {
+    return undefined
   }
-  return text;
+  if (text.length > maxLength) {
+    throw new DomainError(`note cannot exceed ${maxLength} characters`, 'validation')
+  }
+  return text
 }
 
 // ICPDP xem các phòng còn trống cho buổi bảo vệ đề án theo giờ và thời lượng
 export async function listAvailableDefenseRooms(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   startAt: Date,
   durationMinutes: number,
   excludeDefenseId?: string,
 ) {
-  await requireOfficer(auth, actor);
+  await requireOfficer(auth, actor)
   if (!(startAt instanceof Date) || Number.isNaN(startAt.getTime())) {
-    throw new DomainError("valid start time is required", "validation", { field: "startAt" });
+    throw new DomainError('valid start time is required', 'validation', { field: 'startAt' })
   }
-  if (!Number.isInteger(durationMinutes)
-    || durationMinutes < MIN_DEFENSE_DURATION_MINUTES
-    || durationMinutes > MAX_DEFENSE_DURATION_MINUTES) {
+  if (
+    !Number.isInteger(durationMinutes) ||
+    durationMinutes < MIN_DEFENSE_DURATION_MINUTES ||
+    durationMinutes > MAX_DEFENSE_DURATION_MINUTES
+  ) {
     throw new DomainError(
       `duration must be an integer between ${MIN_DEFENSE_DURATION_MINUTES} and ${MAX_DEFENSE_DURATION_MINUTES} minutes`,
-      "validation",
-      { field: "durationMinutes" },
-    );
+      'validation',
+      { field: 'durationMinutes' },
+    )
   }
-  const endAt = new Date(startAt.getTime() + durationMinutes * MINUTE_MS);
-  const excludeId = excludeDefenseId ? validObjectId(excludeDefenseId, "defense id") : undefined;
-  return repo.listAvailableRooms(startAt, endAt, excludeId);
+  const endAt = new Date(startAt.getTime() + durationMinutes * MINUTE_MS)
+  const excludeId = excludeDefenseId ? validObjectId(excludeDefenseId, 'defense id') : undefined
+  return repo.listAvailableRooms(startAt, endAt, excludeId)
 }
 
 // ICPDP lên lịch buổi bảo vệ đề án sự kiện (phòng, giờ, thời lượng)
 export async function scheduleEventDefense(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   input: ScheduleDefenseInput,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  const id = validObjectId(eventId, "event id");
-  const propertyId = validObjectId(input.propertyId, "property id");
-  const title = trimmedRequired(input.title, "defense title", 200);
-  const note = trimmedOptional(input.note, 2000);
-  const slot = validateDefenseScheduleSlot(input.startAt, input.durationMinutes, now);
-  return repo.schedule(id, officerId, { ...slot, propertyId, title, ...(note ? { note } : {}) }, now);
+  const officerId = await requireOfficer(auth, actor)
+  const id = validObjectId(eventId, 'event id')
+  const propertyId = validObjectId(input.propertyId, 'property id')
+  const title = trimmedRequired(input.title, 'defense title', 200)
+  const note = trimmedOptional(input.note, 2000)
+  const slot = validateDefenseScheduleSlot(input.startAt, input.durationMinutes, now)
+  return repo.schedule(
+    id,
+    officerId,
+    { ...slot, propertyId, title, ...(note ? { note } : {}) },
+    now,
+  )
 }
 
 // ICPDP hủy buổi bảo vệ đề án kèm lý do
 export async function cancelEventDefense(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   reason: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  const id = validObjectId(eventId, "event id");
-  const cleanReason = trimmedRequired(reason, "cancellation reason", 2000);
-  return repo.cancel(id, officerId, cleanReason, now);
+  const officerId = await requireOfficer(auth, actor)
+  const id = validObjectId(eventId, 'event id')
+  const cleanReason = trimmedRequired(reason, 'cancellation reason', 2000)
+  return repo.cancel(id, officerId, cleanReason, now)
 }
 
 // ICPDP chấp nhận (đặt lịch mới) hoặc từ chối yêu cầu dời lịch bảo vệ của CLB
 export async function respondDefenseReschedule(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   input: RespondRescheduleInput,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  const id = validObjectId(eventId, "event id");
+  const officerId = await requireOfficer(auth, actor)
+  const id = validObjectId(eventId, 'event id')
   if (input.accept) {
-    if (!(input.startAt instanceof Date) || Number.isNaN(input.startAt.getTime()) || input.startAt <= now) {
-      throw new DomainError("future defense start time is required", "validation", { field: "startAt" });
+    if (
+      !(input.startAt instanceof Date) ||
+      Number.isNaN(input.startAt.getTime()) ||
+      input.startAt <= now
+    ) {
+      throw new DomainError('future defense start time is required', 'validation', {
+        field: 'startAt',
+      })
     }
-    const durationMinutes = input.durationMinutes ?? 60;
-    if (!Number.isInteger(durationMinutes)
-      || durationMinutes < MIN_DEFENSE_DURATION_MINUTES
-      || durationMinutes > MAX_DEFENSE_DURATION_MINUTES) {
+    const durationMinutes = input.durationMinutes ?? 60
+    if (
+      !Number.isInteger(durationMinutes) ||
+      durationMinutes < MIN_DEFENSE_DURATION_MINUTES ||
+      durationMinutes > MAX_DEFENSE_DURATION_MINUTES
+    ) {
       throw new DomainError(
         `duration must be an integer between ${MIN_DEFENSE_DURATION_MINUTES} and ${MAX_DEFENSE_DURATION_MINUTES} minutes`,
-        "validation",
-        { field: "durationMinutes" },
-      );
+        'validation',
+        { field: 'durationMinutes' },
+      )
     }
-    const propertyId = validObjectId(input.propertyId ?? "", "property id");
-    const note = trimmedOptional(input.note, 2000);
-    return repo.respondReschedule(id, officerId, {
-      accept: true,
-      startAt: input.startAt,
-      durationMinutes,
-      propertyId,
-      ...(note ? { note } : {}),
-    }, now);
+    const propertyId = validObjectId(input.propertyId ?? '', 'property id')
+    const note = trimmedOptional(input.note, 2000)
+    return repo.respondReschedule(
+      id,
+      officerId,
+      {
+        accept: true,
+        startAt: input.startAt,
+        durationMinutes,
+        propertyId,
+        ...(note ? { note } : {}),
+      },
+      now,
+    )
   }
-  const reason = trimmedRequired(input.reason, "rejection reason", 2000);
-  return repo.respondReschedule(id, officerId, { accept: false, reason }, now);
+  const reason = trimmedRequired(input.reason, 'rejection reason', 2000)
+  return repo.respondReschedule(id, officerId, { accept: false, reason }, now)
 }
 
 // ICPDP bắt đầu buổi bảo vệ đề án
 export async function startEventDefense(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  return repo.start(validObjectId(eventId, "event id"), officerId, now);
+  const officerId = await requireOfficer(auth, actor)
+  return repo.start(validObjectId(eventId, 'event id'), officerId, now)
 }
 
 // ICPDP xem phiên bảo vệ đang diễn ra
 export async function getLiveDefenseSession(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
 ) {
-  await requireOfficer(auth, actor);
-  const session = await repo.getLiveSession(validObjectId(eventId, "event id"));
-  if (!session) throw new DomainError("defense session not found", "not_found");
-  return session;
+  await requireOfficer(auth, actor)
+  const session = await repo.getLiveSession(validObjectId(eventId, 'event id'))
+  if (!session) {
+    throw new DomainError('defense session not found', 'not_found')
+  }
+  return session
 }
 
 // ICPDP lưu ghi chú trong buổi bảo vệ
 export async function saveDefenseNote(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   content: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  if (typeof content !== "string" || content.length > 50_000) {
-    throw new DomainError("defense note cannot exceed 50000 characters", "validation", { field: "content" });
+  const officerId = await requireOfficer(auth, actor)
+  if (typeof content !== 'string' || content.length > 50_000) {
+    throw new DomainError('defense note cannot exceed 50000 characters', 'validation', {
+      field: 'content',
+    })
   }
-  return repo.saveNote(validObjectId(eventId, "event id"), officerId, content, now);
+  return repo.saveNote(validObjectId(eventId, 'event id'), officerId, content, now)
 }
 
 // ICPDP kết thúc buổi bảo vệ đề án
 export async function endEventDefense(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  return repo.end(validObjectId(eventId, "event id"), officerId, now);
+  const officerId = await requireOfficer(auth, actor)
+  return repo.end(validObjectId(eventId, 'event id'), officerId, now)
 }
 
 // ICPDP ghi nhận CLB vắng mặt buổi bảo vệ
 export async function markDefenseNoShow(
   repo: EventDefenseRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   reason: string | undefined,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  const cleanReason = trimmedOptional(reason, 2000) ?? "Club did not attend the scheduled defense session";
-  return repo.markNoShow(validObjectId(eventId, "event id"), officerId, cleanReason, now);
+  const officerId = await requireOfficer(auth, actor)
+  const cleanReason =
+    trimmedOptional(reason, 2000) ?? 'Club did not attend the scheduled defense session'
+  return repo.markNoShow(validObjectId(eventId, 'event id'), officerId, cleanReason, now)
 }
 
 // ICPDP ghi quyết định đề án sau buổi bảo vệ (duyệt, sửa, từ chối)
 export async function decideAfterDefense(
   defenseRepo: EventDefenseRepository,
   reviewRepo: EventProposalReviewRepository,
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
   input: EventReviewDecisionInput,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor);
-  const id = validObjectId(eventId, "event id");
-  const decision = normalizedEventDecision(input, now);
-  const detail = await reviewRepo.find(id, now);
-  if (!detail) throw new DomainError("event proposal not found", "not_found");
-  if (decision.outcome === "Approve") {
-    const current = detail.versions.find((version) => version.revisionNo === detail.event.currentRevisionNo)
-      ?? detail.versions.at(-1);
-    approvedBudget(current?.budgetLines ?? [], decision.budgetLines);
+  const officerId = await requireOfficer(auth, actor)
+  const id = validObjectId(eventId, 'event id')
+  const decision = normalizedEventDecision(input, now)
+  const detail = await reviewRepo.find(id, now)
+  if (!detail) {
+    throw new DomainError('event proposal not found', 'not_found')
   }
-  return defenseRepo.decideAfterDefense(id, officerId, decision, now);
+  if (decision.outcome === 'Approve') {
+    const current =
+      detail.versions.find((version) => version.revisionNo === detail.event.currentRevisionNo) ??
+      detail.versions.at(-1)
+    approvedBudget(current?.budgetLines ?? [], decision.budgetLines)
+  }
+  return defenseRepo.decideAfterDefense(id, officerId, decision, now)
 }
 
 // CLB xem thông tin buổi bảo vệ đề án của sự kiện mình
@@ -257,10 +298,15 @@ export async function getClubEventDefense(
   eventId: string,
   now: Date,
 ) {
-  await assertClubAccess(access, actor, clubId, "club.event.manage", now);
-  const view = await repo.getClubDefense(validObjectId(clubId, "club id"), validObjectId(eventId, "event id"));
-  if (!view) throw new DomainError("event proposal not found", "not_found");
-  return view;
+  await assertClubAccess(access, actor, clubId, 'club.event.manage', now)
+  const view = await repo.getClubDefense(
+    validObjectId(clubId, 'club id'),
+    validObjectId(eventId, 'event id'),
+  )
+  if (!view) {
+    throw new DomainError('event proposal not found', 'not_found')
+  }
+  return view
 }
 
 // CLB xác nhận tham dự buổi bảo vệ đề án
@@ -272,8 +318,13 @@ export async function confirmClubEventDefense(
   eventId: string,
   now: Date,
 ) {
-  await assertClubAccess(access, actor, clubId, "club.event.manage", now);
-  return repo.confirmByClub(validObjectId(clubId, "club id"), validObjectId(eventId, "event id"), actor!.id, now);
+  await assertClubAccess(access, actor, clubId, 'club.event.manage', now)
+  return repo.confirmByClub(
+    validObjectId(clubId, 'club id'),
+    validObjectId(eventId, 'event id'),
+    actor!.id,
+    now,
+  )
 }
 
 // CLB yêu cầu dời lịch bảo vệ đề án kèm lý do
@@ -286,18 +337,21 @@ export async function requestClubDefenseReschedule(
   reason: string,
   now: Date,
 ) {
-  await assertClubAccess(access, actor, clubId, "club.event.manage", now);
-  const cleanReason = trimmedRequired(reason, "reschedule reason", 2000);
+  await assertClubAccess(access, actor, clubId, 'club.event.manage', now)
+  const cleanReason = trimmedRequired(reason, 'reschedule reason', 2000)
   return repo.requestRescheduleByClub(
-    validObjectId(clubId, "club id"),
-    validObjectId(eventId, "event id"),
+    validObjectId(clubId, 'club id'),
+    validObjectId(eventId, 'event id'),
     actor!.id,
     cleanReason,
     now,
-  );
+  )
 }
 
 // Job: cảnh báo các buổi bảo vệ mà CLB quá hạn chưa xác nhận
-export async function runDefenseConfirmationAlertJob(repo: EventDefenseRepository, now: Date): Promise<number> {
-  return repo.alertOverdueConfirmations(now);
+export async function runDefenseConfirmationAlertJob(
+  repo: EventDefenseRepository,
+  now: Date,
+): Promise<number> {
+  return repo.alertOverdueConfirmations(now)
 }

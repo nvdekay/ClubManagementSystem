@@ -1,51 +1,109 @@
-import { useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { useBoardNominationQueue } from "@/hooks/useBoardNominations";
+import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { useAuth } from '@/hooks/useAuth'
+import { useBoardNominationQueue } from '@/hooks/useBoardNominations'
 
 // Hàng đợi ICPDP các đề cử ban chủ nhiệm cần xác nhận
 export function BoardNominationQueuePage() {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const auth = useAuth();
-  const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
-  const queue = useBoardNominationQueue(isOfficer);
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const auth = useAuth()
+  const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
+  const queue = useBoardNominationQueue(isOfficer)
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language,
-      { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value))
   }
-  const loading = <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-24 w-full" />)}</div>;
-  return <>
-    <PageHeader title={t("boardNominations.queueTitle")} description={t("boardNominations.queueDescription")}
-      actions={queue.data && <AppBadge tone="info">{t("boardNominations.openCount", { count: queue.data.length })}</AppBadge>} />
-    {auth.isPending ? loading
-      : !auth.data ? <AppNotice>{t("boardNominations.signIn")}</AppNotice>
-        : !isOfficer ? <AppNotice tone="danger" role="alert">{t("boardNominations.unauthorized")}</AppNotice>
-          : queue.isPending ? loading
-            : queue.isError ? <AppNotice tone="danger" role="alert" title={queue.error.message || t("boardNominations.queueError")}>
-              <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("boardNominations.retry")}</AppButton>
-            </AppNotice>
-              : queue.data.length ? <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
-                {queue.data.map((nomination) => <li key={nomination.id} className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
-                  <div className="min-w-0 flex-1 basis-64">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-heading text-base font-semibold break-words">{nomination.clubName}</h2>
-                      <AppBadge tone="warning">{nomination.term.name}</AppBadge>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-app">{t("boardNominations.waitingSince", { date: date(nomination.submittedAt) })}</p>
-                    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{nomination.seats.map((seat) =>
-                      <li key={seat.id}><span className="text-muted-app">{seat.positionName}:</span> {seat.displayName}</li>)}</ul>
-                  </div>
-                  <AppButton onClick={() => navigate(`/workspace/board-nominations/${nomination.id}`)}>
-                    {t("boardNominations.open")}<AppIcon name="chevronRight" className="size-4" /></AppButton>
-                </li>)}
-              </ul> : <AppEmptyState variant="boxed" icon="badge" title={t("boardNominations.queueEmpty")} message={t("boardNominations.queueEmptyHint")} />}
-  </>;
+  const loading = (
+    <div className="space-y-2">
+      {[0, 1, 2].map((item) => (
+        <AppSkeleton key={item} className="h-24 w-full" />
+      ))}
+    </div>
+  )
+  return (
+    <>
+      <PageHeader
+        title={t('boardNominations.queueTitle')}
+        description={t('boardNominations.queueDescription')}
+        actions={
+          queue.data && (
+            <AppBadge tone="info">
+              {t('boardNominations.openCount', { count: queue.data.length })}
+            </AppBadge>
+          )
+        }
+      />
+      {auth.isPending ? (
+        loading
+      ) : !auth.data ? (
+        <AppNotice>{t('boardNominations.signIn')}</AppNotice>
+      ) : !isOfficer ? (
+        <AppNotice tone="danger" role="alert">
+          {t('boardNominations.unauthorized')}
+        </AppNotice>
+      ) : queue.isPending ? (
+        loading
+      ) : queue.isError ? (
+        <AppNotice
+          tone="danger"
+          role="alert"
+          title={queue.error.message || t('boardNominations.queueError')}
+        >
+          <AppButton variant="secondary" onClick={() => void queue.refetch()}>
+            {t('boardNominations.retry')}
+          </AppButton>
+        </AppNotice>
+      ) : queue.data.length ? (
+        <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+          {queue.data.map((nomination) => (
+            <li
+              key={nomination.id}
+              className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4"
+            >
+              <div className="min-w-0 flex-1 basis-64">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-heading text-base font-semibold break-words">
+                    {nomination.clubName}
+                  </h2>
+                  <AppBadge tone="warning">{nomination.term.name}</AppBadge>
+                </div>
+                <p className="mt-1 text-sm text-muted-app">
+                  {t('boardNominations.waitingSince', { date: date(nomination.submittedAt) })}
+                </p>
+                <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  {nomination.seats.map((seat) => (
+                    <li key={seat.id}>
+                      <span className="text-muted-app">{seat.positionName}:</span>{' '}
+                      {seat.displayName}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <AppButton onClick={() => navigate(`/workspace/board-nominations/${nomination.id}`)}>
+                {t('boardNominations.open')}
+                <AppIcon name="chevronRight" className="size-4" />
+              </AppButton>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <AppEmptyState
+          variant="boxed"
+          icon="badge"
+          title={t('boardNominations.queueEmpty')}
+          message={t('boardNominations.queueEmptyHint')}
+        />
+      )}
+    </>
+  )
 }

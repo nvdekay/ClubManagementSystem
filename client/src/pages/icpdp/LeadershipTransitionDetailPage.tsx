@@ -1,152 +1,383 @@
-import { useRef, useState } from "react";
-import { useParams } from "react-router";
-import { useTranslation } from "react-i18next";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { useLeadershipTransition, useLeadershipTransitionAction } from "@/hooks/useLeadershipTransitions";
-import { useConfirm } from "@/hooks/useConfirm";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { useRef, useState } from 'react'
+import { useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppSelect } from '@/components/ui/select/AppSelect'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { useAuth } from '@/hooks/useAuth'
+import {
+  useLeadershipTransition,
+  useLeadershipTransitionAction,
+} from '@/hooks/useLeadershipTransitions'
+import { useConfirm } from '@/hooks/useConfirm'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
 
 // Trang ICPDP xem chi tiết bàn giao lãnh đạo CLB và ra quyết định
 export function LeadershipTransitionDetailPage() {
-  const { id } = useParams();
-  const { t, i18n } = useTranslation();
-  const askConfirm = useConfirm();
-  const auth = useAuth();
-  const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
-  const query = useLeadershipTransition(id, isOfficer);
-  const action = useLeadershipTransitionAction();
-  const [outcome, setOutcome] = useState<"Approve" | "Request revision">("Approve");
-  const [reason, setReason] = useState("");
-  const [followUps, setFollowUps] = useState<string[]>([]);
-  const [saved, setSaved] = useState(false);
-  const inFlight = useRef(false);
-  const returning = outcome === "Request revision";
+  const { id } = useParams()
+  const { t, i18n } = useTranslation()
+  const askConfirm = useConfirm()
+  const auth = useAuth()
+  const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
+  const query = useLeadershipTransition(id, isOfficer)
+  const action = useLeadershipTransitionAction()
+  const [outcome, setOutcome] = useState<'Approve' | 'Request revision'>('Approve')
+  const [reason, setReason] = useState('')
+  const [followUps, setFollowUps] = useState<string[]>([])
+  const [saved, setSaved] = useState(false)
+  const inFlight = useRef(false)
+  const returning = outcome === 'Request revision'
   const field = useFieldValidation({
-    reason: returning && !reason.trim() ? t("leadershipTransitions.returnReason") : null,
-  });
+    reason: returning && !reason.trim() ? t('leadershipTransitions.returnReason') : null,
+  })
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language,
-      { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value))
   }
-  const back = { to: "/workspace/leadership-transitions", label: t("leadershipTransitions.detailBack") };
-  const loading = <div className="space-y-4"><AppSkeleton className="h-10 w-1/2" />
-    <AppSkeleton className="h-96 w-full" /></div>;
+  const back = {
+    to: '/workspace/leadership-transitions',
+    label: t('leadershipTransitions.detailBack'),
+  }
+  const loading = (
+    <div className="space-y-4">
+      <AppSkeleton className="h-10 w-1/2" />
+      <AppSkeleton className="h-96 w-full" />
+    </div>
+  )
 
   // Officer nhận (claim) hồ sơ bàn giao lãnh đạo
   async function claim() {
-    if (!auth.data || !id) return;
-    try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Được hiển thị bên dưới. */ }
+    if (!auth.data || !id) {
+      return
+    }
+    try {
+      await action.mutateAsync({ kind: 'claim', id, csrfToken: auth.data.csrfToken })
+    } catch {
+      /* Được hiển thị bên dưới. */
+    }
   }
   // Xác nhận rồi gửi quyết định về bàn giao lãnh đạo
   async function decide() {
-    if (!auth.data || !id || inFlight.current || !field.touchAll() || !(await askConfirm(t("leadershipTransitions.confirmPrompt")))) return;
-    inFlight.current = true;
+    if (
+      !auth.data ||
+      !id ||
+      inFlight.current ||
+      !field.touchAll() ||
+      !(await askConfirm(t('leadershipTransitions.confirmPrompt')))
+    ) {
+      return
+    }
+    inFlight.current = true
     try {
-      await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken,
-        input: { outcome, reason, followUpObligationIds: outcome === "Approve" ? followUps : [] } });
-      setSaved(true);
-    } catch { /* Được hiển thị bên dưới. */ }
-    finally { inFlight.current = false; }
+      await action.mutateAsync({
+        kind: 'decide',
+        id,
+        csrfToken: auth.data.csrfToken,
+        input: { outcome, reason, followUpObligationIds: outcome === 'Approve' ? followUps : [] },
+      })
+      setSaved(true)
+    } catch {
+      /* Được hiển thị bên dưới. */
+    } finally {
+      inFlight.current = false
+    }
   }
 
-  if (auth.isPending) return loading;
-  if (!auth.data) return <AppNotice>{t("leadershipTransitions.signIn")}</AppNotice>;
-  if (!isOfficer) return <AppNotice tone="danger">{t("leadershipTransitions.unauthorized")}</AppNotice>;
-  if (query.isPending) return loading;
-  if (query.isError || !query.data) return <><PageHeader title={t("leadershipTransitions.queueTitle")} back={back} />
-    <AppNotice tone="danger" role="alert" title={query.error?.message ?? t("leadershipTransitions.loadError")}>
-      <AppButton variant="secondary" onClick={() => void query.refetch()}>{t("leadershipTransitions.retry")}</AppButton>
-    </AppNotice></>;
+  if (auth.isPending) {
+    return loading
+  }
+  if (!auth.data) {
+    return <AppNotice>{t('leadershipTransitions.signIn')}</AppNotice>
+  }
+  if (!isOfficer) {
+    return <AppNotice tone="danger">{t('leadershipTransitions.unauthorized')}</AppNotice>
+  }
+  if (query.isPending) {
+    return loading
+  }
+  if (query.isError || !query.data) {
+    return (
+      <>
+        <PageHeader title={t('leadershipTransitions.queueTitle')} back={back} />
+        <AppNotice
+          tone="danger"
+          role="alert"
+          title={query.error?.message ?? t('leadershipTransitions.loadError')}
+        >
+          <AppButton variant="secondary" onClick={() => void query.refetch()}>
+            {t('leadershipTransitions.retry')}
+          </AppButton>
+        </AppNotice>
+      </>
+    )
+  }
 
-  const plan = query.data;
-  const canDecide = plan.task.state === "Open" && plan.task.assigneeId === auth.data.user.id;
-  const assignedElsewhere = plan.task.state === "Open" && Boolean(plan.task.assigneeId)
-    && plan.task.assigneeId !== auth.data.user.id;
-  const stateLabel = plan.state === "Confirmed" ? t("leadershipTransitions.confirmed")
-    : plan.state === "Returned" ? t("leadershipTransitions.returned") : t("leadershipTransitions.pending");
+  const plan = query.data
+  const canDecide = plan.task.state === 'Open' && plan.task.assigneeId === auth.data.user.id
+  const assignedElsewhere =
+    plan.task.state === 'Open' &&
+    Boolean(plan.task.assigneeId) &&
+    plan.task.assigneeId !== auth.data.user.id
+  const stateLabel =
+    plan.state === 'Confirmed'
+      ? t('leadershipTransitions.confirmed')
+      : plan.state === 'Returned'
+        ? t('leadershipTransitions.returned')
+        : t('leadershipTransitions.pending')
   // Loại nghĩa vụ là mã do server trả về; mã mới chưa biết vẫn hiển thị nguyên văn thay vì biến mất.
   function obligationLabel(type: string) {
     switch (type) {
-      case "BUDGET": return t("leadershipTransitions.obligationBudget");
-      case "EVENT": return t("leadershipTransitions.obligationEvent");
-      case "REPORT": return t("leadershipTransitions.obligationReport");
-      case "VIOLATION": return t("leadershipTransitions.obligationViolation");
-      default: return type;
+      case 'BUDGET':
+        return t('leadershipTransitions.obligationBudget')
+      case 'EVENT':
+        return t('leadershipTransitions.obligationEvent')
+      case 'REPORT':
+        return t('leadershipTransitions.obligationReport')
+      case 'VIOLATION':
+        return t('leadershipTransitions.obligationViolation')
+      default:
+        return type
     }
   }
-  return <>
-    <PageHeader title={plan.clubName} back={back} description={`${plan.fromTerm.name} → ${plan.toTerm.name}`}
-      actions={<AppBadge tone={plan.state === "Confirmed" ? "success" : plan.state === "Returned" ? "danger" : "warning"}>
-        {stateLabel}</AppBadge>} />
-    {saved && <AppNotice tone="success" role="status">{t("leadershipTransitions.success")}</AppNotice>}
-    {plan.clubState === "Suspended" && <AppNotice tone="warning" role="status" title={t("leadershipTransitions.suspendedTitle")}>
-      {t("leadershipTransitions.suspended")}</AppNotice>}
-    <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="min-w-0 space-y-5">
-        <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.terms")}</h2>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-border-app bg-surface-app p-4">
-            <dt className="text-sm text-muted-app">{t("leadershipTransitions.fromTerm")}</dt><dd className="mt-1 font-semibold">{plan.fromTerm.name}</dd>
-            <dd className="text-sm text-muted-app">{date(plan.fromTerm.startAt)} – {date(plan.fromTerm.endAt)}</dd></div>
-          <div className="rounded-xl border border-border-app bg-surface-app p-4"><dt className="text-sm text-muted-app">{t("leadershipTransitions.toTerm")}</dt>
-            <dd className="mt-1 font-semibold">{plan.toTerm.name}</dd><dd className="text-sm text-muted-app">{date(plan.toTerm.startAt)} – {date(plan.toTerm.endAt)}</dd></div></dl>
-        </section>
-        <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.candidates")}</h2>
-          <ul className="mt-3 divide-y divide-border-app">{plan.candidates.map((candidate) =>
-            <li key={candidate.positionCode} className="flex flex-wrap justify-between gap-4 py-3"><span className="font-semibold">{candidate.positionName}</span>
-              <span className="text-right text-muted-app">{candidate.displayName}</span></li>)}</ul></section>
-        <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.obligations")}</h2>
-          {plan.outstandingObligations.length ? <ul className="mt-4 space-y-3">{plan.outstandingObligations.map((item) =>
-            <li key={item.id} className="rounded-xl border border-border-app p-4"><p className="font-semibold">{item.description}</p>
-              <p className="mt-1 text-sm text-muted-app">{obligationLabel(item.type)}</p>{canDecide && outcome === "Approve" && <label className="mt-3 flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={followUps.includes(item.id)} onChange={(event) => setFollowUps((current) =>
-                  event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))} />
-                {t("leadershipTransitions.followUp")}</label>}</li>)}</ul>
-            : <div className="mt-3"><AppEmptyState message={t("leadershipTransitions.noObligations")} /></div>}</section>
-        <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.handover")}</h2>
-          {plan.handover.items.length ? <ul className="mt-3 list-disc space-y-2 pl-5">{plan.handover.items.map((item) =>
-            <li key={item.id}>{item.description}</li>)}</ul> : <div className="mt-3"><AppEmptyState message={t("leadershipTransitions.noHandover")} /></div>}</section>
-        {plan.handover.proposedBoardRoles && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.roleChanges")}</h2>
-          <ul className="mt-3 divide-y divide-border-app">{plan.handover.proposedBoardRoles.map((role) =>
-            <li key={role.code} className="py-3"><p className="font-semibold">{role.name}</p></li>)}</ul></section>}
+  return (
+    <>
+      <PageHeader
+        title={plan.clubName}
+        back={back}
+        description={`${plan.fromTerm.name} → ${plan.toTerm.name}`}
+        actions={
+          <AppBadge
+            tone={
+              plan.state === 'Confirmed'
+                ? 'success'
+                : plan.state === 'Returned'
+                  ? 'danger'
+                  : 'warning'
+            }
+          >
+            {stateLabel}
+          </AppBadge>
+        }
+      />
+      {saved && (
+        <AppNotice tone="success" role="status">
+          {t('leadershipTransitions.success')}
+        </AppNotice>
+      )}
+      {plan.clubState === 'Suspended' && (
+        <AppNotice tone="warning" role="status" title={t('leadershipTransitions.suspendedTitle')}>
+          {t('leadershipTransitions.suspended')}
+        </AppNotice>
+      )}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-5">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">
+              {t('leadershipTransitions.terms')}
+            </h2>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border-app bg-surface-app p-4">
+                <dt className="text-sm text-muted-app">{t('leadershipTransitions.fromTerm')}</dt>
+                <dd className="mt-1 font-semibold">{plan.fromTerm.name}</dd>
+                <dd className="text-sm text-muted-app">
+                  {date(plan.fromTerm.startAt)} – {date(plan.fromTerm.endAt)}
+                </dd>
+              </div>
+              <div className="rounded-xl border border-border-app bg-surface-app p-4">
+                <dt className="text-sm text-muted-app">{t('leadershipTransitions.toTerm')}</dt>
+                <dd className="mt-1 font-semibold">{plan.toTerm.name}</dd>
+                <dd className="text-sm text-muted-app">
+                  {date(plan.toTerm.startAt)} – {date(plan.toTerm.endAt)}
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">
+              {t('leadershipTransitions.candidates')}
+            </h2>
+            <ul className="mt-3 divide-y divide-border-app">
+              {plan.candidates.map((candidate) => (
+                <li
+                  key={candidate.positionCode}
+                  className="flex flex-wrap justify-between gap-4 py-3"
+                >
+                  <span className="font-semibold">{candidate.positionName}</span>
+                  <span className="text-right text-muted-app">{candidate.displayName}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">
+              {t('leadershipTransitions.obligations')}
+            </h2>
+            {plan.outstandingObligations.length ? (
+              <ul className="mt-4 space-y-3">
+                {plan.outstandingObligations.map((item) => (
+                  <li key={item.id} className="rounded-xl border border-border-app p-4">
+                    <p className="font-semibold">{item.description}</p>
+                    <p className="mt-1 text-sm text-muted-app">{obligationLabel(item.type)}</p>
+                    {canDecide && outcome === 'Approve' && (
+                      <label className="mt-3 flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={followUps.includes(item.id)}
+                          onChange={(event) =>
+                            setFollowUps((current) =>
+                              event.target.checked
+                                ? [...current, item.id]
+                                : current.filter((id) => id !== item.id),
+                            )
+                          }
+                        />
+                        {t('leadershipTransitions.followUp')}
+                      </label>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="mt-3">
+                <AppEmptyState message={t('leadershipTransitions.noObligations')} />
+              </div>
+            )}
+          </section>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">
+              {t('leadershipTransitions.handover')}
+            </h2>
+            {plan.handover.items.length ? (
+              <ul className="mt-3 list-disc space-y-2 pl-5">
+                {plan.handover.items.map((item) => (
+                  <li key={item.id}>{item.description}</li>
+                ))}
+              </ul>
+            ) : (
+              <div className="mt-3">
+                <AppEmptyState message={t('leadershipTransitions.noHandover')} />
+              </div>
+            )}
+          </section>
+          {plan.handover.proposedBoardRoles && (
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">
+                {t('leadershipTransitions.roleChanges')}
+              </h2>
+              <ul className="mt-3 divide-y divide-border-app">
+                {plan.handover.proposedBoardRoles.map((role) => (
+                  <li key={role.code} className="py-3">
+                    <p className="font-semibold">{role.name}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+        <aside className="min-w-0 lg:sticky lg:top-24">
+          {plan.task.state === 'Decided' ? (
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">
+                {t('leadershipTransitions.history')}
+              </h2>
+              <ol className="mt-4 space-y-4">
+                {plan.decisions.map((decision) => (
+                  <li key={decision.id} className="border-l-2 border-brand-app pl-3">
+                    <p className="font-medium">
+                      {decision.outcome === 'Approve'
+                        ? t('leadershipTransitions.outcomeApprove')
+                        : t('leadershipTransitions.outcomeReturn')}
+                    </p>
+                    <p className="text-xs text-muted-app">{date(decision.at)}</p>
+                    {decision.reason && (
+                      <p className="mt-1 text-sm text-muted-app">{decision.reason}</p>
+                    )}
+                    {decision.followUpObligationIds.length > 0 && (
+                      <p className="mt-1 text-sm text-muted-app">
+                        {t('leadershipTransitions.conditional', {
+                          count: decision.followUpObligationIds.length,
+                        })}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : canDecide ? (
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">
+                {t('leadershipTransitions.decisionTitle')}
+              </h2>
+              <AppSelect
+                className="mt-4 w-full"
+                fitWidth
+                label={t('leadershipTransitions.decisionTitle')}
+                value={outcome}
+                onChange={setOutcome}
+                options={[
+                  { value: 'Approve' as const, label: t('leadershipTransitions.approve') },
+                  { value: 'Request revision' as const, label: t('leadershipTransitions.return') },
+                ]}
+              />
+              <label className="mt-4 block text-sm font-medium text-text-app">
+                {t('leadershipTransitions.reason')}
+                {returning && <AppRequiredMark />}
+                <AppInput
+                  className="mt-1.5 block w-full font-normal"
+                  value={reason}
+                  {...field.control('reason', returning)}
+                  onChange={(event) => setReason(event.target.value)}
+                />
+                <AppFieldError message={field.error('reason')} />
+              </label>
+              <AppButton
+                className="mt-5 w-full"
+                disabled={
+                  action.isPending || (outcome === 'Approve' && plan.clubState === 'Suspended')
+                }
+                onClick={() => void decide()}
+              >
+                {action.isPending
+                  ? t('leadershipTransitions.deciding')
+                  : t('leadershipTransitions.submitDecision')}
+              </AppButton>
+            </section>
+          ) : assignedElsewhere ? (
+            <AppNotice tone="warning">{t('leadershipTransitions.claimedByOther')}</AppNotice>
+          ) : plan.task.state === 'Open' ? (
+            <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="mb-4 font-heading text-base font-semibold">
+                {t('leadershipTransitions.decisionTitle')}
+              </h2>
+              <AppButton
+                className="w-full"
+                disabled={action.isPending}
+                onClick={() => void claim()}
+              >
+                {action.isPending
+                  ? t('leadershipTransitions.claiming')
+                  : t('leadershipTransitions.claim')}
+              </AppButton>
+            </div>
+          ) : (
+            <AppNotice>{t('leadershipTransitions.readOnly')}</AppNotice>
+          )}
+          {action.isError && (
+            <p role="alert" className="mt-4 text-sm text-danger-app">
+              {action.error.message}
+            </p>
+          )}
+        </aside>
       </div>
-      <aside className="min-w-0 lg:sticky lg:top-24">
-        {plan.task.state === "Decided" ? <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.history")}</h2>
-          <ol className="mt-4 space-y-4">{plan.decisions.map((decision) => <li key={decision.id} className="border-l-2 border-brand-app pl-3">
-            <p className="font-medium">{decision.outcome === "Approve" ? t("leadershipTransitions.outcomeApprove") : t("leadershipTransitions.outcomeReturn")}</p>
-            <p className="text-xs text-muted-app">{date(decision.at)}</p>
-            {decision.reason && <p className="mt-1 text-sm text-muted-app">{decision.reason}</p>}
-            {decision.followUpObligationIds.length > 0 && <p className="mt-1 text-sm text-muted-app">{t("leadershipTransitions.conditional", { count: decision.followUpObligationIds.length })}</p>}
-          </li>)}</ol></section> : canDecide ? <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-          <h2 className="font-heading text-base font-semibold">{t("leadershipTransitions.decisionTitle")}</h2>
-          <AppSelect className="mt-4 w-full" fitWidth label={t("leadershipTransitions.decisionTitle")} value={outcome} onChange={setOutcome}
-            options={[{ value: "Approve" as const, label: t("leadershipTransitions.approve") },
-              { value: "Request revision" as const, label: t("leadershipTransitions.return") }]} />
-          <label className="mt-4 block text-sm font-medium text-text-app">{t("leadershipTransitions.reason")}{returning && <AppRequiredMark />}
-            <AppInput className="mt-1.5 block w-full font-normal" value={reason} {...field.control("reason", returning)}
-              onChange={(event) => setReason(event.target.value)} />
-            <AppFieldError message={field.error("reason")} /></label>
-          <AppButton className="mt-5 w-full" disabled={action.isPending
-            || (outcome === "Approve" && plan.clubState === "Suspended")} onClick={() => void decide()}>
-            {action.isPending ? t("leadershipTransitions.deciding") : t("leadershipTransitions.submitDecision")}</AppButton>
-        </section> : assignedElsewhere ? <AppNotice tone="warning">{t("leadershipTransitions.claimedByOther")}</AppNotice>
-          : plan.task.state === "Open" ? <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="mb-4 font-heading text-base font-semibold">{t("leadershipTransitions.decisionTitle")}</h2>
-            <AppButton className="w-full" disabled={action.isPending} onClick={() => void claim()}>
-              {action.isPending ? t("leadershipTransitions.claiming") : t("leadershipTransitions.claim")}</AppButton></div>
-            : <AppNotice>{t("leadershipTransitions.readOnly")}</AppNotice>}
-        {action.isError && <p role="alert" className="mt-4 text-sm text-danger-app">{action.error.message}</p>}
-      </aside>
-    </div>
-  </>;
+    </>
+  )
 }

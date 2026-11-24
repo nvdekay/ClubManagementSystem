@@ -1,29 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import {
-  createPolicy, fetchPolicies, type CreatePolicyInput,
-} from "@/services/policy";
+import { createPolicy, fetchPolicies, type CreatePolicyInput } from '@/services/policy'
 
-const policyKeyRoot = ["policies"] as const;
+const policyKeyRoot = ['policies'] as const
 
 // Query các chính sách và phiên bản
 export function usePolicies(enabled: boolean) {
   return useQuery({
-    queryKey: [...policyKeyRoot, "recent"],
+    queryKey: [...policyKeyRoot, 'recent'],
     queryFn: ({ signal }) => fetchPolicies(signal),
     enabled,
     retry: false,
-  });
+  })
 }
 
 // Mutation tạo phiên bản chính sách mới, rồi làm mới cache
 export function useCreatePolicy() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ input, csrfToken }: { input: CreatePolicyInput; csrfToken: string }) =>
       createPolicy(input, csrfToken),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: policyKeyRoot });
+      await queryClient.invalidateQueries({ queryKey: policyKeyRoot })
     },
-  });
+  })
 }

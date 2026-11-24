@@ -1,79 +1,105 @@
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { usePolicies } from "@/hooks/usePolicy";
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { useAuth } from '@/hooks/useAuth'
+import { usePolicies } from '@/hooks/usePolicy'
 import {
-  CLUB_PROFILE_FORM_FIELDS, FOUNDING_FORM_FIELDS, type PolicyVersion,
-} from "@/services/policy";
+  CLUB_PROFILE_FORM_FIELDS,
+  FOUNDING_FORM_FIELDS,
+  type PolicyVersion,
+} from '@/services/policy'
 import {
-  PolicyEditor, deadlineLabelKey, foundingFieldKey, profileFieldKey, sectionTitleKey,
-} from "./PolicyEditor";
+  PolicyEditor,
+  deadlineLabelKey,
+  foundingFieldKey,
+  profileFieldKey,
+  sectionTitleKey,
+} from './PolicyEditor'
 
 const deadlineFields = [
-  "dueDaysAfterPeriodEnd", "remindBeforeDays", "overdueAfterDays", "escalateAfterDays",
-] as const;
+  'dueDaysAfterPeriodEnd',
+  'remindBeforeDays',
+  'overdueAfterDays',
+  'escalateAfterDays',
+] as const
 
 // Định dạng ngày giờ theo ngôn ngữ hiện tại
 function formatDate(value: string, language: string): string {
-  return new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", {
-    dateStyle: "medium", timeStyle: "short",
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }
 
 // Hiển thị chi tiết các quy định của một phiên bản chính sách
 function PolicyDetails({ version, language }: { version: PolicyVersion; language: string }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   function booleanLabel(value: boolean): string {
-    return t(value ? "policy.yes" : "policy.no");
+    return t(value ? 'policy.yes' : 'policy.no')
   }
   function requiredLabel(value: boolean): string {
-    return t(value ? "policy.required" : "policy.optional");
+    return t(value ? 'policy.required' : 'policy.optional')
   }
   return (
     <div className="mt-4 space-y-6 text-sm">
       <div>
-        <h3 className="font-heading font-semibold">{t(sectionTitleKey("founding"))}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey('founding'))}</h3>
         <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-          <div><dt className="text-muted-app">{t("policy.minFounders")}</dt>
-            <dd className="mt-1">{version.minFoundingMembers}</dd></div>
+          <div>
+            <dt className="text-muted-app">{t('policy.minFounders')}</dt>
+            <dd className="mt-1">{version.minFoundingMembers}</dd>
+          </div>
           {FOUNDING_FORM_FIELDS.map((field) => (
-            <div key={field}><dt className="text-muted-app">{t(foundingFieldKey(field))}</dt>
-              <dd className="mt-1">{requiredLabel(version.formRequirements.clubFounding[field])}</dd></div>
+            <div key={field}>
+              <dt className="text-muted-app">{t(foundingFieldKey(field))}</dt>
+              <dd className="mt-1">
+                {requiredLabel(version.formRequirements.clubFounding[field])}
+              </dd>
+            </div>
           ))}
         </dl>
       </div>
       <div>
-        <h3 className="font-heading font-semibold">{t(sectionTitleKey("profile"))}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey('profile'))}</h3>
         <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
           {CLUB_PROFILE_FORM_FIELDS.map((field) => (
-            <div key={field}><dt className="text-muted-app">{t(profileFieldKey(field))}</dt>
-              <dd className="mt-1">{requiredLabel(version.formRequirements.clubProfile[field])}</dd></div>
+            <div key={field}>
+              <dt className="text-muted-app">{t(profileFieldKey(field))}</dt>
+              <dd className="mt-1">{requiredLabel(version.formRequirements.clubProfile[field])}</dd>
+            </div>
           ))}
         </dl>
       </div>
       <div>
-        <h3 className="font-heading font-semibold">{t(sectionTitleKey("events"))}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey('events'))}</h3>
         <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-          <div><dt className="text-muted-app">{t("policy.feedbackWindow")}</dt>
-            <dd className="mt-1">{version.feedbackWindowHours}</dd></div>
-          <div><dt className="text-muted-app">{t("policy.feedbackMinimum")}</dt>
-            <dd className="mt-1">{version.feedbackMinRespondents}</dd></div>
-          <div><dt className="text-muted-app">{t("policy.conflictMinutes")}</dt>
-            <dd className="mt-1">{version.conflictThresholdMinutes}</dd></div>
-          <div><dt className="text-muted-app">{t("policy.overbooking")}</dt>
-            <dd className="mt-1">{booleanLabel(version.allowOverbooking)}</dd></div>
+          <div>
+            <dt className="text-muted-app">{t('policy.feedbackWindow')}</dt>
+            <dd className="mt-1">{version.feedbackWindowHours}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-app">{t('policy.feedbackMinimum')}</dt>
+            <dd className="mt-1">{version.feedbackMinRespondents}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-app">{t('policy.conflictMinutes')}</dt>
+            <dd className="mt-1">{version.conflictThresholdMinutes}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-app">{t('policy.overbooking')}</dt>
+            <dd className="mt-1">{booleanLabel(version.allowOverbooking)}</dd>
+          </div>
         </dl>
       </div>
       <div>
-        <h3 className="font-heading font-semibold">{t(sectionTitleKey("calendar"))}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey('calendar'))}</h3>
         <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
           {version.academicCalendar.map((item) => (
             <li key={item.code} className="flex flex-wrap gap-x-3 gap-y-1 py-3">
@@ -86,124 +112,175 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
         </ul>
       </div>
       <div>
-        <h3 className="font-heading font-semibold">{t(sectionTitleKey("reports"))}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey('reports'))}</h3>
         <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
           {version.reportDeadlines.map((item) => (
             <li key={item.reportType} className="py-3">
-              <span className="font-medium">{item.reportType === "PERIODIC" ? t("common.navPeriodicReports")
-                : item.reportType === "POST_EVENT" ? t("common.navEventReports") : item.reportType}</span>
+              <span className="font-medium">
+                {item.reportType === 'PERIODIC'
+                  ? t('common.navPeriodicReports')
+                  : item.reportType === 'POST_EVENT'
+                    ? t('common.navEventReports')
+                    : item.reportType}
+              </span>
               <dl className="mt-2 grid gap-2 sm:grid-cols-2">
                 {deadlineFields.map((field) => (
-                  <div key={field}><dt className="text-muted-app">{t(deadlineLabelKey(field))}</dt>
-                    <dd>{item[field]}</dd></div>
+                  <div key={field}>
+                    <dt className="text-muted-app">{t(deadlineLabelKey(field))}</dt>
+                    <dd>{item[field]}</dd>
+                  </div>
                 ))}
               </dl>
             </li>
           ))}
         </ul>
-        <p className="mt-3"><span className="text-muted-app">{t("policy.overdueBlock")}: </span>
-          {booleanLabel(version.enforceOverdueReportBlock)}</p>
+        <p className="mt-3">
+          <span className="text-muted-app">{t('policy.overdueBlock')}: </span>
+          {booleanLabel(version.enforceOverdueReportBlock)}
+        </p>
       </div>
       <div>
-        <h3 className="font-heading font-semibold">{t(sectionTitleKey("finance"))}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey('finance'))}</h3>
         {version.schoolRefundAccount ? (
           <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-            <div><dt className="text-muted-app">{t("policy.refundAccountHolder")}</dt>
-              <dd className="mt-1 font-medium">{version.schoolRefundAccount.accountHolder}</dd></div>
-            <div><dt className="text-muted-app">{t("policy.refundAccountNumber")}</dt>
-              <dd className="mt-1 font-medium">{version.schoolRefundAccount.accountNumber}</dd></div>
-            <div><dt className="text-muted-app">{t("policy.refundBankName")}</dt>
-              <dd className="mt-1">{version.schoolRefundAccount.bankName}</dd></div>
+            <div>
+              <dt className="text-muted-app">{t('policy.refundAccountHolder')}</dt>
+              <dd className="mt-1 font-medium">{version.schoolRefundAccount.accountHolder}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-app">{t('policy.refundAccountNumber')}</dt>
+              <dd className="mt-1 font-medium">{version.schoolRefundAccount.accountNumber}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-app">{t('policy.refundBankName')}</dt>
+              <dd className="mt-1">{version.schoolRefundAccount.bankName}</dd>
+            </div>
             {version.schoolRefundAccount.bankBranch && (
-              <div><dt className="text-muted-app">{t("policy.refundBankBranch")}</dt>
-                <dd className="mt-1">{version.schoolRefundAccount.bankBranch}</dd></div>
+              <div>
+                <dt className="text-muted-app">{t('policy.refundBankBranch')}</dt>
+                <dd className="mt-1">{version.schoolRefundAccount.bankBranch}</dd>
+              </div>
             )}
             {version.schoolRefundAccount.transferNote && (
-              <div className="sm:col-span-2"><dt className="text-muted-app">{t("policy.refundTransferNote")}</dt>
-                <dd className="mt-1">{version.schoolRefundAccount.transferNote}</dd></div>
+              <div className="sm:col-span-2">
+                <dt className="text-muted-app">{t('policy.refundTransferNote')}</dt>
+                <dd className="mt-1">{version.schoolRefundAccount.transferNote}</dd>
+              </div>
             )}
           </dl>
         ) : (
-          <p className="mt-2 text-muted-app">{t("policy.refundAccountNotConfigured")}</p>
+          <p className="mt-2 text-muted-app">{t('policy.refundAccountNotConfigured')}</p>
         )}
       </div>
     </div>
-  );
+  )
 }
 
 // Trang xem chính sách hiện hành và lịch sử các phiên bản
 export function PolicyPage() {
-  const { t, i18n } = useTranslation();
-  const auth = useAuth();
-  const isOfficer = auth.data?.systemRoles.includes("ICPDP_OFFICER") ?? false;
-  const policies = usePolicies(isOfficer);
+  const { t, i18n } = useTranslation()
+  const auth = useAuth()
+  const isOfficer = auth.data?.systemRoles.includes('ICPDP_OFFICER') ?? false
+  const policies = usePolicies(isOfficer)
   function date(value: string): string {
-    return formatDate(value, i18n.language);
+    return formatDate(value, i18n.language)
   }
 
   return (
     <>
-      <PageHeader title={t("policy.title")} description={t("policy.description")} />
+      <PageHeader title={t('policy.title')} description={t('policy.description')} />
 
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : auth.isError ? (
         <AppNotice tone="danger" role="alert" title={auth.error.message}>
-          <AppButton onClick={() => void auth.refetch()}>{t("policy.retry")}</AppButton>
+          <AppButton onClick={() => void auth.refetch()}>{t('policy.retry')}</AppButton>
         </AppNotice>
       ) : !auth.data ? (
         <AppNotice>
-          <p>{t("policy.signIn")}</p>
-          <Link className="font-semibold text-primary-app"
-            to="/login?returnTo=%2Fworkspace%2Fpolicy">{t("policy.signInLink")}</Link>
+          <p>{t('policy.signIn')}</p>
+          <Link
+            className="font-semibold text-primary-app"
+            to="/login?returnTo=%2Fworkspace%2Fpolicy"
+          >
+            {t('policy.signInLink')}
+          </Link>
         </AppNotice>
       ) : !isOfficer ? (
-        <AppNotice tone="danger" role="alert">{t("policy.forbidden")}</AppNotice>
+        <AppNotice tone="danger" role="alert">
+          {t('policy.forbidden')}
+        </AppNotice>
       ) : policies.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : policies.isError ? (
-        <AppNotice tone="danger" role="alert" title={`${t("policy.loadError")} ${policies.error.message}`}>
-          <AppButton onClick={() => void policies.refetch()}>{t("policy.retry")}</AppButton>
+        <AppNotice
+          tone="danger"
+          role="alert"
+          title={`${t('policy.loadError')} ${policies.error.message}`}
+        >
+          <AppButton onClick={() => void policies.refetch()}>{t('policy.retry')}</AppButton>
         </AppNotice>
       ) : (
         <div className="space-y-5">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <div className="flex flex-wrap items-center gap-2">
               <AppIcon name="shield" className="size-4.5 text-brand-app" />
-              <h2 className="font-heading text-base font-semibold">{t("policy.current")}</h2>
+              <h2 className="font-heading text-base font-semibold">{t('policy.current')}</h2>
             </div>
             {policies.data.current ? (
               <div className="mt-2 text-sm">
-                <p className="text-muted-app">{t("policy.currentFrom", { date: date(policies.data.current.effectiveFrom) })}</p>
+                <p className="text-muted-app">
+                  {t('policy.currentFrom', { date: date(policies.data.current.effectiveFrom) })}
+                </p>
                 <PolicyDetails version={policies.data.current} language={i18n.language} />
               </div>
-            ) : <div className="mt-3"><AppEmptyState message={t("policy.noCurrent")} /></div>}
+            ) : (
+              <div className="mt-3">
+                <AppEmptyState message={t('policy.noCurrent')} />
+              </div>
+            )}
           </section>
 
-          <PolicyEditor key={policies.data.versions[0]?.id ?? "first"}
-            latest={policies.data.versions[0]} csrfToken={auth.data.csrfToken} />
+          <PolicyEditor
+            key={policies.data.versions[0]?.id ?? 'first'}
+            latest={policies.data.versions[0]}
+            csrfToken={auth.data.csrfToken}
+          />
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t("policy.history")}</h2>
+            <h2 className="font-heading text-base font-semibold">{t('policy.history')}</h2>
             {policies.data.versions.length === 0 ? (
-              <div className="mt-3"><AppEmptyState message={t("policy.noHistory")} /></div>
+              <div className="mt-3">
+                <AppEmptyState message={t('policy.noHistory')} />
+              </div>
             ) : (
               <ul className="mt-3 divide-y divide-border-app">
                 {policies.data.versions.map((version) => (
-                  <li key={version.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
+                  <li
+                    key={version.id}
+                    className="flex flex-wrap items-start justify-between gap-3 py-4"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{date(version.effectiveFrom)}</p>
                       <p className="mt-1 text-sm break-words text-muted-app">
-                        {t("policy.minFounders")}: {version.minFoundingMembers}
+                        {t('policy.minFounders')}: {version.minFoundingMembers}
                       </p>
-                      <p className="mt-1 text-xs text-muted-app">{t("policy.created", { date: date(version.createdAt) })}</p>
+                      <p className="mt-1 text-xs text-muted-app">
+                        {t('policy.created', { date: date(version.createdAt) })}
+                      </p>
                       <details className="mt-2">
-                        <summary className="inline-flex min-h-10 items-center text-sm font-semibold text-primary-app">{t("policy.showDetails")}</summary>
+                        <summary className="inline-flex min-h-10 items-center text-sm font-semibold text-primary-app">
+                          {t('policy.showDetails')}
+                        </summary>
                         <PolicyDetails version={version} language={i18n.language} />
                       </details>
                     </div>
-                    <AppBadge tone={new Date(version.effectiveFrom) > new Date() ? "info" : "success"}>
-                      {new Date(version.effectiveFrom) > new Date() ? t("policy.scheduled") : t("policy.effective")}
+                    <AppBadge
+                      tone={new Date(version.effectiveFrom) > new Date() ? 'info' : 'success'}
+                    >
+                      {new Date(version.effectiveFrom) > new Date()
+                        ? t('policy.scheduled')
+                        : t('policy.effective')}
                     </AppBadge>
                   </li>
                 ))}
@@ -213,5 +290,5 @@ export function PolicyPage() {
         </div>
       )}
     </>
-  );
+  )
 }
