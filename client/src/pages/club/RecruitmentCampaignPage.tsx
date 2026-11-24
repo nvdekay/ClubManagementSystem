@@ -168,16 +168,21 @@ export function RecruitmentCampaignPage() {
   const [notice, setNotice] = useState('')
   const [pageError, setPageError] = useState('')
   const required = t('common.fieldRequired')
+  const [now, setNow] = useState(Date.now)
+  function dateError(value: string) {
+    if (!value) {
+      return required
+    }
+    return new Date(value).getTime() < now ? t('common.dateNotPast') : null
+  }
   const capacity = Number(form.capacity)
   const errors: Record<string, string | null> = {
     title: form.title.trim() ? null : required,
     positions: hasLine(form.positions) ? null : required,
-    windowStart: form.windowStart ? null : required,
-    windowEnd: !form.windowEnd
-      ? required
-      : form.windowStart && form.windowEnd <= form.windowStart
-        ? t('common.endAfterStart')
-        : null,
+    windowStart: dateError(form.windowStart),
+    windowEnd:
+      dateError(form.windowEnd) ??
+      (form.windowStart && form.windowEnd <= form.windowStart ? t('common.endAfterStart') : null),
     capacity: !form.capacity.trim()
       ? required
       : !Number.isInteger(capacity)
@@ -245,6 +250,7 @@ export function RecruitmentCampaignPage() {
 
   // Cập nhật một trường của form đợt tuyển
   function field<K extends keyof CampaignForm>(key: K, value: CampaignForm[K]) {
+    setNow(Date.now)
     setForm((current) => ({ ...current, [key]: value }))
   }
 

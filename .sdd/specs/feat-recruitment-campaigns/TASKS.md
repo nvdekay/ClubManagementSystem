@@ -9,3 +9,4 @@
 - [x] UI campaign management cho UC16, i18n `en`/`vi`, responsive/theme/loading/error.
 - [x] Unit/integration tests cho quyền, calendar, overlap, public visibility và cancel.
 - [x] `npm run check`, production builds; nghiệm thu trực quan chưa chạy (không có browser tool trong phiên).
+- [x] Kiểm tra thời điểm mở và đóng đơn khi lưu bản nháp, chặn công bố khi đã hết hạn.

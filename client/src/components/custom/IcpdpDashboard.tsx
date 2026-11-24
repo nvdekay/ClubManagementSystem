@@ -144,6 +144,68 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
 
   return (
     <div className="space-y-5">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <AppChartFrame
+          className="lg:col-span-2"
+          title={t('dashboard.queueTitle')}
+          description={t('dashboard.queueDescription')}
+          legend={[
+            { label: t('dashboard.onTime'), tone: 'chart-2' },
+            { label: t('dashboard.overdue'), tone: 'danger' },
+          ]}
+          table={{
+            label: t('dashboard.tableView'),
+            columns: [t('dashboard.queueType'), t('dashboard.onTime'), t('dashboard.overdue')],
+            rows: queueRows.map((row) => [row.label, row.values[0]!, row.values[1]!]),
+          }}
+        >
+          <AppBarList
+            rows={queueRows}
+            tones={['chart-2', 'danger']}
+            seriesLabels={[t('dashboard.onTime'), t('dashboard.overdue')]}
+            emptyLabel={t('dashboard.queueEmpty')}
+          />
+        </AppChartFrame>
+        <AppChartFrame title={t('dashboard.slaTitle')} description={t('dashboard.slaDescription')}>
+          <AppDonut
+            label={`${t('dashboard.slaTitle')}: ${pending ? Math.round((onTime / pending) * 100) : 100}%`}
+            centerValue={pending ? `${Math.round((onTime / pending) * 100)}%` : '–'}
+            centerLabel={t('dashboard.slaCenter')}
+            formatValue={(value) => number.format(value)}
+            segments={[
+              { key: 'onTime', label: t('dashboard.onTime'), value: onTime, tone: 'chart-2' },
+              { key: 'overdue', label: t('dashboard.overdue'), value: overdue, tone: 'danger' },
+            ]}
+          />
+          <div className="mt-5 border-t border-border-app pt-4">
+            <h4 className="text-sm font-medium text-text-app">{t('dashboard.slaWorst')}</h4>
+            {lateQueues.length ? (
+              <ul className="mt-2 divide-y divide-border-app">
+                {lateQueues.map((row) => (
+                  <li key={row.key}>
+                    <Link
+                      to={row.href ?? '/workspace/reviews'}
+                      className="flex items-center gap-3 rounded-md py-2 text-sm hover:text-primary-app focus-visible:outline-2 focus-visible:outline-ring-app"
+                    >
+                      <span className="min-w-0 flex-1 text-text-app">{row.label}</span>
+                      <span className="rounded-md bg-danger-app/10 px-1.5 py-0.5 text-xs font-medium text-danger-app tabular-nums">
+                        {number.format(row.values[1]!)}
+                      </span>
+                      <AppIcon name="chevronRight" className="size-4 text-muted-app" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 flex items-center gap-2 text-sm text-success-app">
+                <AppIcon name="check" className="size-4" />
+                {t('dashboard.allClear')}
+              </p>
+            )}
+          </div>
+        </AppChartFrame>
+      </div>
+
       <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <li>
           <AppStatTile
@@ -209,68 +271,6 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
           />
         </li>
       </ul>
-
-      <div className="grid gap-5 lg:grid-cols-3">
-        <AppChartFrame
-          className="lg:col-span-2"
-          title={t('dashboard.queueTitle')}
-          description={t('dashboard.queueDescription')}
-          legend={[
-            { label: t('dashboard.onTime'), tone: 'chart-2' },
-            { label: t('dashboard.overdue'), tone: 'danger' },
-          ]}
-          table={{
-            label: t('dashboard.tableView'),
-            columns: [t('dashboard.queueType'), t('dashboard.onTime'), t('dashboard.overdue')],
-            rows: queueRows.map((row) => [row.label, row.values[0]!, row.values[1]!]),
-          }}
-        >
-          <AppBarList
-            rows={queueRows}
-            tones={['chart-2', 'danger']}
-            seriesLabels={[t('dashboard.onTime'), t('dashboard.overdue')]}
-            emptyLabel={t('dashboard.queueEmpty')}
-          />
-        </AppChartFrame>
-        <AppChartFrame title={t('dashboard.slaTitle')} description={t('dashboard.slaDescription')}>
-          <AppDonut
-            label={`${t('dashboard.slaTitle')}: ${pending ? Math.round((onTime / pending) * 100) : 100}%`}
-            centerValue={pending ? `${Math.round((onTime / pending) * 100)}%` : '–'}
-            centerLabel={t('dashboard.slaCenter')}
-            formatValue={(value) => number.format(value)}
-            segments={[
-              { key: 'onTime', label: t('dashboard.onTime'), value: onTime, tone: 'chart-2' },
-              { key: 'overdue', label: t('dashboard.overdue'), value: overdue, tone: 'danger' },
-            ]}
-          />
-          <div className="mt-5 border-t border-border-app pt-4">
-            <h4 className="text-sm font-medium text-text-app">{t('dashboard.slaWorst')}</h4>
-            {lateQueues.length ? (
-              <ul className="mt-2 divide-y divide-border-app">
-                {lateQueues.map((row) => (
-                  <li key={row.key}>
-                    <Link
-                      to={row.href ?? '/workspace/reviews'}
-                      className="flex items-center gap-3 rounded-md py-2 text-sm hover:text-primary-app focus-visible:outline-2 focus-visible:outline-ring-app"
-                    >
-                      <span className="min-w-0 flex-1 text-text-app">{row.label}</span>
-                      <span className="rounded-md bg-danger-app/10 px-1.5 py-0.5 text-xs font-medium text-danger-app tabular-nums">
-                        {number.format(row.values[1]!)}
-                      </span>
-                      <AppIcon name="chevronRight" className="size-4 text-muted-app" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-2 flex items-center gap-2 text-sm text-success-app">
-                <AppIcon name="check" className="size-4" />
-                {t('dashboard.allClear')}
-              </p>
-            )}
-          </div>
-        </AppChartFrame>
-      </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
         <AppChartFrame

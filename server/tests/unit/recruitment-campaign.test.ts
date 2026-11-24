@@ -298,3 +298,36 @@ describe('UC16 recruitment campaign', () => {
     expect(isPublished()).toBe(true)
   })
 })
+
+it('rejects a draft whose start has passed even if applications would still be open', async () => {
+  await expect(
+    createRecruitmentCampaignDraft(
+      repository().repo,
+      accessRepository(),
+      actor,
+      clubId,
+      {
+        ...input,
+        windowStart: new Date(now.getTime() - 1),
+      },
+      now,
+    ),
+  ).rejects.toThrow('invalid campaign application window')
+})
+
+it('rejects publication when the draft application window has expired', async () => {
+  const { repo, isPublished } = repository()
+  await expect(
+    publishRecruitmentCampaign(
+      repo,
+      accessRepository(),
+      policy([]),
+      actor,
+      clubId,
+      campaignId,
+      false,
+      input.windowEnd,
+    ),
+  ).rejects.toThrow('invalid campaign application window')
+  expect(isPublished()).toBe(false)
+})

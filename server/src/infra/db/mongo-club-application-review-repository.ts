@@ -152,7 +152,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
     async listOpen() {
       const taskDocs = await tasks
         .find({ entityType: 'CLUB_APPLICATION', state: 'Open' })
-        .sort({ openedAt: 1, _id: 1 })
+        .sort({ openedAt: -1, _id: -1 })
         .lean()
       if (!taskDocs.length) {
         return []

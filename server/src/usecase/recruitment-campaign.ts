@@ -28,7 +28,7 @@ function optionalText(value: string | undefined, max: number, field: string): st
 }
 
 // Chuẩn hóa và kiểm dữ liệu đợt tuyển (vị trí, thời gian, form, rubric)
-function normalizeInput(input: RecruitmentCampaignInput): RecruitmentCampaignInput {
+function normalizeInput(input: RecruitmentCampaignInput, now: Date): RecruitmentCampaignInput {
   const title = input.title.trim()
   const positions = input.positions.map((position) => position.trim())
   if (
@@ -47,6 +47,7 @@ function normalizeInput(input: RecruitmentCampaignInput): RecruitmentCampaignInp
     !(input.windowEnd instanceof Date) ||
     Number.isNaN(input.windowStart.getTime()) ||
     Number.isNaN(input.windowEnd.getTime()) ||
+    input.windowStart < now ||
     input.windowStart >= input.windowEnd
   ) {
     throw new DomainError('invalid campaign application window', 'validation')
@@ -200,7 +201,7 @@ export async function createRecruitmentCampaignDraft(
   now: Date,
 ) {
   const ids = await actorForClub(access, actor, clubId, now)
-  const campaign = await repo.createDraft(ids.clubId, ids.actorId, normalizeInput(input), now)
+  const campaign = await repo.createDraft(ids.clubId, ids.actorId, normalizeInput(input, now), now)
   const overlaps = await repo.overlaps(
     ids.clubId,
     campaign.id,
@@ -226,7 +227,7 @@ export async function updateRecruitmentCampaignDraft(
     ids.clubId,
     id(campaignId, 'campaign id'),
     ids.actorId,
-    normalizeInput(input),
+    normalizeInput(input, now),
     now,
   )
   const overlaps = await repo.overlaps(
@@ -254,6 +255,9 @@ export async function publishRecruitmentCampaign(
   const campaign = await repo.find(ids.clubId, id(campaignId, 'campaign id'))
   if (!campaign) {
     throw new DomainError('recruitment campaign not found', 'not_found')
+  }
+  if (campaign.windowEnd <= now) {
+    throw new DomainError('invalid campaign application window', 'validation')
   }
   const activePolicy = await policy.findEffective(now)
   if (!activePolicy) {
