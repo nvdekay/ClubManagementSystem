@@ -538,13 +538,6 @@ function ItemCard({
 				</div>
 			)}
 
-			{/* Quy định bắt buộc cho khoản trả sau từ 5 triệu trở lên */}
-			{requiresDirectVendor && (
-				<div className='mt-4'>
-					<AppNotice tone='warning'>{t('sponsoredItems.thresholdRequiredNotice')}</AppNotice>
-				</div>
-			)}
-
 			{/* Lựa chọn hình thức giải ngân cho khoản trả sau dưới 5 triệu (chỉ phía CLB chọn khi còn chỉnh sửa) */}
 			{isClub && isAfterEvent && !requiresDirectVendor && (
 				<fieldset className='mt-4 rounded-xl border border-border-app bg-surface-app/60 p-3.5'>
@@ -614,9 +607,6 @@ function ItemCard({
 										<h5 className='text-sm font-semibold text-text-app'>
 											{t('sponsoredItems.vendorSectionTitle')}
 										</h5>
-										<p className='mt-0.5 text-xs text-muted-app'>
-											{t('sponsoredItems.vendorSectionHint')}
-										</p>
 									</div>
 									<div className='grid gap-3 sm:grid-cols-2'>
 										<label className='text-sm text-text-app'>
@@ -728,9 +718,6 @@ function ItemCard({
 										<h5 className='text-sm font-semibold text-text-app'>
 											{t('sponsoredItems.vendorSectionTitle')}
 										</h5>
-										<p className='mt-0.5 text-xs text-muted-app'>
-											{t('sponsoredItems.vendorSectionHint')}
-										</p>
 									</div>
 									{item.vendorBankInfo ? (
 										<dl className='grid gap-3 pt-1 text-sm sm:grid-cols-2'>
@@ -953,7 +940,9 @@ function ItemCard({
 				<section className='mt-4 space-y-4 rounded-xl border border-warning-app/40 bg-surface-app/60 p-4'>
 					<AppNotice tone='warning'>
 						{t(
-							isClub ? 'sponsoredItems.refundRequiredBanner' : 'sponsoredItems.refundWaitingClubOfficer',
+							isClub
+								? 'sponsoredItems.refundRequiredBanner'
+								: 'sponsoredItems.refundWaitingClubOfficer',
 							{ amount: money(item.refundAmount!) },
 						)}
 					</AppNotice>
@@ -970,7 +959,11 @@ function ItemCard({
 									type='button'
 									variant={showRefundPanel ? 'secondary' : 'primary'}
 									onClick={() => setShowRefundPanel((open) => !open)}>
-									{t(showRefundPanel ? 'sponsoredItems.refundHideAccount' : 'sponsoredItems.refundStartButton')}
+									{t(
+										showRefundPanel
+											? 'sponsoredItems.refundHideAccount'
+											: 'sponsoredItems.refundStartButton',
+									)}
 								</AppButton>
 							</div>
 							{showRefundPanel && (
@@ -993,19 +986,25 @@ function ItemCard({
 									) : refundAccountQuery.data ? (
 										<dl className='grid gap-3 rounded-lg border border-border-app bg-surface-app/50 p-3.5 text-sm sm:grid-cols-2'>
 											<div>
-												<dt className='text-xs text-muted-app'>{t('sponsoredItems.refundAmountDue')}</dt>
+												<dt className='text-xs text-muted-app'>
+													{t('sponsoredItems.refundAmountDue')}
+												</dt>
 												<dd className='mt-0.5 font-semibold tabular-nums text-warning-app'>
 													{money(refundAccountQuery.data.refundAmount)}
 												</dd>
 											</div>
 											<div>
-												<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountHolder')}</dt>
+												<dt className='text-xs text-muted-app'>
+													{t('sponsoredItems.accountHolder')}
+												</dt>
 												<dd className='mt-0.5 font-medium break-words text-text-app'>
 													{refundAccountQuery.data.account.accountHolder}
 												</dd>
 											</div>
 											<div>
-												<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountNumber')}</dt>
+												<dt className='text-xs text-muted-app'>
+													{t('sponsoredItems.accountNumber')}
+												</dt>
 												<dd className='mt-0.5 flex flex-wrap items-center gap-2'>
 													<span className='font-semibold tabular-nums text-text-app'>
 														{refundAccountQuery.data.account.accountNumber}
@@ -1017,8 +1016,15 @@ function ItemCard({
 														onClick={() =>
 															void copyAccountNumber(refundAccountQuery.data.account.accountNumber)
 														}>
-														<AppIcon name={copiedAccount ? 'check' : 'clipboard'} className='size-3.5' />
-														{t(copiedAccount ? 'sponsoredItems.refundCopied' : 'sponsoredItems.refundCopyAccount')}
+														<AppIcon
+															name={copiedAccount ? 'check' : 'clipboard'}
+															className='size-3.5'
+														/>
+														{t(
+															copiedAccount
+																? 'sponsoredItems.refundCopied'
+																: 'sponsoredItems.refundCopyAccount',
+														)}
 													</AppButton>
 												</dd>
 											</div>
@@ -1030,7 +1036,9 @@ function ItemCard({
 											</div>
 											{refundAccountQuery.data.account.bankBranch && (
 												<div>
-													<dt className='text-xs text-muted-app'>{t('sponsoredItems.bankBranch')}</dt>
+													<dt className='text-xs text-muted-app'>
+														{t('sponsoredItems.bankBranch')}
+													</dt>
 													<dd className='mt-0.5 break-words text-text-app'>
 														{refundAccountQuery.data.account.bankBranch}
 													</dd>
@@ -1038,7 +1046,9 @@ function ItemCard({
 											)}
 											{refundAccountQuery.data.account.transferNote && (
 												<div className='sm:col-span-2'>
-													<dt className='text-xs text-muted-app'>{t('sponsoredItems.transferNote')}</dt>
+													<dt className='text-xs text-muted-app'>
+														{t('sponsoredItems.transferNote')}
+													</dt>
 													<dd className='mt-0.5 break-words text-text-app'>
 														{refundAccountQuery.data.account.transferNote}
 													</dd>
@@ -1071,7 +1081,9 @@ function ItemCard({
 														file={file}
 														editable={active}
 														busy={mutation.isPending}
-														onRemove={() => void act({ kind: 'removeRefundImage', imageId: file.id })}
+														onRemove={() =>
+															void act({ kind: 'removeRefundImage', imageId: file.id })
+														}
 													/>
 												))}
 											</div>
@@ -1179,7 +1191,11 @@ function ItemCard({
 									type='button'
 									variant='secondary'
 									onClick={() => setShowRefundPanel((open) => !open)}>
-									{t(showRefundPanel ? 'sponsoredItems.refundHideAccount' : 'sponsoredItems.refundShowAccountAgain')}
+									{t(
+										showRefundPanel
+											? 'sponsoredItems.refundHideAccount'
+											: 'sponsoredItems.refundShowAccountAgain',
+									)}
 								</AppButton>
 								{showRefundPanel && (
 									<div className='mt-3'>
@@ -1192,13 +1208,17 @@ function ItemCard({
 										) : refundAccountQuery.data ? (
 											<dl className='grid gap-3 rounded-lg border border-border-app bg-bg-app p-3.5 text-sm sm:grid-cols-2'>
 												<div>
-													<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountHolder')}</dt>
+													<dt className='text-xs text-muted-app'>
+														{t('sponsoredItems.accountHolder')}
+													</dt>
 													<dd className='mt-0.5 font-medium break-words text-text-app'>
 														{refundAccountQuery.data.account.accountHolder}
 													</dd>
 												</div>
 												<div>
-													<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountNumber')}</dt>
+													<dt className='text-xs text-muted-app'>
+														{t('sponsoredItems.accountNumber')}
+													</dt>
 													<dd className='mt-0.5 font-semibold tabular-nums text-text-app'>
 														{refundAccountQuery.data.account.accountNumber}
 													</dd>
@@ -1211,7 +1231,9 @@ function ItemCard({
 												</div>
 												{refundAccountQuery.data.account.bankBranch && (
 													<div>
-														<dt className='text-xs text-muted-app'>{t('sponsoredItems.bankBranch')}</dt>
+														<dt className='text-xs text-muted-app'>
+															{t('sponsoredItems.bankBranch')}
+														</dt>
 														<dd className='mt-0.5 break-words text-text-app'>
 															{refundAccountQuery.data.account.bankBranch}
 														</dd>
@@ -1312,7 +1334,9 @@ function ItemCard({
 											type='button'
 											variant='ghost'
 											disabled={mutation.isPending || !refundReason.trim()}
-											onClick={() => void act({ kind: 'returnRefund', reason: refundReason.trim() })}>
+											onClick={() =>
+												void act({ kind: 'returnRefund', reason: refundReason.trim() })
+											}>
 											{t('sponsoredItems.returnRefund')}
 										</AppButton>
 									</div>
@@ -1495,7 +1519,6 @@ export function SponsoredItems({
 	return (
 		<section className='mt-6 space-y-4'>
 			<h3 className='font-heading text-lg font-semibold'>{t('sponsoredItems.title')}</h3>
-			<p className='text-sm text-muted-app'>{t('sponsoredItems.hint')}</p>
 			<dl className={cn('grid gap-3', totals.length > 3 ? 'sm:grid-cols-4' : 'sm:grid-cols-3')}>
 				{totals.map((total) => (
 					<div key={total.label} className='rounded-xl border border-border-app bg-bg-app p-4'>
