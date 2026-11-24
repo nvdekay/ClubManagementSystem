@@ -89,8 +89,7 @@ export function ApplicationReviewDialog({
         ...(reason.trim() ? { reason: reason.trim() } : {}),
         csrfToken,
       })
-      setReason('')
-      field.reset()
+      onClose()
       appToast.success(t('recruitmentApplications.actionDone'))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('recruitmentApplications.reviewError'))
@@ -119,6 +118,7 @@ export function ApplicationReviewDialog({
         applicationId: application.id,
         csrfToken,
       })
+      onClose()
       appToast.success(t('recruitmentApplications.actionDone'))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('recruitmentApplications.reviewError'))

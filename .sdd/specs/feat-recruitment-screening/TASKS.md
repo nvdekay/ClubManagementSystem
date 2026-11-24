@@ -10,3 +10,4 @@
 - [ ] Add focused integration cases for capacity and bulk/waitlist promotion.
 - [x] Reviewer với `club.application.review` mở tệp đính kèm của đơn đã nộp qua URL ký ngắn hạn; sửa kiểm tra id tệp theo UUID ở cả route của chủ đơn (2026-10-09).
 - [x] Run `npm run check` and server/client builds (37 files, 133 tests); visual QA unavailable in this session.
+- [x] Tự đóng hộp thoại hồ sơ sau khi chuyển trạng thái thành công và hiển thị toast.
