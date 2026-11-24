@@ -1812,7 +1812,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | **Kích hoạt** | Sự kiện đã kết thúc |
 | **Tiền điều kiện** | Sự kiện đề xuất đang `Completed`; điểm danh chưa được chốt |
 | **Dữ liệu vào** | Các hiệu chỉnh cho bản ghi bất thường, kèm lý do |
-| **Thực thể / trạng thái** | Bộ dữ liệu `Attendance` bị khoá; sự kiện giữ `Completed` để nộp báo cáo sau sự kiện (UC33); mở khoá điểm danh khi chưa có báo cáo đã nộp đưa `Closed → Completed` |
+| **Thực thể / trạng thái** | Bộ dữ liệu `Attendance` bị khoá; sự kiện giữ `Completed` để nộp báo cáo sau sự kiện (UC33); mở khoá điểm danh chỉ được khi chưa có báo cáo nào đã nộp và không đổi trạng thái sự kiện |
 | **Quy tắc** | BR18, BR19, BR54 |
 | **Liên quan · Pain point** | UC31, UC33, UC42 · BP07 |
 
@@ -2780,7 +2780,6 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 | Completed → Report Submitted | UC33 |
 | Report Submitted → Closed | UC34 (chấp nhận) |
 | Report Submitted → Completed | UC34 (trả báo cáo về để sửa) |
-| Closed → Completed | UC32 mở khoá điểm danh (khi chưa có báo cáo sau sự kiện đã nộp) |
 | Approved / Upcoming / Ongoing → Cancelled | UC28: Club Leader gửi yêu cầu huỷ (≥ 72 giờ trước giờ bắt đầu, chưa chốt điểm danh) → ICPDP xác nhận; UC15 tạm ngừng chỉ huỷ sự kiện `Approved` / `Upcoming` chưa bắt đầu, quyết định giải thể huỷ sự kiện `Approved` / `Upcoming` kết thúc sau học kỳ giải thể; UC40 không huỷ sự kiện |
 | Bản đổi lịch (UC28 A1) bị UC26 từ chối → Rejected; hết hạn sửa → Expired | UC26 / **Scheduler** (huỷ dây chuyền đăng ký và booking) |
 | Pending Approval / Under Review / Revision Requested / Re-defense Pending → Cancelled | UC15 (tạm ngừng, hoặc quyết định giải thể theo BR45), hoặc **Scheduler** khi CLB chuyển `Dissolved` |
@@ -3846,7 +3845,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 | **Main workflow** (chín swimlane theo luồng happy case, tiếng Anh; khối hoạt động màu xám, hình thoi quyết định màu vàng; ba trang Slide là bản ngang dùng cho thuyết trình) | 01 Club establishment · 02 Member recruitment · 03 Periodic reports submission · 04 Term transition · 05 Club suspension · 06 Facilities request · 07 Event proposal and approval · 08 Event run and close · 09 Event disbursement · Slide 01 · Slide 07 · Slide 09 | [`03-diagrams/UCMS_Main_Workflow.drawio`](03-diagrams/UCMS_Main_Workflow.drawio) |
 | Swimlane chi tiết từng luồng (§2.5, tiếng Anh) | Club Founding · Leadership Transition · Member Recruitment · Event Proposal · Event Execution · Event Finance · Room Allocation · Facility Request · Complaint Handling · Periodic Report · Violation Case · Club Evaluation · Suspension and Dissolution · Club Leader and Club Member | [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) |
 | **State diagram** (một màu xám cho mọi trạng thái, nhãn chuyển trạng thái ngắn, không ghi chú) | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking · Event Defense Session | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |
-| **ERD** (mô hình khái niệm, 33 thực thể cùng một màu xám, mỗi ký pháp một hình) | ERD Chen · ERD Crow's Foot · ERD Chen (no legend) · ERD Crow's Foot (no legend) | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) |
+| **ERD** (mô hình khái niệm, 34 thực thể và 2 thực thể liên kết, 58 quan hệ có tên, cùng một màu xám, mỗi ký pháp một hình) | ERD Chen · ERD Crow's Foot · ERD Chen (no legend) · ERD Crow's Foot (no legend) | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) |
 | **Database schema** (mô hình vật lý MongoDB, Crow's Foot, 55 collection) | Schema overview · 10 trang theo module (M01 … M12) · Enums | [`03-diagrams/UCMS_Database_Schema.drawio`](03-diagrams/UCMS_Database_Schema.drawio) |
 | **System architecture** | System architecture | [`03-diagrams/UCMS_System_Architecture.drawio`](03-diagrams/UCMS_System_Architecture.drawio) |
 | **Kiến trúc bảo mật** (các lớp phòng thủ của request `/api/v1`, §12.1) | Security architecture | [`03-diagrams/UCMS_Security_Architecture.drawio`](03-diagrams/UCMS_Security_Architecture.drawio) |
