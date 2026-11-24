@@ -300,7 +300,7 @@ Hai trang `Slide 01` và `Slide 07` trong `UCMS_Main_Workflow.drawio` là bản 
 trang 01 và 07) dùng cho slide thuyết trình.
 
 **Rút gọn main workflow (2026-11-24, theo góp ý):** cả 8 trang (luồng sự kiện nay đánh số riêng 07 và 08 thay cho 07a/07b) và 2 trang `Slide` của `UCMS_Main_Workflow.drawio`
-được vẽ lại theo luồng happy case: một màu xám duy nhất cho mọi khối (giữ đúng hình: khối bo góc, hình thoi quyết định,
-nút bắt đầu/kết thúc), chữ trong khối ngắn gọn, nhãn cạnh chỉ Yes/No, bỏ bảng chú thích và ghi chú. Nhánh ngoại lệ
+được vẽ lại theo luồng happy case: khối hoạt động một màu xám, hình thoi quyết định màu vàng (giữ đúng hình: khối bo góc, hình thoi,
+nút bắt đầu/kết thúc không kèm chữ), chữ trong khối ngắn gọn, nhãn cạnh chỉ Yes/No, bỏ bảng chú thích và ghi chú. Nhánh ngoại lệ
 (rút đơn, hết hạn, waitlist, đổi lịch bảo vệ, no-show, huỷ sự kiện…) vẫn được mô tả đầy đủ trong `UCMS_Swimlane_Flows.drawio`.
 Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
