@@ -202,102 +202,161 @@
 <mxCell id="int_e_caf" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="int_ca" target="int_f_ca"><mxGeometry relative="1" as="geometry"/></mxCell>
 </root></mxGraphModel></diagram>
 <diagram name="Event Budget" id="finance-UCMS_State_Diagrams">
-  <mxGraphModel dx="1600" dy="1200" grid="1" page="1" pageWidth="1600" pageHeight="1200">
+  <mxGraphModel dx="1820" dy="1280" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1820" pageHeight="1280">
     <root>
       <mxCell id="0" />
       <mxCell id="1" parent="0" />
-      <mxCell id="title" value="Event budget — item decisions and invoice/payment lifecycle" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=25;strokeColor=none;fontStyle=1;">
-        <mxGeometry x="40" y="20" width="1450" height="70" as="geometry" />
+      <mxCell id="title" value="Event budget — 3-channel disbursement, reconciliation &amp; refund lifecycle" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=none;fontSize=24;fontStyle=1;">
+        <mxGeometry x="40" y="20" width="1720" height="55" as="geometry" />
       </mxCell>
-      <mxCell id="target" value="Target business rules · 14 Nov 2026 · UC26 / UC35–UC37 · not implemented code" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;fontSize=15;">
-        <mxGeometry x="40" y="95" width="1450" height="40" as="geometry" />
+      <mxCell id="target" value="Implemented workflow · 23 Nov 2026 · UC26 / UC35–UC37 / UC04 · 12 item statuses across 3 payment channels" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;">
+        <mxGeometry x="40" y="85" width="1720" height="40" as="geometry" />
       </mxCell>
-      <mxCell id="a" value="UC26: every item explicitly decided" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
-        <mxGeometry x="60" y="190" width="400" height="80" as="geometry" />
+
+      <mxCell id="a" value="&lt;b&gt;UC26: Proposal approved&lt;/b&gt;&lt;br&gt;Every budget line explicitly decided" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=15;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="80" y="160" width="350" height="75" as="geometry" />
       </mxCell>
-      <mxCell id="b" value="Not Sponsored&lt;br&gt;cap = 0; reason required&lt;br&gt;terminal / no payment" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#f8cecc;strokeColor=#6c8ebf;">
-        <mxGeometry x="1080" y="190" width="400" height="110" as="geometry" />
+      <mxCell id="b" value="&lt;b&gt;NOT_SPONSORED&lt;/b&gt;&lt;br&gt;cap = 0; reason required&lt;br&gt;terminal (expense tracking only)" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=15;fillColor=#f8cecc;strokeColor=#b85450;">
+        <mxGeometry x="1390" y="155" width="360" height="85" as="geometry" />
       </mxCell>
-      <mxCell id="c" value="Before Event / After Event&lt;br&gt;approved cap &gt; 0&lt;br&gt;Draft invoice pack" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
-        <mxGeometry x="60" y="380" width="400" height="110" as="geometry" />
+
+      <mxCell id="adv0" value="&lt;b&gt;AwaitingAdvance&lt;/b&gt;&lt;br&gt;BEFORE_EVENT · VIA_OFFICER_ADVANCE&lt;br&gt;no upfront invoice required" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;">
+        <mxGeometry x="80" y="300" width="350" height="85" as="geometry" />
       </mxCell>
-      <mxCell id="d" value="Submitted&lt;br&gt;timely complete pack; locked version" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
-        <mxGeometry x="570" y="380" width="400" height="110" as="geometry" />
+      <mxCell id="adv1" value="&lt;b&gt;AdvanceSent&lt;/b&gt;&lt;br&gt;advanceAmount = approvedAmount&lt;br&gt;awaiting club receipt confirmation" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="540" y="300" width="350" height="85" as="geometry" />
       </mxCell>
-      <mxCell id="e" value="Returned&lt;br&gt;correction within original window" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;">
-        <mxGeometry x="570" y="590" width="400" height="90" as="geometry" />
+
+      <mxCell id="c" value="&lt;b&gt;Draft&lt;/b&gt;&lt;br&gt;AFTER_EVENT: &amp;lt;5M reimburse (opt. vendor) | ≥5M DIRECT_VENDOR&lt;br&gt;BEFORE_EVENT: post-advance invoice pack draft" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="80" y="485" width="350" height="105" as="geometry" />
       </mxCell>
-      <mxCell id="f" value="Accepted&lt;br&gt;payable = min(valid invoices, cap) &gt; 0" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
-        <mxGeometry x="1080" y="380" width="400" height="110" as="geometry" />
+      <mxCell id="d" value="&lt;b&gt;Submitted&lt;/b&gt;&lt;br&gt;1–5 JPG/PNG/PDF files; locked version&lt;br&gt;(DIRECT_VENDOR requires vendorBankInfo)" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="540" y="485" width="350" height="105" as="geometry" />
       </mxCell>
-      <mxCell id="g" value="Paid&lt;br&gt;one full payment; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#d5e8d4;strokeColor=#6c8ebf;">
-        <mxGeometry x="1080" y="590" width="400" height="90" as="geometry" />
+      <mxCell id="e" value="&lt;b&gt;Returned&lt;/b&gt;&lt;br&gt;correction within original deadline D" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;">
+        <mxGeometry x="540" y="690" width="350" height="80" as="geometry" />
       </mxCell>
-      <mxCell id="h" value="Expired&lt;br&gt;Draft / Returned after D; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#f8cecc;strokeColor=#6c8ebf;">
-        <mxGeometry x="60" y="760" width="400" height="90" as="geometry" />
+      <mxCell id="h" value="&lt;b&gt;Expired&lt;/b&gt;&lt;br&gt;Draft / Returned past D (computed for display)&lt;br&gt;terminal / no payment" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#f8cecc;strokeColor=#b85450;">
+        <mxGeometry x="80" y="835" width="350" height="85" as="geometry" />
       </mxCell>
-      <mxCell id="i" value="Rejected&lt;br&gt;no valid payable; reason; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#f8cecc;strokeColor=#6c8ebf;">
-        <mxGeometry x="1080" y="760" width="400" height="90" as="geometry" />
+
+      <mxCell id="rec" value="&lt;b&gt;Reconciled&lt;/b&gt;&lt;br&gt;BEFORE_EVENT settled; terminal&lt;br&gt;(refundedTotal updated when refunded)" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;">
+        <mxGeometry x="1390" y="300" width="360" height="90" as="geometry" />
       </mxCell>
-      <mxCell id="edge0" value="not sponsored" edge="1" parent="1" source="a" target="b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+      <mxCell id="rf0" value="&lt;b&gt;RefundPending&lt;/b&gt;&lt;br&gt;BEFORE_EVENT · payable &amp;lt; advance (incl. valid = 0)&lt;br&gt;refundAmount = advance − payable" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;">
+        <mxGeometry x="990" y="485" width="320" height="105" as="geometry" />
+      </mxCell>
+      <mxCell id="rf1" value="&lt;b&gt;RefundSubmitted&lt;/b&gt;&lt;br&gt;1–5 refund receipts uploaded by club&lt;br&gt;awaiting ICPDP verification" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="1390" y="485" width="360" height="105" as="geometry" />
+      </mxCell>
+
+      <mxCell id="f" value="&lt;b&gt;Accepted&lt;/b&gt;&lt;br&gt;AFTER_EVENT · payable = min(valid, cap) &amp;gt; 0" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="990" y="680" width="320" height="90" as="geometry" />
+      </mxCell>
+      <mxCell id="g" value="&lt;b&gt;Paid&lt;/b&gt;&lt;br&gt;disbursedTotal += payable; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;">
+        <mxGeometry x="1390" y="680" width="360" height="90" as="geometry" />
+      </mxCell>
+      <mxCell id="i" value="&lt;b&gt;Rejected&lt;/b&gt;&lt;br&gt;AFTER_EVENT · payable = 0; reason; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#f8cecc;strokeColor=#b85450;">
+        <mxGeometry x="990" y="835" width="320" height="85" as="geometry" />
+      </mxCell>
+
+      <mxCell id="e_notsp" value="NOT_SPONSORED" edge="1" parent="1" source="a" target="b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="edge1" value="sponsored" edge="1" parent="1" source="a" target="c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+      <mxCell id="e_before" value="BEFORE_EVENT" edge="1" parent="1" source="a" target="adv0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="edge2" value="UC36&lt;br&gt;within window" edge="1" parent="1" source="c" target="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="edge3" value="UC37 return&lt;br&gt;before D" edge="1" parent="1" source="d" target="e" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;;exitX=0.4;exitY=1;entryX=0.4;entryY=0;">
+      <mxCell id="e_after" value="AFTER_EVENT" edge="1" parent="1" source="a" target="c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=0;entryY=0.5;">
         <mxGeometry relative="1" as="geometry">
           <Array as="points">
-            <mxPoint x="730" y="525" />
+            <mxPoint x="30" y="198" />
+            <mxPoint x="30" y="538" />
           </Array>
         </mxGeometry>
       </mxCell>
-      <mxCell id="edge4" value="UC36 resubmit&lt;br&gt;by D" edge="1" parent="1" source="e" target="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;;exitX=0.75;exitY=0;entryX=0.75;entryY=1;">
+      <mxCell id="e_recadv" value="UC35 recordAdvance&lt;br&gt;(ICPDP)" edge="1" parent="1" source="adv0" target="adv1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="e_confadv" value="UC35 confirmAdvanceReceived (Club)&lt;br&gt;disbursedTotal += advance" edge="1" parent="1" source="adv1" target="c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.65;entryY=0;">
         <mxGeometry relative="1" as="geometry">
           <Array as="points">
-            <mxPoint x="870" y="525" />
+            <mxPoint x="715" y="425" />
+            <mxPoint x="308" y="425" />
           </Array>
         </mxGeometry>
       </mxCell>
-      <mxCell id="edge5" value="UC37&lt;br&gt;accept" edge="1" parent="1" source="d" target="f" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+      <mxCell id="e_submit" value="UC36 submit&lt;br&gt;[E, D]" edge="1" parent="1" source="c" target="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="edge6" value="UC35 full payable once" edge="1" parent="1" source="f" target="g" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+      <mxCell id="e_ret" value="UC37 return&lt;br&gt;before D" edge="1" parent="1" source="d" target="e" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.35;exitY=1;entryX=0.35;entryY=0;">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="edge7" value="now &gt; D" edge="1" parent="1" source="c" target="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+      <mxCell id="e_resub" value="UC36 resubmit&lt;br&gt;by D" edge="1" parent="1" source="e" target="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.72;exitY=0;entryX=0.72;entryY=1;">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="edge8" value="now &gt; D" edge="1" parent="1" source="e" target="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;;exitX=0.5;exitY=1;entryX=0.5;entryY=0;">
+      <mxCell id="e_exp1" value="now &gt; D" edge="1" parent="1" source="c" target="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="e_exp2" value="now &gt; D" edge="1" parent="1" source="e" target="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=1;entryY=0.5;">
         <mxGeometry relative="1" as="geometry">
           <Array as="points">
-            <mxPoint x="780" y="715" />
-            <mxPoint x="260" y="715" />
+            <mxPoint x="715" y="878" />
           </Array>
         </mxGeometry>
       </mxCell>
-      <mxCell id="edge9" value="UC37&lt;br&gt;payable = 0" edge="1" parent="1" source="d" target="i" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;exitX=1;exitY=0.9;entryX=1;entryY=0.5;">
+
+      <mxCell id="e_rev_ok" value="UC37 review (BEFORE_EVENT)&lt;br&gt;payable ≥ advance" edge="1" parent="1" source="d" target="rec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.75;exitY=0;entryX=0;entryY=0.5;">
         <mxGeometry relative="1" as="geometry">
           <Array as="points">
-            <mxPoint x="1020" y="474" />
-            <mxPoint x="1020" y="520" />
-            <mxPoint x="1550" y="520" />
-            <mxPoint x="1550" y="805" />
+            <mxPoint x="803" y="445" />
+            <mxPoint x="945" y="445" />
+            <mxPoint x="945" y="345" />
           </Array>
         </mxGeometry>
       </mxCell>
-      <mxCell id="note0" value="Decision is separate from processing status. A = approval time; E = approved event end; D = E + 14 days.&lt;br&gt;Before Event submission: [A,D]; After Event: [E,D]. No new submission/correction after D.&lt;br&gt;Timely Submitted never auto-expires: review/payment may finish after D." vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;fontSize=15;align=left;spacing=12;">
-        <mxGeometry x="60" y="930" width="1440" height="105" as="geometry" />
+      <mxCell id="e_rev_rf" value="UC37 review (BEFORE_EVENT)&lt;br&gt;payable &amp;lt; advance" edge="1" parent="1" source="d" target="rf0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="note1" value="Budget aggregate: Approved → Closed only when ALL items are Not Sponsored / Paid / Rejected / Expired.&lt;br&gt;No Advance / TopUp / Refund lifecycle in the new normal flow. Cancellation/reschedule and legacy data need separate policy." vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;fontSize=15;align=left;spacing=12;">
-        <mxGeometry x="60" y="1060" width="1440" height="85" as="geometry" />
+      <mxCell id="e_subrf" value="UC35/36 submitRefund&lt;br&gt;(Club · schoolRefundAccount)" edge="1" parent="1" source="rf0" target="rf1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=1;exitY=0.3;entryX=0;entryY=0.3;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="e_retrf" value="UC37 returnRefund&lt;br&gt;(ICPDP, reason)" edge="1" parent="1" source="rf1" target="rf0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0;exitY=0.75;entryX=1;entryY=0.75;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="e_confrf" value="UC37 confirmRefund&lt;br&gt;(ICPDP)" edge="1" parent="1" source="rf1" target="rec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+
+      <mxCell id="e_rev_acc" value="UC37 review (AFTER_EVENT)&lt;br&gt;payable &amp;gt; 0" edge="1" parent="1" source="d" target="f" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=1;exitY=0.8;entryX=0;entryY=0.35;">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="945" y="569" />
+            <mxPoint x="945" y="712" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="e_pay" value="UC35 pay (Club, &amp;lt;5M)&lt;br&gt;or confirmVendorPaid (ICPDP, DIRECT_VENDOR)" edge="1" parent="1" source="f" target="g" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="e_rev_rej" value="UC37 review (AFTER_EVENT)&lt;br&gt;payable = 0" edge="1" parent="1" source="d" target="i" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.92;exitY=1;entryX=0;entryY=0.5;">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="862" y="635" />
+            <mxPoint x="920" y="635" />
+            <mxPoint x="920" y="878" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+
+      <mxCell id="note0" value="Window &amp; attachments: E = event end, D = E + 14 days. Invoice submission allowed in [E, D] (BEFORE_EVENT requires advanceReceivedAt first). 1–5 private attachments per target (JPG/PNG ≤ 5 MiB, PDF ≤ 10 MiB), SHA-256 deduplicated across the entire budget. ICPDP has read/download-only access (?download=1).&lt;br&gt;School refund bank account (schoolRefundAccount) is configured in UC04 (/workspace/policy) and disclosed to the club ONLY via GET .../refund-account when a BEFORE_EVENT item is in RefundPending or RefundSubmitted (refundAmount &amp;gt; 0)." vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;align=left;spacing=12;">
+        <mxGeometry x="60" y="965" width="1690" height="105" as="geometry" />
+      </mxCell>
+      <mxCell id="note1" value="Budget aggregate: EventBudget transitions Approved → Closed automatically ONLY when ALL items are terminal (NOT_SPONSORED, Paid, Reconciled, Rejected, or Draft / Returned past D).&lt;br&gt;All finance actions are paused (409) when the event is outside Approved..Closed or an open EVENT_CANCELLATION task exists. Concurrency is guarded by optimistic __v revision in MongoDB transactions." vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;align=left;spacing=12;">
+        <mxGeometry x="60" y="1095" width="1690" height="90" as="geometry" />
       </mxCell>
     </root>
   </mxGraphModel>
-</diagram>
+  </diagram>
 <diagram id="property-booking" name="Property Booking"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
 <mxCell id="title" value="State diagram — Property Booking" style="text;html=1;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="30" as="geometry"/></mxCell>
 <mxCell id="init" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="40" y="255" width="30" height="30" as="geometry"/></mxCell>

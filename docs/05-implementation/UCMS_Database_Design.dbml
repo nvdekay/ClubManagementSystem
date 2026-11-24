@@ -992,27 +992,27 @@ Table correctiveActions {
 
 Table eventBudgets {
   id objectId [pk]
-  sponsoredItems json [note: 'Luồng tài trợ mới: từng hạng mục có quyết định, trần, bộ ảnh riêng tư, trạng thái nộp/đối soát/thanh toán. Null với dữ liệu tạm ứng cũ.']
+  sponsoredItems json [note: 'Luồng giải ngân theo hạng mục (3 kênh): [{ id, category, expenseId?, requestedAmount, approvedAmount, fundingDecision (NOT_SPONSORED | BEFORE_EVENT | AFTER_EVENT), paymentChannel (VIA_OFFICER_ADVANCE | VIA_OFFICER_REIMBURSE | DIRECT_VENDOR), vendorBankInfo?, reason?, approvedAt, eventEndAt, status (AwaitingAdvance | AdvanceSent | Draft | Submitted | Returned | Accepted | RefundPending | RefundSubmitted | Reconciled | Rejected | Expired | Paid), amount, description, images[] (JPG/PNG/PDF <= 5 tệp), advanceAmount?, advancedAt?, advancedBy?, advanceReceivedAt?, advanceReceivedBy?, submittedAt?, validAmount?, payable?, reconciliationDelta?, reviewReason?, refundAmount?, refundProofs[]?, refundNote?, refundSubmittedAt?, refundReviewReason?, refundConfirmedAt?, refundConfirmedBy?, paidAt?, paidBy?, paymentReference? }]. Null với dữ liệu tạm ứng cũ.']
   eventId objectId [unique, not null, note: 'Mỗi sự kiện có tối đa một ngân sách; ngân sách không tồn tại tách rời sự kiện (BR22).']
   clubId objectId [not null]
-  lines json [not null, note: 'Nhúng: [{ category, requestedAmount, approvedAmount, reason }] — số xin lấy từ bản sửa đã duyệt của đề xuất; số duyệt và lý do giảm do UC26 chốt (FR-UC26-14).']
+  lines json [not null, note: 'Nhúng: [{ category, requestedAmount, approvedAmount, reason, fundingDecision? }] — số xin lấy từ bản sửa đã duyệt của đề xuất; quyết định tài trợ từng dòng do UC26 chốt (FR-UC26-14).']
   requestedTotal decimal [not null]
   approvedTotal decimal [not null, note: 'Được lưu tách biệt với tổng số tiền đã xin (FR-UC26-14).']
   approvedByDecisionId objectId [not null, note: 'Quyết định phê duyệt đề xuất ở UC26 đã tạo ra ngân sách này.']
-  disbursedTotal decimal [not null, default: 0, note: 'Tổng Advance + TopUp; BR23 so với approvedTotal.']
-  settlementDueAt datetime [note: 'Hạn quyết toán = lúc sự kiện kết thúc hoặc bị huỷ + thời hạn trong tài liệu chính sách (BR57).']
-  settlementSubmittedAt datetime [note: 'Lần nộp quyết toán gần nhất (UC36).']
-  isSettlementLate bool [not null, default: false, note: 'Nộp sau hạn hoặc bị UC37 A2 chốt; đi vào BR21.']
-  acceptedTotal decimal [note: 'Chi hợp lệ, trần là approvedTotal (UC37).']
-  settlementBalance decimal [note: 'acceptedTotal − tổng Advance: dương → cấp bù, âm → thu hồi (UC37).']
-  recoveryAmount decimal [note: 'Số phải hoàn khi settlementBalance âm (BR58).']
-  recoveryDueAt datetime [note: 'Hạn hoàn trả (BR58); quá hạn → BR21 và căn cứ mở hồ sơ UC40.']
-  refundedTotal decimal [not null, default: 0, note: 'Tổng Refund; đạt recoveryAmount → Closed (UC35 A3).']
+  disbursedTotal decimal [not null, default: 0, note: 'Luồng mới: tổng advanceAmount của BEFORE_EVENT đã có advanceReceivedAt cộng tổng payable của AFTER_EVENT đã Paid. Luồng cũ: tổng Advance + TopUp.']
+  settlementDueAt datetime [note: 'Luồng cũ: hạn quyết toán = lúc sự kiện kết thúc hoặc bị huỷ + 14 ngày (BR57).']
+  settlementSubmittedAt datetime [note: 'Luồng cũ: lần nộp quyết toán gần nhất (UC36).']
+  isSettlementLate bool [not null, default: false, note: 'Luồng cũ: nộp sau hạn hoặc bị UC37 A2 chốt; đi vào BR21.']
+  acceptedTotal decimal [note: 'Tổng payable (chi hợp lệ) được ICPDP chấp nhận sau đối soát (UC37).']
+  settlementBalance decimal [note: 'Luồng cũ: acceptedTotal − tổng Advance.']
+  recoveryAmount decimal [note: 'Luồng cũ: số phải hoàn khi settlementBalance âm.']
+  recoveryDueAt datetime [note: 'Luồng cũ: hạn hoàn trả; quá hạn → BR21 và căn cứ mở hồ sơ UC40.']
+  refundedTotal decimal [not null, default: 0, note: 'Luồng mới: tổng refundAmount của các hạng mục BEFORE_EVENT đã được ICPDP confirmRefund (có refundConfirmedAt). Luồng cũ: tổng Refund.']
   state eventBudgetState [not null, default: 'Approved']
   periodCode string
   createdAt datetime [not null]
 
-  Note: 'Chỉ được tạo khi UC26 phê duyệt một đề xuất sự kiện có phần ngân sách. Nháp, chờ duyệt, yêu cầu chỉnh sửa và từ chối là trạng thái của events, không phải của ngân sách.'
+  Note: 'Chỉ được tạo khi UC26 phê duyệt một đề xuất sự kiện có phần ngân sách. Nháp, chờ duyệt, yêu cầu chỉnh sửa và từ chối là trạng thái của events, không phải của ngân sách. Với ngân sách mới có sponsoredItems, trạng thái tổng chỉ chuyển Approved → Closed khi mọi hạng mục đã kết thúc.'
   indexes {
     (clubId, state) [name: 'ix_budget_club_state']
   }
@@ -1028,7 +1028,7 @@ Table budgetDisbursements {
   recordedBy objectId [not null]
   note string
 
-  Note: 'Mọi dòng tiền của một ngân sách: tạm ứng (nhiều lần, UC35 A1), cấp bù (A2) và CLB hoàn trả (A3). BR23 đối chiếu tổng Advance + TopUp với eventBudgets.approvedTotal.'
+  Note: 'Bảng tương thích dữ liệu legacy (khi eventBudgets.sponsoredItems = null): ghi các dòng Advance/TopUp/Refund cũ. Ngân sách mới lưu tiến độ giải ngân và hoàn trả trực tiếp trong eventBudgets.sponsoredItems.'
   indexes {
     eventBudgetId [name: 'ix_disb_budget']
   }

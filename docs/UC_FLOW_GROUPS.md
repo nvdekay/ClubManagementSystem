@@ -122,24 +122,24 @@ Không demo lại toàn bộ đăng ký và điểm danh sự kiện đã thuộ
 
 | Flow | Nội dung trình bày |
 |---|---|
-| 7. Kinh phí và quyết toán | Tạm ứng, khoản chi, chứng từ, quyết toán, đối soát, cấp bù/hoàn trả và tất toán |
+| 7. Kinh phí và giải ngân theo hạng mục | Giải ngân 3 kênh (`BEFORE_EVENT`, `AFTER_EVENT < 5M`, `AFTER_EVENT ≥ 5M`), chứng từ ảnh/PDF, thẩm định `validAmount`, hoàn trả 2 bước phần dư tạm ứng về STK nhà trường và tất toán |
 | 8. Báo cáo định kỳ và đánh giá CLB | Nộp, thẩm định báo cáo; bộ tiêu chí, dữ liệu đầu vào, chốt và công bố đánh giá |
 
-**Kịch bản demo:** nhận ngân sách đã duyệt từ Người 3 → ghi tạm ứng → ghi chi và chứng từ →
-nộp quyết toán → ICPDP đối soát → minh hoạ chênh lệch → nộp/thẩm định báo cáo kỳ → sinh,
-chốt và công bố đánh giá.
+**Kịch bản demo:** nhận ngân sách đã duyệt với 3 loại hạng mục từ Người 3 → tạm ứng trước sự kiện (`recordAdvance` → CLB `confirmAdvanceReceived`) → sau sự kiện CLB tải ảnh/PDF hoá đơn và nộp (`Submitted`) → ICPDP xem/tải chỉ đọc và chốt `validAmount` → minh hoạ nhánh hoàn trả 2 bước (`RefundPending` → CLB mở STK nhà trường từ policy → nộp biên lai → `RefundSubmitted` → ICPDP `confirmRefund` → `Reconciled`) và hai kênh sau sự kiện (`VIA_OFFICER_REIMBURSE` / `DIRECT_VENDOR`) → đóng ngân sách `Closed` → nộp/thẩm định báo cáo kỳ → sinh, chốt và công bố đánh giá.
 
 **Điểm cần giải thích khi được hỏi:**
 
-- Phân biệt số được duyệt, số đã tạm ứng, số đã chi và số chi được chấp nhận.
-- Ba trường hợp chi hợp lệ bằng, lớn hơn hoặc nhỏ hơn số đã tạm ứng.
-- App ghi nhận giao dịch; dòng tiền thực tế diễn ra bên ngoài.
+- Phân biệt 3 kênh giải ngân: `VIA_OFFICER_ADVANCE` (`BEFORE_EVENT`), `VIA_OFFICER_REIMBURSE` (`AFTER_EVENT < 5.000.000 đ`) và `DIRECT_VENDOR` (bắt buộc khi `AFTER_EVENT ≥ 5.000.000 đ`, yêu cầu hợp đồng + thông tin chuyển khoản NCC).
+- Công thức `payable = min(validAmount, approvedAmount)` và nhánh hoàn trả 2 bước khi `BEFORE_EVENT` có `payable < advance` (kể cả `validAmount = 0` phải hoàn 100%).
+- Quy tắc bảo mật `schoolRefundAccount`: ICPDP cấu hình ở `/workspace/policy` (UC04), ẩn khỏi policy công khai và chỉ trả cho CLB khi hạng mục thực sự ở `RefundPending`/`RefundSubmitted`.
+- Chứng từ chấp nhận ảnh JPG/PNG (≤ 5 MiB) và PDF (≤ 10 MiB), tối đa 5 tệp, chống trùng SHA-256 toàn ngân sách; ICPDP chỉ xem/tải chỉ đọc, không tự sửa/xoá.
+- App ghi nhận giao dịch và bằng chứng; dòng tiền thực tế diễn ra bên ngoài.
 - Báo cáo sau sự kiện UC33–UC34 thuộc Người 3; báo cáo định kỳ UC38–UC39 thuộc phần này.
 - Dữ liệu hoạt động, báo cáo và tuân thủ được dùng để đánh giá; Leader xem kết quả `Published`.
 
 UC40 chỉ được nhắc như nguồn dữ liệu tuân thủ; quy trình mở hồ sơ, giải trình và khắc phục
-thuộc Người 6. Trong demo chính chọn một tình huống đối soát, giải thích hai trường hợp còn
-lại bằng số liệu ngắn để giữ thời lượng.
+thuộc Người 6. Trong demo chính chọn đi sâu 1 hạng mục `BEFORE_EVENT` (kèm hoàn trả phần dư)
+và giải thích nhanh 2 kênh `AFTER_EVENT` trên cùng sự kiện để giữ thời lượng.
 
 ## 7. Người 6 — Khiếu nại và xử lý vi phạm
 
@@ -169,7 +169,7 @@ Năm UC dưới đây chưa được liệt kê riêng trong 11 flow. Giao ngư�
 | UC | Chức năng | Người phụ trách | Lý do |
 |---|---|---|---|
 | UC03 | Quản lý tài khoản và gán vai trò hệ thống | Người 6 | Liên quan kiểm soát truy cập và xử lý tài khoản; phân biệt với quyền CLB của Người 2 |
-| UC04 | Chính sách và deadline nhà trường | Người 2 | Liên quan học kỳ, nhiệm kỳ và các mốc quản lý CLB |
+| UC04 | Chính sách và deadline nhà trường | Người 2 | Liên quan học kỳ, nhiệm kỳ, các mốc quản lý CLB và cấu hình `schoolRefundAccount` cho luồng hoàn trả tạm ứng |
 | UC05 | Quy tắc định tuyến phê duyệt | Người 6 | Giải thích quyền cấu hình và SLA thẩm định; không tạo thêm cấp duyệt |
 | UC06 | Khám phá CLB và sự kiện | Người 1 | Điểm vào trước đăng nhập, thành lập hoặc ứng tuyển |
 | UC55 | Xuất dữ liệu và báo cáo | Người 5 | Gắn với tài chính, báo cáo và kết quả đánh giá |

@@ -251,7 +251,7 @@ cao mới.
 | **M04** Recruitment & Membership | Đợt tuyển, đơn ứng tuyển, sàng lọc, tiếp nhận, danh sách thành viên, không gian thành viên | Student, Club Member | RecruitmentCampaign, RecruitmentApplication, CandidateEvaluation, ClubMembership | UC16–UC22, UC24 |
 | **M05** Event & Activity | Đề xuất (kèm ngân sách), phê duyệt, công bố, huỷ / đổi lịch; sự kiện cấp trường và mời CLB | Club Member, ICPDP | Event, EventProposalVersion, EventInvitation | UC25–UC28, UC53, UC54 |
 | **M06** Registration & Attendance | Đăng ký, danh sách chờ, check-in, chốt điểm danh | Student, Club Member | EventRegistration, Attendance | UC29–UC32 |
-| **M07** Finance & Budget | Quyết định tài trợ từng hạng mục, khoản chi, bộ hóa đơn, đối soát và thanh toán một lần cho ngân sách sự kiện (ngân sách được xin và duyệt trong đề xuất sự kiện, M05) | Club Member, ICPDP | EventBudget, BudgetDisbursement, Expense, FinancialEvidence, FinancialReconciliation | UC35–UC37 |
+| **M07** Finance & Budget | Quyết định tài trợ từng hạng mục theo 3 kênh (tạm ứng trước qua cán bộ, tự chi hoàn sau < 5 triệu, thanh toán trực tiếp NCC ≥ 5 triệu), chứng từ JPG/PNG/PDF riêng tư, đối soát và hoàn trả tiền dư tạm ứng về tài khoản nhà trường | Club Leader, ICPDP | EventBudget (`sponsoredItems`), Expense (+ bảng legacy BudgetDisbursement, FinancialEvidence, FinancialReconciliation) | UC35–UC37 |
 | **M08** Reporting, Accountability & Compliance | Báo cáo sau sự kiện, báo cáo định kỳ, hồ sơ vi phạm | Club Member, ICPDP | PostEventReport, PeriodicReport, Violation, CorrectiveAction | UC33, UC34, UC38–UC40 |
 | **M09** Performance Evaluation & Reporting | Cấu hình scheme, sinh bản nháp, công bố theo bảng điểm chung; xuất dữ liệu và báo cáo | ICPDP | EvaluationScheme, EvaluationDimension, Evaluation, EvaluationDimensionResult | UC41–UC43, UC55 |
 | **M10** Workflow, Notification & Audit | Approval task, hàng đợi thông báo, gửi email, nhật ký audit, scheduler | Xuyên suốt | ApprovalTask, ApprovalDecision, Notification, EmailDeliveryLog, AuditLog | không có use case riêng — xem §8 |
@@ -392,7 +392,7 @@ quản lý; Club Member chỉ có tập khả năng thành viên cố định.
 | `club.event.manage` | UC25 (gồm phần ngân sách của đề xuất), UC27, UC28, UC54 | Club Leader |
 | `club.attendance.manage` | UC30, UC32, check-in thủ công ở UC31 | Mọi thành viên `Active` (mặc định) |
 | `club.report.submit` | UC33, UC38 | Club Leader |
-| `club.expense.record` | UC36 | Club Leader |
+| `club.expense.record` | UC35 (phần CLB xác nhận nhận tạm ứng / nhận hoàn tiền và hoàn trả tiền dư), UC36 | Club Leader |
 | `club.booking.manage` | UC45, UC47, gắn/gỡ booking ở UC25 | Club Leader |
 | `club.room.view` | UC58 (xem phòng được phân để nhận chìa khoá) | Mọi thành viên `Active` (mặc định) |
 | `club.feedback.view` | UC49 | Club Leader |
@@ -532,58 +532,43 @@ Huỷ / đổi lịch bất kỳ lúc nào trước khi kết thúc (UC28) → C
 ### F5 — Tài chính sự kiện
 
 ```text
-UC25: CLB đề xuất ngân sách (không đổi)
-→ UC26: ICPDP quyết định từng dòng: không tài trợ / tài trợ trả trước / tài trợ trả sau + trần
-→ Thông báo kết quả tại dashboard CLB, liên kết về thông tin đề xuất
-→ UC36: ghi khoản chi ngay sau duyệt, không cần giải ngân
-→ UC36: nộp đủ bộ hóa đơn mỗi hạng mục tại Khoản chi và quyết toán trong cửa sổ BR57
-→ UC37: xét hóa đơn, chốt payable = min(hóa đơn hợp lệ, trần từng hạng mục)
-→ UC37 duyệt đối soát → Accepted (Đã duyệt); kế toán ngoài hệ thống chuyển tiền
-→ UC35: CLB xác nhận đã nhận đủ payable một lần → Paid
-→ Đóng ngân sách khi mọi hạng mục kết thúc; kết quả vào báo cáo và đánh giá CLB
+UC25: CLB đề xuất ngân sách trong đề xuất sự kiện
+→ UC26: ICPDP quyết định từng hạng mục: NOT_SPONSORED (trần 0) | BEFORE_EVENT | AFTER_EVENT (trần = số xin)
+  · BEFORE_EVENT → kênh VIA_OFFICER_ADVANCE, trạng thái AwaitingAdvance
+  · AFTER_EVENT < 5.000.000 VNĐ → mặc định VIA_OFFICER_REIMBURSE (CLB có thể đổi sang DIRECT_VENDOR), trạng thái Draft
+  · AFTER_EVENT ≥ 5.000.000 VNĐ → bắt buộc DIRECT_VENDOR, trạng thái Draft
+→ [BEFORE_EVENT] UC35: ICPDP xác nhận chuyển tạm ứng (AdvanceSent, không cần hóa đơn trước) → CLB xác nhận đã nhận tạm ứng (Draft)
+→ UC36: CLB ghi chi phí thực tế, tải 1–5 chứng từ JPG/PNG (≤ 5 MB) hoặc PDF (≤ 10 MB), nhập thông tin TK NCC nếu DIRECT_VENDOR; nộp bộ chứng từ sau sự kiện trong [E, D] (D = E + 14 ngày) → Submitted
+→ UC37: ICPDP chỉ xem / lưu chứng từ CLB tải lên; trả sửa trước D (Returned) hoặc duyệt đối soát payable = min(validAmount, approvedAmount)
+  · [BEFORE_EVENT] payable == advanceAmount → Reconciled
+  · [BEFORE_EVENT] payable < advanceAmount (kể cả validAmount = 0 → hoàn 100%) → RefundPending (refundAmount = advanceAmount − payable)
+    → UC35/UC36: CLB bấm "Thực hiện hoàn trả" → xem STK nhà trường (cấu hình ở UC04) → chuyển khoản ngoài hệ thống → tải 1–5 biên lai hoàn trả → submitRefund (RefundSubmitted)
+    → UC37: ICPDP xem/lưu biên lai → trả lại biên lai (returnRefund → RefundPending) hoặc xác nhận đã nhận hoàn trả (confirmRefund → Reconciled, cộng refundedTotal)
+  · [AFTER_EVENT] payable = 0 → Rejected; payable > 0 → Accepted
+    · VIA_OFFICER_REIMBURSE (< 5M) → UC35: CLB xác nhận đã nhận tiền từ cán bộ ICPDP (pay → Paid)
+    · DIRECT_VENDOR (≥ 5M hoặc tự chọn) → UC35: ICPDP xác nhận nhà trường đã thanh toán trực tiếp cho NCC (confirmVendorPaid → Paid)
+→ Đóng ngân sách (Approved → Closed) khi mọi hạng mục ở NOT_SPONSORED / Paid / Reconciled / Rejected / Expired
 ```
 
-### Quy ước tài chính áp dụng từ 14/11/2026
+### Quy ước tài chính áp dụng từ 23/11/2026 (đã triển khai)
 
-Đây là yêu cầu nghiệp vụ đích, chưa xác nhận đã triển khai trong code. Giữ nguyên UC25
-và mã UC26, UC35–UC37; thay luồng tạm ứng/cấp bù/thu hồi thông thường bằng thanh toán
-một lần theo hóa đơn cho từng hạng mục. Không áp dụng lại yêu cầu xác nhận nhận tiền
-kèm ảnh đã bị hủy trước đó.
+Giữ nguyên UC25 và mã UC26, UC35–UC37; loại bỏ giao diện tạm ứng/cấp bù/thu hồi legacy khỏi UI để thống nhất trên **luồng giải ngân theo hạng mục (`sponsoredItems`) với 3 kênh thanh toán và quy trình hoàn trả tiền dư tạm ứng 2 bước**. Việc chuyển tiền thực tế luôn diễn ra ngoài hệ thống; UCMS ghi nhận trạng thái, chứng từ riêng tư và audit.
 
-- Gọi `A` là thời điểm phê duyệt, `E` là thời điểm kết thúc sự kiện đã duyệt,
-  `D = E + 14 ngày`. Kiểm tra hạn bằng thời điểm máy chủ; giao diện hiển thị ngày, giờ và
-  múi giờ của hạn. Hai đầu cửa sổ nộp đều được chấp nhận.
-- ICPDP phải quyết định rõ từng hạng mục: `Not Sponsored`, `Before Event` hoặc
-  `After Event`. Dòng chưa quyết định chặn phê duyệt. Dòng không tài trợ có lý do và trần 0;
-  dòng tài trợ có trần bằng toàn bộ số xin, không cho sửa tiền tại bước duyệt. Lưu riêng số xin,
-  trần được duyệt và quyết định trả trước/trả sau.
-- `Before Event`: nộp đủ bộ hóa đơn trong `[A, D]`; có thể được thanh toán trước khi sự kiện
-  kết thúc. Nếu nộp hoặc được duyệt sau `E` nhưng nộp đúng hạn, vẫn thanh toán sau sự kiện,
-  giữ nguyên quyết định ban đầu. `After Event`: chỉ nộp trong `[E, D]`, thanh toán sau `E`.
-  “Trả trước” là khả năng thanh toán sớm, không phải cam kết hoàn tất thanh toán trước `E`.
-- Mỗi hạng mục có thể có nhiều hóa đơn trong **một bộ đầy đủ**, được thanh toán **một lần**:
-  `payable = min(tổng giá trị hóa đơn hợp lệ được ICPDP chấp nhận, trần tài trợ hạng mục)`.
-  Không chia đợt, không tỷ lệ ứng trước, không nộp thêm hóa đơn để nhận lần hai sau thanh toán,
-  không tự chuyển phần trần còn dư giữa các hạng mục.
-- Ví dụ: trần 10 triệu, hóa đơn hợp lệ 8 triệu → thanh toán 8 triệu một lần và đóng hạng mục;
-  2 triệu còn lại không được lĩnh tiếp. Hóa đơn hợp lệ 12 triệu → tối đa 10 triệu, CLB tự chịu
-  phần vượt. Không có hóa đơn hợp lệ → không phát sinh khoản thanh toán.
-- Club Leader (`club.expense.record`) được ghi khoản chi ngay từ khi đề xuất/ngân sách được
-  duyệt, không cần giải ngân trước. Hạng mục không tài trợ vẫn có thể ghi chi phí thực tế,
-  nhưng không được gửi yêu cầu thanh toán từ kinh phí trường.
-- Tạo, sửa, đính kèm và nộp bộ hóa đơn tại trang **Khoản chi và quyết toán** của CLB; không thêm dashboard
-  thanh toán riêng. Dashboard CLB nhận thông báo kết quả đề xuất kèm cả ba nhóm quyết định,
-  trần, lý do, thời gian được nộp, hạn `D` và liên kết mở đúng đề xuất/hạng mục.
-- Trước nộp có thể lưu nháp; nộp thì khóa phiên bản. ICPDP có thể trả về sửa trước `D`;
-  mọi lần sửa/nộp lại vẫn phải trong cửa sổ ban đầu, **không có hạn bổ sung riêng**. Sau `D`
-  không nhận hóa đơn mới hoặc bản sửa. Bộ đã nộp đúng hạn vẫn được xét và thanh toán sau `D`.
-- Chứng từ trùng không được tính hai lần (trong cùng bộ hoặc các hạng mục); chứng từ không
-  hợp lệ bị loại kèm lý do. Kiểm tra quyền đúng CLB, liên kết đúng sự kiện/hạng mục và chống
-  thao tác lặp/đồng thời khi nộp, chốt đối soát, ghi nhận thanh toán. Lưu audit và phiên bản
-  quyết định để cả CLB và ICPDP thấy cùng kết quả.
-- Hủy/đổi lịch sau duyệt, xử lý chi phí không hoàn lại và dữ liệu tạm ứng cũ cần quyết định
-  nghiệp vụ/migration riêng; không tự chuyển chúng thành khoản trả mới, không tự gia hạn,
-  không xóa lịch sử hoặc cho thanh toán hai lần. Không tự động mở lại hạng mục đã trả.
+- Gọi `A` là thời điểm phê duyệt, `E` là thời điểm kết thúc sự kiện đã duyệt, `D = E + 14 ngày`. Kiểm tra hạn bằng thời điểm máy chủ; giao diện hiển thị ngày, giờ và múi giờ.
+- **Quyết định tài trợ & phân kênh tự động tại UC26:** ICPDP bắt buộc chọn cho từng dòng: `NOT_SPONSORED` (lý do, trần 0), `BEFORE_EVENT` hoặc `AFTER_EVENT` (trần bằng toàn bộ số xin, không sửa tiền khi duyệt). Dòng chưa quyết định chặn phê duyệt:
+  1. **`BEFORE_EVENT` → `VIA_OFFICER_ADVANCE`** (trạng thái ban đầu `AwaitingAdvance`): nhà trường chuyển tiền về cán bộ ICPDP để chuyển tạm ứng cho CLB **không cần hóa đơn trước**. Sau khi ICPDP ghi nhận chuyển (`recordAdvance` → `AdvanceSent`) và CLB xác nhận đã nhận (`confirmAdvanceReceived` → `Draft`), CLB giữ hóa đơn và nộp bộ chứng từ đối soát **sau khi sự kiện kết thúc** trong `[E, D]`.
+  2. **`AFTER_EVENT` dưới 5.000.000 VNĐ** (trạng thái ban đầu `Draft`): mặc định **`VIA_OFFICER_REIMBURSE`** (CLB tự chi trước, nhận hoàn qua cán bộ ICPDP sau đối soát); khi còn `Draft`/`Returned`, CLB có thể chủ động chuyển sang **`DIRECT_VENDOR`**.
+  3. **`AFTER_EVENT` từ 5.000.000 VNĐ trở lên** (trạng thái ban đầu `Draft`): **bắt buộc `DIRECT_VENDOR`** (không được hạ về tự chi); CLB phải lập hợp đồng và điền đầy đủ thông tin chuyển khoản nhà cung cấp (`vendorBankInfo`: tên NCC, chủ tài khoản, số tài khoản, tên ngân hàng, tùy chọn chi nhánh & nội dung chuyển khoản) trước khi nộp.
+- **Chứng từ riêng tư & quyền chỉ đọc của ICPDP:** mỗi hạng mục hỗ trợ 1–5 tệp chứng từ **JPG/PNG (≤ 5 MiB)** hoặc **PDF (≤ 10 MiB)** lưu riêng tư trên Cloudinary, kiểm tra magic bytes và chặn trùng **SHA-256 trên toàn bộ ngân sách** (gồm cả hóa đơn và biên lai hoàn trả). Chỉ CLB có quyền tải lên/gỡ tệp khi còn chỉnh sửa; **ICPDP chỉ được xem trước và lưu về máy** (`?download=1` / *Lưu tất cả*), không tự tải tệp thay CLB.
+- **Đối soát & công thức tính tiền (`UC37`):** `payable = min(validAmount, approvedAmount)` với `0 ≤ validAmount ≤ amount`.
+  - Với `AFTER_EVENT`: `payable > 0 → Accepted` (chờ CLB bấm `pay` nếu `VIA_OFFICER_REIMBURSE`, hoặc chờ ICPDP bấm `confirmVendorPaid` nếu `DIRECT_VENDOR` → `Paid`); `payable = 0 → Rejected`.
+  - Với `BEFORE_EVENT`: tính `reconciliationDelta = payable − advanceAmount`. Nếu `payable ≥ advanceAmount` → `Reconciled`. Nếu **`payable < advanceAmount` — kể cả trường hợp `validAmount = 0` (hoàn trả 100%)** → chuyển **`RefundPending`** với `refundAmount = advanceAmount − payable` và **chưa đóng ngân sách**.
+- **Hoàn trả tiền dư tạm ứng 2 bước & bảo mật STK nhà trường:**
+  - ICPDP cấu hình tài khoản ngân hàng nhận hoàn trả của nhà trường (`schoolRefundAccount`) trong **UC04 (`/workspace/policy` → tab Tài chính & hoàn trả)**.
+  - **Quy tắc hiển thị nghiêm ngặt:** STK nhà trường **không bao giờ** đi kèm payload ngân sách thông thường; hệ thống chỉ cấp qua endpoint riêng `GET /clubs/:clubId/budgets/:id/items/:itemId/refund-account` khi CLB có quyền `club.expense.record` chủ động bấm **"Thực hiện hoàn trả"** trên hạng mục `BEFORE_EVENT` đang ở `RefundPending`/`RefundSubmitted` có `refundAmount > 0`.
+  - CLB chuyển khoản ngoài hệ thống → tải 1–5 biên lai hoàn trả (`target=refund`, JPG/PNG ≤ 5 MiB hoặc PDF ≤ 10 MiB) + ghi chú tùy chọn → `submitRefund` → `RefundSubmitted` (thông báo ICPDP).
+  - ICPDP xem/lưu biên lai hoàn trả → chọn **`confirmRefund`** → `Reconciled` (cập nhật `EventBudget.refundedTotal`, đóng ngân sách nếu mọi hạng mục đã kết thúc) hoặc **`returnRefund`** (bắt buộc lý do) → quay về `RefundPending`.
+- **Quản lý danh sách & chống xung đột:** CLB thao tác tại `/club/:clubId/budgets`; ICPDP lọc theo **Câu lạc bộ** và số hạng mục cần xử lý (*Chờ giải ngân trước*, *Chờ đối soát*, *Chờ TT nhà cung cấp*, *Chờ xác nhận hoàn trả*) tại `/workspace/budgets` và xử lý trực tiếp tại `/workspace/budgets/:id`. Mọi thao tác đều dùng `revision` (`__v`) chống ghi đè, kiểm tra quyền trong MongoDB transaction và ghi `auditLogs`. Nếu sự kiện bị huỷ hoặc có yêu cầu huỷ đang mở, thao tác tài chính bị tạm khóa (409).
 
 ### F6 — Mượn cơ sở vật chất và phân phòng học
 
@@ -978,16 +963,18 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 | Chính sách overbooking (chỉ cơ sở vật chất ngoài `ROOM`) | BR33, UC46 |
 | Công tắc cưỡng chế (chặn đề xuất mới khi còn nghĩa vụ quá hạn: báo cáo, quyết toán, hoàn trả) | BR21, UC25 |
 | Lịch học kỳ — ngày bắt đầu và kết thúc | BR44, BR45, BR62, UC15, UC21 A2, UC58 |
+| Tài khoản ngân hàng hoàn trả của nhà trường (`schoolRefundAccount`: chủ tài khoản, số tài khoản, tên ngân hàng, chi nhánh, mẫu nội dung chuyển khoản — tuỳ chọn) | BR23, BR58, UC35, UC36 |
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC04-01 | Hiển thị bộ chính sách của kỳ hiện tại và cho officer sửa một hoặc nhiều giá trị trong danh sách trên |
-| FR-UC04-02 | Validate từng giá trị và từ chối tổ hợp mâu thuẫn nội tại |
+| FR-UC04-01 | Hiển thị bộ chính sách của kỳ hiện tại và cho officer sửa một hoặc nhiều giá trị trong danh sách trên (gồm tab *Tài chính & hoàn trả* cho `schoolRefundAccount`) |
+| FR-UC04-02 | Validate từng giá trị và từ chối tổ hợp mâu thuẫn nội tại; nếu nhập bất kỳ trường nào của `schoolRefundAccount` thì bắt buộc đủ chủ tài khoản, số tài khoản hợp lệ và tên ngân hàng |
 | FR-UC04-03 | Lưu mỗi lần xác nhận thành một **phiên bản chính sách mới** kèm ngày hiệu lực, và ghi audit |
 | FR-UC04-04 | Giữ nguyên mọi quyết định đã ra theo đúng giá trị tại thời điểm ra quyết định — thay đổi chính sách không bao giờ viết lại lịch sử |
 | FR-UC04-05 | *(A1)* Chấp nhận ngày hiệu lực trong tương lai và chỉ áp dụng giá trị từ ngày đó |
 | FR-UC04-06 | *(E1)* Từ chối giá trị làm vô hiệu một quyết định đã ra, và liệt kê các bản ghi bị ảnh hưởng |
 | FR-UC04-07 | Không phơi ra bất kỳ giá trị cấu hình nào ngoài danh sách trên (BR42) |
+| FR-UC04-08 | Không trả `schoolRefundAccount` trong các API ngân sách/hạng mục chung; chỉ cấp cho CLB qua endpoint `/refund-account` khi CLB thực hiện hoàn trả tiền dư tạm ứng hợp lệ |
 
 **Hậu điều kiện** — một phiên bản chính sách mới có hiệu lực. **Đầu ra** — `PolicyVersion`, bản ghi audit.
 
@@ -1639,7 +1626,7 @@ không đổi số các use case còn lại.
 | FR-UC26-11 | Chỉ cho phép công bố ở UC27 với sự kiện đề xuất đã `Approved` (BR14); sự kiện nội bộ không ngân sách đi từ `CREATED → PUBLIC` ở UC27 không qua UC26 |
 | FR-UC26-12 | Không nhận đề xuất, không hiện trong hàng đợi đề xuất sự kiện và không tạo review task/buổi bảo vệ cho sự kiện nội bộ CLB không ngân sách; đề xuất `MEMBERS_ONLY` có ngân sách (Phương án B) được thẩm định như đề xuất `PUBLIC`. ICPDP xem danh sách sự kiện nội bộ (trừ `DRAFT` và đã huỷ) và biểu đồ thống kê ở UC02, xử lý sai phạm (nếu có) qua UC40 |
 | FR-UC26-13 | Với đề xuất có phần ngân sách, hiển thị cho officer điều kiện, hạn mức còn lại của kỳ và khả năng trùng lặp với các ngân sách khác của CLB; yêu cầu chỉnh sửa có thể nhắm riêng vào phần ngân sách |
-| FR-UC26-14 | Khi duyệt đề xuất, bắt buộc quyết định từng hạng mục: không tài trợ (trần 0, lý do), hoặc tài trợ trả trước/trả sau (trần bằng toàn bộ số xin, không sửa tiền tại bước duyệt); dòng chưa quyết định chặn duyệt. Lưu riêng số xin, trần và quyết định; tạo EventBudget, thông báo đầy đủ ba nhóm kèm hạn và liên kết hồ sơ cho dashboard CLB |
+| FR-UC26-14 | Khi duyệt đề xuất, bắt buộc quyết định từng hạng mục: `NOT_SPONSORED` (trần 0, có lý do), `BEFORE_EVENT` hoặc `AFTER_EVENT` (trần bằng toàn bộ số xin, không sửa tiền tại bước duyệt); dòng chưa quyết định chặn duyệt. Tạo `EventBudget` với `sponsoredItems` khởi tạo kênh thanh toán và trạng thái ban đầu: `BEFORE_EVENT → VIA_OFFICER_ADVANCE / AwaitingAdvance`; `AFTER_EVENT < 5.000.000 VNĐ → VIA_OFFICER_REIMBURSE / Draft`; `AFTER_EVENT ≥ 5.000.000 VNĐ → DIRECT_VENDOR / Draft`; thông báo đầy đủ kết quả và hạn nộp cho CLB |
 | FR-UC26-15 | *(A3)* Đề xuất có tổng ngân sách vượt ngưỡng vẫn được quyết định ở một cấp; rule của UC05 chỉ đặt SLA thẩm định (BR16) |
 | FR-UC26-16 | *(E3)* Cho officer yêu cầu chỉnh sửa hoặc từ chối kèm lý do được ghi lại khi hạn mức ngân sách của kỳ đã cạn |
 | FR-UC26-17 | Cho ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện của CLB: `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`; hiển thị phiên bản hiện tại, lịch sử xử lý, nhận xét và hạn bổ sung; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời hiện hành |
@@ -1892,108 +1879,106 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 
 ## 4.7 M07 — Tài chính và ngân sách
 
-### UC35 — Ghi nhận thanh toán hạng mục tài trợ
+### UC35 — Ghi nhận giải ngân, xác nhận thanh toán và hoàn trả tạm ứng theo hạng mục
 
-- **Actor chính:** Club Leader (quyền `club.expense.record`); **Module:** M07.
-- **Mục tiêu:** CLB xác nhận đã nhận đủ tiền cho bộ hóa đơn ICPDP đã duyệt đối soát của một hạng mục.
-- **Kích hoạt:** ICPDP chỉ duyệt tiền; kế toán (ngoài hệ thống, không phải actor của UCMS) chuyển tiền
-  cho CLB. UCMS chỉ ghi nhận xác nhận của CLB, không thực hiện chuyển tiền.
-- **Tiền điều kiện:** Hạng mục được tài trợ; UC37 đã duyệt đối soát với số phải trả dương (hạng mục
-  `Accepted` — hiển thị "Đã duyệt"); chưa có lần xác nhận nào. Không đòi ngân sách từng được tạm ứng.
-- **Dữ liệu vào:** Sự kiện, hạng mục, phiên bản đối soát. Không nhập số tiền, ngày hay mã tham chiếu.
-- **Luồng chính:**
-  1. CLB mở hạng mục `Accepted` tại trang **Khoản chi và quyết toán** của CLB.
-  2. Hệ thống hiển thị quyết định tài trợ, trần và số được duyệt thanh toán.
-  3. Sau khi nhận tiền từ kế toán, CLB bấm **Xác nhận đã nhận tiền** và xác nhận lại.
-  4. Hệ thống kiểm tra lại quyền, trạng thái và việc chưa xác nhận trong cùng thao tác nguyên tử;
-     chuyển hạng mục `Paid`, ghi thời điểm xác nhận, khóa bộ đã trả.
-  5. Thông báo kết quả cho CLB, lưu audit. Ngân sách chỉ `Closed` khi mọi hạng mục đã kết thúc.
-- **Luồng thay thế:** Bộ đã nộp đúng hạn và được duyệt vẫn được CLB xác nhận nhận tiền sau `E`/`D`.
-- **Ngoại lệ:** Chưa đối soát, không tài trợ, số phải trả bằng 0, hoặc đã `Paid` → từ chối;
-  ICPDP Officer không được xác nhận thay CLB; thao tác lặp không tạo xác nhận thứ hai.
-- **Hậu điều kiện:** Hạng mục `Paid`; số đã trả bằng số phải trả; không còn lần lĩnh thêm.
-- **Quy tắc:** BR23, BR26, BR58; quy ước tài chính 14/11/2026.
-- **Đầu ra:** Bản ghi thanh toán, thông báo và audit; **Liên quan:** UC26, UC36, UC37; **Pain point:** BP10.
+- **Actor chính:** ICPDP Officer (ghi nhận chuyển tạm ứng, xác nhận thanh toán trực tiếp NCC, xác nhận nhận hoàn trả) và Club Leader (`club.expense.record`, xác nhận nhận tạm ứng, xác nhận nhận hoàn tiền `< 5M`, thực hiện hoàn trả tiền dư); **Module:** M07. *(Mỗi thao tác đều tách quyền tuyệt đối ở server qua `isClubAction`.)*
+- **Mục tiêu:** Ghi nhận chính xác toàn bộ chuyển giao tiền ngoài hệ thống cho từng hạng mục tài trợ theo 3 kênh (`VIA_OFFICER_ADVANCE`, `VIA_OFFICER_REIMBURSE`, `DIRECT_VENDOR`) và hoàn tất bước hoàn trả tiền dư tạm ứng về tài khoản nhà trường.
+- **Kích hoạt:** Hạng mục `BEFORE_EVENT` ở `AwaitingAdvance`/`AdvanceSent`/`RefundPending`/`RefundSubmitted`, hoặc hạng mục `AFTER_EVENT` đã được UC37 duyệt ở `Accepted`.
+- **Tiền điều kiện:** Ngân sách có `sponsoredItems`; sự kiện đang ở `Approved..Closed` và không có yêu cầu huỷ mở; thao tác đúng vai trò và đúng trạng thái của kênh.
+- **Dữ liệu vào:** `budgetId`, `itemId`, `revision`, loại hành động (`recordAdvance`, `confirmAdvanceReceived`, `pay`, `confirmVendorPaid`, `submitRefund`, `confirmRefund`, `returnRefund`), kèm biên lai hoàn trả (1–5 tệp JPG/PNG/PDF) và ghi chú/lý do khi hoàn trả. Không nhập số tiền giải ngân thủ công.
+- **Luồng chính theo kênh:**
+  1. **Tạm ứng trước sự kiện (`BEFORE_EVENT` · `VIA_OFFICER_ADVANCE`):**
+     - ICPDP chuyển tiền tạm ứng cho CLB ngoài hệ thống (chưa cần hóa đơn) và bấm **Xác nhận đã chuyển tiền tạm ứng** (`recordAdvance`: `AwaitingAdvance → AdvanceSent`, `advanceAmount = approvedAmount`).
+     - Club Leader nhận tiền và bấm **Xác nhận CLB đã nhận tiền ứng** (`confirmAdvanceReceived`: `AdvanceSent → Draft`, ghi `advanceReceivedAt`, cộng `disbursedTotal`, mở giai đoạn tập hợp hóa đơn cho UC36).
+  2. **Hoàn tiền sau sự kiện (`AFTER_EVENT < 5.000.000 VNĐ` · `VIA_OFFICER_REIMBURSE`):**
+     - Sau khi UC37 duyệt `Accepted` (`payable > 0`) và cán bộ ICPDP chuyển tiền ngoài hệ thống, Club Leader bấm **Xác nhận đã nhận tiền từ cán bộ ICPDP** (`pay`: `Accepted → Paid`, cộng `disbursedTotal`).
+  3. **Thanh toán trực tiếp nhà cung cấp (`AFTER_EVENT ≥ 5.000.000 VNĐ` hoặc CLB chọn · `DIRECT_VENDOR`):**
+     - Sau khi UC37 duyệt `Accepted` (`payable > 0`), nhà trường chuyển thẳng cho NCC theo `vendorBankInfo`; ICPDP bấm **Xác nhận nhà trường đã thanh toán cho nhà cung cấp** (`confirmVendorPaid`: `Accepted → Paid`, ghi `paidBy`, cộng `disbursedTotal`).
+  4. **Hoàn trả tiền dư tạm ứng (`BEFORE_EVENT` ở `RefundPending`, kể cả `validAmount = 0` hoàn 100%):**
+     - Club Leader bấm **Thực hiện hoàn trả** → hệ thống gọi `GET /clubs/:clubId/budgets/:id/items/:itemId/refund-account` để lấy `schoolRefundAccount` (từ phiên bản chính sách hiệu lực UC04).
+     - CLB chuyển khoản ngoài hệ thống → tải lên 1–5 biên lai hoàn trả (`target=refund`, JPG/PNG ≤ 5 MiB hoặc PDF ≤ 10 MiB) + ghi chú tùy chọn → bấm **Gửi xác nhận đã hoàn trả** (`submitRefund`: `RefundPending → RefundSubmitted`, thông báo ICPDP).
+     - ICPDP xem/lưu biên lai hoàn trả (chỉ đọc) tại `/workspace/budgets/:id` → chọn **Xác nhận đã nhận hoàn trả** (`confirmRefund`: `RefundSubmitted → Reconciled`, ghi `refundConfirmedAt`/`refundConfirmedBy`, cộng `refundedTotal`) hoặc **Yêu cầu gửi lại biên lai** (`returnRefund` kèm lý do → `RefundPending`).
+  5. Mọi thao tác kiểm tra `revision` (`__v`) trong transaction MongoDB, ghi `auditLogs`, gửi thông báo hai chiều và tự chuyển `EventBudget` sang `Closed` khi toàn bộ hạng mục đã ở trạng thái kết thúc.
+- **Ngoại lệ:** Sai vai trò (403); sai trạng thái hoặc sai kênh thanh toán (409); `schoolRefundAccount` chưa cấu hình khi CLB bấm hoàn trả (503); gửi hoàn trả không có biên lai (400); thao tác lặp hoặc `revision` cũ (409).
+- **Hậu điều kiện:** Tiến độ giải ngân/thanh toán/hoàn trả của hạng mục được chốt nguyên tử; `disbursedTotal` và `refundedTotal` đồng bộ với trạng thái hạng mục.
+- **Quy tắc:** BR23, BR26, BR58; quy ước tài chính 23/11/2026.
+- **Đầu ra:** `EventBudget` cập nhật, thông báo và audit; **Liên quan:** UC04, UC26, UC36, UC37; **Pain point:** BP10.
 
 | Mã FR | Yêu cầu chức năng |
 |---|---|
-| FR-UC35-01 | CLB chỉ xác nhận nhận tiền khi hạng mục được tài trợ, bộ hóa đơn đã đối soát với số phải trả dương và chưa Paid |
-| FR-UC35-02 | Xác nhận đúng toàn bộ payable một lần, không nhập số tiền; từ chối lần xác nhận thứ hai |
-| FR-UC35-03 | Chỉ CLB (quyền `club.expense.record`) xác nhận; ICPDP chỉ duyệt đối soát, kế toán ngoài hệ thống chuyển tiền |
-| FR-UC35-04 | CLB xác nhận đã nhận tiền; ghi nhận nguyên tử trạng thái Paid, thời điểm xác nhận và audit; thông báo ban chủ nhiệm CLB |
-| FR-UC35-05 | Hệ thống chỉ ghi nhận giao dịch ngoài hệ thống, không thực hiện chuyển tiền |
+| FR-UC35-01 | Tách rạch ròi quyền CLB (`confirmAdvanceReceived`, `pay`, `refundImage`/`removeRefundImage`, `submitRefund`) và ICPDP (`recordAdvance`, `confirmVendorPaid`, `returnRefund`, `confirmRefund`); từ chối thao tác trái vai trò (403) |
+| FR-UC35-02 | Hạng mục `BEFORE_EVENT` đi qua 2 bước tạm ứng trước sự kiện (`AwaitingAdvance → AdvanceSent → Draft`) không cần hóa đơn trước; `disbursedTotal` chỉ cộng khi CLB xác nhận đã nhận |
+| FR-UC35-03 | Hạng mục `AFTER_EVENT` đã `Accepted` chỉ thanh toán một lần đúng bằng `payable`: CLB xác nhận `pay` với `VIA_OFFICER_REIMBURSE`; ICPDP xác nhận `confirmVendorPaid` với `DIRECT_VENDOR`; chặn xác nhận lặp |
+| FR-UC35-04 | Chỉ cấp thông tin tài khoản hoàn trả nhà trường (`GET .../refund-account`) khi CLB có quyền và hạng mục `BEFORE_EVENT` đang ở `RefundPending`/`RefundSubmitted` với `refundAmount > 0`; báo lỗi 503 nếu UC04 chưa cấu hình |
+| FR-UC35-05 | Quy trình hoàn trả 2 bước (`RefundPending → RefundSubmitted → Reconciled` hoặc trả về `RefundPending` có lý do); cộng `refundedTotal` khi ICPDP xác nhận; không thực hiện chuyển tiền trực tiếp trong hệ thống |
 
-### UC36 — Ghi nhận khoản chi và nộp bộ hóa đơn
+### UC36 — Ghi nhận khoản chi, kênh thanh toán và nộp bộ chứng từ
 
 - **Actor chính:** Club Leader (`club.expense.record`, BR54); **Module:** M07.
-- **Mục tiêu:** Ghi chi phí thực tế và nộp đủ hóa đơn theo từng hạng mục được tài trợ.
-- **Kích hoạt:** Phát sinh chi phí hoặc CLB đã tập hợp đủ hóa đơn của hạng mục.
-- **Tiền điều kiện:** Đề xuất/ngân sách được duyệt; đúng quyền trong CLB. Không yêu cầu giải ngân trước.
-- **Dữ liệu vào:** Hạng mục, khoản chi, số tiền, ngày, mô tả và bộ hóa đơn/chứng từ liên quan.
+- **Mục tiêu:** Ghi chi phí thực tế, chọn kênh thanh toán hợp lệ, cung cấp thông tin chuyển khoản nhà cung cấp (khi `DIRECT_VENDOR`) và nộp đầy đủ bộ chứng từ cho từng hạng mục tài trợ sau sự kiện.
+- **Kích hoạt:** Sau khi ngân sách được duyệt (với `AFTER_EVENT`/`NOT_SPONSORED`) hoặc sau khi CLB xác nhận đã nhận tạm ứng (với `BEFORE_EVENT`).
+- **Tiền điều kiện:** Đề xuất/ngân sách được duyệt; đúng quyền `club.expense.record`; hạng mục đang ở `Draft` hoặc `Returned` và `now ≤ D` (`D = E + 14 ngày`).
+- **Dữ liệu vào:** Số tiền thực chi, mô tả khoản chi, lựa chọn kênh thanh toán (`AFTER_EVENT < 5M`), `vendorBankInfo` (bắt buộc khi `DIRECT_VENDOR`), và 1–5 tệp chứng từ (JPG/PNG ≤ 5 MiB hoặc PDF ≤ 10 MiB).
 - **Luồng chính:**
-  1. Club Leader mở trang **Khoản chi và quyết toán**, chọn ngân sách sự kiện, xem ba nhóm quyết định tài trợ và hạn nộp.
-  2. Ghi khoản chi ngay sau duyệt, lưu nháp và tập hợp một hoặc nhiều hóa đơn cho hạng mục.
-  3. Hệ thống kiểm tra liên kết chứng từ, dữ liệu bắt buộc, hạng mục và dấu hiệu trùng;
-     cảnh báo chi vượt trần hoặc không được tài trợ, vẫn cho ghi chi phí thực tế.
-  4. Với hạng mục tài trợ, Club Leader xác nhận đây là bộ hóa đơn đầy đủ để thanh toán một lần.
-  5. Hệ thống kiểm tra thời điểm nộp: `Before Event` trong `[A,D]`, `After Event` trong `[E,D]`;
-     khóa phiên bản bộ hóa đơn → `Submitted`, lưu dấu thời gian và tạo task cho ICPDP (UC37).
+  1. Club Leader mở `/club/:clubId/budgets`, chọn ngân sách sự kiện, xem quyết định tài trợ, kênh thanh toán, hạn nộp `D` và trạng thái từng hạng mục.
+  2. Với `BEFORE_EVENT`, CLB phải hoàn tất bước xác nhận nhận tạm ứng (UC35) để mở trạng thái `Draft` trước khi soạn chứng từ đối soát.
+  3. Với `AFTER_EVENT`: hạng mục `< 5.000.000 VNĐ` mặc định `VIA_OFFICER_REIMBURSE` nhưng cho phép chuyển sang `DIRECT_VENDOR`; hạng mục `≥ 5.000.000 VNĐ` khóa cứng ở `DIRECT_VENDOR`. Khi dùng `DIRECT_VENDOR`, CLB nhập bắt buộc `vendorBankInfo` (tên NCC, chủ TK, STK hợp lệ, tên ngân hàng; tùy chọn chi nhánh & nội dung chuyển khoản).
+  4. CLB lưu số tiền, mô tả và tải lên 1–5 tệp chứng từ **JPG/PNG (≤ 5 MiB)** hoặc **PDF (≤ 10 MiB)** (tải riêng tư Cloudinary). Server kiểm tra magic bytes, giới hạn 5 tệp, và từ chối tệp trùng **SHA-256** trong toàn bộ ngân sách.
+  5. Sau khi sự kiện kết thúc (`E ≤ now ≤ D`), Club Leader xác nhận nộp bộ chứng từ đầy đủ (`submit`) → khóa bản ghi sang `Submitted`, lưu `submittedAt`, đồng bộ bản ghi `expenses` và thông báo ICPDP (UC37).
 - **Luồng thay thế:**
-  - **A1 Nháp:** Cho ghi chi phí trước khi có hóa đơn; thiếu bộ hóa đơn đầy đủ thì chưa được nộp yêu cầu thanh toán.
-  - **A2 Sửa/nộp lại:** Khi ICPDP trả về trước `D`, CLB sửa và nộp lại trong cửa sổ gốc;
-    lưu phiên bản cũ và nhận xét, không có hạn bổ sung riêng.
-  - **A3 Không tài trợ:** Chỉ ghi chi phí để báo cáo, không tạo yêu cầu thanh toán.
-- **Ngoại lệ:** Sai quyền/CLB/sự kiện, chưa duyệt, chưa tới cửa sổ, sau `D`, bộ rỗng,
-  bộ đang khóa hoặc đã `Paid` → từ chối nộp/sửa. Chi vượt không tăng trần tài trợ.
-- **Hậu điều kiện:** Bộ hóa đơn `Submitted` chờ UC37; ghi khoản chi không đồng nghĩa được trường trả.
-- **Quy tắc:** BR24, BR25, BR54, BR57, BR58; quy ước tài chính 14/11/2026.
-- **Đầu ra:** Khoản chi, bộ hóa đơn theo phiên bản, task và audit; **Liên quan:** UC26, UC35, UC37, UC33; **Pain point:** BP09, BP10.
+  - **A1 Nháp:** Cho lưu số tiền/mô tả/chứng từ trước khi sự kiện kết thúc (trừ `BEFORE_EVENT` chưa nhận tạm ứng), nhưng chỉ cho `submit` khi `now ≥ E`.
+  - **A2 Sửa/nộp lại:** Khi ICPDP trả về trước `D` (`Returned`), CLB sửa thông tin/thêm-bỏ tệp và nộp lại trong cửa sổ gốc `≤ D`.
+  - **A3 Không tài trợ:** Cho ghi số tiền và mô tả thực tế để theo dõi chi phí sự kiện, không cho nộp yêu cầu thanh toán.
+  - **A4 Hoàn trả tiền dư tạm ứng:** Khi hạng mục `BEFORE_EVENT` chuyển `RefundPending` sau UC37, CLB bấm **Thực hiện hoàn trả** để xem `schoolRefundAccount`, tải 1–5 biên lai hoàn trả (`target=refund`) và nộp xác nhận hoàn trả (UC35).
+- **Ngoại lệ:** Sai quyền, sự kiện tạm khóa tài chính, chưa nhận tạm ứng (`BEFORE_EVENT`), chưa đến `E`, quá `D`, hạ mục `≥ 5M` về tự chi, thiếu `vendorBankInfo` khi `DIRECT_VENDOR`, tệp sai định dạng/quá dung lượng/trùng SHA-256, hoặc vượt 5 tệp → từ chối.
+- **Hậu điều kiện:** Bộ chứng từ ở `Submitted` chờ UC37 (hoặc biên lai hoàn trả ở `RefundSubmitted` chờ ICPDP xác nhận).
+- **Quy tắc:** BR24, BR25, BR54, BR57, BR58; quy ước tài chính 23/11/2026.
+- **Đầu ra:** `EventBudget.sponsoredItems`, bản ghi `Expense`, chứng từ riêng tư, thông báo và audit; **Liên quan:** UC26, UC35, UC37, UC33; **Pain point:** BP09, BP10.
 
 | Mã FR | Yêu cầu chức năng |
 |---|---|
-| FR-UC36-01 | Cho Club Leader ghi khoản chi ngay sau duyệt, không cần tạm ứng hoặc giải ngân trước |
-| FR-UC36-02 | Tập hợp đủ một bộ nhiều hóa đơn cho từng hạng mục, tạo/sửa/nộp tại trang Khoản chi và quyết toán của CLB |
-| FR-UC36-03 | Kiểm tra liên kết, quyền, dữ liệu và hóa đơn trùng; khoản không tài trợ chỉ được ghi chi phí thực tế |
-| FR-UC36-04 | Before Event nộp trong [A,D]; After Event nộp trong [E,D]; D=E+14 ngày |
-| FR-UC36-05 | Nộp thì khóa phiên bản, tạo task UC37; sửa/nộp lại khi được trả về chỉ trong cửa sổ gốc, không hạn bổ sung riêng |
-| FR-UC36-06 | Từ chối nộp/sửa sau D, trước cửa sổ, bộ rỗng, đang khóa hoặc đã Paid; không nhận thêm hóa đơn để trả lần hai |
+| FR-UC36-01 | Cho phép Club Leader soạn chi phí ở `Draft`/`Returned` (`BEFORE_EVENT` phải qua `confirmAdvanceReceived` trước); không cho nộp hạng mục `NOT_SPONSORED` |
+| FR-UC36-02 | Áp dụng ngưỡng 5.000.000 VNĐ cho `AFTER_EVENT`: `< 5M` chọn được giữa `VIA_OFFICER_REIMBURSE` và `DIRECT_VENDOR`; `≥ 5M` bắt buộc `DIRECT_VENDOR` và yêu cầu `vendorBankInfo` hợp lệ trước khi nộp |
+| FR-UC36-03 | Nhận tối đa 5 tệp JPG/PNG (≤ 5 MiB) hoặc PDF (≤ 10 MiB) cho mỗi hạng mục, kiểm tra magic bytes và chặn trùng SHA-256 trên toàn bộ ngân sách (gồm cả biên lai hoàn trả) |
+| FR-UC36-04 | Chỉ cho phép `submit` sau khi sự kiện kết thúc và không quá hạn (`E ≤ now ≤ D`, với `D = E + 14 ngày`) |
+| FR-UC36-05 | Nộp thì khóa hồ sơ sang `Submitted` và thông báo ICPDP; khi bị trả về (`Returned`), sửa và nộp lại chỉ trong hạn gốc `D`, không có hạn bổ sung riêng |
+| FR-UC36-06 | Khi hạng mục `BEFORE_EVENT` ở `RefundPending`, cho CLB xem STK nhà trường theo yêu cầu, tải/gỡ tối đa 5 biên lai hoàn trả (`target=refund`) và gửi `submitRefund` |
 
-### UC37 — Đối soát hóa đơn và chốt số thanh toán
+### UC37 — Đối soát chứng từ, chốt thanh toán và xác nhận hoàn trả
 
 - **Actor chính:** ICPDP Officer; **Module:** M07.
-- **Mục tiêu:** Chốt số phải trả một lần cho mỗi hạng mục theo hóa đơn hợp lệ và trần đã duyệt.
-- **Kích hoạt:** Task từ UC36 hoặc hạng mục chưa nộp đủ hồ sơ khi đã qua `D`.
-- **Tiền điều kiện:** Có bộ `Submitted` để xét; hoặc hạng mục `Draft`/`Returned` đã quá hạn để chốt `Expired`.
+- **Mục tiêu:** Kiểm tra chứng từ CLB tải lên, chốt giá trị hợp lệ cho từng hạng mục, quyết định thanh toán hoặc yêu cầu hoàn trả tiền dư tạm ứng, và xác nhận hoàn trả khi CLB gửi biên lai.
+- **Kích hoạt:** Thông báo từ UC36 (`Submitted` hoặc `RefundSubmitted`), hoặc cần theo dõi ngân sách tại `/workspace/budgets`.
+- **Tiền điều kiện:** Hạng mục đang ở `Submitted` (đối soát hóa đơn) hoặc `RefundSubmitted` (kiểm tra biên lai hoàn trả); sự kiện không bị tạm khóa tài chính.
+- **Dữ liệu vào:** `validAmount` (`0 ≤ validAmount ≤ amount`) và `reason` (bắt buộc) khi duyệt đối soát; `reason` (bắt buộc) khi trả hóa đơn hoặc trả biên lai hoàn trả; ghi chú (tùy chọn) khi xác nhận hoàn trả.
 - **Luồng chính:**
-  1. Officer mở bộ hóa đơn tại chi tiết **Giải ngân kinh phí**; xem quyết định tài trợ, trần và dấu thời gian nộp.
-  2. Đối chiếu từng chứng từ/khoản chi; chấp nhận hoặc loại với lý do, loại chứng từ không hợp lệ
-     và không tính trùng hóa đơn. Không cộng hóa đơn chưa được CLB nộp vào hồ sơ đang xét.
-  3. Tính `payable = min(tổng hóa đơn hợp lệ được chấp nhận, trần hạng mục)`;
-     phần vượt CLB tự chịu, không chuyển trần giữa hạng mục.
-  4. Chốt đối soát: số phải trả dương → `Accepted` chờ UC35; bằng 0 → `Rejected` kèm lý do.
-  5. Lưu phiên bản kết quả, audit và thông báo cho CLB; kết quả tài chính là đầu vào UC38/UC42.
+  1. Officer mở `/workspace/budgets`, lọc theo **Câu lạc bộ** hoặc bộ lọc trạng thái hạng mục (*Chờ giải ngân trước*, *Chờ đối soát*, *Chờ TT nhà cung cấp*, *Chờ xác nhận hoàn trả*), rồi mở chi tiết ngân sách `/workspace/budgets/:id`.
+  2. Officer xem thông tin khoản chi, `vendorBankInfo` (nếu `DIRECT_VENDOR`), và **chỉ xem trước hoặc lưu về máy** (`?download=1` / *Lưu tất cả*) các tệp hóa đơn/hợp đồng CLB đã tải lên — **không được tải lên hay xoá chứng từ thay CLB**.
+  3. Officer nhập `validAmount` và lý do, hệ thống tính `payable = min(validAmount, approvedAmount)` và phân nhánh:
+     - **Với `AFTER_EVENT`:** `payable > 0 → Accepted` (chờ UC35 thanh toán theo kênh); `payable = 0 → Rejected`.
+     - **Với `BEFORE_EVENT`:** tính `reconciliationDelta = payable − advanceAmount`. Nếu `payable ≥ advanceAmount → Reconciled`. Nếu **`payable < advanceAmount` (kể cả `validAmount = 0` → hoàn 100%)** → **`RefundPending`** với `refundAmount = advanceAmount − payable` (ngân sách giữ `Approved`, chưa đóng).
+  4. Khi CLB gửi biên lai hoàn trả (`RefundSubmitted`), Officer xem/lưu biên lai hoàn trả (chỉ đọc) rồi chọn:
+     - **Xác nhận đã nhận hoàn trả (`confirmRefund`)** → `Reconciled`, cập nhật `refundConfirmedAt`/`refundConfirmedBy` và `EventBudget.refundedTotal`;
+     - **Yêu cầu gửi lại biên lai (`returnRefund`, bắt buộc lý do)** → quay về `RefundPending`.
+  5. Cập nhật `acceptedTotal`, `refundedTotal`, tự chuyển `EventBudget` sang `Closed` khi mọi hạng mục đã kết thúc, ghi `auditLogs` và thông báo ban chủ nhiệm CLB.
 - **Luồng thay thế:**
-  - **A1 Trả về:** Chỉ trả về khi còn trước `D`, ghi nội dung cần sửa; `Returned`, nộp lại vẫn phải
-    trong cửa sổ gốc. Nếu đã hết hạn, xét bộ nộp đúng hạn đang có, không tạo hạn bổ sung.
-  - **A2 Quá hạn:** `Draft`/`Returned` chưa nộp đủ trước `D` → `Expired`, không thanh toán;
-    `Submitted` đúng hạn giữ quyền được xét và trả tiền sau `D`, không đánh dấu CLB nộp trễ vì ICPDP xét chậm.
-- **Ngoại lệ:** Không tài trợ, đã trả, phiên bản đã bị thay thế hoặc yêu cầu chốt đồng thời → từ chối;
-  giữ lịch sử hồ sơ bị loại/trả về. Không lấy khoản chi nháp làm căn cứ thanh toán.
-- **Hậu điều kiện:** Hạng mục `Accepted`, `Rejected` hoặc `Expired`; ngân sách đóng khi mọi hạng mục
-  ở `Not Sponsored`, `Paid`, `Rejected` hoặc `Expired`, không còn hồ sơ/giao dịch chờ xử lý.
-- **Quy tắc:** BR23–BR26, BR57, BR58; quy ước tài chính 14/11/2026.
-- **Đầu ra:** Tổng hợp hóa đơn hợp lệ, số phải trả, lý do loại, thông báo, audit và dữ liệu đánh giá.
+  - **A1 Trả bộ chứng từ về sửa:** Chỉ thực hiện khi `Submitted` và `now < D`, bắt buộc lý do → `Returned`; CLB nộp lại trong cửa sổ gốc `≤ D`.
+  - **A2 Quá hạn nộp:** Hạng mục `Draft`/`Returned` khi `now > D` được hiển thị là `Expired` và coi là trạng thái kết thúc (không thanh toán); bộ đã `Submitted` đúng hạn vẫn được đối soát và thanh toán/hoàn trả sau `D`.
+- **Ngoại lệ:** Hạng mục không tài trợ, sai trạng thái, `validAmount` ngoài `[0, amount]`, thiếu lý do bắt buộc, trả về sau `D`, hoặc `revision` cũ → từ chối.
+- **Hậu điều kiện:** Hạng mục ở `Accepted`, `Rejected`, `RefundPending` hoặc `Reconciled`; ngân sách đóng (`Closed`) chỉ khi mọi hạng mục đều ở `NOT_SPONSORED`, `Paid`, `Reconciled`, `Rejected` hoặc `Expired`.
+- **Quy tắc:** BR23–BR26, BR57, BR58; quy ước tài chính 23/11/2026.
+- **Đầu ra:** Kết quả đối soát/xác nhận hoàn trả, `acceptedTotal`/`refundedTotal`, thông báo, audit và dữ liệu cho UC38/UC42.
 - **Liên quan:** UC35, UC36, UC38, UC40, UC42; **Pain point:** BP10.
 
 | Mã FR | Yêu cầu chức năng |
 |---|---|
-| FR-UC37-01 | Xét từng hóa đơn đã nộp, loại chứng từ không hợp lệ/trùng kèm lý do |
-| FR-UC37-02 | Chốt payable=min(tổng hóa đơn hợp lệ được chấp nhận,trần hạng mục); không tự chuyển trần giữa các dòng |
-| FR-UC37-03 | Payable dương chuyển Accepted chờ UC35; bằng 0 chuyển Rejected; lưu phiên bản kết quả và audit |
-| FR-UC37-04 | Chỉ trả về sửa trước D, không tạo hạn bổ sung; sau D xét bộ Submitted đúng hạn đang có |
-| FR-UC37-05 | Draft/Returned chưa nộp đủ khi quá D chuyển Expired; hồ sơ Submitted đúng hạn vẫn xét và trả sau D |
-| FR-UC37-06 | Ngân sách chỉ Closed khi mọi dòng Not Sponsored/Paid/Rejected/Expired; không chốt khi còn hồ sơ hoặc thanh toán chờ |
-| FR-UC37-07 | Thông báo kết quả cho CLB và đưa số liệu tài chính vào UC38/UC42; không tự kết luận vi phạm do ICPDP xét chậm |
+| FR-UC37-01 | ICPDP chỉ xem trước và lưu về máy (`?download=1` / lưu tất cả) chứng từ hóa đơn và biên lai hoàn trả do CLB tải lên; không được tải lên hoặc sửa tệp của CLB |
+| FR-UC37-02 | Tính `payable = min(validAmount, approvedAmount)` (`0 ≤ validAmount ≤ amount`), bắt buộc có lý do đối soát; không tự chuyển trần giữa các hạng mục |
+| FR-UC37-03 | Với `AFTER_EVENT`: `payable > 0 → Accepted`, `payable = 0 → Rejected`. Với `BEFORE_EVENT`: `payable ≥ advanceAmount → Reconciled`, `payable < advanceAmount` (kể cả `validAmount = 0`) → `RefundPending` với `refundAmount = advanceAmount − payable` |
+| FR-UC37-04 | Chỉ trả về sửa (`Returned`) trước hạn `D` kèm lý do; không tạo hạn bổ sung riêng; hồ sơ `Submitted` đúng hạn vẫn được đối soát sau `D` |
+| FR-UC37-05 | Với `RefundSubmitted`, cho ICPDP xác nhận nhận hoàn trả (`confirmRefund → Reconciled`, cập nhật `refundedTotal`) hoặc trả lại yêu cầu gửi lại biên lai (`returnRefund → RefundPending`, bắt buộc lý do) |
+| FR-UC37-06 | Ngân sách chỉ `Closed` khi mọi hạng mục ở `NOT_SPONSORED`, `Paid`, `Reconciled`, `Rejected`, hoặc `Draft`/`Returned` đã quá `D` (`Expired`); giữ `Approved` khi còn hạng mục chờ tạm ứng, chờ đối soát, chờ thanh toán hoặc chờ hoàn trả |
+| FR-UC37-07 | Hỗ trợ lọc danh sách ngân sách tại `/workspace/budgets` theo CLB và số hạng mục chờ giải ngân trước, chờ đối soát, chờ TT nhà cung cấp, chờ xác nhận hoàn trả |
 
 ### UC38 — Nộp báo cáo hoạt động định kỳ
 
@@ -2607,12 +2592,12 @@ của nó không bao giờ được dùng lại.**
 | BR18 | Mỗi người tham dự chỉ có một bản ghi điểm danh chính thức cho mỗi sự kiện | UC31, UC32 |
 | BR19 | Bảng điểm danh đã chốt chỉ được mở khoá bởi một vai trò đặc biệt, cấp ở UC03 | UC32, UC03 |
 | BR20 | Deadline báo cáo sau sự kiện và báo cáo định kỳ là cấu hình được | UC04, UC33, UC38 |
-| BR21 | CLB quá hạn một nghĩa vụ bắt buộc — báo cáo hoặc bộ hóa đơn (BR57); không dùng BR58 mới làm nghĩa vụ hoàn trả — có thể bị chặn sự kiện mới, nếu chính sách bật cưỡng chế | UC04, UC25, UC34, UC36, UC37, UC39 |
+| BR21 | CLB quá hạn một nghĩa vụ bắt buộc — báo cáo, quyết toán hoặc hoàn trả (BR57, BR58) — có thể bị chặn đề xuất sự kiện mới nếu chính sách bật cưỡng chế | UC04, UC25, UC34, UC36, UC37, UC39 |
 | BR22 | **Đã sửa (I59)** — Ngân sách chỉ tồn tại như một phần của đề xuất sự kiện (UC25) và được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện | UC25, UC26 |
-| BR23 | Thanh toán một lần mỗi hạng mục, bằng min(tổng hóa đơn hợp lệ được chấp nhận, trần tài trợ); không phần trăm, chia đợt, cấp bù hay tự chuyển trần | UC26, UC35, UC37 |
+| BR23 | **Cập nhật (23/11/2026)** — Giải ngân theo hạng mục qua 3 kênh: `BEFORE_EVENT` tạm ứng trước qua cán bộ ICPDP (`VIA_OFFICER_ADVANCE`, không cần hóa đơn trước) và đối soát sau sự kiện; `AFTER_EVENT < 5.000.000 VNĐ` mặc định tự chi hoàn sau (`VIA_OFFICER_REIMBURSE`) hoặc tự chọn `DIRECT_VENDOR`; `AFTER_EVENT ≥ 5.000.000 VNĐ` bắt buộc lập hợp đồng thanh toán trực tiếp NCC (`DIRECT_VENDOR`). Số chấp nhận `payable = min(validAmount, approvedAmount)`; không tự chuyển trần giữa các hạng mục | UC26, UC35, UC36, UC37 |
 | BR24 | Khoản chi ngoài hạng mục đã duyệt bị gắn cờ ngoại lệ | UC36, UC37 |
-| BR25 | Các loại chứng từ chi được chấp nhận định nghĩa trong tài liệu chính sách, như nhau cho mọi hạng mục | UC36 |
-| BR26 | Ngân sách chỉ đóng khi mọi hạng mục Not Sponsored, Paid, Rejected hoặc Expired; không còn hồ sơ hay khoản phải trả đang chờ | UC35, UC37 |
+| BR25 | **Cập nhật (23/11/2026)** — Mỗi hạng mục nhận 1–5 tệp chứng từ riêng tư (JPG/PNG ≤ 5 MiB hoặc PDF ≤ 10 MiB), chống trùng SHA-256 trên toàn bộ ngân sách (gồm cả hóa đơn và biên lai hoàn trả); ICPDP chỉ được xem/lưu về máy, không upload thay CLB | UC36, UC37 |
+| BR26 | **Cập nhật (23/11/2026)** — Ngân sách chỉ đóng (`Closed`) khi mọi hạng mục ở `NOT_SPONSORED`, `Paid`, `Reconciled`, `Rejected` hoặc `Expired` (`Draft`/`Returned` quá `D`); giữ `Approved` khi còn hạng mục ở `AwaitingAdvance`, `AdvanceSent`, `Submitted`, `Accepted`, `RefundPending` hoặc `RefundSubmitted` | UC35, UC37 |
 | BR27 | Thang phân loại mức độ vi phạm định nghĩa trong tài liệu chính sách | UC40 |
 | BR28 | Quyết định về vi phạm phải có lý do và chứng cứ | UC40 |
 | BR29 | Tổng trọng số đánh giá phải hợp lệ trước khi một scheme được kích hoạt | UC41, UC42 |
@@ -2643,8 +2628,8 @@ của nó không bao giờ được dùng lại.**
 | BR54 | Ánh xạ capability/permission của `Club Leader` và `Club Member` là cố định do hệ thống định nghĩa. Mỗi use case kiểm tra đúng role cố định trong đúng CLB; chức danh nội bộ không cộng dồn hoặc cấp thêm quyền. Mọi membership `Active` có hai capability hiện hành `club.attendance.manage` và `club.room.view`; các permission quản lý khác chỉ Club Leader có | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54, UC58 |
 | BR55 | Không có RBAC tuỳ biến theo CLB: Club Leader không được tạo role truy cập, sửa permission hoặc gán permission cho chức danh. Cơ cấu tổ chức có thể lưu tên chức danh/ban/bộ phận để hiển thị và truy vết nhưng không tham gia quyết định quyền. Ghế Chủ nhiệm / Phó chủ nhiệm chỉ đổi qua UC08, UC10 / UC11 hoặc UC12 / UC13 | UC07, UC08, UC09, UC10, UC11, UC12, UC13 |
 | BR56 | Cơ cấu tổ chức được đánh phiên bản: phiên bản 1 là cơ cấu cố định được duyệt ở UC08 (Chủ nhiệm, Phó chủ nhiệm, Members), và một phiên bản đã lưu không bao giờ bị ghi đè. Sửa ở UC09 không tạo phiên bản mới; luồng UC12 / UC13 hiện tại cũng không tạo, vì UC12 không gửi danh sách role đề xuất. Phiên bản cơ cấu không chứa ánh xạ permission tuỳ biến và không có nguồn `ROLE_EDIT` từ UC23 | UC02, UC07, UC08, UC13 |
-| BR57 | D=E+14 ngày; Before Event nộp [A,D], After Event nộp [E,D]. Không nộp/sửa sau D, không hạn bổ sung riêng; bộ nộp đúng hạn vẫn được xét và trả sau D | UC36, UC37 |
-| BR58 | Một bộ hóa đơn đầy đủ mỗi hạng mục, nhiều chứng từ được phép; sau thanh toán không nộp thêm để nhận lần hai. Không dùng luồng tạm ứng/thu hồi thông thường của baseline cũ cho yêu cầu này | UC35, UC36, UC37 |
+| BR57 | **Cập nhật (23/11/2026)** — Cửa sổ nộp bộ chứng từ sau sự kiện là `[E, D]` với `D = E + 14 ngày` (hạng mục `BEFORE_EVENT` phải hoàn tất xác nhận nhận tạm ứng trước khi nộp). Không nộp/sửa sau `D`, không có hạn bổ sung riêng; bộ đã `Submitted` đúng hạn vẫn được đối soát và thanh toán/hoàn trả sau `D` | UC36, UC37 |
+| BR58 | **Cập nhật (23/11/2026)** — Mỗi hạng mục nộp một bộ chứng từ đầy đủ và thanh toán/đối soát một lần; riêng `BEFORE_EVENT` có `payable < advanceAmount` (kể cả `validAmount = 0` → hoàn 100%) bắt buộc đi qua luồng hoàn trả 2 bước (`RefundPending → RefundSubmitted → Reconciled`) về tài khoản nhà trường `schoolRefundAccount` (cấu hình ở UC04, chỉ hiển thị cho CLB khi bấm hoàn trả) | UC04, UC35, UC36, UC37 |
 | BR59 | **Mới (I61)** — Sự kiện cấp trường do ICPDP khởi tạo (UC53) chỉ gửi lời mời tới các CLB đang `Active`. Lời mời có hạn chót phản hồi (`deadline`); quá hạn chót mà CLB chưa phản hồi thì hệ thống tự động chuyển trạng thái lời mời sang `Expired`. CLB có thể `Accepted` hoặc `Declined` (bắt buộc nêu lý do khi từ chối, UC54); ICPDP chỉ thu hồi được (`Withdrawn`) khi lời mời còn `Pending` và chưa đến hạn chót. Khi CLB chấp nhận, tư cách tham gia của CLB được ghi nhận chính thức vào sự kiện | UC53, UC54 |
 | BR60 | **Mới (I63)** — Đánh giá CLB dùng một **format chung**: danh mục dimension D1–D8 do hệ thống định nghĩa (§9), ICPDP chỉ chọn dimension áp dụng, đặt trọng số và ngưỡng. Mọi scheme bắt buộc gồm ba dimension chung D1 Số người tham gia, D2 Tầm ảnh hưởng, D3 Mức độ hài lòng với trọng số > 0; thiếu một trong ba thì không kích hoạt được. Mọi CLB trong cùng kỳ được chấm bằng cùng một scheme và công bố dưới cùng một bảng điểm | UC41, UC42, UC43, UC55 |
 | BR61 | **Mới (I64)** — Chỉ ICPDP Officer xuất được dữ liệu (UC55). Bản xuất tuân theo cùng quy tắc hiển thị như trên màn hình — phản hồi gửi ẩn danh không kèm danh tính người gửi, kết quả đánh giá chỉ xuất bản đã `Published`. Mọi lần xuất được ghi audit: người xuất, loại dữ liệu, bộ lọc, số dòng | UC55 |
@@ -2813,24 +2798,44 @@ SCHEDULED ──┬──UC25 A5 (CLB xác nhận)──────────
 
 `DEFENDED`, `NO_SHOW` và `CANCELLED` là các trạng thái kết thúc của một phiên bảo vệ. Khi ở `DEFENDED`, Officer đưa ra 1 trong 4 quyết định thẩm định cuối cùng (`Approved`, `Rejected`, `Revision Requested`, hoặc `Re-defense`).
 
-## 6.7 Event Budget (ngân sách sự kiện)
+## 6.7 Event Budget (ngân sách sự kiện — theo hạng mục `sponsoredItems`)
 
-Ngân sách sinh từ UC26, không có đơn xin ngân sách riêng. Trạng thái sau đây là **thiết kế
-nghiệp vụ đích**, chưa phải enum đã triển khai. Quyết định tài trợ và tiến độ xử lý tách biệt.
+Ngân sách sinh từ UC26 cùng mảng `sponsoredItems` (12 trạng thái xử lý tách biệt với quyết định tài trợ và kênh thanh toán):
 
-| Cấp | Trạng thái / quy tắc chuyển |
+```text
+[NOT_SPONSORED] → Kết thúc (không tạo yêu cầu thanh toán; CLB chỉ ghi chi thực tế)
+
+[BEFORE_EVENT · VIA_OFFICER_ADVANCE]
+  AwaitingAdvance --UC35 recordAdvance (ICPDP)--> AdvanceSent
+                  --UC35 confirmAdvanceReceived (CLB)--> Draft
+                  ⇄ Returned (UC37 return trước D)
+                  --UC36 submit [E,D]--> Submitted
+                  ├─ UC37 review (payable >= advance) ──────────────────────────► Reconciled
+                  └─ UC37 review (payable < advance, gồm validAmount = 0) ──────► RefundPending
+                       --UC35/36 submitRefund (CLB, 1–5 biên lai)--> RefundSubmitted
+                       ├─ UC37 returnRefund (ICPDP, có lý do) ──────────────────► RefundPending
+                       └─ UC37 confirmRefund (ICPDP, cộng refundedTotal) ───────► Reconciled
+
+[AFTER_EVENT · VIA_OFFICER_REIMBURSE (<5M) | DIRECT_VENDOR (>=5M hoặc chọn)]
+  Draft ⇄ Returned (UC37 return trước D)
+        --UC36 submit [E,D]--> Submitted
+        ├─ UC37 review (payable = 0) ───────────────────────────────────────────► Rejected
+        └─ UC37 review (payable > 0) ──► Accepted
+             ├─ VIA_OFFICER_REIMBURSE: UC35 pay (CLB) ──────────────────────────► Paid
+             └─ DIRECT_VENDOR: UC35 confirmVendorPaid (ICPDP) ──────────────────► Paid
+
+[Quá hạn hiển thị] Draft / Returned khi now > D → Expired (suy diễn để hiển thị và đóng ngân sách)
+[Aggregate EventBudget] Approved → Closed chỉ khi mọi hạng mục ở NOT_SPONSORED / Paid / Reconciled / Rejected / Expired
+```
+
+| Cấp / Trạng thái | Quy tắc chuyển & Tác nhân |
 |---|---|
-| Quyết định từng dòng | Chưa quyết định → Not Sponsored / Before Event / After Event; phải hoàn tất trước khi duyệt |
-| Dòng được tài trợ | Draft → Submitted → Accepted → Paid |
-| Yêu cầu sửa | Submitted → Returned (chỉ trước D) → Submitted (trong cửa sổ gốc) |
-| Không có chi hợp lệ | Submitted → Rejected (lý do, payable=0) |
-| Quá hạn | Draft / Returned → Expired khi now>D; không tự chuyển Submitted đúng hạn thành Expired |
-| Không tài trợ | Not Sponsored là kết quả cuối, không tạo yêu cầu thanh toán |
-| Toàn ngân sách | Approved → Closed khi mọi dòng Not Sponsored/Paid/Rejected/Expired |
-
-Mỗi dòng chỉ Paid một lần; Accepted phải có payable dương. Chưa có chính sách mới cho hủy/
-đổi lịch và dữ liệu tạm ứng cũ: giữ lịch sử, không tự gia hạn hoặc phát sinh thanh toán trùng;
-cần chốt nghiệp vụ riêng trước khi triển khai các nhánh đó.
+| Khởi tạo tại UC26 | `BEFORE_EVENT → VIA_OFFICER_ADVANCE / AwaitingAdvance`; `AFTER_EVENT < 5M → VIA_OFFICER_REIMBURSE / Draft`; `AFTER_EVENT ≥ 5M → DIRECT_VENDOR / Draft`; `NOT_SPONSORED` kết thúc |
+| Tạm ứng trước (`BEFORE_EVENT`) | `AwaitingAdvance → AdvanceSent` (ICPDP `recordAdvance`) → `Draft` (CLB `confirmAdvanceReceived`, cộng `disbursedTotal`) |
+| Nộp & trả sửa chứng từ | `Draft / Returned → Submitted` (CLB `submit` trong `[E, D]`); `Submitted → Returned` (ICPDP `return` trước `D`) |
+| Đối soát `AFTER_EVENT` | `Submitted → Accepted` (`payable > 0`) hoặc `Rejected` (`payable = 0`); `Accepted → Paid` (CLB `pay` cho `< 5M` tự chi, ICPDP `confirmVendorPaid` cho `DIRECT_VENDOR`) |
+| Đối soát & hoàn trả `BEFORE_EVENT` | `Submitted → Reconciled` (`payable ≥ advance`) hoặc `RefundPending` (`payable < advance`, kể cả `validAmount = 0`); `RefundPending → RefundSubmitted` (CLB `submitRefund` kèm 1–5 biên lai); `RefundSubmitted → RefundPending` (ICPDP `returnRefund`) hoặc `Reconciled` (ICPDP `confirmRefund`, cộng `refundedTotal`) |
+| Toàn ngân sách | `Approved → Closed` tự động khi toàn bộ hạng mục đã kết thúc; mọi thao tác tài chính tạm khóa (409) khi sự kiện bị huỷ hoặc có yêu cầu huỷ mở |
 
 ## 6.8 Property Booking (đặt cơ sở vật chất)
 
@@ -2947,7 +2952,7 @@ giờ được sửa tại chỗ (BR30).
 | `User` | email (unique, kiểm tra domain), googleSubject, displayName, avatarUrl, accountState (`Active`/`Locked`), lockReason, createdAt |
 | `StudentProfile` | userId, studentCode, fullName, faculty, các trường đồng bộ từ OAuth |
 | `Role` / `Permission` | code, scope (`system` / `club`), danh sách mã quyền |
-| `PolicyVersion` | chín giá trị của UC04, effectiveFrom, createdBy, createdAt |
+| `PolicyVersion` | các giá trị cấu hình của UC04 (gồm `schoolRefundAccount` tùy chọn), effectiveFrom, createdBy, createdAt |
 | `RoutingRuleSet` | version, state, rules[] {requestType, amountThreshold, riskCategory, propertyClass, complianceCondition, slaHours} |
 | `Club` | code, name, field, state, description, contact, charter, channels, các trường thuộc thẩm quyền nhà trường, dissolutionDecision {decidedAt, effectiveSemester, reason}, createdAt |
 | `ClubApplication` | clubName, field, objectives, foundingMembers[], documents[], proposedRoleStructure (chức danh, ban/bộ phận, ghế lãnh đạo; không có permission tuỳ biến), state, currentVersion, lịch sử quyết định |
@@ -2967,11 +2972,11 @@ giờ được sửa tại chỗ (BR30).
 | `Attendance` | eventId, studentId (cặp unique), registrationId, checkedInAt, method (`self`/`manual`/`walk-in`), performedBy, abnormalFlags[], finalized, finalizedBy, finalizedAt |
 | `PostEventReport` | eventId, bản chụp số liệu nạp sẵn, actualResult, incidents, lessonsLearned, evidence[], state, versions[], submittedAt, lateFlag |
 | `PeriodicReport` | clubId, period, bản chụp số liệu nạp sẵn, narrative, nextPlan, evidence[], state, versions[], lateFlag |
-| `EventBudget` | Thiết kế đích: eventId, clubId, approvedByDecisionId, approvedAt, eventEndAt, invoiceDueAt (=E+14 ngày), lines[] {id, category, requestedAmount, fundingDecision, approvedCap, reason, invoiceStatus, validInvoiceTotal, payable, paidAt}, state. Quyết định tài trợ và trạng thái xử lý tách biệt; giữ snapshot lịch sử |
-| `BudgetDisbursement` | Thiết kế đích: eventBudgetId, budgetLineId, invoicePackVersionId, payable, amount (=payable), date, paymentReference, recordedBy; duy nhất một khoản trả mỗi hạng mục. Chưa phải schema triển khai |
-| `Expense` | eventBudgetId, eventId, category, amount, date, description, isOutOfCategory, isOverRemaining, supported (suy ra), reviewOutcome (`Accepted` / `Rejected`), reviewReason |
-| `FinancialEvidence` | expenseId (đúng một), type, externalLink, uploadedBy, uploadedAt |
-| `FinancialReconciliation` | Thiết kế đích: eventBudgetId, budgetLineId, invoicePackVersionId, validInvoiceTotal, approvedCap, payable, outcome (Accepted/Rejected/Returned), reasons, reviewedBy, reviewedAt; lưu phiên bản lịch sử |
+| `EventBudget` | eventId, clubId, approvedByDecisionId, requestedTotal, approvedTotal, disbursedTotal, acceptedTotal, refundedTotal, state (`Approved`/`Closed`/`Cancelled`), `lines[]`, `sponsoredItems[]` {id, category, fundingDecision, paymentChannel, vendorBankInfo?, approvedAmount, status (12 trạng thái), amount, description, images[] (JPG/PNG/PDF), advanceAmount/advancedAt/advanceReceivedAt, validAmount/payable/reconciliationDelta, refundAmount/refundProofs[]/refundNote/refundSubmittedAt/refundReviewReason/refundConfirmedAt/refundConfirmedBy, paidAt/paidBy} |
+| `BudgetDisbursement` | *(Legacy — chỉ giữ cho dữ liệu cũ khi `sponsoredItems = null`)* eventBudgetId, kind, amount, disbursedAt, paymentReference, recordedBy, note |
+| `Expense` | eventBudgetId, eventId, category, amount, spentAt, description, isOutOfCategory, isOverRemaining, hasEvidence, reviewOutcome (`Accepted` / `Rejected`), reviewReason |
+| `FinancialEvidence` | *(Legacy — luồng mới dùng `sponsoredItems[].images` & `refundProofs` lưu riêng tư trên Cloudinary)* expenseId, type, externalLink, uploadedBy, uploadedAt |
+| `FinancialReconciliation` | *(Legacy — luồng mới lưu kết quả đối soát trực tiếp trên từng phần tử của `sponsoredItems`)* eventBudgetId, acceptedTotal, settlementBalance, outcome, closedAt |
 | `Property` | code, name, type, capacity, location, equipment[], bookableHours, blackouts[], isActive |
 | `PropertyBooking` | propertyId, clubId, clubName (denormalize), eventId?, purpose, startAt, endAt, headcount, state, currentVersion, decision {actor, reason, at} |
 | `EventFeedback` | eventId, attendanceId, studentId (nội bộ, không bao giờ trả cho CLB), clubId, scores[] (một mục duy nhất: tiêu chí `overall`, điểm 1–5), comment (≤ 2.000 ký tự), isAnonymous, submittedAt (bất biến) |
@@ -3479,7 +3484,7 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC01 | M01 | Tất cả | User, StudentProfile | BR32, BR47 |
 | UC02 | M01 | Tất cả | — (chỉ đọc) | BR49, BR53, BR56 |
 | UC03 | M01 | ICPDP | User, Role | BR19, BR47 |
-| UC04 | M01 | ICPDP | PolicyVersion | BR42 + 9 giá trị |
+| UC04 | M01 | ICPDP | PolicyVersion | BR42 + danh sách chính sách (gồm `schoolRefundAccount`) |
 | UC05 | M01 | ICPDP | RoutingRuleSet | BR16, BR31 |
 | UC06 | M02 | Student | Club (đọc) | BR09, BR14 |
 | UC07 | M02 | Student | ClubApplication (gồm cơ cấu role dự kiến) | BR02, BR03, BR04, BR55, BR56 |
@@ -3510,9 +3515,9 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC32 | M06 | Club Member | Attendance | BR18, BR19, BR53, BR54 |
 | UC33 | M08 | Club Leader | PostEventReport | BR20, BR21, BR54 |
 | UC34 | M08 | ICPDP | PostEventReport, Event | BR05, BR21 |
-| UC35 | M07 | ICPDP | EventBudget, BudgetDisbursement | BR23, BR26, BR58 |
-| UC36 | M07 | Club Leader | Expense, FinancialEvidence, EventBudget | BR21, BR24, BR25, BR54, BR57 |
-| UC37 | M07 | ICPDP | FinancialReconciliation | BR21, BR23, BR24, BR26, BR57, BR58 |
+| UC35 | M07 | ICPDP / Club Leader (tách theo thao tác) | EventBudget (`sponsoredItems`) | BR23, BR26, BR58 |
+| UC36 | M07 | Club Leader | EventBudget (`sponsoredItems`), Expense | BR21, BR23, BR24, BR25, BR54, BR57, BR58 |
+| UC37 | M07 | ICPDP | EventBudget (`sponsoredItems`), Expense | BR21, BR23, BR24, BR25, BR26, BR57, BR58 |
 | UC38 | M08 | Club Leader | PeriodicReport | BR20, BR54 |
 | UC39 | M08 | ICPDP | PeriodicReport | BR05, BR21 |
 | UC40 | M08 | ICPDP | Violation, CorrectiveAction | BR27, BR28 |

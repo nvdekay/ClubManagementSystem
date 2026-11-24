@@ -145,7 +145,7 @@
       <mxCell id="clbg16" value="Finance &amp;amp; facilities" style="text;html=1;fontSize=11;fontStyle=2;fontColor=#757575;align=left;verticalAlign=bottom;spacingLeft=2;spacingBottom=2;" vertex="1" parent="1">
         <mxGeometry x="1680" y="1359.2" width="180" height="49" as="geometry" />
       </mxCell>
-      <mxCell id="clb17" value="Proposal details&lt;br&gt;Expenses &amp;amp; invoices" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCDD2;strokeColor=#D9777D;fontSize=12;" vertex="1" parent="1">
+      <mxCell id="clb17" value="Expenses &amp;amp; budgets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCDD2;strokeColor=#D9777D;fontSize=12;" vertex="1" parent="1">
         <mxGeometry x="1680" y="1408.8000000000002" width="180" height="44" as="geometry" />
       </mxCell>
       <mxCell id="clb18" value="Allocated rooms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E0973B;fontSize=12;" vertex="1" parent="1">
@@ -289,11 +289,8 @@
       <mxCell id="icp33" value="Internal event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8F7C5;strokeColor=#5FB85C;fontSize=12;" vertex="1" parent="1">
         <mxGeometry x="2486" y="987.1999999999999" width="180" height="44" as="geometry" />
       </mxCell>
-      <mxCell id="icp34" value="Event budget" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8F7C5;strokeColor=#5FB85C;fontSize=12;" vertex="1" parent="1">
+      <mxCell id="icp34" value="Event budget&lt;br&gt;(items, review &amp;amp; refund)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8F7C5;strokeColor=#5FB85C;fontSize=12;" vertex="1" parent="1">
         <mxGeometry x="2486" y="1111.1999999999998" width="180" height="44" as="geometry" />
-      </mxCell>
-      <mxCell id="icp35" value="Review item invoices&lt;br&gt;&amp;amp; record one full payment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8F7C5;strokeColor=#5FB85C;fontSize=12;" vertex="1" parent="1">
-        <mxGeometry x="2726" y="1111.1999999999998" width="180" height="44" as="geometry" />
       </mxCell>
       <mxCell id="icp36" value="School event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8F7C5;strokeColor=#5FB85C;fontSize=12;" vertex="1" parent="1">
         <mxGeometry x="2486" y="1173.1999999999998" width="180" height="44" as="geometry" />
@@ -449,9 +446,6 @@
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
       <mxCell id="e23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="icp12" target="icp34">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="e24" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="icp34" target="icp35">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
       <mxCell id="e25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="icp13" target="icp36">
