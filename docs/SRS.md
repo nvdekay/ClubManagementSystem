@@ -175,7 +175,7 @@ theo vai trò.
 | R2 | [`02-use-cases/UCMS_UseCase_Model_v2.md`](02-use-cases/UCMS_UseCase_Model_v2.md) | Use case model tham khảo; các đoạn khôi phục UC23 là lịch sử và bị quyết định role cố định ngày 07/11/2026 thay thế |
 | R3 | [`02-use-cases/UCMS_UseCase_Specification_v2.md`](02-use-cases/UCMS_UseCase_Specification_v2.md) | Đặc tả chi tiết tham khảo; UC23 không còn trong phạm vi |
 | R4 | [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
-| R5 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) | Biên hệ thống, 46 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
+| R5 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) | Biên hệ thống, 45 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
 | R6 | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) | Use case diagram ngày 19/10/2026; các oval quản lý role của UC23 đã cũ. Quyết định mới hơn nằm ở `UCMS_Organization_and_Flows.drawio` ngày 02/11/2026: chỉ hai role cố định, không có custom role |
 | R7 | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
 | R8 | [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) | Container, bản đồ module → code, thiết kế approval/notification/audit, định danh, thiết kế dữ liệu, bề mặt API, client, triển khai |
@@ -241,7 +241,7 @@ khác.
                                                           └──► Cloudinary     (lưu tệp tải lên)
 ```
 
-Biên hệ thống và toàn bộ 46 luồng dữ liệu được vẽ ở R5
+Biên hệ thống và toàn bộ 45 luồng dữ liệu được vẽ ở R5
 ([`img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png`](03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png)).
 Mỗi luồng là một **nhóm dữ liệu**, không phải một use case; một hồ sơ gửi lên ICPDP chỉ vẽ một
 lần (`Submissions for review`) thay vì lặp lại ở cả chiều CMB → hệ thống và hệ thống → ICPDP.
@@ -3589,11 +3589,11 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 ## 14.4 Luồng dữ liệu context → use case
 
 Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu thụ bởi ít nhất một use case. Bảng có
-đúng 46 luồng, cùng nhãn và cùng chiều với `UCMS_Context_Diagram.drawio` (sửa 2026-11-02).
+đúng 45 luồng, cùng nhãn và cùng chiều với `UCMS_Context_Diagram.drawio` (sửa 2026-11-02; bỏ luồng `Internal event records` ngày 2026-11-24).
 
 | Từ → Đến | Luồng dữ liệu | Use case |
 |---|---|---|
-| Student → Hệ thống | Club establishment application | UC07 (gồm cơ cấu role dự kiến) |
+| Student → Hệ thống | Club establishment application | UC07 |
 | Student → Hệ thống | Membership application | UC17 |
 | Student → Hệ thống | Event registration, check-in & feedback | UC29, UC31, UC48 |
 | Student → Hệ thống | Club complaint | UC50 |
@@ -3611,34 +3611,33 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | Club Leader → Hệ thống | Complaint response | UC52 |
 | Club Leader → Hệ thống | Event invitation response | UC54 |
 | Club Leader → Hệ thống | Leadership & suspension requests | UC10, UC12, UC14 |
-| Club Leader → Hệ thống | Club structure updates | UC09, UC10, UC12 (không có cấu hình role/permission) |
+| Club Leader → Hệ thống | Defense confirmation & reschedule requests | UC25 A5 (BR63) |
 | Hệ thống → Club Leader | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
-| Hệ thống → Club Leader | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân) |
+| Hệ thống → Club Leader | Review decisions, defense schedule & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân) |
 | Hệ thống → Club Leader | Event feedback & forwarded complaints | UC49, UC51 → UC52 |
 | Hệ thống → Club Leader | Violation notices & evaluation results | UC40, UC43 |
 | Hệ thống → Club Leader | Deadline reminders | UC04 + scheduler |
 | Hệ thống → Club Leader | Event invitations | UC53 → UC54 |
 | Hệ thống → Club Leader | Leadership & club status decisions | UC11, UC13, UC15 |
-| ICPDP → Hệ thống | System configuration | UC03, UC04, UC05, UC41, UC44 |
-| ICPDP → Hệ thống | Review decisions | UC08, UC11, UC13, UC26, UC34, UC39, UC46 |
+| ICPDP → Hệ thống | System configuration & club room allocations | UC03, UC04, UC05, UC41, UC44, UC58 |
+| ICPDP → Hệ thống | Review decisions & event defense schedule | UC08, UC11, UC13, UC26, UC34, UC39, UC46 |
 | ICPDP → Hệ thống | Club status & violation decisions | UC15, UC40 |
 | ICPDP → Hệ thống | Disbursements & reconciliation | UC35, UC37 |
 | ICPDP → Hệ thống | Complaint triage | UC51 |
 | ICPDP → Hệ thống | Evaluation scoring | UC43 |
 | ICPDP → Hệ thống | University events & invitations | UC53 |
 | ICPDP → Hệ thống | Export criteria (club reports & data) | UC55 (tiêu chí xuất: loại dữ liệu, kỳ/khoảng thời gian, CLB, định dạng xlsx/csv/pdf) |
-| Hệ thống → ICPDP | Submissions for review | UC07 → UC08, UC10 → UC11, UC12 → UC13, UC14 → UC15, UC25 → UC26, UC33 → UC34, UC36 → UC37, UC38 → UC39, UC45 → UC46 |
+| Hệ thống → ICPDP | Submissions for review & defense responses | UC07 → UC08, UC10 → UC11, UC12 → UC13, UC14 → UC15, UC25 → UC26, UC33 → UC34, UC36 → UC37, UC38 → UC39, UC45 → UC46 |
 | Hệ thống → ICPDP | Club complaints | UC50 → UC51 |
-| Hệ thống → ICPDP | Internal event records | *Đã ngừng từ 19/11/2026 (BR53 rút); luồng còn trên context diagram v2.1, cần gỡ khi vẽ lại* |
 | Hệ thống → ICPDP | Club statistics & evaluation draft | UC02, UC42 |
-| Hệ thống → ICPDP | Club role structure & board history | UC02 (phiên bản cơ cấu và lịch sử ban điều hành của mọi CLB; BR56) |
+| Hệ thống → ICPDP | Club board & leadership history | UC02 (phiên bản cơ cấu và lịch sử ban điều hành của mọi CLB; BR56) |
 | Hệ thống → ICPDP | Event invitation responses | UC54 → UC53, UC02 |
 | Hệ thống → ICPDP | Exported data & end-of-term club reports | UC55 (file report cuối kỳ của các CLB, bảng so sánh điểm xếp loại theo kỳ, dữ liệu xlsx/csv/pdf) |
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
 | Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2), qua outbox (EXT-02) |
-| Hệ thống → Cloudinary | Image file | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển) |
-| Cloudinary → Hệ thống | Image URL | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển) |
+| Hệ thống → Cloudinary | Uploaded file | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển) |
+| Cloudinary → Hệ thống | File URL | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển) |
 
 ## 14.5 Bản đồ quan hệ use case
 
@@ -3841,7 +3840,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 
 | Sơ đồ | Các trang | File |
 |---|---|---|
-| **Context diagram v2.1** (46 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
+| **Context diagram v2.1** (45 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
 | **Use case diagram theo actor** (UC01–UC55, UC58) | User · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 - Access & club lifecycle · ICPDP 2 - Events, bookings & finance · ICPDP 3 - Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
 | **Main workflow** (chín swimlane theo luồng happy case, tiếng Anh; khối hoạt động màu xám, hình thoi quyết định màu vàng; ba trang Slide là bản ngang dùng cho thuyết trình) | 01 Club establishment · 02 Member recruitment · 03 Periodic reports submission · 04 Term transition · 05 Club suspension · 06 Facilities request · 07 Event proposal and approval · 08 Event run and close · 09 Event disbursement · Slide 01 · Slide 07 · Slide 09 | [`03-diagrams/UCMS_Main_Workflow.drawio`](03-diagrams/UCMS_Main_Workflow.drawio) |
