@@ -323,3 +323,5 @@ trang 01, 07 và 09) dùng cho slide thuyết trình.
 nút bắt đầu/kết thúc không kèm chữ), chữ trong khối ngắn gọn, nhãn cạnh chỉ Yes/No, bỏ bảng chú thích và ghi chú. Nhánh ngoại lệ
 (rút đơn, hết hạn, waitlist, đổi lịch bảo vệ, no-show, huỷ sự kiện…) vẫn được mô tả đầy đủ trong `UCMS_Swimlane_Flows.drawio`.
 Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
+
+**State diagram kiểu xám (2026-11-24):** 9 trang `UCMS_State_Diagrams.drawio` dùng một màu xám cho mọi trạng thái, nhãn chuyển trạng thái ngắn (không mã UC, không điều kiện), bỏ toàn bộ note; trang Event Budget chỉ còn tên trạng thái. Script: `docs-qa/diagram-gen/state_mono.py`.
