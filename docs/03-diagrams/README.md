@@ -330,3 +330,4 @@ Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
 - **Context diagram (2026-11-24):** bỏ luồng `Internal event records` (UCMS → ICPDP) và đổi nhãn `Event proposals & internal events` thành `Event proposals`, vì sự kiện nội bộ CLB đã gỡ khỏi code; còn 45 luồng.
 - **Organization structure (2026-11-24):** bỏ ô note vàng và các dòng mô tả phụ trong từng khối, chỉ giữ tên khối; nhãn mũi tên còn `recruitment`.
 - **Screen flow (2026-11-24):** bỏ hai màn `Internal events` / `Internal event` của ICPDP (tính năng đã gỡ ngày 19/11/2026), dồn các màn phía dưới lên.
+- **State diagram (2026-11-24, đợt 2):** trang Event bỏ cung `unlock attendance` Closed → Completed (không thể xảy ra vì unlock bị chặn khi đã có báo cáo); trang Event Budget thêm nút đầu (`approve`) và nút cuối cho NOT_SPONSORED, Reconciled, Paid, Rejected, Expired.
