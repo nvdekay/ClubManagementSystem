@@ -3535,7 +3535,11 @@ export const openApiDocument = createDocument({
     },
     '/admin/event-proposals': {
       get: {
-        summary: 'List open event proposal review tasks (UC26, ICPDP Officer only)',
+        summary:
+          'List pending or approved event proposals, newest first (UC26, ICPDP Officer only)',
+        requestParams: {
+          query: z.object({ view: z.enum(['pending', 'approved']).default('pending') }),
+        },
         responses: {
           '200': {
             description: 'Event proposal queue',

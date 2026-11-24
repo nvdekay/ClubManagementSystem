@@ -1,4 +1,11 @@
 const en = {
+  pendingTab: 'Pending review',
+  approvedTab: 'Approved',
+  approvedCount: '{{count}} approved',
+  noneApproved: 'No approved proposals yet.',
+  noneApprovedHint: 'Approved proposals remain here so you can view the dossier and decision.',
+  submittedDate: 'Submitted {{date}}',
+  viewApproved: 'View approved proposal',
   templateTitle: 'Event proposal template',
   templateHint:
     'Clubs download this file when preparing a proposal. Replacing it does not change proposals already submitted.',
@@ -158,6 +165,13 @@ const en = {
 }
 
 const vi: Record<keyof typeof en, string> = {
+  pendingTab: 'Chờ xử lý',
+  approvedTab: 'Đã duyệt',
+  approvedCount: '{{count}} đã duyệt',
+  noneApproved: 'Chưa có đề xuất đã duyệt.',
+  noneApprovedHint: 'Đề xuất duyệt thành công sẽ hiển thị ở đây để xem lại hồ sơ và quyết định.',
+  submittedDate: 'Nộp ngày {{date}}',
+  viewApproved: 'Xem hồ sơ đã duyệt',
   templateTitle: 'Mẫu đề án sự kiện',
   templateHint:
     'CLB tải file này khi soạn đề xuất. Thay mẫu mới không làm thay đổi các đề xuất đã nộp.',

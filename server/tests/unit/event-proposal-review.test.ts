@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { eventProposalListQuery } from '../../src/interface/http/event-proposal-review-routes.js'
 import type { AuthRepository } from '../../src/domain/auth.js'
 import {
   approvedBudget,
@@ -20,6 +21,25 @@ const lines = [
   { category: 'Truyền thông', amount: 2_000_000, purpose: 'In poster' },
   { category: 'Hậu cần', amount: 3_000_000, purpose: 'Nước uống' },
 ]
+
+describe('proposal list views', () => {
+  it('defaults to pending and only accepts supported views', () => {
+    expect(eventProposalListQuery.parse({})).toEqual({ view: 'pending' })
+    expect(eventProposalListQuery.parse({ view: 'approved' })).toEqual({ view: 'approved' })
+    expect(eventProposalListQuery.safeParse({ view: 'anything' }).success).toBe(false)
+  })
+  it('authorizes approved history before forwarding the view to the repository', async () => {
+    const repo = repository()
+    const list = vi.spyOn(repo, 'listOpen')
+    await listEventProposalReviews(repo, auth(['ICPDP_OFFICER']), officer, 'approved')
+    expect(list).toHaveBeenCalledWith('approved')
+    list.mockClear()
+    await expect(
+      listEventProposalReviews(repo, auth([]), officer, 'approved'),
+    ).rejects.toMatchObject({ kind: 'forbidden' })
+    expect(list).not.toHaveBeenCalled()
+  })
+})
 
 function detail(budgetLines = lines): EventProposalDetail {
   return {

@@ -390,4 +390,59 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
       completed: 0,
     })
   })
+
+  it('keeps approved proposals accessible without duplicating previous revision tasks', async () => {
+    const repo = mongoEventProposalReviewRepository()
+    const id = await submit('Approved history proposal', null)
+    await repo.claim(id, String(officer), now)
+    await repo.decide(
+      id,
+      String(officer),
+      { outcome: 'Approve', sections: [], conditions: [], budgetLines: [] },
+      now,
+    )
+    expect((await repo.listOpen()).some((item) => item.event.id === id)).toBe(false)
+    expect((await repo.listOpen('approved')).filter((item) => item.event.id === id)).toHaveLength(1)
+    await ucmsModels.approvalTasks!.create({
+      entityType: 'EVENT_PROPOSAL',
+      entityId: new Types.ObjectId(id),
+      clubId,
+      title: 'Earlier revision',
+      state: 'Decided',
+      openedAt: new Date(now.getTime() - 60_000),
+    })
+    for (const state of ['Upcoming', 'Ongoing', 'Completed']) {
+      await ucmsModels.events!.updateOne({ _id: new Types.ObjectId(id) }, { $set: { state } })
+      const approved = (await repo.listOpen('approved')).filter((item) => item.event.id === id)
+      expect(approved).toHaveLength(1)
+      expect(approved[0]?.event.state).toBe(state)
+      expect(approved[0]?.task.title).not.toBe('Earlier revision')
+      expect((await repo.find(id, now))?.event.id).toBe(id)
+    }
+    const pendingId = await submit('Pending history exclusion', null)
+    expect((await repo.listOpen('approved')).some((item) => item.event.id === pendingId)).toBe(
+      false,
+    )
+  })
+
+  it('lists the newest submitted review tasks first with a stable descending ID tie-breaker', async () => {
+    const repo = mongoEventProposalReviewRepository()
+    const newest = await submit('Newest proposal', null)
+    const oldest = await submit('Oldest proposal', null)
+    const tied = await submit('Same submission time', null)
+    const newestAt = new Date(now.getTime() + 40 * 60_000)
+    for (const [id, openedAt] of [
+      [newest, newestAt],
+      [oldest, new Date(now.getTime() + 10 * 60_000)],
+      [tied, newestAt],
+    ] as const) {
+      await ucmsModels.approvalTasks!.updateOne(
+        { entityType: 'EVENT_PROPOSAL', entityId: new Types.ObjectId(id) },
+        { $set: { openedAt } },
+      )
+    }
+    const selected = new Set([newest, oldest, tied])
+    const queue = (await repo.listOpen()).filter((item) => selected.has(item.event.id))
+    expect(queue.map((item) => item.event.id)).toEqual([tied, newest, oldest])
+  })
 })

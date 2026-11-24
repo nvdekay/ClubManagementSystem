@@ -166,7 +166,7 @@ export interface EventLifecycleResult {
 }
 
 export interface EventProposalReviewRepository {
-  listOpen(): Promise<EventProposalQueueItem[]>
+  listOpen(view?: 'pending' | 'approved'): Promise<EventProposalQueueItem[]>
   find(eventId: string, now: Date): Promise<EventProposalDetail | null>
   claim(eventId: string, officerId: string, now: Date): Promise<EventProposalDetail>
   decide(

@@ -27,6 +27,9 @@ export interface EventProposalReviewRouteDeps {
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i)
+export const eventProposalListQuery = z
+  .object({ view: z.enum(['pending', 'approved']).default('pending') })
+  .strict()
 // Validate transport types and limits here; outcome-specific rules belong to the use case.
 export const eventReviewDecisionBody = z
   .object({
@@ -86,8 +89,9 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
   const guard = { repo: deps.authRepo, sessions: deps.sessions }
 
   // Read-only requests authenticate the session without requiring a CSRF token.
-  router.get('/admin/event-proposals', authGuard(guard, false), async (_req, res) => {
-    ok(res, await listEventProposalReviews(deps.repo, deps.authRepo, actor(res)))
+  router.get('/admin/event-proposals', authGuard(guard, false), async (req, res) => {
+    const { view } = parsed(eventProposalListQuery, req.query)
+    ok(res, await listEventProposalReviews(deps.repo, deps.authRepo, actor(res), view))
   })
   // Load the complete review dossier for one proposal.
   router.get('/admin/event-proposals/:id', authGuard(guard, false), async (req, res) => {

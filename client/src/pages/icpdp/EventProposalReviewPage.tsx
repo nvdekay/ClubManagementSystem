@@ -186,7 +186,12 @@ export function EventProposalReviewPage() {
           : t('eventReviews.requestRevision')
   }
 
-  const back = { to: '/workspace/event-proposals', label: t('eventReviews.back') }
+  const back = {
+    to: ['Approved', 'Upcoming', 'Ongoing', 'Completed'].includes(review.data?.event.state ?? '')
+      ? '/workspace/event-proposals?view=approved'
+      : '/workspace/event-proposals',
+    label: t('eventReviews.back'),
+  }
   const label = 'text-xs text-muted-app'
 
   // Truy vấn bị tắt vẫn ở trạng thái chờ; chỉ chờ dữ liệu xét duyệt khi có quyền tải.

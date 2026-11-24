@@ -12,6 +12,9 @@ Bản cài bằng Mongoose cho các repository port của domain — mỗi port 
 `mongo-<entity>-repository.ts` — cộng các tiện ích DB (seed). Không gì ngoài `infra/` được đụng
 tới Mongoose.
 
+Danh sách UC26 hỗ trợ `pending` (task Open) và `approved` (task đề án Decided, sự kiện đã duyệt hoặc
+đã chuyển sang vận hành/hoàn thành). Mỗi sự kiện đã duyệt chỉ hiện một lần, theo task mới nhất.
+
 `ucms-schema.generated.ts` được sinh từ `docs/05-implementation/UCMS_Database_Design.dbml`
 qua `python3 server/src/infra/db/generate-ucms-schema.py`. `ucms-models.ts` ánh xạ các kiểu,
 enum và index DBML sang Mongoose; `init.ts` là lệnh `npm run db:init` idempotent, còn `verify.ts`

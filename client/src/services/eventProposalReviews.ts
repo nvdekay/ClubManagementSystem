@@ -165,8 +165,11 @@ function mutation(csrfToken: string, body?: object): RequestInit {
 }
 
 // GET hàng đợi đề xuất sự kiện chờ ICPDP
-export function fetchEventProposalQueue(signal: AbortSignal): Promise<EventProposalQueueItem[]> {
-  return request('', { signal })
+export function fetchEventProposalQueue(
+  signal: AbortSignal,
+  view: 'pending' | 'approved' = 'pending',
+): Promise<EventProposalQueueItem[]> {
+  return request(`?view=${view}`, { signal })
 }
 
 // GET chi tiết một đề xuất sự kiện

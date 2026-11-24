@@ -8,6 +8,7 @@ import { AppInput } from '@/components/ui/input/AppInput'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useConfirm } from '@/hooks/useConfirm'
+import { appToast } from '@/components/ui/toast/AppToast'
 import { useEventDefenseActions } from '@/hooks/useEventDefense'
 import { useEventProposalAction } from '@/hooks/useEventProposalReviews'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
@@ -272,6 +273,7 @@ export function ProposalDecisionPanel({
         reviewAction.reset()
         await reviewAction.mutateAsync({ kind: 'decide', id: event.id, csrfToken, input })
       }
+      appToast.success(t('eventReviews.success'))
       onSuccess?.()
     } catch (error) {
       console.error('[ProposalDecisionPanel] submit decision failed:', error)

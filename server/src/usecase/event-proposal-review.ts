@@ -114,9 +114,10 @@ export async function listEventProposalReviews(
   repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
+  view: 'pending' | 'approved' = 'pending',
 ) {
   await officer(auth, actor)
-  return repo.listOpen()
+  return repo.listOpen(view)
 }
 
 /** Return the review dossier, including submitted versions and decision history. */

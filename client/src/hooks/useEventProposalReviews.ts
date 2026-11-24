@@ -17,10 +17,10 @@ import {
 const eventProposalKey = ['event-proposal-reviews'] as const
 
 /** Tải các hồ sơ đang chờ xử lý khi nơi gọi bật quyền truy cập cho ICPDP. */
-export function useEventProposalQueue(enabled: boolean) {
+export function useEventProposalQueue(enabled: boolean, view: 'pending' | 'approved' = 'pending') {
   return useQuery({
-    queryKey: [...eventProposalKey, 'queue'],
-    queryFn: ({ signal }) => fetchEventProposalQueue(signal),
+    queryKey: [...eventProposalKey, 'queue', view],
+    queryFn: ({ signal }) => fetchEventProposalQueue(signal, view),
     enabled,
     retry: false,
   })

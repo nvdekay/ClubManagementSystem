@@ -1,6 +1,6 @@
 /** Trang ICPDP quản lý mẫu đề xuất, nhận hồ sơ xử lý và mở chi tiết xét duyệt. */
 import { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
@@ -25,9 +25,11 @@ export function EventProposalQueuePage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const auth = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const view = searchParams.get('view') === 'approved' ? 'approved' : 'pending'
   // Chỉ ICPDP được tải danh sách và mẫu; các thao tác ghi theo dõi trạng thái chờ và lỗi riêng.
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
-  const queue = useEventProposalQueue(isOfficer)
+  const queue = useEventProposalQueue(isOfficer, view)
   const action = useEventProposalAction()
   const template = useEventProposalTemplate(isOfficer)
   const replaceTemplate = useUploadProposalTemplate()
@@ -77,7 +79,7 @@ export function EventProposalQueuePage() {
     if (!auth.data) {
       return
     }
-    if (!takenElsewhere) {
+    if (view === 'pending' && !takenElsewhere) {
       try {
         await action.mutateAsync({ kind: 'claim', id: eventId, csrfToken: auth.data.csrfToken })
       } catch {
@@ -103,7 +105,9 @@ export function EventProposalQueuePage() {
         actions={
           queue.data && (
             <AppBadge tone="info">
-              {t('eventReviews.openCount', { count: queue.data.length })}
+              {t(view === 'approved' ? 'eventReviews.approvedCount' : 'eventReviews.openCount', {
+                count: queue.data.length,
+              })}
             </AppBadge>
           )
         }
@@ -175,6 +179,30 @@ export function EventProposalQueuePage() {
       )}
 
       {/* Xử lý trạng thái tải, đăng nhập, quyền và lỗi trước khi hiển thị danh sách hoặc trạng thái rỗng. */}
+      {isOfficer && (
+        <nav aria-label={t('eventReviews.title')} className="mb-5 flex flex-wrap gap-2">
+          <AppButton
+            variant={view === 'pending' ? 'primary' : 'secondary'}
+            aria-pressed={view === 'pending'}
+            onClick={() => {
+              action.reset()
+              setSearchParams({ view: 'pending' })
+            }}
+          >
+            {t('eventReviews.pendingTab')}
+          </AppButton>
+          <AppButton
+            variant={view === 'approved' ? 'primary' : 'secondary'}
+            aria-pressed={view === 'approved'}
+            onClick={() => {
+              action.reset()
+              setSearchParams({ view: 'approved' })
+            }}
+          >
+            {t('eventReviews.approvedTab')}
+          </AppButton>
+        </nav>
+      )}
       {auth.isPending || (isOfficer && queue.isPending) ? (
         loading
       ) : !auth.data ? (
@@ -223,13 +251,17 @@ export function EventProposalQueuePage() {
                     {event.hasPendingCancellation && (
                       <AppBadge tone="warning">{t('eventReviews.cancellationBadge')}</AppBadge>
                     )}
-                    <AppBadge tone={mine ? 'success' : takenElsewhere ? 'danger' : 'neutral'}>
-                      {mine
-                        ? t('eventReviews.assignedToYou')
-                        : takenElsewhere
-                          ? t('eventReviews.assigned')
-                          : t('eventReviews.unassigned')}
-                    </AppBadge>
+                    {view === 'approved' ? (
+                      <AppBadge tone="success">{t('eventReviews.stateApproved')}</AppBadge>
+                    ) : (
+                      <AppBadge tone={mine ? 'success' : takenElsewhere ? 'danger' : 'neutral'}>
+                        {mine
+                          ? t('eventReviews.assignedToYou')
+                          : takenElsewhere
+                            ? t('eventReviews.assigned')
+                            : t('eventReviews.unassigned')}
+                      </AppBadge>
+                    )}
                   </div>
                   <p className="mt-1 text-sm text-muted-app">
                     {event.clubName} · {date(event.startAt)} ·{' '}
@@ -242,7 +274,12 @@ export function EventProposalQueuePage() {
                         : t('eventReviews.noBudget')}
                     </AppBadge>
                     <span className="text-xs text-muted-app">
-                      {t('eventReviews.waitingSince', { date: date(task.openedAt) })}
+                      {t(
+                        view === 'approved'
+                          ? 'eventReviews.submittedDate'
+                          : 'eventReviews.waitingSince',
+                        { date: date(task.openedAt) },
+                      )}
                     </span>
                   </div>
                 </div>
@@ -253,7 +290,7 @@ export function EventProposalQueuePage() {
                 >
                   {action.isPending && action.variables?.id === event.id
                     ? t('eventReviews.claiming')
-                    : t('eventReviews.open')}
+                    : t(view === 'approved' ? 'eventReviews.viewApproved' : 'eventReviews.open')}
                   <AppIcon name="chevronRight" className="size-4" />
                 </AppButton>
               </li>
@@ -264,8 +301,10 @@ export function EventProposalQueuePage() {
         <AppEmptyState
           variant="boxed"
           icon="sparkles"
-          title={t('eventReviews.none')}
-          message={t('eventReviews.noneHint')}
+          title={t(view === 'approved' ? 'eventReviews.noneApproved' : 'eventReviews.none')}
+          message={t(
+            view === 'approved' ? 'eventReviews.noneApprovedHint' : 'eventReviews.noneHint',
+          )}
         />
       )}
       {/* Nếu nhận xử lý thất bại, giữ danh sách và hiển thị lỗi xung đột từ server tại đây. */}

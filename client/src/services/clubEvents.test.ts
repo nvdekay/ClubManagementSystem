@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchEventProposalPreviewFile } from '@/services/clubEvents'
-import { fetchReviewProposalPreviewFile } from '@/services/eventProposalReviews'
+import {
+  fetchReviewProposalPreviewFile,
+  fetchEventProposalQueue,
+} from '@/services/eventProposalReviews'
 
 const access = {
   fileName: 'Proposal.docx',
@@ -10,6 +13,17 @@ const access = {
 }
 
 afterEach(() => vi.unstubAllGlobals())
+
+it('requests approved proposal history separately from pending reviews', async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: [] })))
+  vi.stubGlobal('fetch', fetch)
+  const signal = new AbortController().signal
+  expect(await fetchEventProposalQueue(signal, 'approved')).toEqual([])
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/v1/admin/event-proposals?view=approved',
+    expect.objectContaining({ signal, credentials: 'same-origin' }),
+  )
+})
 
 describe('submitted proposal review preview', () => {
   it('downloads the requested immutable revision without sending cookies to storage', async () => {

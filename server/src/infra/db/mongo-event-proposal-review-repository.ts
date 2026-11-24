@@ -34,6 +34,7 @@ const TASK_TYPE = 'EVENT_PROPOSAL'
 const CANCELLATION_TASK_TYPE = 'EVENT_CANCELLATION'
 const reviewableStates = ['Pending Approval', 'Under Review', 'Re-defense Pending']
 const cancellableStates = ['Approved', 'Upcoming', 'Ongoing']
+const approvedStates = [...cancellableStates, 'Completed']
 
 // Ánh xạ approval task thành EventProposalTask
 function taskFrom(doc: Doc): EventProposalTask {
@@ -286,10 +287,15 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
 
   return {
     // Liệt kê task thẩm định đề xuất và yêu cầu hủy đang Open
-    async listOpen() {
+    async listOpen(view = 'pending') {
+      const approved = view === 'approved'
       const taskDocs = await tasks
-        .find({ entityType: { $in: [TASK_TYPE, CANCELLATION_TASK_TYPE] }, state: 'Open' })
-        .sort({ openedAt: 1, _id: 1 })
+        .find(
+          approved
+            ? { entityType: TASK_TYPE, state: 'Decided' }
+            : { entityType: { $in: [TASK_TYPE, CANCELLATION_TASK_TYPE] }, state: 'Open' },
+        )
+        .sort({ openedAt: -1, _id: -1 })
         .lean()
       if (!taskDocs.length) {
         return []
@@ -297,7 +303,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       const eventDocs = await events
         .find({
           _id: { $in: taskDocs.map((task) => task.entityId) },
-          state: { $in: [...reviewableStates, ...cancellableStates] },
+          state: { $in: approved ? approvedStates : [...reviewableStates, ...cancellableStates] },
         })
         .lean()
       const versionDocs = await versions
@@ -311,19 +317,22 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         ]),
       )
       const byId = new Map(eventDocs.map((event) => [String(event._id), event]))
+      const included = new Set<string>()
       return taskDocs.flatMap((task) => {
         const event = byId.get(String(task.entityId))
-        if (!event) {
+        if (!event || (approved && included.has(String(event._id)))) {
           return []
         }
         const isCancel = task.entityType === CANCELLATION_TASK_TYPE
         if (
-          isCancel
+          !approved &&
+          (isCancel
             ? !cancellableStates.includes(String(event.state))
-            : !reviewableStates.includes(String(event.state))
+            : !reviewableStates.includes(String(event.state)))
         ) {
           return []
         }
+        included.add(String(event._id))
         const total =
           totals.get(`${String(event._id)}:${String(event.currentRevisionNo ?? 1)}`) ?? 0
         return [{ task: taskFrom(task), event: eventFrom(event, total, undefined, isCancel) }]
