@@ -1,43 +1,66 @@
-import { DomainError } from "./errors.js";
-import type { PolicyVersion } from "./policy.js";
-import type { Property } from "./property.js";
+import { DomainError } from './errors.js'
+import type { PolicyVersion } from './policy.js'
+import type { Property } from './property.js'
 
-export const BOOKING_STATES = ["Draft", "Requested", "Under Review", "Revision Requested", "Approved",
-  "Rejected", "In Use", "Completed", "Cancelled", "Released"] as const;
-export type BookingState = typeof BOOKING_STATES[number];
-export const BOOKING_CANCELLATION_NOTICE_HOURS = 24;
+export const BOOKING_STATES = [
+  'Draft',
+  'Requested',
+  'Under Review',
+  'Revision Requested',
+  'Approved',
+  'Rejected',
+  'In Use',
+  'Completed',
+  'Cancelled',
+  'Released',
+] as const
+export type BookingState = (typeof BOOKING_STATES)[number]
+export const BOOKING_CANCELLATION_NOTICE_HOURS = 24
 export const BOOKING_SLOTS = [
-  { number: 1, start: "07:30", end: "09:50" },
-  { number: 2, start: "10:00", end: "12:20" },
-  { number: 3, start: "12:50", end: "15:10" },
-  { number: 4, start: "15:20", end: "17:40" },
-] as const;
+  { number: 1, start: '07:30', end: '09:50' },
+  { number: 2, start: '10:00', end: '12:20' },
+  { number: 3, start: '12:50', end: '15:10' },
+  { number: 4, start: '15:20', end: '17:40' },
+] as const
 
 // Nhận diện khung giờ (slot 1-4) của campus khớp với thời gian đặt
 /** Khớp chính xác một slot của trường theo giờ Việt Nam, kể cả giây và mili giây. */
-export function bookingSlot(startAt: Date, endAt: Date): typeof BOOKING_SLOTS[number] | undefined {
-  if (!Number.isFinite(startAt.getTime()) || !Number.isFinite(endAt.getTime())) return undefined;
-  const start = new Date(startAt.getTime() + 7 * 3600000).toISOString();
-  const end = new Date(endAt.getTime() + 7 * 3600000).toISOString();
-  if (start.slice(0, 10) !== end.slice(0, 10)) return undefined;
-  return BOOKING_SLOTS.find((slot) => start.slice(11) === `${slot.start}:00.000Z`
-    && end.slice(11) === `${slot.end}:00.000Z`);
+export function bookingSlot(
+  startAt: Date,
+  endAt: Date,
+): (typeof BOOKING_SLOTS)[number] | undefined {
+  if (!Number.isFinite(startAt.getTime()) || !Number.isFinite(endAt.getTime())) {
+    return undefined
+  }
+  const start = new Date(startAt.getTime() + 7 * 3600000).toISOString()
+  const end = new Date(endAt.getTime() + 7 * 3600000).toISOString()
+  if (start.slice(0, 10) !== end.slice(0, 10)) {
+    return undefined
+  }
+  return BOOKING_SLOTS.find(
+    (slot) =>
+      start.slice(11) === `${slot.start}:00.000Z` && end.slice(11) === `${slot.end}:00.000Z`,
+  )
 }
 
 export interface BookingTimeInterval {
-  startAt: Date;
-  endAt: Date;
+  startAt: Date
+  endAt: Date
 }
 
 // Kiểm tra hai mốc thời gian là hai slot campus liền kề
 /** True khi `firstEnd` là giờ kết thúc của slot k và `secondStart` là giờ bắt đầu của slot k+1 trong cùng một ngày Việt Nam. */
 function areAdjacentCampusSlots(firstEnd: Date, secondStart: Date): boolean {
-  const endIso = new Date(firstEnd.getTime() + 7 * 3600000).toISOString();
-  const startIso = new Date(secondStart.getTime() + 7 * 3600000).toISOString();
-  if (endIso.slice(0, 10) !== startIso.slice(0, 10)) return false;
-  const slotIndex = BOOKING_SLOTS.findIndex((slot) => endIso.slice(11) === `${slot.end}:00.000Z`);
-  if (slotIndex < 0 || slotIndex + 1 >= BOOKING_SLOTS.length) return false;
-  return startIso.slice(11) === `${BOOKING_SLOTS[slotIndex + 1]!.start}:00.000Z`;
+  const endIso = new Date(firstEnd.getTime() + 7 * 3600000).toISOString()
+  const startIso = new Date(secondStart.getTime() + 7 * 3600000).toISOString()
+  if (endIso.slice(0, 10) !== startIso.slice(0, 10)) {
+    return false
+  }
+  const slotIndex = BOOKING_SLOTS.findIndex((slot) => endIso.slice(11) === `${slot.end}:00.000Z`)
+  if (slotIndex < 0 || slotIndex + 1 >= BOOKING_SLOTS.length) {
+    return false
+  }
+  return startIso.slice(11) === `${BOOKING_SLOTS[slotIndex + 1]!.start}:00.000Z`
 }
 
 // Gộp các khoảng đặt phòng liên tiếp thành khoảng liền mạch
@@ -45,27 +68,43 @@ function areAdjacentCampusSlots(firstEnd: Date, secondStart: Date): boolean {
  * Gộp các khoảng slot chồng lấn, sát nhau hoặc liên tiếp trong cùng một ngày
  * thành các cửa sổ liên tục, để sự kiện nhiều slot có thể được phủ bởi các booking slot liên tiếp.
  */
-export function mergeConsecutiveBookingIntervals(intervals: readonly BookingTimeInterval[]): BookingTimeInterval[] {
+export function mergeConsecutiveBookingIntervals(
+  intervals: readonly BookingTimeInterval[],
+): BookingTimeInterval[] {
   const sorted = [...intervals]
-    .filter((item) => Number.isFinite(item.startAt.getTime()) && Number.isFinite(item.endAt.getTime()) && item.startAt < item.endAt)
-    .sort((a, b) => a.startAt.getTime() - b.startAt.getTime() || a.endAt.getTime() - b.endAt.getTime());
-  const merged: BookingTimeInterval[] = [];
+    .filter(
+      (item) =>
+        Number.isFinite(item.startAt.getTime()) &&
+        Number.isFinite(item.endAt.getTime()) &&
+        item.startAt < item.endAt,
+    )
+    .sort(
+      (a, b) => a.startAt.getTime() - b.startAt.getTime() || a.endAt.getTime() - b.endAt.getTime(),
+    )
+  const merged: BookingTimeInterval[] = []
   for (const item of sorted) {
-    const last = merged[merged.length - 1];
-    if (last && (item.startAt.getTime() <= last.endAt.getTime() || areAdjacentCampusSlots(last.endAt, item.startAt))) {
+    const last = merged[merged.length - 1]
+    if (
+      last &&
+      (item.startAt.getTime() <= last.endAt.getTime() ||
+        areAdjacentCampusSlots(last.endAt, item.startAt))
+    ) {
       if (item.endAt.getTime() > last.endAt.getTime()) {
-        last.endAt = item.endAt;
+        last.endAt = item.endAt
       }
     } else {
-      merged.push({ startAt: item.startAt, endAt: item.endAt });
+      merged.push({ startAt: item.startAt, endAt: item.endAt })
     }
   }
-  return merged;
+  return merged
 }
 
 // Kiểm tra một khoảng thời gian nằm trọn trong một khoảng khác
-function intervalCoveredBy(interval: BookingTimeInterval, windows: readonly BookingTimeInterval[]): boolean {
-  return windows.some((w) => w.startAt <= interval.startAt && w.endAt >= interval.endAt);
+function intervalCoveredBy(
+  interval: BookingTimeInterval,
+  windows: readonly BookingTimeInterval[],
+): boolean {
+  return windows.some((w) => w.startAt <= interval.startAt && w.endAt >= interval.endAt)
 }
 
 // Kiểm tra booking thuộc chuỗi booking liên tiếp cần thiết để phủ lịch sự kiện
@@ -78,176 +117,340 @@ export function bookingCoversEventSchedule(
   samePropertyBookings: readonly BookingTimeInterval[],
   eventIntervals: readonly BookingTimeInterval[],
 ): boolean {
-  const allMerged = mergeConsecutiveBookingIntervals(samePropertyBookings);
-  const withoutTarget = mergeConsecutiveBookingIntervals(samePropertyBookings.filter((item) => item !== target));
+  const allMerged = mergeConsecutiveBookingIntervals(samePropertyBookings)
+  const withoutTarget = mergeConsecutiveBookingIntervals(
+    samePropertyBookings.filter((item) => item !== target),
+  )
   return eventIntervals.some(
-    (interval) => intervalCoveredBy(interval, allMerged) && !intervalCoveredBy(interval, withoutTarget),
-  );
+    (interval) =>
+      intervalCoveredBy(interval, allMerged) && !intervalCoveredBy(interval, withoutTarget),
+  )
 }
 
 // Kiểm tra hai booking có xung đột thời gian không
-export function bookingIntervalsConflict(start: Date, end: Date, otherStart: Date, otherEnd: Date,
-  thresholdMinutes: number): boolean {
-  return slotsConflict(start, end, otherStart, otherEnd,
-    bookingSlot(start, end) && bookingSlot(otherStart, otherEnd) ? 0 : thresholdMinutes);
+export function bookingIntervalsConflict(
+  start: Date,
+  end: Date,
+  otherStart: Date,
+  otherEnd: Date,
+  thresholdMinutes: number,
+): boolean {
+  return slotsConflict(
+    start,
+    end,
+    otherStart,
+    otherEnd,
+    bookingSlot(start, end) && bookingSlot(otherStart, otherEnd) ? 0 : thresholdMinutes,
+  )
 }
 // Tính hạn chót gửi yêu cầu đặt phòng cho slot
 /** Quy tắc báo trước trong ngày đã thống nhất cho bốn slot của trường. */
 export function bookingDeadline(startAt: Date, endAt: Date): Date {
-  const slot = bookingSlot(startAt, endAt);
-  if (!slot) throw new DomainError("booking must match one campus slot (1-4)", "validation");
-  const day = new Date(startAt.getTime() + 7 * 3600000).toISOString().slice(0, 10);
-  const cutoff = slot.number <= 2 ? BOOKING_SLOTS[0].start : BOOKING_SLOTS[slot.number - 3]!.end;
-  return new Date(`${day}T${cutoff}:00+07:00`);
+  const slot = bookingSlot(startAt, endAt)
+  if (!slot) {
+    throw new DomainError('booking must match one campus slot (1-4)', 'validation')
+  }
+  const day = new Date(startAt.getTime() + 7 * 3600000).toISOString().slice(0, 10)
+  const cutoff = slot.number <= 2 ? BOOKING_SLOTS[0].start : BOOKING_SLOTS[slot.number - 3]!.end
+  return new Date(`${day}T${cutoff}:00+07:00`)
 }
 // Đảm bảo yêu cầu đặt phòng gửi trước hạn chót
 export function assertBookingNotice(input: { startAt: Date; endAt: Date }, now: Date): void {
   if (now >= bookingDeadline(input.startAt, input.endAt)) {
-    throw new DomainError("booking submission deadline has passed", "validation");
+    throw new DomainError('booking submission deadline has passed', 'validation')
   }
 }
 
 export interface BookingInput {
-  propertyId: string; purpose: string; startAt: Date; endAt: Date;
-  headcount: number; equipment: string[]; eventId?: string;
+  propertyId: string
+  purpose: string
+  startAt: Date
+  endAt: Date
+  headcount: number
+  equipment: string[]
+  eventId?: string
 }
 export interface Booking extends BookingInput {
-  id: string; clubId: string; clubName: string; semesterCode: string; state: BookingState;
-  currentVersionNo: number; conflictResult?: string; isLateCancellation: boolean;
-  decisionReason?: string; cancelReason?: string;
+  id: string
+  clubId: string
+  clubName: string
+  semesterCode: string
+  state: BookingState
+  currentVersionNo: number
+  conflictResult?: string
+  isLateCancellation: boolean
+  decisionReason?: string
+  cancelReason?: string
 }
 export interface BookingTask {
-  id: string; state: string; assigneeId?: string; openedAt: Date;
+  id: string
+  state: string
+  assigneeId?: string
+  openedAt: Date
 }
 export interface BookingVersion {
-  versionNo: number; payload: BookingInput; submittedBy: string; submittedAt: Date;
+  versionNo: number
+  payload: BookingInput
+  submittedBy: string
+  submittedAt: Date
 }
 export interface BookingDecisionInput {
-  outcome: "Approve" | "Reject" | "Request revision"; reason: string; reviewNote?: string;
-  overbookingReason?: string;
-  alternative?: { propertyId: string; startAt: Date; endAt: Date };
+  outcome: 'Approve' | 'Reject' | 'Request revision'
+  reason: string
+  reviewNote?: string
+  overbookingReason?: string
+  alternative?: { propertyId: string; startAt: Date; endAt: Date }
 }
 export interface BookingDecision extends BookingDecisionInput {
-  id: string; taskId: string; actorId: string; at: Date;
+  id: string
+  taskId: string
+  actorId: string
+  at: Date
 }
-export interface BookingConflict { id: string; startAt: Date; endAt: Date; source: "booking" | "event" | "defense" }
+export interface BookingConflict {
+  id: string
+  startAt: Date
+  endAt: Date
+  source: 'booking' | 'event' | 'defense'
+}
 export interface BookingCheck {
-  conflicts: BookingConflict[]; capacityWarning: boolean; conflictResult: string;
+  conflicts: BookingConflict[]
+  capacityWarning: boolean
+  conflictResult: string
 }
 export interface BookingClub {
-  id: string; name: string; state: string; dissolutionSemester?: string; dissolutionEffectiveTo?: Date;
+  id: string
+  name: string
+  state: string
+  dissolutionSemester?: string
+  dissolutionEffectiveTo?: Date
 }
 export interface BookingDetail {
-  booking: Booking; property: Property | null; club: BookingClub | null;
-  task: BookingTask | null; versions: BookingVersion[]; decisions: BookingDecision[];
-  check: BookingCheck | null; obligations: string[];
+  booking: Booking
+  property: Property | null
+  club: BookingClub | null
+  task: BookingTask | null
+  versions: BookingVersion[]
+  decisions: BookingDecision[]
+  check: BookingCheck | null
+  obligations: string[]
 }
 export interface FacilityBookingRepository {
   /** Chỉ áp dụng cho yêu cầu cơ sở vật chất; booking ROOM do phân bổ phòng sinh ra. */
-  list(clubId?: string): Promise<Booking[]>;
-  find(id: string, now: Date): Promise<BookingDetail | null>;
-  club(id: string): Promise<BookingClub | null>;
-  events(clubId: string): Promise<Array<{ id: string; title: string; startAt: Date }>>;
-  eventBelongsToClub(eventId: string, clubId: string): Promise<boolean>;
-  conflicts(input: BookingInput, thresholdMinutes: number, excludeId?: string): Promise<BookingConflict[]>;
-  create(clubId: string, input: BookingInput, actorId: string, now: Date): Promise<BookingDetail>;
-  save(id: string, clubId: string, input: BookingInput, expectedVersion: number,
-    actorId: string, now: Date): Promise<BookingDetail>;
-  submit(id: string, clubId: string, expectedVersion: number, actorId: string, now: Date): Promise<BookingDetail>;
-  claim(id: string, officerId: string, now: Date): Promise<BookingDetail>;
-  decide(id: string, officerId: string, input: BookingDecisionInput, now: Date): Promise<BookingDetail>;
-  cancel(id: string, clubId: string, reason: string, actorId: string, now: Date): Promise<BookingDetail>;
-  release(input: { clubId?: string; eventId?: string; source: "event" | "club";
-    reason: string; now: Date }): Promise<number>;
-  advanceLifecycle(now: Date): Promise<{ started: number; completed: number }>;
+  list(clubId?: string): Promise<Booking[]>
+  find(id: string, now: Date): Promise<BookingDetail | null>
+  club(id: string): Promise<BookingClub | null>
+  events(clubId: string): Promise<Array<{ id: string; title: string; startAt: Date }>>
+  eventBelongsToClub(eventId: string, clubId: string): Promise<boolean>
+  conflicts(
+    input: BookingInput,
+    thresholdMinutes: number,
+    excludeId?: string,
+  ): Promise<BookingConflict[]>
+  create(clubId: string, input: BookingInput, actorId: string, now: Date): Promise<BookingDetail>
+  save(
+    id: string,
+    clubId: string,
+    input: BookingInput,
+    expectedVersion: number,
+    actorId: string,
+    now: Date,
+  ): Promise<BookingDetail>
+  submit(
+    id: string,
+    clubId: string,
+    expectedVersion: number,
+    actorId: string,
+    now: Date,
+  ): Promise<BookingDetail>
+  claim(id: string, officerId: string, now: Date): Promise<BookingDetail>
+  decide(
+    id: string,
+    officerId: string,
+    input: BookingDecisionInput,
+    now: Date,
+  ): Promise<BookingDetail>
+  cancel(
+    id: string,
+    clubId: string,
+    reason: string,
+    actorId: string,
+    now: Date,
+  ): Promise<BookingDetail>
+  release(input: {
+    clubId?: string
+    eventId?: string
+    source: 'event' | 'club'
+    reason: string
+    now: Date
+  }): Promise<number>
+  advanceLifecycle(now: Date): Promise<{ started: number; completed: number }>
   /** Các yêu cầu chưa xong, booking đã duyệt và buổi phân bổ phòng trùng với một blackout (UC44 A2). */
-  blackoutConflicts(propertyId: string, now: Date): Promise<Booking[]>;
+  blackoutConflicts(propertyId: string, now: Date): Promise<Booking[]>
 }
 
 // Đảm bảo tài sản CLB được phép yêu cầu đặt (không phải phòng do ICPDP phân bổ)
 /** Phòng do ICPDP phân bổ mỗi học kỳ; CLB yêu cầu mọi loại cơ sở vật chất còn lại. */
-export function assertRequestableProperty(property: Pick<Property, "type"> | null | undefined): void {
-  if (property?.type === "ROOM") throw new DomainError("rooms are allocated by ICPDP", "validation");
+export function assertRequestableProperty(
+  property: Pick<Property, 'type'> | null | undefined,
+): void {
+  if (property?.type === 'ROOM') {
+    throw new DomainError('rooms are allocated by ICPDP', 'validation')
+  }
 }
 
 // Kiểm tra và chuẩn hoá mã booking dạng ObjectId
 export function bookingId(value: string): string {
-  if (!/^[0-9a-f]{24}$/i.test(value)) throw new DomainError("invalid booking identifier", "validation");
-  return value.toLowerCase();
+  if (!/^[0-9a-f]{24}$/i.test(value)) {
+    throw new DomainError('invalid booking identifier', 'validation')
+  }
+  return value.toLowerCase()
 }
 // Kiểm tra lý do đặt phòng là bắt buộc và không quá dài
 export function bookingReason(value: string): string {
-  if (typeof value !== "string" || !value.trim() || value.trim().length > 2000) {
-    throw new DomainError("booking reason is required (maximum 2000 characters)", "validation");
+  if (typeof value !== 'string' || !value.trim() || value.trim().length > 2000) {
+    throw new DomainError('booking reason is required (maximum 2000 characters)', 'validation')
   }
-  return value.trim();
+  return value.trim()
 }
 // Kiểm tra dữ liệu yêu cầu đặt phòng
 export function validateBookingInput(input: BookingInput): BookingInput {
-  const propertyId = bookingId(input.propertyId);
-  const purpose = bookingReason(input.purpose);
-  if (!(input.startAt instanceof Date) || !(input.endAt instanceof Date)
-    || !Number.isFinite(input.startAt.getTime()) || !Number.isFinite(input.endAt.getTime())
-    || input.startAt >= input.endAt) throw new DomainError("invalid booking interval", "validation");
-  if (!bookingSlot(input.startAt, input.endAt)) throw new DomainError("booking must match one campus slot (1-4)", "validation");
+  const propertyId = bookingId(input.propertyId)
+  const purpose = bookingReason(input.purpose)
+  if (
+    !(input.startAt instanceof Date) ||
+    !(input.endAt instanceof Date) ||
+    !Number.isFinite(input.startAt.getTime()) ||
+    !Number.isFinite(input.endAt.getTime()) ||
+    input.startAt >= input.endAt
+  ) {
+    throw new DomainError('invalid booking interval', 'validation')
+  }
+  if (!bookingSlot(input.startAt, input.endAt)) {
+    throw new DomainError('booking must match one campus slot (1-4)', 'validation')
+  }
   if (!Number.isInteger(input.headcount) || input.headcount < 1 || input.headcount > 10000) {
-    throw new DomainError("invalid booking headcount", "validation");
+    throw new DomainError('invalid booking headcount', 'validation')
   }
-  if (!Array.isArray(input.equipment) || input.equipment.length > 30
-    || input.equipment.some((item) => typeof item !== "string" || !item.trim() || item.length > 60)) {
-    throw new DomainError("invalid booking equipment", "validation");
+  if (
+    !Array.isArray(input.equipment) ||
+    input.equipment.length > 30 ||
+    input.equipment.some((item) => typeof item !== 'string' || !item.trim() || item.length > 60)
+  ) {
+    throw new DomainError('invalid booking equipment', 'validation')
   }
-  const equipment = input.equipment.map((item) => item.trim());
-  if (new Set(equipment).size !== equipment.length) throw new DomainError("duplicate booking equipment", "validation");
-  return { propertyId, purpose, startAt: input.startAt, endAt: input.endAt,
-    headcount: input.headcount, equipment, ...(input.eventId ? { eventId: bookingId(input.eventId) } : {}) };
+  const equipment = input.equipment.map((item) => item.trim())
+  if (new Set(equipment).size !== equipment.length) {
+    throw new DomainError('duplicate booking equipment', 'validation')
+  }
+  return {
+    propertyId,
+    purpose,
+    startAt: input.startAt,
+    endAt: input.endAt,
+    headcount: input.headcount,
+    equipment,
+    ...(input.eventId ? { eventId: bookingId(input.eventId) } : {}),
+  }
 }
 
 // Kiểm tra hai khoảng thời gian chồng lấn tính cả khoảng đệm
-export function slotsConflict(startAt: Date, endAt: Date, otherStart: Date, otherEnd: Date,
-  thresholdMinutes: number): boolean {
-  const buffer = thresholdMinutes * 60000;
-  return startAt.getTime() < otherEnd.getTime() + buffer && endAt.getTime() + buffer > otherStart.getTime();
+export function slotsConflict(
+  startAt: Date,
+  endAt: Date,
+  otherStart: Date,
+  otherEnd: Date,
+  thresholdMinutes: number,
+): boolean {
+  const buffer = thresholdMinutes * 60000
+  return (
+    startAt.getTime() < otherEnd.getTime() + buffer &&
+    endAt.getTime() + buffer > otherStart.getTime()
+  )
 }
 
 // Kiểm tra việc huỷ booking có trễ so với thời gian báo trước không
 export function isLateBookingCancellation(startAt: Date, now: Date): boolean {
-  return startAt.getTime() - now.getTime() < BOOKING_CANCELLATION_NOTICE_HOURS * 3600000;
+  return startAt.getTime() - now.getTime() < BOOKING_CANCELLATION_NOTICE_HOURS * 3600000
 }
 
 // Đánh giá yêu cầu đặt phòng theo tài sản, CLB, chính sách và xung đột lịch
-export function assessBooking(input: BookingInput, property: Property, club: BookingClub,
-  policy: PolicyVersion, conflicts: BookingConflict[], now: Date): BookingCheck & { semesterCode: string } {
-  validateBookingInput(input);
-  if (!["Active", "Dissolving"].includes(club.state)) throw new DomainError("club cannot request bookings", "conflict");
-  if (!property.isActive) throw new DomainError("property is inactive", "conflict");
-  if (input.startAt <= now) throw new DomainError("booking must start in the future", "validation");
-  const semester = policy.academicCalendar.find((item) => input.startAt >= item.startAt && input.endAt <= item.endAt);
-  if (!semester) throw new DomainError("booking must fit within one academic semester", "validation");
-  if (club.dissolutionSemester || club.state === "Dissolving") {
+export function assessBooking(
+  input: BookingInput,
+  property: Property,
+  club: BookingClub,
+  policy: PolicyVersion,
+  conflicts: BookingConflict[],
+  now: Date,
+): BookingCheck & { semesterCode: string } {
+  validateBookingInput(input)
+  if (!['Active', 'Dissolving'].includes(club.state)) {
+    throw new DomainError('club cannot request bookings', 'conflict')
+  }
+  if (!property.isActive) {
+    throw new DomainError('property is inactive', 'conflict')
+  }
+  if (input.startAt <= now) {
+    throw new DomainError('booking must start in the future', 'validation')
+  }
+  const semester = policy.academicCalendar.find(
+    (item) => input.startAt >= item.startAt && input.endAt <= item.endAt,
+  )
+  if (!semester) {
+    throw new DomainError('booking must fit within one academic semester', 'validation')
+  }
+  if (club.dissolutionSemester || club.state === 'Dissolving') {
     // The decision's stored cutoff wins over the live calendar, which ICPDP may have edited since (BR45).
-    const cutoffEnd = club.dissolutionEffectiveTo
-      ?? policy.academicCalendar.find((item) => item.code === club.dissolutionSemester)?.endAt;
-    if (!cutoffEnd || input.endAt > cutoffEnd) throw new DomainError("booking exceeds dissolution semester", "conflict");
+    const cutoffEnd =
+      club.dissolutionEffectiveTo ??
+      policy.academicCalendar.find((item) => item.code === club.dissolutionSemester)?.endAt
+    if (!cutoffEnd || input.endAt > cutoffEnd) {
+      throw new DomainError('booking exceeds dissolution semester', 'conflict')
+    }
   }
   // Giờ được phép đặt của trường tính theo giờ địa phương Việt Nam, không phụ thuộc múi giờ của server.
-  const start = new Date(input.startAt.getTime() + 7 * 3600000);
-  const end = new Date(input.endAt.getTime() + 7 * 3600000);
-  function minutes(date: Date) { return date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60 + date.getUTCMilliseconds() / 60000; }
-  function clock(value: string) { return Number(value.slice(0, 2)) * 60 + Number(value.slice(3)); }
-  const window = property.bookableHours.find((item) => item.day === (start.getUTCDay() || 7));
-  if (!window || start.toISOString().slice(0, 10) !== end.toISOString().slice(0, 10)
-    || minutes(start) < clock(window.open) || minutes(end) > clock(window.close)) {
-    throw new DomainError("booking is outside bookable hours", "validation");
+  const start = new Date(input.startAt.getTime() + 7 * 3600000)
+  const end = new Date(input.endAt.getTime() + 7 * 3600000)
+  function minutes(date: Date) {
+    return (
+      date.getUTCHours() * 60 +
+      date.getUTCMinutes() +
+      date.getUTCSeconds() / 60 +
+      date.getUTCMilliseconds() / 60000
+    )
   }
-  if (property.blackouts.some((item) => slotsConflict(input.startAt, input.endAt, item.startAt, item.endAt, 0))) {
-    throw new DomainError("booking overlaps a blackout", "conflict");
+  function clock(value: string) {
+    return Number(value.slice(0, 2)) * 60 + Number(value.slice(3))
+  }
+  const window = property.bookableHours.find((item) => item.day === (start.getUTCDay() || 7))
+  if (
+    !window ||
+    start.toISOString().slice(0, 10) !== end.toISOString().slice(0, 10) ||
+    minutes(start) < clock(window.open) ||
+    minutes(end) > clock(window.close)
+  ) {
+    throw new DomainError('booking is outside bookable hours', 'validation')
+  }
+  if (
+    property.blackouts.some((item) =>
+      slotsConflict(input.startAt, input.endAt, item.startAt, item.endAt, 0),
+    )
+  ) {
+    throw new DomainError('booking overlaps a blackout', 'conflict')
   }
   if (input.equipment.some((item) => !property.equipment.includes(item))) {
-    throw new DomainError("equipment is not available at this property", "validation");
+    throw new DomainError('equipment is not available at this property', 'validation')
   }
-  const capacityWarning = property.capacity !== undefined && input.headcount > property.capacity;
-  return { semesterCode: semester.code, conflicts, capacityWarning,
-    conflictResult: conflicts.length && !policy.allowOverbooking ? "Blocking Conflict"
-      : conflicts.length || capacityWarning ? "Warning" : "No Conflict" };
+  const capacityWarning = property.capacity !== undefined && input.headcount > property.capacity
+  return {
+    semesterCode: semester.code,
+    conflicts,
+    capacityWarning,
+    conflictResult:
+      conflicts.length && !policy.allowOverbooking
+        ? 'Blocking Conflict'
+        : conflicts.length || capacityWarning
+          ? 'Warning'
+          : 'No Conflict',
+  }
 }

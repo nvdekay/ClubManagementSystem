@@ -1,10 +1,10 @@
-import { Types } from "mongoose";
-import type { EventFinanceRepository } from "../../domain/event-finance.js";
-import { mongoPostEventReportRepository } from "./mongo-post-event-report-repository.js";
-import { ucmsModels as m } from "./ucms-models.js";
+import { Types } from 'mongoose'
+import type { EventFinanceRepository } from '../../domain/event-finance.js'
+import { mongoPostEventReportRepository } from './mongo-post-event-report-repository.js'
+import { ucmsModels as m } from './ucms-models.js'
 // Chuyển số thành Decimal128
 function decimal(value: number) {
-  return Types.Decimal128.fromString(String(value));
+  return Types.Decimal128.fromString(String(value))
 }
 // Seed sự kiện demo Wave 4 (cân bằng, bổ sung, hoàn trả, huỷ) cho báo cáo sau sự kiện
 /** Chỉ tạo các fixture demo thuộc quyền sở hữu; fixture đã có thì không bao giờ bị reset sau thao tác của user. */
@@ -17,60 +17,62 @@ export async function seedWave4(
   const policy = await m
     .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
     .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-    .lean();
+    .lean()
   if (
     !((policy?.reportDeadlines ?? []) as { reportType: string }[]).some(
-      (d) => d.reportType === "POST_EVENT",
+      (d) => d.reportType === 'POST_EVENT',
     )
   ) {
     console.log(
-      "Wave 4 report demo skipped: configure POST_EVENT in UC04 before running seed:demo again",
-    );
-    return;
+      'Wave 4 report demo skipped: configure POST_EVENT in UC04 before running seed:demo again',
+    )
+    return
   }
-  const club = await m.clubs!.findById(clubId).lean();
+  const club = await m.clubs!.findById(clubId).lean()
   for (const [suffix, amount, state] of [
-    ["balanced", 1000000, "Completed"],
-    ["top-up", 1200000, "Completed"],
-    ["refund", 800000, "Completed"],
-    ["cancelled", 200000, "Cancelled"],
+    ['balanced', 1000000, 'Completed'],
+    ['top-up', 1200000, 'Completed'],
+    ['refund', 800000, 'Completed'],
+    ['cancelled', 200000, 'Cancelled'],
   ] as const) {
-    const title = `Wave 4 demo: ${suffix}`;
-    if (await m.events!.exists({ clubId, title })) continue;
+    const title = `Wave 4 demo: ${suffix}`
+    if (await m.events!.exists({ clubId, title })) {
+      continue
+    }
     // Hoàn tất tại thời điểm seed dùng policy đang cấu hình, không lùi ngày.
     const event = await m.events!.create({
-      organizerType: "CLUB",
+      organizerType: 'CLUB',
       clubId,
       clubName: club?.name,
       title,
       state,
-      audienceScope: "PUBLIC",
+      audienceScope: 'PUBLIC',
       capacity: 10,
       startAt: new Date(now.getTime() - 3600000),
       endAt: now,
       currentRevisionNo: 1,
-      attendanceFinalized: state === "Completed",
-      semesterCode: "Fall 2026",
+      attendanceFinalized: state === 'Completed',
+      semesterCode: 'Fall 2026',
       createdAt: now,
-    });
+    })
     await m.eventProposalVersions!.create({
       eventId: event._id,
       revisionNo: 1,
       payload: {
         title,
-        objective: "Practice and demonstrate the post-event workflow",
-        plan: "Workshop and discussion",
+        objective: 'Practice and demonstrate the post-event workflow',
+        plan: 'Workshop and discussion',
       },
-      budgetLines: [{ category: "Supplies", amount: 1500000 }],
+      budgetLines: [{ category: 'Supplies', amount: 1500000 }],
       submittedBy: owner,
       submittedAt: now,
-    });
+    })
     const budget = await m.eventBudgets!.create({
       eventId: event._id,
       clubId,
       lines: [
         {
-          category: "Supplies",
+          category: 'Supplies',
           requestedAmount: 1500000,
           approvedAmount: 1500000,
         },
@@ -80,77 +82,74 @@ export async function seedWave4(
       approvedByDecisionId: new Types.ObjectId(),
       disbursedTotal: decimal(1000000),
       refundedTotal: decimal(0),
-      state: "Disbursed",
+      state: 'Disbursed',
       settlementDueAt: new Date(now.getTime() + 14 * 86400000),
       createdAt: now,
-    });
+    })
     await m.budgetDisbursements!.create({
       eventBudgetId: budget._id,
-      kind: "Advance",
+      kind: 'Advance',
       amount: decimal(1000000),
       disbursedAt: now,
       recordedBy: owner,
-      note: "Wave 4 demo advance",
-    });
+      note: 'Wave 4 demo advance',
+    })
     if (finance) {
-      let detail = (await finance.find(String(budget._id)))!;
+      let detail = (await finance.find(String(budget._id)))!
       detail = await finance.act(
         detail.id,
         String(clubId),
         String(owner),
         {
-          kind: "expense",
+          kind: 'expense',
           revision: detail.revision,
           input: {
-            category: "Supplies",
+            category: 'Supplies',
             amount,
             spentAt: now,
-            description: "Wave 4 demo expense",
+            description: 'Wave 4 demo expense',
           },
         },
         now,
-      );
-      if (suffix !== "cancelled")
+      )
+      if (suffix !== 'cancelled') {
         await finance.act(
           detail.id,
           String(clubId),
           String(owner),
           {
-            kind: "evidence",
+            kind: 'evidence',
             revision: detail.revision,
             expenseId: detail.expenses[0]!.id,
             input: {
-              type: "RECEIPT",
-              externalLink: "https://example.org/demo-receipt",
+              type: 'RECEIPT',
+              externalLink: 'https://example.org/demo-receipt',
             },
           },
           now,
-        );
+        )
+      }
     }
-    if (state === "Completed") {
-      const reports = mongoPostEventReportRepository();
-      const current = (await reports.find(
-        String(event._id),
-        String(clubId),
-        now,
-      ))!;
+    if (state === 'Completed') {
+      const reports = mongoPostEventReportRepository()
+      const current = (await reports.find(String(event._id), String(clubId), now))!
       await reports.act(
         String(event._id),
         String(clubId),
         String(owner),
         {
-          kind: "save",
+          kind: 'save',
           revision: current.obligation.revision,
           input: {
             actualResult:
-              "Demo workshop completed; verify attendance and actual expenses before submission.",
-            incidents: "",
-            lessonsLearned: "Prepare materials earlier.",
+              'Demo workshop completed; verify attendance and actual expenses before submission.',
+            incidents: '',
+            lessonsLearned: 'Prepare materials earlier.',
             evidence: [],
           },
         },
         now,
-      );
+      )
     }
   }
 }

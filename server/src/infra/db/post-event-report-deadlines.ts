@@ -1,25 +1,24 @@
-import { Types, type ClientSession } from "mongoose";
-import type { ReportDeadline } from "../../domain/policy.js";
-import { DomainError } from "../../domain/errors.js";
-import { ucmsModels as m } from "./ucms-models.js";
-type Doc = Record<string, unknown>;
+import { Types, type ClientSession } from 'mongoose'
+import type { ReportDeadline } from '../../domain/policy.js'
+import { DomainError } from '../../domain/errors.js'
+import { ucmsModels as m } from './ucms-models.js'
+type Doc = Record<string, unknown>
 // Xác định hạn nộp, nhắc và leo thang của báo cáo sau sự kiện theo policy đã đóng băng
 export async function postEventDeadline(
   event: Doc,
   session?: ClientSession,
 ): Promise<{
-  policyVersionId: string;
-  dueAt: Date;
-  reminderAt: Date;
-  escalationAt: Date;
+  policyVersionId: string
+  dueAt: Date
+  reminderAt: Date
+  escalationAt: Date
 }> {
   const first = await m
     .postEventReports!.findOne({ eventId: event._id })
     .sort({ versionNo: 1 })
     .session(session ?? null)
-    .lean();
-  const frozen = first?.preloadedFigures as
-    { dueAt?: Date; policyVersionId?: string } | undefined;
+    .lean()
+  const frozen = first?.preloadedFigures as { dueAt?: Date; policyVersionId?: string } | undefined
   const policy = frozen?.policyVersionId
     ? await m
         .policyVersions!.findById(frozen.policyVersionId)
@@ -29,31 +28,22 @@ export async function postEventDeadline(
         .policyVersions!.findOne({ effectiveFrom: { $lte: event.endAt } })
         .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
         .session(session ?? null)
-        .lean();
+        .lean()
   const deadline = ((policy?.reportDeadlines ?? []) as ReportDeadline[]).find(
-    (d) => d.reportType === "POST_EVENT",
-  );
-  if (!policy || !deadline)
-    throw new DomainError(
-      "post-event report deadline is not configured",
-      "unavailable",
-    );
+    (d) => d.reportType === 'POST_EVENT',
+  )
+  if (!policy || !deadline) {
+    throw new DomainError('post-event report deadline is not configured', 'unavailable')
+  }
   const dueAt =
     frozen?.dueAt ??
-    new Date(
-      (event.endAt as Date).getTime() +
-        deadline.dueDaysAfterPeriodEnd * 86400000,
-    );
+    new Date((event.endAt as Date).getTime() + deadline.dueDaysAfterPeriodEnd * 86400000)
   return {
     policyVersionId: String(policy._id),
     dueAt,
-    reminderAt: new Date(
-      dueAt.getTime() - deadline.remindBeforeDays * 86400000,
-    ),
-    escalationAt: new Date(
-      dueAt.getTime() + deadline.escalateAfterDays * 86400000,
-    ),
-  };
+    reminderAt: new Date(dueAt.getTime() - deadline.remindBeforeDays * 86400000),
+    escalationAt: new Date(dueAt.getTime() + deadline.escalateAfterDays * 86400000),
+  }
 }
 // Liệt kê sự kiện CLB có báo cáo sau sự kiện quá hạn chưa nộp
 export async function overduePostEventReports(
@@ -63,35 +53,37 @@ export async function overduePostEventReports(
 ): Promise<Types.ObjectId[]> {
   const events = await m
     .events!.find({
-      organizerType: "CLUB",
+      organizerType: 'CLUB',
       ...(clubId ? { clubId } : {}),
-      state: { $in: ["Completed", "Report Submitted"] },
+      state: { $in: ['Completed', 'Report Submitted'] },
     })
     .session(session ?? null)
-    .lean();
-  const overdue: Types.ObjectId[] = [];
+    .lean()
+  const overdue: Types.ObjectId[] = []
   for (const event of events) {
     if (
-      event.audienceScope === "MEMBERS_ONLY" &&
-      !(await m
-        .eventBudgets!.exists({ eventId: event._id })
-        .session(session ?? null))
-    )
-      continue;
+      event.audienceScope === 'MEMBERS_ONLY' &&
+      !(await m.eventBudgets!.exists({ eventId: event._id }).session(session ?? null))
+    ) {
+      continue
+    }
     const latest = await m
       .postEventReports!.findOne({ eventId: event._id })
       .sort({ versionNo: -1 })
       .session(session ?? null)
-      .lean();
-    if (latest && ["Submitted", "Accepted"].includes(String(latest.state)))
-      continue;
+      .lean()
+    if (latest && ['Submitted', 'Accepted'].includes(String(latest.state))) {
+      continue
+    }
     try {
-      if ((await postEventDeadline(event, session)).dueAt < now)
-        overdue.push(event._id as Types.ObjectId);
+      if ((await postEventDeadline(event, session)).dueAt < now) {
+        overdue.push(event._id as Types.ObjectId)
+      }
     } catch (error) {
-      if (!(error instanceof DomainError && error.kind === "unavailable"))
-        throw error;
+      if (!(error instanceof DomainError && error.kind === 'unavailable')) {
+        throw error
+      }
     }
   }
-  return overdue;
+  return overdue
 }

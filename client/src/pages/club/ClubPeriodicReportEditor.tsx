@@ -1,15 +1,15 @@
-import { useRef, useState, type ChangeEvent, type ClipboardEvent } from "react";
-import { useTranslation } from "react-i18next";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppDialog } from "@/components/ui/dialog/AppDialog";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { useChangePeriodicReport } from "@/hooks/useClubPeriodicReports";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { useRef, useState, type ChangeEvent, type ClipboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppDialog } from '@/components/ui/dialog/AppDialog'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppInput } from '@/components/ui/input/AppInput'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { useChangePeriodicReport } from '@/hooks/useClubPeriodicReports'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
 import type {
   PeriodicAchievementEntry,
   PeriodicCustomAnswer,
@@ -17,90 +17,91 @@ import type {
   PeriodicMemberEntry,
   PeriodicReportDetail,
   ReturnSection,
-} from "@/services/periodicReports";
-import { formatMoney } from "@/utils/formatMoney";
+} from '@/services/periodicReports'
+import { formatMoney } from '@/utils/formatMoney'
 
 interface Props {
-  clubId: string;
-  csrfToken: string;
-  report: PeriodicReportDetail;
+  clubId: string
+  csrfToken: string
+  report: PeriodicReportDetail
 }
 
 // Đọc tệp thành data URL
 function readRawDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("Could not read file"));
-    reader.readAsDataURL(file);
-  });
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result ?? ''))
+    reader.onerror = () => reject(new Error('Could not read file'))
+    reader.readAsDataURL(file)
+  })
 }
 
 // Đọc ảnh thành data URL, nén nếu ảnh quá lớn
 async function readImageDataUrl(file: File): Promise<string> {
-  const raw = await readRawDataUrl(file);
-  if (raw.length <= 900_000 || file.type === "image/gif" || file.type === "image/svg+xml") {
-    return raw;
+  const raw = await readRawDataUrl(file)
+  if (raw.length <= 900_000 || file.type === 'image/gif' || file.type === 'image/svg+xml') {
+    return raw
   }
   return new Promise((resolve) => {
-    const img = new Image();
+    const img = new Image()
     img.onload = () => {
-      const maxDim = 1600;
-      const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(img.width * scale));
-      canvas.height = Math.max(1, Math.round(img.height * scale));
-      const ctx = canvas.getContext("2d");
+      const maxDim = 1600
+      const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(img.width * scale))
+      canvas.height = Math.max(1, Math.round(img.height * scale))
+      const ctx = canvas.getContext('2d')
       if (!ctx) {
-        resolve(raw);
-        return;
+        resolve(raw)
+        return
       }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => resolve(raw);
-    img.src = raw;
-  });
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', 0.85))
+    }
+    img.onerror = () => resolve(raw)
+    img.src = raw
+  })
 }
 
 // Tạo tên tệp an toàn cho ảnh minh chứng từ tiêu đề
 function safeFileName(title: string, url: string): string {
-  const base = title
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]+/gi, "-")
-    .replace(/^-+|-+$/g, "") || "evidence-image";
-  const match = url.match(/^data:image\/([a-z0-9.+-]+);base64,/i);
-  const rawExt = match?.[1]?.toLowerCase() ?? "png";
-  const ext = rawExt === "jpeg" ? "jpg" : rawExt === "svg+xml" ? "svg" : rawExt;
-  return `${base}.${ext}`;
+  const base =
+    title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/gi, '-')
+      .replace(/^-+|-+$/g, '') || 'evidence-image'
+  const match = url.match(/^data:image\/([a-z0-9.+-]+);base64,/i)
+  const rawExt = match?.[1]?.toLowerCase() ?? 'png'
+  const ext = rawExt === 'jpeg' ? 'jpg' : rawExt === 'svg+xml' ? 'svg' : rawExt
+  return `${base}.${ext}`
 }
 
 // Tải ảnh minh chứng về máy
 async function saveEvidenceImage(url: string, title: string) {
-  const filename = safeFileName(title, url);
-  if (url.startsWith("data:image/")) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    return;
+  const filename = safeFileName(title, url)
+  if (url.startsWith('data:image/')) {
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    return
   }
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(blobUrl);
+    const res = await fetch(url)
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(blobUrl)
   } catch {
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -116,48 +117,52 @@ function EvidenceInputBlock({
   onPreview,
   onRemoveRow,
 }: {
-  label?: string;
-  required?: boolean;
-  value?: string;
-  editable: boolean;
-  disabled: boolean;
-  showMissingError?: boolean;
-  onChange: (nextUrl: string) => void;
-  onPreview: (url: string, title: string) => void;
-  onRemoveRow?: () => void;
+  label?: string
+  required?: boolean
+  value?: string
+  editable: boolean
+  disabled: boolean
+  showMissingError?: boolean
+  onChange: (nextUrl: string) => void
+  onPreview: (url: string, title: string) => void
+  onRemoveRow?: () => void
 }) {
-  const { t } = useTranslation();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const hasValue = Boolean(value?.trim());
-  const isUploaded = Boolean(value?.startsWith("data:image/"));
-  const imgFailed = Boolean(value && failedUrl === value);
-  const displayTitle = label || t("clubPeriodicReports.eventEvidenceUrl");
-  const isMissing = Boolean(required && showMissingError && !hasValue);
+  const { t } = useTranslation()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const hasValue = Boolean(value?.trim())
+  const isUploaded = Boolean(value?.startsWith('data:image/'))
+  const imgFailed = Boolean(value && failedUrl === value)
+  const displayTitle = label || t('clubPeriodicReports.eventEvidenceUrl')
+  const isMissing = Boolean(required && showMissingError && !hasValue)
 
   // Xử lý khi chọn tệp ảnh minh chứng
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    const dataUrl = await readImageDataUrl(file);
-    setFailedUrl(null);
-    onChange(dataUrl);
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) {
+      return
+    }
+    const dataUrl = await readImageDataUrl(file)
+    setFailedUrl(null)
+    onChange(dataUrl)
   }
 
   // Xử lý khi dán ảnh từ clipboard làm minh chứng
   async function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
-    const items = event.clipboardData?.items;
-    if (!items) return;
+    const items = event.clipboardData?.items
+    if (!items) {
+      return
+    }
     for (const item of Array.from(items)) {
-      if (item.type.startsWith("image/")) {
-        const file = item.getAsFile();
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
         if (file) {
-          event.preventDefault();
-          const dataUrl = await readImageDataUrl(file);
-          setFailedUrl(null);
-          onChange(dataUrl);
-          return;
+          event.preventDefault()
+          const dataUrl = await readImageDataUrl(file)
+          setFailedUrl(null)
+          onChange(dataUrl)
+          return
         }
       }
     }
@@ -174,15 +179,15 @@ function EvidenceInputBlock({
       <div className="flex flex-wrap items-center gap-2.5">
         {!isUploaded && (
           <AppInput
-            placeholder={t("clubPeriodicReports.evidenceUrlPlaceholder")}
+            placeholder={t('clubPeriodicReports.evidenceUrlPlaceholder')}
             aria-invalid={isMissing ? true : undefined}
             className="min-w-60 flex-1 disabled:opacity-70"
-            value={value ?? ""}
+            value={value ?? ''}
             disabled={!editable || disabled}
             onPaste={(e) => void handlePaste(e)}
             onChange={(e) => {
-              setFailedUrl(null);
-              onChange(e.target.value);
+              setFailedUrl(null)
+              onChange(e.target.value)
             }}
           />
         )}
@@ -201,7 +206,9 @@ function EvidenceInputBlock({
               disabled={disabled}
               onClick={() => fileRef.current?.click()}
             >
-              {isUploaded ? t("clubPeriodicReports.changeImage") : t("clubPeriodicReports.uploadImage")}
+              {isUploaded
+                ? t('clubPeriodicReports.changeImage')
+                : t('clubPeriodicReports.uploadImage')}
             </AppButton>
           </>
         )}
@@ -210,21 +217,21 @@ function EvidenceInputBlock({
             variant="secondary"
             disabled={disabled}
             onClick={() => {
-              setFailedUrl(null);
-              onChange("");
+              setFailedUrl(null)
+              onChange('')
             }}
           >
-            {t("clubPeriodicReports.removeImage")}
+            {t('clubPeriodicReports.removeImage')}
           </AppButton>
         )}
         {editable && onRemoveRow && (
           <AppButton variant="secondary" disabled={disabled} onClick={onRemoveRow}>
-            {t("clubPeriodicReports.remove")}
+            {t('clubPeriodicReports.remove')}
           </AppButton>
         )}
       </div>
 
-      {isMissing && <AppFieldError message={t("clubPeriodicReports.validationEvidenceMissing")} />}
+      {isMissing && <AppFieldError message={t('clubPeriodicReports.validationEvidenceMissing')} />}
 
       {value && (
         <div className="flex flex-wrap items-start gap-3 rounded-lg border border-border-app bg-surface-app p-3">
@@ -236,24 +243,34 @@ function EvidenceInputBlock({
               className="max-h-40 rounded-lg border border-border-app object-contain"
             />
           ) : (
-            <a href={value} target="_blank" rel="noreferrer" className="text-xs font-medium text-primary-app break-all hover:underline">
+            <a
+              href={value}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-medium text-primary-app break-all hover:underline"
+            >
               {value}
             </a>
           )}
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <AppBadge tone={isUploaded ? "success" : "info"}>
-                {isUploaded ? t("clubPeriodicReports.uploadedImageReady") : t("periodicReports.linkedEvidenceBadge")}
+              <AppBadge tone={isUploaded ? 'success' : 'info'}>
+                {isUploaded
+                  ? t('clubPeriodicReports.uploadedImageReady')
+                  : t('periodicReports.linkedEvidenceBadge')}
               </AppBadge>
             </div>
             <div className="flex flex-wrap gap-2">
               {!imgFailed && (
                 <>
                   <AppButton variant="secondary" onClick={() => onPreview(value, displayTitle)}>
-                    {t("clubPeriodicReports.viewImage")}
+                    {t('clubPeriodicReports.viewImage')}
                   </AppButton>
-                  <AppButton variant="secondary" onClick={() => void saveEvidenceImage(value, displayTitle)}>
-                    {t("clubPeriodicReports.saveImage")}
+                  <AppButton
+                    variant="secondary"
+                    onClick={() => void saveEvidenceImage(value, displayTitle)}
+                  >
+                    {t('clubPeriodicReports.saveImage')}
                   </AppButton>
                 </>
               )}
@@ -264,7 +281,7 @@ function EvidenceInputBlock({
                   rel="noreferrer"
                   className="inline-flex min-h-10 items-center rounded-lg border border-border-app bg-bg-app px-3 py-1.5 text-xs font-medium text-text-app shadow-xs hover:bg-surface-app"
                 >
-                  {t("periodicReports.openOriginalLink")}
+                  {t('periodicReports.openOriginalLink')}
                 </a>
               )}
             </div>
@@ -272,130 +289,163 @@ function EvidenceInputBlock({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // Khóa i18n tên mục của báo cáo định kỳ
 function sectionNameKey(section: ReturnSection) {
   switch (section) {
-    case "members": return "periodicReports.sectionMembers" as const;
-    case "events": return "periodicReports.sectionEvents" as const;
-    case "achievements": return "periodicReports.sectionAchievements" as const;
-    case "customFields": return "periodicReports.sectionCustomFields" as const;
-    case "narrative": return "periodicReports.sectionNarrative" as const;
-    case "nextPlan": return "periodicReports.sectionNextPlan" as const;
-    case "figures": return "periodicReports.sectionFigures" as const;
-    case "evidence": return "periodicReports.sectionEvidence" as const;
-    default: return "periodicReports.sectionOther" as const;
+    case 'members':
+      return 'periodicReports.sectionMembers' as const
+    case 'events':
+      return 'periodicReports.sectionEvents' as const
+    case 'achievements':
+      return 'periodicReports.sectionAchievements' as const
+    case 'customFields':
+      return 'periodicReports.sectionCustomFields' as const
+    case 'narrative':
+      return 'periodicReports.sectionNarrative' as const
+    case 'nextPlan':
+      return 'periodicReports.sectionNextPlan' as const
+    case 'figures':
+      return 'periodicReports.sectionFigures' as const
+    case 'evidence':
+      return 'periodicReports.sectionEvidence' as const
+    default:
+      return 'periodicReports.sectionOther' as const
   }
 }
 
 // Trình soạn báo cáo định kỳ: thành viên, sự kiện, thành tích, trường tùy chỉnh
 export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
-  const { t, i18n } = useTranslation();
-  const action = useChangePeriodicReport(clubId);
+  const { t, i18n } = useTranslation()
+  const action = useChangePeriodicReport(clubId)
 
-  const initialMembers = report.members ?? report.systemData?.members ?? [];
-  const initialEvents = report.events ?? report.systemData?.events ?? [];
-  const initialAchievements = report.achievements ?? [];
-  const initialAnswers = report.customAnswers ?? [];
+  const initialMembers = report.members ?? report.systemData?.members ?? []
+  const initialEvents = report.events ?? report.systemData?.events ?? []
+  const initialAchievements = report.achievements ?? []
+  const initialAnswers = report.customAnswers ?? []
 
-  const [members, setMembers] = useState<PeriodicMemberEntry[]>(initialMembers);
-  const [events, setEvents] = useState<PeriodicEventEntry[]>(initialEvents);
-  const [achievements, setAchievements] = useState<PeriodicAchievementEntry[]>(initialAchievements);
-  const [customAnswers, setCustomAnswers] = useState<PeriodicCustomAnswer[]>(initialAnswers);
-  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+  const [members, setMembers] = useState<PeriodicMemberEntry[]>(initialMembers)
+  const [events, setEvents] = useState<PeriodicEventEntry[]>(initialEvents)
+  const [achievements, setAchievements] = useState<PeriodicAchievementEntry[]>(initialAchievements)
+  const [customAnswers, setCustomAnswers] = useState<PeriodicCustomAnswer[]>(initialAnswers)
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null)
 
-  const customFields = report.campaign?.customFields ?? [];
-  const editable = ["Draft", "Returned for correction"].includes(report.state);
-  const now = new Date();
-  const effectiveDueAt = report.state === "Returned for correction" && report.resubmitDueAt
-    ? new Date(report.resubmitDueAt)
-    : report.state === "Draft"
-      ? new Date(report.campaign?.dueAt ?? report.dueAt)
-      : null;
-  const deadlinePassed = effectiveDueAt ? now > effectiveDueAt : false;
-  const campaignClosed = report.campaign ? !report.campaign.isOpen && report.state === "Draft" : false;
-  const canSubmit = editable && !deadlinePassed && !campaignClosed;
+  const customFields = report.campaign?.customFields ?? []
+  const editable = ['Draft', 'Returned for correction'].includes(report.state)
+  const now = new Date()
+  const effectiveDueAt =
+    report.state === 'Returned for correction' && report.resubmitDueAt
+      ? new Date(report.resubmitDueAt)
+      : report.state === 'Draft'
+        ? new Date(report.campaign?.dueAt ?? report.dueAt)
+        : null
+  const deadlinePassed = effectiveDueAt ? now > effectiveDueAt : false
+  const campaignClosed = report.campaign
+    ? !report.campaign.isOpen && report.state === 'Draft'
+    : false
+  const canSubmit = editable && !deadlinePassed && !campaignClosed
 
-  const figures = editable || !report.preloadedFigures.capturedAt ? report.live : report.preloadedFigures;
+  const figures =
+    editable || !report.preloadedFigures.capturedAt ? report.live : report.preloadedFigures
 
   const dirty =
     JSON.stringify(members) !== JSON.stringify(initialMembers) ||
     JSON.stringify(events) !== JSON.stringify(initialEvents) ||
     JSON.stringify(achievements) !== JSON.stringify(initialAchievements) ||
-    JSON.stringify(customAnswers) !== JSON.stringify(initialAnswers);
+    JSON.stringify(customAnswers) !== JSON.stringify(initialAnswers)
 
-  const membersValid = members.length > 0 && members.every((m) =>
-    Boolean(m.fullName.trim()) &&
-    Boolean(m.studentCode.trim()) &&
-    Boolean(m.email.trim()) &&
-    Number.isFinite(m.activityScore) &&
-    m.activityScore >= 0 &&
-    m.activityScore <= 10,
-  );
-  const eventsValid = events.every((ev) =>
-    Boolean(ev.title.trim()) &&
-    Boolean(ev.description.trim()) &&
-    Boolean(ev.heldAt.trim()) &&
-    Number.isInteger(ev.participantCount) &&
-    ev.participantCount >= 0 &&
-    Boolean(ev.evidenceUrl?.trim()),
-  );
-  const achievementsValid = achievements.every((ach) =>
-    Boolean(ach.title.trim()) &&
-    Boolean(ach.description.trim()) &&
-    Boolean(ach.evidenceUrl?.trim()),
-  );
+  const membersValid =
+    members.length > 0 &&
+    members.every(
+      (m) =>
+        Boolean(m.fullName.trim()) &&
+        Boolean(m.studentCode.trim()) &&
+        Boolean(m.email.trim()) &&
+        Number.isFinite(m.activityScore) &&
+        m.activityScore >= 0 &&
+        m.activityScore <= 10,
+    )
+  const eventsValid = events.every(
+    (ev) =>
+      Boolean(ev.title.trim()) &&
+      Boolean(ev.description.trim()) &&
+      Boolean(ev.heldAt.trim()) &&
+      Number.isInteger(ev.participantCount) &&
+      ev.participantCount >= 0 &&
+      Boolean(ev.evidenceUrl?.trim()),
+  )
+  const achievementsValid = achievements.every(
+    (ach) =>
+      Boolean(ach.title.trim()) &&
+      Boolean(ach.description.trim()) &&
+      Boolean(ach.evidenceUrl?.trim()),
+  )
   const customValid = customFields.every((cf) => {
-    if (!cf.required) return true;
-    const ans = customAnswers.find((a) => a.fieldId === cf.id);
-    if (cf.type === "text") return Boolean(ans?.textValue?.trim());
-    if (cf.type === "number") return ans?.numberValue !== undefined && Number.isFinite(ans.numberValue);
-    return Boolean(ans?.evidenceUrl?.trim());
-  });
+    if (!cf.required) {
+      return true
+    }
+    const ans = customAnswers.find((a) => a.fieldId === cf.id)
+    if (cf.type === 'text') {
+      return Boolean(ans?.textValue?.trim())
+    }
+    if (cf.type === 'number') {
+      return ans?.numberValue !== undefined && Number.isFinite(ans.numberValue)
+    }
+    return Boolean(ans?.evidenceUrl?.trim())
+  })
 
   const field = useFieldValidation({
-    members: membersValid ? null : t("clubPeriodicReports.validationMembersRequired"),
-    events: eventsValid ? null : t("clubPeriodicReports.validationEventsInvalid"),
-    achievements: achievementsValid ? null : t("clubPeriodicReports.validationAchievementsInvalid"),
-    customAnswers: customValid ? null : t("clubPeriodicReports.validationCustomRequired"),
-  });
+    members: membersValid ? null : t('clubPeriodicReports.validationMembersRequired'),
+    events: eventsValid ? null : t('clubPeriodicReports.validationEventsInvalid'),
+    achievements: achievementsValid ? null : t('clubPeriodicReports.validationAchievementsInvalid'),
+    customAnswers: customValid ? null : t('clubPeriodicReports.validationCustomRequired'),
+  })
 
   // Cập nhật một dòng thành viên trong báo cáo
   function updateMember(index: number, patch: Partial<PeriodicMemberEntry>) {
-    setMembers((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
+    setMembers((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)))
   }
 
   // Cập nhật một dòng sự kiện trong báo cáo
   function updateEvent(index: number, patch: Partial<PeriodicEventEntry>) {
-    setEvents((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
+    setEvents((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)))
   }
 
   // Cập nhật một dòng thành tích trong báo cáo
   function updateAchievement(index: number, patch: Partial<PeriodicAchievementEntry>) {
-    setAchievements((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
+    setAchievements((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)),
+    )
   }
 
   // Cập nhật hoặc thêm câu trả lời cho trường tùy chỉnh của báo cáo
-  function updateCustomAnswer(fieldId: string, label: string, type: "text" | "number" | "evidence", patch: Partial<PeriodicCustomAnswer>) {
+  function updateCustomAnswer(
+    fieldId: string,
+    label: string,
+    type: 'text' | 'number' | 'evidence',
+    patch: Partial<PeriodicCustomAnswer>,
+  ) {
     setCustomAnswers((prev) => {
-      const existing = prev.find((a) => a.fieldId === fieldId);
+      const existing = prev.find((a) => a.fieldId === fieldId)
       if (existing) {
-        return prev.map((a) => (a.fieldId === fieldId ? { ...a, label, type, ...patch } : a));
+        return prev.map((a) => (a.fieldId === fieldId ? { ...a, label, type, ...patch } : a))
       }
-      return [...prev, { fieldId, label, type, ...patch }];
-    });
+      return [...prev, { fieldId, label, type, ...patch }]
+    })
   }
 
   // Lưu nháp hoặc nộp báo cáo định kỳ
-  async function change(kind: "save" | "submit") {
-    if (kind === "submit" && !field.touchAll()) return;
+  async function change(kind: 'save' | 'submit') {
+    if (kind === 'submit' && !field.touchAll()) {
+      return
+    }
     try {
       const saved = await action.mutateAsync({
         csrfToken,
         action: {
-          kind: "save",
+          kind: 'save',
           id: report.id,
           revision: report.revision ?? 0,
           input: {
@@ -405,59 +455,85 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
             customAnswers,
           },
         },
-      });
-      if (kind === "submit") {
+      })
+      if (kind === 'submit') {
         await action.mutateAsync({
           csrfToken,
-          action: { kind: "submit", id: report.id, revision: saved.revision ?? (report.revision ?? 0) + 1 },
-        });
+          action: {
+            kind: 'submit',
+            id: report.id,
+            revision: saved.revision ?? (report.revision ?? 0) + 1,
+          },
+        })
       }
-    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
+    } catch {
+      /* Lỗi của mutation được hiển thị bên dưới. */
+    }
   }
 
-  const status = report.state as "Draft" | "Submitted" | "Accepted" | "Returned for correction";
-  const inputBase = "mt-1.5 block w-full font-normal disabled:opacity-70";
+  const status = report.state as 'Draft' | 'Submitted' | 'Accepted' | 'Returned for correction'
+  const inputBase = 'mt-1.5 block w-full font-normal disabled:opacity-70'
 
   return (
     <section className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-heading text-base font-semibold">{report.periodCode}</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <AppBadge tone={status === "Accepted" ? "success" : status === "Submitted" ? "info" : status === "Returned for correction" ? "warning" : "neutral"}>
+          <AppBadge
+            tone={
+              status === 'Accepted'
+                ? 'success'
+                : status === 'Submitted'
+                  ? 'info'
+                  : status === 'Returned for correction'
+                    ? 'warning'
+                    : 'neutral'
+            }
+          >
             {t(`clubPeriodicReports.${status}`)}
           </AppBadge>
-          <span className="text-sm text-muted-app">{t("clubPeriodicReports.version")} {report.versionNo}</span>
+          <span className="text-sm text-muted-app">
+            {t('clubPeriodicReports.version')} {report.versionNo}
+          </span>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-4 text-sm text-muted-app">
-        <span>{t("clubPeriodicReports.deadline")}: {new Date(report.campaign?.dueAt ?? report.dueAt).toLocaleString(i18n.language)}</span>
+        <span>
+          {t('clubPeriodicReports.deadline')}:{' '}
+          {new Date(report.campaign?.dueAt ?? report.dueAt).toLocaleString(i18n.language)}
+        </span>
         {report.resubmitDueAt && (
           <span className="font-semibold text-warning-app">
-            {t("clubPeriodicReports.resubmitDeadline")}: {new Date(report.resubmitDueAt).toLocaleString(i18n.language)}
+            {t('clubPeriodicReports.resubmitDeadline')}:{' '}
+            {new Date(report.resubmitDueAt).toLocaleString(i18n.language)}
           </span>
         )}
-        {report.lateFlag && <AppBadge tone="warning">{t("clubPeriodicReports.late")}</AppBadge>}
+        {report.lateFlag && <AppBadge tone="warning">{t('clubPeriodicReports.late')}</AppBadge>}
       </div>
 
       {report.campaign?.announcement && (
-        <AppNotice title={t("clubPeriodicReports.announcementTitle")}>
+        <AppNotice title={t('clubPeriodicReports.announcementTitle')}>
           <p className="whitespace-pre-wrap break-words">{report.campaign.announcement}</p>
         </AppNotice>
       )}
 
       {editable && (deadlinePassed || campaignClosed) && (
         <AppNotice tone="danger" role="alert">
-          {t("clubPeriodicReports.deadlinePassedBlocked")}
+          {t('clubPeriodicReports.deadlinePassedBlocked')}
         </AppNotice>
       )}
 
       {report.decision && (
-        <AppNotice tone={report.decision.outcome === "Return" ? "warning" : "info"}>
-          <p className="whitespace-pre-wrap break-words">{report.decision.reason ?? report.decision.observation}</p>
+        <AppNotice tone={report.decision.outcome === 'Return' ? 'warning' : 'info'}>
+          <p className="whitespace-pre-wrap break-words">
+            {report.decision.reason ?? report.decision.observation}
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {report.decision.sections.map((s) => (
-              <AppBadge key={s} tone="warning">{t(sectionNameKey(s))}</AppBadge>
+              <AppBadge key={s} tone="warning">
+                {t(sectionNameKey(s))}
+              </AppBadge>
             ))}
           </div>
         </AppNotice>
@@ -467,22 +543,40 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.membersTitle")}<AppRequiredMark /></h3>
-            <p className="text-xs text-muted-app">{t("clubPeriodicReports.membersHint")}</p>
+            <h3 className="font-heading text-sm font-semibold">
+              {t('clubPeriodicReports.membersTitle')}
+              <AppRequiredMark />
+            </h3>
+            <p className="text-xs text-muted-app">{t('clubPeriodicReports.membersHint')}</p>
           </div>
           {editable && (
             <div className="flex flex-wrap gap-2">
               {report.systemData?.members && (
-                <AppButton variant="secondary" disabled={action.isPending} onClick={() => setMembers(report.systemData!.members)}>
-                  {t("clubPeriodicReports.resetMembers")}
+                <AppButton
+                  variant="secondary"
+                  disabled={action.isPending}
+                  onClick={() => setMembers(report.systemData!.members)}
+                >
+                  {t('clubPeriodicReports.resetMembers')}
                 </AppButton>
               )}
               <AppButton
                 variant="secondary"
                 disabled={action.isPending}
-                onClick={() => setMembers((prev) => [...prev, { fullName: "", studentCode: "", email: "", activityScore: 8, source: "MANUAL" }])}
+                onClick={() =>
+                  setMembers((prev) => [
+                    ...prev,
+                    {
+                      fullName: '',
+                      studentCode: '',
+                      email: '',
+                      activityScore: 8,
+                      source: 'MANUAL',
+                    },
+                  ])
+                }
               >
-                {t("clubPeriodicReports.addMember")}
+                {t('clubPeriodicReports.addMember')}
               </AppButton>
             </div>
           )}
@@ -490,9 +584,12 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
 
         <div className="space-y-3">
           {members.map((member, idx) => (
-            <div key={idx} className="grid gap-3 rounded-xl border border-border-app bg-bg-app p-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[1fr_9rem_1fr_10rem_auto]">
+            <div
+              key={idx}
+              className="grid gap-3 rounded-xl border border-border-app bg-bg-app p-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[1fr_9rem_1fr_10rem_auto]"
+            >
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.memberName")}
+                {t('clubPeriodicReports.memberName')}
                 <AppInput
                   className={inputBase}
                   value={member.fullName}
@@ -501,7 +598,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 />
               </label>
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.memberCode")}
+                {t('clubPeriodicReports.memberCode')}
                 <AppInput
                   className={inputBase}
                   value={member.studentCode}
@@ -510,7 +607,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 />
               </label>
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.memberEmail")}
+                {t('clubPeriodicReports.memberEmail')}
                 <AppInput
                   type="email"
                   className={inputBase}
@@ -520,7 +617,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 />
               </label>
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.memberScore")}
+                {t('clubPeriodicReports.memberScore')}
                 <AppInput
                   type="number"
                   min={0}
@@ -539,36 +636,54 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                     disabled={action.isPending}
                     onClick={() => setMembers((prev) => prev.filter((_, i) => i !== idx))}
                   >
-                    {t("clubPeriodicReports.remove")}
+                    {t('clubPeriodicReports.remove')}
                   </AppButton>
                 </div>
               )}
             </div>
           ))}
         </div>
-        <AppFieldError message={field.error("members")} />
+        <AppFieldError message={field.error('members')} />
       </div>
 
       {/* 2. Sự kiện đã tổ chức */}
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.eventsTitle")}</h3>
-            <p className="text-xs text-muted-app">{t("clubPeriodicReports.eventsHint")}</p>
+            <h3 className="font-heading text-sm font-semibold">
+              {t('clubPeriodicReports.eventsTitle')}
+            </h3>
+            <p className="text-xs text-muted-app">{t('clubPeriodicReports.eventsHint')}</p>
           </div>
           {editable && (
             <div className="flex flex-wrap gap-2">
               {report.systemData?.events && (
-                <AppButton variant="secondary" disabled={action.isPending} onClick={() => setEvents(report.systemData!.events)}>
-                  {t("clubPeriodicReports.resetEvents")}
+                <AppButton
+                  variant="secondary"
+                  disabled={action.isPending}
+                  onClick={() => setEvents(report.systemData!.events)}
+                >
+                  {t('clubPeriodicReports.resetEvents')}
                 </AppButton>
               )}
               <AppButton
                 variant="secondary"
                 disabled={action.isPending}
-                onClick={() => setEvents((prev) => [...prev, { title: "", description: "", heldAt: new Date().toISOString().slice(0, 10), participantCount: 0, evidenceUrl: "", source: "MANUAL" }])}
+                onClick={() =>
+                  setEvents((prev) => [
+                    ...prev,
+                    {
+                      title: '',
+                      description: '',
+                      heldAt: new Date().toISOString().slice(0, 10),
+                      participantCount: 0,
+                      evidenceUrl: '',
+                      source: 'MANUAL',
+                    },
+                  ])
+                }
               >
-                {t("clubPeriodicReports.addEvent")}
+                {t('clubPeriodicReports.addEvent')}
               </AppButton>
             </div>
           )}
@@ -579,7 +694,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
             <div key={idx} className="space-y-3 rounded-xl border border-border-app bg-bg-app p-4">
               <div className="grid gap-3 sm:grid-cols-3">
                 <label className="block text-sm font-medium text-text-app sm:col-span-1">
-                  {t("clubPeriodicReports.eventTitle")}<AppRequiredMark />
+                  {t('clubPeriodicReports.eventTitle')}
+                  <AppRequiredMark />
                   <AppInput
                     className={inputBase}
                     value={ev.title}
@@ -588,7 +704,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   />
                 </label>
                 <label className="block text-sm font-medium text-text-app">
-                  {t("clubPeriodicReports.eventHeldAt")}<AppRequiredMark />
+                  {t('clubPeriodicReports.eventHeldAt')}
+                  <AppRequiredMark />
                   <AppInput
                     type="date"
                     className={inputBase}
@@ -598,7 +715,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   />
                 </label>
                 <label className="block text-sm font-medium text-text-app">
-                  {t("clubPeriodicReports.eventParticipants")}<AppRequiredMark />
+                  {t('clubPeriodicReports.eventParticipants')}
+                  <AppRequiredMark />
                   <AppInput
                     type="number"
                     min={0}
@@ -611,7 +729,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 </label>
               </div>
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.eventDescription")}<AppRequiredMark />
+                {t('clubPeriodicReports.eventDescription')}
+                <AppRequiredMark />
                 <AppTextarea
                   className="mt-1.5 block w-full font-normal disabled:opacity-70"
                   value={ev.description}
@@ -620,12 +739,12 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 />
               </label>
               <EvidenceInputBlock
-                label={t("clubPeriodicReports.eventEvidenceUrl")}
+                label={t('clubPeriodicReports.eventEvidenceUrl')}
                 required
                 value={ev.evidenceUrl}
                 editable={editable}
                 disabled={action.isPending}
-                showMissingError={Boolean(field.error("events"))}
+                showMissingError={Boolean(field.error('events'))}
                 onChange={(evidenceUrl) => updateEvent(idx, { evidenceUrl })}
                 onPreview={(url, title) => setPreviewImage({ url, title: ev.title || title })}
                 onRemoveRow={() => setEvents((prev) => prev.filter((_, i) => i !== idx))}
@@ -633,23 +752,30 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
             </div>
           ))}
         </div>
-        <AppFieldError message={field.error("events")} />
+        <AppFieldError message={field.error('events')} />
       </div>
 
       {/* 3. Thành tích */}
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.achievementsTitle")}</h3>
-            <p className="text-xs text-muted-app">{t("clubPeriodicReports.achievementsHint")}</p>
+            <h3 className="font-heading text-sm font-semibold">
+              {t('clubPeriodicReports.achievementsTitle')}
+            </h3>
+            <p className="text-xs text-muted-app">{t('clubPeriodicReports.achievementsHint')}</p>
           </div>
           {editable && (
             <AppButton
               variant="secondary"
               disabled={action.isPending}
-              onClick={() => setAchievements((prev) => [...prev, { title: "", description: "", evidenceUrl: "" }])}
+              onClick={() =>
+                setAchievements((prev) => [
+                  ...prev,
+                  { title: '', description: '', evidenceUrl: '' },
+                ])
+              }
             >
-              {t("clubPeriodicReports.addAchievement")}
+              {t('clubPeriodicReports.addAchievement')}
             </AppButton>
           )}
         </div>
@@ -658,7 +784,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
           {achievements.map((ach, idx) => (
             <div key={idx} className="space-y-3 rounded-xl border border-border-app bg-bg-app p-4">
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.achievementTitle")}<AppRequiredMark />
+                {t('clubPeriodicReports.achievementTitle')}
+                <AppRequiredMark />
                 <AppInput
                   className={inputBase}
                   value={ach.title}
@@ -667,7 +794,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 />
               </label>
               <label className="block text-sm font-medium text-text-app">
-                {t("clubPeriodicReports.achievementDescription")}<AppRequiredMark />
+                {t('clubPeriodicReports.achievementDescription')}
+                <AppRequiredMark />
                 <AppTextarea
                   className="mt-1.5 block w-full font-normal disabled:opacity-70"
                   value={ach.description}
@@ -676,12 +804,12 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 />
               </label>
               <EvidenceInputBlock
-                label={t("clubPeriodicReports.achievementEvidenceUrl")}
+                label={t('clubPeriodicReports.achievementEvidenceUrl')}
                 required
                 value={ach.evidenceUrl}
                 editable={editable}
                 disabled={action.isPending}
-                showMissingError={Boolean(field.error("achievements"))}
+                showMissingError={Boolean(field.error('achievements'))}
                 onChange={(evidenceUrl) => updateAchievement(idx, { evidenceUrl })}
                 onPreview={(url, title) => setPreviewImage({ url, title: ach.title || title })}
                 onRemoveRow={() => setAchievements((prev) => prev.filter((_, i) => i !== idx))}
@@ -689,106 +817,141 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
             </div>
           ))}
         </div>
-        <AppFieldError message={field.error("achievements")} />
+        <AppFieldError message={field.error('achievements')} />
       </div>
 
       {/* 4. Các trường tuỳ chỉnh bổ sung của ICPDP */}
       {customFields.length > 0 && (
         <div className="space-y-4 border-t border-border-app pt-5">
-          <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.customFieldsTitle")}</h3>
+          <h3 className="font-heading text-sm font-semibold">
+            {t('clubPeriodicReports.customFieldsTitle')}
+          </h3>
           {customFields.map((cf) => {
-            const answer = customAnswers.find((a) => a.fieldId === cf.id);
+            const answer = customAnswers.find((a) => a.fieldId === cf.id)
             return (
-              <div key={cf.id} className="space-y-2 rounded-xl border border-border-app bg-bg-app p-4">
+              <div
+                key={cf.id}
+                className="space-y-2 rounded-xl border border-border-app bg-bg-app p-4"
+              >
                 <label className="block text-sm font-medium text-text-app">
                   {cf.label}
                   {cf.required && <AppRequiredMark />}
                 </label>
                 {cf.description && <p className="text-xs text-muted-app">{cf.description}</p>}
-                {cf.type === "text" && (
+                {cf.type === 'text' && (
                   <AppTextarea
                     className="mt-1.5 block w-full font-normal disabled:opacity-70"
-                    value={answer?.textValue ?? ""}
+                    value={answer?.textValue ?? ''}
                     disabled={!editable || action.isPending}
-                    onChange={(e) => updateCustomAnswer(cf.id, cf.label, "text", { textValue: e.target.value })}
+                    onChange={(e) =>
+                      updateCustomAnswer(cf.id, cf.label, 'text', { textValue: e.target.value })
+                    }
                   />
                 )}
-                {cf.type === "number" && (
+                {cf.type === 'number' && (
                   <AppInput
                     type="number"
                     className={inputBase}
-                    value={answer?.numberValue ?? ""}
+                    value={answer?.numberValue ?? ''}
                     disabled={!editable || action.isPending}
-                    onChange={(e) => updateCustomAnswer(cf.id, cf.label, "number", {
-                      numberValue: e.target.value === "" ? undefined : Number(e.target.value),
-                    })}
+                    onChange={(e) =>
+                      updateCustomAnswer(cf.id, cf.label, 'number', {
+                        numberValue: e.target.value === '' ? undefined : Number(e.target.value),
+                      })
+                    }
                   />
                 )}
-                {cf.type === "evidence" && (
+                {cf.type === 'evidence' && (
                   <EvidenceInputBlock
                     required={cf.required}
                     value={answer?.evidenceUrl}
                     editable={editable}
                     disabled={action.isPending}
-                    showMissingError={Boolean(field.error("customAnswers"))}
-                    onChange={(evidenceUrl) => updateCustomAnswer(cf.id, cf.label, "evidence", { evidenceUrl })}
+                    showMissingError={Boolean(field.error('customAnswers'))}
+                    onChange={(evidenceUrl) =>
+                      updateCustomAnswer(cf.id, cf.label, 'evidence', { evidenceUrl })
+                    }
                     onPreview={(url) => setPreviewImage({ url, title: cf.label })}
                   />
                 )}
               </div>
-            );
+            )
           })}
-          <AppFieldError message={field.error("customAnswers")} />
+          <AppFieldError message={field.error('customAnswers')} />
         </div>
       )}
 
       {editable && (
         <div className="flex flex-wrap gap-3 border-t border-border-app pt-4">
-          <AppButton disabled={action.isPending || !dirty} onClick={() => void change("save")}>
-            {t("clubPeriodicReports.save")}
+          <AppButton disabled={action.isPending || !dirty} onClick={() => void change('save')}>
+            {t('clubPeriodicReports.save')}
           </AppButton>
-          <AppButton variant="secondary" disabled={action.isPending || !canSubmit} onClick={() => void change("submit")}>
-            {t("clubPeriodicReports.submit")}
+          <AppButton
+            variant="secondary"
+            disabled={action.isPending || !canSubmit}
+            onClick={() => void change('submit')}
+          >
+            {t('clubPeriodicReports.submit')}
           </AppButton>
         </div>
       )}
-      {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
+      {action.isError && (
+        <AppNotice tone="danger" role="alert">
+          {action.error.message}
+        </AppNotice>
+      )}
 
       <details className="border-t border-border-app pt-4">
-        <summary className="font-semibold">{t("clubPeriodicReports.figures")}</summary>
+        <summary className="font-semibold">{t('clubPeriodicReports.figures')}</summary>
         <p className="mt-3 text-sm text-muted-app">
           {editable || !figures.capturedAt
-            ? t("clubPeriodicReports.figuresLive")
-            : t("clubPeriodicReports.figuresFrozen", { date: new Date(figures.capturedAt).toLocaleString(i18n.language) })}
+            ? t('clubPeriodicReports.figuresLive')
+            : t('clubPeriodicReports.figuresFrozen', {
+                date: new Date(figures.capturedAt).toLocaleString(i18n.language),
+              })}
         </p>
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <dt>{t("periodicReports.eventsHeld")}</dt><dd>{figures.events?.completed ?? 0}</dd>
-          <dt>{t("periodicReports.eventsCancelled")}</dt><dd>{figures.events?.cancelled ?? 0}</dd>
-          <dt>{t("periodicReports.activeMembers")}</dt><dd>{figures.members?.active ?? 0}</dd>
-          <dt>{t("periodicReports.attendance")}</dt><dd>{figures.attendance?.total ?? 0}</dd>
-          <dt>{t("periodicReports.budgets")}</dt><dd>{figures.finance?.budgets ?? 0}</dd>
-          <dt>{t("periodicReports.approvedTotal")}</dt><dd>{formatMoney(figures.finance?.approvedTotal ?? 0, i18n.language)}</dd>
-          <dt>{t("periodicReports.disbursedTotal")}</dt><dd>{formatMoney(figures.finance?.disbursedTotal ?? 0, i18n.language)}</dd>
+          <dt>{t('periodicReports.eventsHeld')}</dt>
+          <dd>{figures.events?.completed ?? 0}</dd>
+          <dt>{t('periodicReports.eventsCancelled')}</dt>
+          <dd>{figures.events?.cancelled ?? 0}</dd>
+          <dt>{t('periodicReports.activeMembers')}</dt>
+          <dd>{figures.members?.active ?? 0}</dd>
+          <dt>{t('periodicReports.attendance')}</dt>
+          <dd>{figures.attendance?.total ?? 0}</dd>
+          <dt>{t('periodicReports.budgets')}</dt>
+          <dd>{figures.finance?.budgets ?? 0}</dd>
+          <dt>{t('periodicReports.approvedTotal')}</dt>
+          <dd>{formatMoney(figures.finance?.approvedTotal ?? 0, i18n.language)}</dd>
+          <dt>{t('periodicReports.disbursedTotal')}</dt>
+          <dd>{formatMoney(figures.finance?.disbursedTotal ?? 0, i18n.language)}</dd>
         </dl>
       </details>
 
       <details className="border-t border-border-app pt-4">
-        <summary className="font-semibold">{t("clubPeriodicReports.history")}</summary>
+        <summary className="font-semibold">{t('clubPeriodicReports.history')}</summary>
         <div className="space-y-4 pt-3">
           {report.versions?.map((v) => (
-            <article key={v.versionNo} className="space-y-2 border-t border-border-app pt-3 text-sm">
+            <article
+              key={v.versionNo}
+              className="space-y-2 border-t border-border-app pt-3 text-sm"
+            >
               <h3 className="font-semibold">
-                {t("clubPeriodicReports.version")} {v.versionNo} · {new Date(v.submittedAt).toLocaleString(i18n.language)}
+                {t('clubPeriodicReports.version')} {v.versionNo} ·{' '}
+                {new Date(v.submittedAt).toLocaleString(i18n.language)}
               </h3>
               <p className="text-muted-app">
-                {t("periodicReports.sectionMembers")}: {v.members?.length ?? 0} · {t("periodicReports.sectionEvents")}: {v.events?.length ?? 0} · {t("periodicReports.sectionAchievements")}: {v.achievements?.length ?? 0}
+                {t('periodicReports.sectionMembers')}: {v.members?.length ?? 0} ·{' '}
+                {t('periodicReports.sectionEvents')}: {v.events?.length ?? 0} ·{' '}
+                {t('periodicReports.sectionAchievements')}: {v.achievements?.length ?? 0}
               </p>
               {v.narrative && <p className="whitespace-pre-wrap break-words">{v.narrative}</p>}
               {v.decision && (
                 <p className="whitespace-pre-wrap break-words font-medium">
-                  {v.decision.outcome === "Accept"
-                    ? t("clubPeriodicReports.Accepted")
-                    : t("clubPeriodicReports.Returned for correction")}: {v.decision.reason ?? v.decision.observation}
+                  {v.decision.outcome === 'Accept'
+                    ? t('clubPeriodicReports.Accepted')
+                    : t('clubPeriodicReports.Returned for correction')}
+                  : {v.decision.reason ?? v.decision.observation}
                 </p>
               )}
             </article>
@@ -798,15 +961,20 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
 
       <AppDialog
         open={Boolean(previewImage)}
-        title={previewImage?.title ?? ""}
-        closeLabel={t("periodicReports.closeImagePreview")}
+        title={previewImage?.title ?? ''}
+        closeLabel={t('periodicReports.closeImagePreview')}
         onClose={() => setPreviewImage(null)}
         className="w-[min(100%-2rem,56rem)]"
-        footer={previewImage && (
-          <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
-            {t("clubPeriodicReports.saveImage")}
-          </AppButton>
-        )}
+        footer={
+          previewImage && (
+            <AppButton
+              variant="secondary"
+              onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}
+            >
+              {t('clubPeriodicReports.saveImage')}
+            </AppButton>
+          )
+        }
       >
         {previewImage && (
           <img
@@ -817,5 +985,5 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         )}
       </AppDialog>
     </section>
-  );
+  )
 }

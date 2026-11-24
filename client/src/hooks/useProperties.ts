@@ -1,35 +1,50 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
-  createProperty, deleteProperty, fetchProperties, setPropertyActive, updateProperty,
-  type PropertyDetails, type PropertyType,
-} from "@/services/properties";
+  createProperty,
+  deleteProperty,
+  fetchProperties,
+  setPropertyActive,
+  updateProperty,
+  type PropertyDetails,
+  type PropertyType,
+} from '@/services/properties'
 
-const propertiesKeyRoot = ["properties"] as const;
+const propertiesKeyRoot = ['properties'] as const
 
 // Query danh sách cơ sở vật chất
 export function useProperties(enabled: boolean) {
-  return useQuery({ queryKey: [...propertiesKeyRoot, "catalogue"],
-    queryFn: ({ signal }) => fetchProperties(signal), enabled, retry: false });
+  return useQuery({
+    queryKey: [...propertiesKeyRoot, 'catalogue'],
+    queryFn: ({ signal }) => fetchProperties(signal),
+    enabled,
+    retry: false,
+  })
 }
 
 // Mutation tạo, sửa, bật/tắt hoặc xoá cơ sở vật chất, rồi làm mới cache
 /** Danh sách được sắp xếp ở server (đang bật trước, rồi theo mã), nên mọi thay đổi đều tải lại. */
 export function usePropertyAction() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (action:
-      | { kind: "create"; input: PropertyDetails & { type: PropertyType }; csrfToken: string }
-      | { kind: "update"; id: string; details: PropertyDetails; csrfToken: string }
-      | { kind: "activation"; id: string; isActive: boolean; csrfToken: string }
-      | { kind: "delete"; id: string; csrfToken: string }) => {
+    mutationFn: async (
+      action:
+        | { kind: 'create'; input: PropertyDetails & { type: PropertyType }; csrfToken: string }
+        | { kind: 'update'; id: string; details: PropertyDetails; csrfToken: string }
+        | { kind: 'activation'; id: string; isActive: boolean; csrfToken: string }
+        | { kind: 'delete'; id: string; csrfToken: string },
+    ) => {
       switch (action.kind) {
-        case "create": return createProperty(action.input, action.csrfToken);
-        case "update": return updateProperty(action.id, action.details, action.csrfToken);
-        case "activation": return setPropertyActive(action.id, action.isActive, action.csrfToken);
-        case "delete": return deleteProperty(action.id, action.csrfToken);
+        case 'create':
+          return createProperty(action.input, action.csrfToken)
+        case 'update':
+          return updateProperty(action.id, action.details, action.csrfToken)
+        case 'activation':
+          return setPropertyActive(action.id, action.isActive, action.csrfToken)
+        case 'delete':
+          return deleteProperty(action.id, action.csrfToken)
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: propertiesKeyRoot }),
-  });
+  })
 }

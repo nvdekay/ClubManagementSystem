@@ -1,177 +1,326 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createColumnHelper, useTable } from "@tanstack/react-table";
-import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createColumnHelper, useTable } from '@tanstack/react-table'
+import { useTranslation } from 'react-i18next'
+import { useParams } from 'react-router'
 
-import { MembershipStateBadge, membershipStateLabels } from "@/components/custom/MembershipStateBadge";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppDialog } from "@/components/ui/dialog/AppDialog";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppPagination } from "@/components/ui/pagination/AppPagination";
-import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
-import { AppTableLimitSelect } from "@/components/ui/table/AppTableLimitSelect";
-import { useAuth } from "@/hooks/useAuth";
-import { useClubMembers, useClubWithdrawals, useMemberSpace, useMembershipAction } from "@/hooks/useMemberSpace";
-import type { Locale } from "@/i18n";
-import type { ClubRosterMember, WithdrawalRequest } from "@/services/memberSpace";
-import { formatDay } from "@/utils/formatDate";
+import {
+  MembershipStateBadge,
+  membershipStateLabels,
+} from '@/components/custom/MembershipStateBadge'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppDialog } from '@/components/ui/dialog/AppDialog'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppPagination } from '@/components/ui/pagination/AppPagination'
+import { AppSearchInput } from '@/components/ui/search-input/AppSearchInput'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppSelect } from '@/components/ui/select/AppSelect'
+import { AppTable, appTableFeatures, type AppTableFeatures } from '@/components/ui/table/AppTable'
+import { AppTableLimitSelect } from '@/components/ui/table/AppTableLimitSelect'
+import { useAuth } from '@/hooks/useAuth'
+import {
+  useClubMembers,
+  useClubWithdrawals,
+  useMemberSpace,
+  useMembershipAction,
+} from '@/hooks/useMemberSpace'
+import type { Locale } from '@/i18n'
+import type { ClubRosterMember, WithdrawalRequest } from '@/services/memberSpace'
+import { formatDay } from '@/utils/formatDate'
 
-import { ClubMemberOnboardDialog } from "./ClubMemberOnboardDialog";
-import { ClubMemberStateDialog } from "./ClubMemberStateDialog";
-import { exportClubMembers } from "./exportClubMembers";
-import { useConfirm } from "@/hooks/useConfirm";
+import { ClubMemberOnboardDialog } from './ClubMemberOnboardDialog'
+import { ClubMemberStateDialog } from './ClubMemberStateDialog'
+import { exportClubMembers } from './exportClubMembers'
+import { useConfirm } from '@/hooks/useConfirm'
 
-const EMPTY: ClubRosterMember[] = [];
-const helper = createColumnHelper<AppTableFeatures, ClubRosterMember>();
-const ALL = "";
-const NO_ROLE = "__none__";
+const EMPTY: ClubRosterMember[] = []
+const helper = createColumnHelper<AppTableFeatures, ClubRosterMember>()
+const ALL = ''
+const NO_ROLE = '__none__'
 
 // Trang quản lý thành viên CLB: danh sách, đổi trạng thái, rút khỏi CLB, xuất Excel
 /** UC21 A1 cho thành viên có club.member.manage: danh sách thành viên và các yêu cầu rời CLB (UC22) cần thực hiện. */
 export function ClubMembersPage() {
-  const { t, i18n } = useTranslation();
-  const askConfirm = useConfirm();
-  const locale: Locale = i18n.language === "vi" ? "vi" : "en";
-  const { clubId } = useParams();
-  const auth = useAuth();
-  const workspace = auth.data?.workspaces.find((item) => item.kind === "club" && item.clubId === clubId);
-  const canManage = Boolean(workspace?.permissions.includes("club.member.manage"));
-  const signedIn = Boolean(auth.data) && canManage;
-  const members = useClubMembers(clubId, signedIn);
-  const withdrawals = useClubWithdrawals(clubId, signedIn);
-  const action = useMembershipAction();
-  const inFlight = useRef(false);
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const { t, i18n } = useTranslation()
+  const askConfirm = useConfirm()
+  const locale: Locale = i18n.language === 'vi' ? 'vi' : 'en'
+  const { clubId } = useParams()
+  const auth = useAuth()
+  const workspace = auth.data?.workspaces.find(
+    (item) => item.kind === 'club' && item.clubId === clubId,
+  )
+  const canManage = Boolean(workspace?.permissions.includes('club.member.manage'))
+  const signedIn = Boolean(auth.data) && canManage
+  const members = useClubMembers(clubId, signedIn)
+  const withdrawals = useClubWithdrawals(clubId, signedIn)
+  const action = useMembershipAction()
+  const inFlight = useRef(false)
+  const [currentTime, setCurrentTime] = useState(() => Date.now())
   useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
-  const [doneId, setDoneId] = useState<string | null>(null);
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const [doneId, setDoneId] = useState<string | null>(null)
   // Thành viên bị cấm sẽ rời khỏi danh sách, nên hộp xác nhận đặt ở cấp trang.
-  const [stateNotice, setStateNotice] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [stateFilter, setStateFilter] = useState(ALL);
-  const [roleFilter, setRoleFilter] = useState(ALL);
-  const [dialog, setDialog] = useState<{ kind: "state" | "history"; member: ClubRosterMember } | null>(null);
-  const [onboarding, setOnboarding] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [exportFailed, setExportFailed] = useState(false);
-  const roster = members.data ?? EMPTY;
-  const waiting = (withdrawals.data ?? []).filter((item) => item.state === "Pending" || item.state === "Held");
-  const closeDialog = useCallback(() => setDialog(null), []);
+  const [stateNotice, setStateNotice] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [stateFilter, setStateFilter] = useState(ALL)
+  const [roleFilter, setRoleFilter] = useState(ALL)
+  const [dialog, setDialog] = useState<{
+    kind: 'state' | 'history'
+    member: ClubRosterMember
+  } | null>(null)
+  const [onboarding, setOnboarding] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportFailed, setExportFailed] = useState(false)
+  const roster = members.data ?? EMPTY
+  const waiting = (withdrawals.data ?? []).filter(
+    (item) => item.state === 'Pending' || item.state === 'Held',
+  )
+  const closeDialog = useCallback(() => setDialog(null), [])
 
-  const roles = useMemo(() => [...new Set(roster.flatMap((member) => member.positions))], [roster]);
+  const roles = useMemo(() => [...new Set(roster.flatMap((member) => member.positions))], [roster])
   // Lọc trước khi đưa vào bảng để mô hình phân trang và sắp xếp chỉ xử lý các dòng khớp.
   const filtered = useMemo(() => {
-    const needle = search.toLocaleLowerCase();
-    return roster.filter((member) => (!needle || (member.displayName ?? "").toLocaleLowerCase().includes(needle)
-        || member.email.toLocaleLowerCase().includes(needle))
-      && (stateFilter === ALL || member.state === stateFilter)
-      && (roleFilter === ALL || (roleFilter === NO_ROLE ? member.positions.length === 0
-        : member.positions.includes(roleFilter))));
-  }, [roster, search, stateFilter, roleFilter]);
+    const needle = search.toLocaleLowerCase()
+    return roster.filter(
+      (member) =>
+        (!needle ||
+          (member.displayName ?? '').toLocaleLowerCase().includes(needle) ||
+          member.email.toLocaleLowerCase().includes(needle)) &&
+        (stateFilter === ALL || member.state === stateFilter) &&
+        (roleFilter === ALL ||
+          (roleFilter === NO_ROLE
+            ? member.positions.length === 0
+            : member.positions.includes(roleFilter))),
+    )
+  }, [roster, search, stateFilter, roleFilter])
 
-  const columns = useMemo(() => helper.columns([
-    helper.accessor((member) => member.displayName ?? "", { id: "name", header: t("memberSpace.colName"),
-      sortFn: "text", cell: (info) => <span className="block min-w-32 font-medium break-words">{info.getValue()}</span> }),
-    helper.accessor("email", { header: t("memberSpace.colEmail"), enableSorting: false,
-      cell: (info) => <span className="whitespace-nowrap text-muted-app">{info.getValue()}</span> }),
-    helper.accessor("positions", { header: t("memberSpace.colPositions"), enableSorting: false,
-      cell: (info) => info.getValue().length ? (
-        <div className="flex min-w-36 flex-wrap gap-1">
-          {info.getValue().map((role) => <AppBadge key={role} tone="info">{role}</AppBadge>)}
-        </div>
-      ) : <span className="text-muted-app">—</span> }),
-    helper.accessor("state", { header: t("memberSpace.colState"), enableSorting: false,
-      cell: (info) => <MembershipStateBadge state={info.getValue()} /> }),
-    helper.accessor("joinedAt", { header: t("memberSpace.colJoined"), sortFn: "text",
-      cell: (info) => <span className="whitespace-nowrap tabular-nums">{formatDay(info.getValue(), locale)}</span> }),
-    helper.display({ id: "actions", header: t("memberSpace.colActions"), cell: ({ row }) => (
-      <div className="flex min-w-48 flex-wrap gap-1">
-        <AppButton variant="secondary" className="min-h-9 px-3 sm:min-h-9"
-          onClick={() => setDialog({ kind: "state", member: row.original })}>{t("memberSpace.changeState")}</AppButton>
-        <AppButton variant="ghost" className="min-h-9 px-3 text-muted-app hover:text-text-app sm:min-h-9"
-          onClick={() => setDialog({ kind: "history", member: row.original })}>{t("memberSpace.history")}</AppButton>
-      </div>
-    ) }),
-  ]), [t, locale]);
+  const columns = useMemo(
+    () =>
+      helper.columns([
+        helper.accessor((member) => member.displayName ?? '', {
+          id: 'name',
+          header: t('memberSpace.colName'),
+          sortFn: 'text',
+          cell: (info) => (
+            <span className="block min-w-32 font-medium break-words">{info.getValue()}</span>
+          ),
+        }),
+        helper.accessor('email', {
+          header: t('memberSpace.colEmail'),
+          enableSorting: false,
+          cell: (info) => (
+            <span className="whitespace-nowrap text-muted-app">{info.getValue()}</span>
+          ),
+        }),
+        helper.accessor('positions', {
+          header: t('memberSpace.colPositions'),
+          enableSorting: false,
+          cell: (info) =>
+            info.getValue().length ? (
+              <div className="flex min-w-36 flex-wrap gap-1">
+                {info.getValue().map((role) => (
+                  <AppBadge key={role} tone="info">
+                    {role}
+                  </AppBadge>
+                ))}
+              </div>
+            ) : (
+              <span className="text-muted-app">—</span>
+            ),
+        }),
+        helper.accessor('state', {
+          header: t('memberSpace.colState'),
+          enableSorting: false,
+          cell: (info) => <MembershipStateBadge state={info.getValue()} />,
+        }),
+        helper.accessor('joinedAt', {
+          header: t('memberSpace.colJoined'),
+          sortFn: 'text',
+          cell: (info) => (
+            <span className="whitespace-nowrap tabular-nums">
+              {formatDay(info.getValue(), locale)}
+            </span>
+          ),
+        }),
+        helper.display({
+          id: 'actions',
+          header: t('memberSpace.colActions'),
+          cell: ({ row }) => (
+            <div className="flex min-w-48 flex-wrap gap-1">
+              <AppButton
+                variant="secondary"
+                className="min-h-9 px-3 sm:min-h-9"
+                onClick={() => setDialog({ kind: 'state', member: row.original })}
+              >
+                {t('memberSpace.changeState')}
+              </AppButton>
+              <AppButton
+                variant="ghost"
+                className="min-h-9 px-3 text-muted-app hover:text-text-app sm:min-h-9"
+                onClick={() => setDialog({ kind: 'history', member: row.original })}
+              >
+                {t('memberSpace.history')}
+              </AppButton>
+            </div>
+          ),
+        }),
+      ]),
+    [t, locale],
+  )
 
-  const table = useTable({ features: appTableFeatures, columns, data: filtered,
-    initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
-  const { pageIndex, pageSize } = table.state.pagination;
+  const table = useTable({
+    features: appTableFeatures,
+    columns,
+    data: filtered,
+    initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
+  })
+  const { pageIndex, pageSize } = table.state.pagination
 
   // Xác nhận rồi thực thi yêu cầu rút khỏi CLB đã đến ngày hiệu lực
   async function execute(request: WithdrawalRequest) {
-    if (new Date(request.requestedEffectiveDate).getTime() > currentTime) return;
-    if (!auth.data || !clubId || inFlight.current || !(await askConfirm(t("memberSpace.executeConfirm")))) return;
-    inFlight.current = true;
-    setDoneId(null);
+    if (new Date(request.requestedEffectiveDate).getTime() > currentTime) {
+      return
+    }
+    if (
+      !auth.data ||
+      !clubId ||
+      inFlight.current ||
+      !(await askConfirm(t('memberSpace.executeConfirm')))
+    ) {
+      return
+    }
+    inFlight.current = true
+    setDoneId(null)
     try {
-      await action.mutateAsync({ kind: "execute", clubId, requestId: request.id, csrfToken: auth.data.csrfToken });
-      setDoneId(request.id);
+      await action.mutateAsync({
+        kind: 'execute',
+        clubId,
+        requestId: request.id,
+        csrfToken: auth.data.csrfToken,
+      })
+      setDoneId(request.id)
     } catch {
       // action.isError được hiển thị bên dưới.
     } finally {
-      inFlight.current = false;
+      inFlight.current = false
     }
   }
 
   // Xuất danh sách thành viên đang lọc ra file xlsx
   async function exportRows() {
-    setExporting(true);
-    setExportFailed(false);
+    setExporting(true)
+    setExportFailed(false)
     try {
-      await exportClubMembers(table.getPrePaginatedRowModel().rows.map((row) => row.original),
-        roster[0]?.clubName ?? "club", { name: t("memberSpace.colName"), email: t("memberSpace.colEmail"),
-          positions: t("memberSpace.colPositions"), state: t("memberSpace.colState"),
-          joined: t("memberSpace.colJoined"), stateLabel: (state) => t(membershipStateLabels[state]) });
+      await exportClubMembers(
+        table.getPrePaginatedRowModel().rows.map((row) => row.original),
+        roster[0]?.clubName ?? 'club',
+        {
+          name: t('memberSpace.colName'),
+          email: t('memberSpace.colEmail'),
+          positions: t('memberSpace.colPositions'),
+          state: t('memberSpace.colState'),
+          joined: t('memberSpace.colJoined'),
+          stateLabel: (state) => t(membershipStateLabels[state]),
+        },
+      )
     } catch {
-      setExportFailed(true);
+      setExportFailed(true)
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
   }
 
-  if (auth.isPending) return <AppSkeleton className="h-48 w-full" />;
-  if (!workspace || !clubId) return <AppNotice tone="danger">{t("memberSpace.rosterDenied")}</AppNotice>;
+  if (auth.isPending) {
+    return <AppSkeleton className="h-48 w-full" />
+  }
+  if (!workspace || !clubId) {
+    return <AppNotice tone="danger">{t('memberSpace.rosterDenied')}</AppNotice>
+  }
   // Club Member chỉ xem danh sách; Club Leader quản lý ở phần bên dưới.
-  if (!canManage) return <ClubRosterReadOnly clubId={clubId} />;
-  const error = members.error ?? withdrawals.error;
+  if (!canManage) {
+    return <ClubRosterReadOnly clubId={clubId} />
+  }
+  const error = members.error ?? withdrawals.error
   return (
     <>
-      <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.membersPageDescription")}
-        actions={<div className="flex flex-wrap gap-2">
-          <AppButton onClick={() => setOnboarding(true)}>{t("memberSpace.onboard")}</AppButton>
-          <AppButton variant="secondary" disabled={exporting || filtered.length === 0}
-            onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>
-        </div>} />
-      {exportFailed && <AppNotice tone="danger" role="alert" className="mb-6" title={t("memberSpace.exportError")} />}
-      {error ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}><p>{error.message}</p></AppNotice> : (
+      <PageHeader
+        title={t('memberSpace.membersPageTitle')}
+        description={t('memberSpace.membersPageDescription')}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <AppButton onClick={() => setOnboarding(true)}>{t('memberSpace.onboard')}</AppButton>
+            <AppButton
+              variant="secondary"
+              disabled={exporting || filtered.length === 0}
+              onClick={() => void exportRows()}
+            >
+              {exporting ? t('memberSpace.exporting') : t('memberSpace.exportXlsx')}
+            </AppButton>
+          </div>
+        }
+      />
+      {exportFailed && (
+        <AppNotice
+          tone="danger"
+          role="alert"
+          className="mb-6"
+          title={t('memberSpace.exportError')}
+        />
+      )}
+      {error ? (
+        <AppNotice tone="danger" role="alert" title={t('memberSpace.loadError')}>
+          <p>{error.message}</p>
+        </AppNotice>
+      ) : (
         <div className="min-w-0 space-y-8">
           {(waiting.length > 0 || action.isError || doneId) && (
-            <section aria-labelledby="leave-requests" className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs">
-              <h2 id="leave-requests" className="flex flex-wrap items-center gap-2 font-heading text-base font-semibold">
-                {t("memberSpace.withdrawals")}
-                {waiting.length > 0 && <AppBadge tone="warning" className="whitespace-normal">{t("memberSpace.withdrawalsCount", { count: waiting.length })}</AppBadge>}
+            <section
+              aria-labelledby="leave-requests"
+              className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs"
+            >
+              <h2
+                id="leave-requests"
+                className="flex flex-wrap items-center gap-2 font-heading text-base font-semibold"
+              >
+                {t('memberSpace.withdrawals')}
+                {waiting.length > 0 && (
+                  <AppBadge tone="warning" className="whitespace-normal">
+                    {t('memberSpace.withdrawalsCount', { count: waiting.length })}
+                  </AppBadge>
+                )}
               </h2>
-              {action.isError && <AppNotice tone="danger" role="alert" className="mt-3" title={t("memberSpace.executeError")}>
-                <p>{action.error.message}</p></AppNotice>}
-              {doneId && !action.isError && <p role="status" className="mt-3 text-sm font-semibold text-success-app">{t("memberSpace.executed")}</p>}
+              {action.isError && (
+                <AppNotice
+                  tone="danger"
+                  role="alert"
+                  className="mt-3"
+                  title={t('memberSpace.executeError')}
+                >
+                  <p>{action.error.message}</p>
+                </AppNotice>
+              )}
+              {doneId && !action.isError && (
+                <p role="status" className="mt-3 text-sm font-semibold text-success-app">
+                  {t('memberSpace.executed')}
+                </p>
+              )}
               {waiting.length > 0 && (
                 <div className="mt-4 overflow-x-auto rounded-xl border border-border-app bg-bg-app">
                   <table className="w-full min-w-2xl text-sm">
                     <thead className="bg-surface-app text-left text-xs font-medium text-muted-app">
                       <tr>
-                        <th className="px-4 py-2.5 font-medium">{t("memberSpace.colMember")}</th>
-                        <th className="px-4 py-2.5 font-medium">{t("memberSpace.colReason")}</th>
-                        <th className="px-4 py-2.5 font-medium">{t("memberSpace.colRequestedFor")}</th>
-                        <th className="px-4 py-2.5 font-medium"><span className="sr-only">{t("memberSpace.colActions")}</span></th>
+                        <th className="px-4 py-2.5 font-medium">{t('memberSpace.colMember')}</th>
+                        <th className="px-4 py-2.5 font-medium">{t('memberSpace.colReason')}</th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('memberSpace.colRequestedFor')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          <span className="sr-only">{t('memberSpace.colActions')}</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -179,15 +328,33 @@ export function ClubMembersPage() {
                         <tr key={request.id} className="border-t border-border-app align-top">
                           <td className="px-4 py-3">
                             <p className="min-w-32 font-medium break-words">{request.memberName}</p>
-                            {request.state === "Held" && <AppBadge tone="warning" className="mt-1 whitespace-normal">{t("memberSpace.held")}</AppBadge>}
+                            {request.state === 'Held' && (
+                              <AppBadge tone="warning" className="mt-1 whitespace-normal">
+                                {t('memberSpace.held')}
+                              </AppBadge>
+                            )}
                           </td>
-                          <td className="min-w-48 px-4 py-3 break-words whitespace-pre-line">{request.reason}</td>
-                          <td className="px-4 py-3 tabular-nums">{formatDay(request.requestedEffectiveDate, locale)}</td>
+                          <td className="min-w-48 px-4 py-3 break-words whitespace-pre-line">
+                            {request.reason}
+                          </td>
+                          <td className="px-4 py-3 tabular-nums">
+                            {formatDay(request.requestedEffectiveDate, locale)}
+                          </td>
                           <td className="px-4 py-3 text-right">
-                            <AppButton className="min-h-9 px-3 sm:min-h-9" disabled={action.isPending || new Date(request.requestedEffectiveDate).getTime() > currentTime}
-                              onClick={() => void execute(request)}>
-                              {action.isPending ? t("memberSpace.executing") : new Date(request.requestedEffectiveDate).getTime() > currentTime
-                                ? t("memberSpace.notEffectiveYet") : t("memberSpace.execute")}</AppButton>
+                            <AppButton
+                              className="min-h-9 px-3 sm:min-h-9"
+                              disabled={
+                                action.isPending ||
+                                new Date(request.requestedEffectiveDate).getTime() > currentTime
+                              }
+                              onClick={() => void execute(request)}
+                            >
+                              {action.isPending
+                                ? t('memberSpace.executing')
+                                : new Date(request.requestedEffectiveDate).getTime() > currentTime
+                                  ? t('memberSpace.notEffectiveYet')
+                                  : t('memberSpace.execute')}
+                            </AppButton>
                           </td>
                         </tr>
                       ))}
@@ -198,54 +365,118 @@ export function ClubMembersPage() {
             </section>
           )}
           <section aria-labelledby="roster" className="space-y-4">
-            <h2 id="roster" className="font-heading text-base font-semibold">{t("memberSpace.roster")}</h2>
-            {stateNotice && <p role="status" className="text-sm font-semibold text-success-app">{stateNotice}</p>}
+            <h2 id="roster" className="font-heading text-base font-semibold">
+              {t('memberSpace.roster')}
+            </h2>
+            {stateNotice && (
+              <p role="status" className="text-sm font-semibold text-success-app">
+                {stateNotice}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
-              <AppSearchInput onSearch={setSearch} aria-label={t("memberSpace.searchLabel")}
-                placeholder={t("memberSpace.searchPlaceholder")} className="min-w-0 flex-1 basis-60" />
-              <AppSelect value={stateFilter} onChange={setStateFilter} label={t("memberSpace.filterState")} options={[
-                { value: ALL, label: t("memberSpace.allStates") },
-                { value: "Active", label: t(membershipStateLabels.Active) },
-                { value: "Inactive", label: t(membershipStateLabels.Inactive) },
-              ]} />
-              <AppSelect value={roleFilter} onChange={setRoleFilter} label={t("memberSpace.filterPosition")} options={[
-                { value: ALL, label: t("memberSpace.allPositions") },
-                ...roles.map((role) => ({ value: role, label: role })),
-                { value: NO_ROLE, label: t("memberSpace.noRole") },
-              ]} />
+              <AppSearchInput
+                onSearch={setSearch}
+                aria-label={t('memberSpace.searchLabel')}
+                placeholder={t('memberSpace.searchPlaceholder')}
+                className="min-w-0 flex-1 basis-60"
+              />
+              <AppSelect
+                value={stateFilter}
+                onChange={setStateFilter}
+                label={t('memberSpace.filterState')}
+                options={[
+                  { value: ALL, label: t('memberSpace.allStates') },
+                  { value: 'Active', label: t(membershipStateLabels.Active) },
+                  { value: 'Inactive', label: t(membershipStateLabels.Inactive) },
+                ]}
+              />
+              <AppSelect
+                value={roleFilter}
+                onChange={setRoleFilter}
+                label={t('memberSpace.filterPosition')}
+                options={[
+                  { value: ALL, label: t('memberSpace.allPositions') },
+                  ...roles.map((role) => ({ value: role, label: role })),
+                  { value: NO_ROLE, label: t('memberSpace.noRole') },
+                ]}
+              />
             </div>
-            <AppTable table={table} loading={members.isPending}
-              emptyMessage={roster.length ? t("memberSpace.rosterNoMatch") : t("memberSpace.rosterEmpty")} />
+            <AppTable
+              table={table}
+              loading={members.isPending}
+              emptyMessage={
+                roster.length ? t('memberSpace.rosterNoMatch') : t('memberSpace.rosterEmpty')
+              }
+            />
             {!members.isPending && filtered.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted-app">
-                  {t("memberSpace.rosterCount", { shown: filtered.length, total: roster.length })}</p>
+                  {t('memberSpace.rosterCount', { shown: filtered.length, total: roster.length })}
+                </p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <AppTableLimitSelect value={pageSize} onChange={(size) => table.setPageSize(size)}
-                    label={t("memberSpace.rowsPerPage")} options={[10, 20, 50, 100]} />
-                  <AppPagination pageIndex={pageIndex} pageCount={table.getPageCount()}
-                    onPageChange={(index) => table.setPageIndex(index)} prevLabel={t("memberSpace.prevPage")}
-                    nextLabel={t("memberSpace.nextPage")} pageLabel={(page) => t("memberSpace.pageLabel", { page })}
-                    navLabel={t("memberSpace.pages")} />
+                  <AppTableLimitSelect
+                    value={pageSize}
+                    onChange={(size) => table.setPageSize(size)}
+                    label={t('memberSpace.rowsPerPage')}
+                    options={[10, 20, 50, 100]}
+                  />
+                  <AppPagination
+                    pageIndex={pageIndex}
+                    pageCount={table.getPageCount()}
+                    onPageChange={(index) => table.setPageIndex(index)}
+                    prevLabel={t('memberSpace.prevPage')}
+                    nextLabel={t('memberSpace.nextPage')}
+                    pageLabel={(page) => t('memberSpace.pageLabel', { page })}
+                    navLabel={t('memberSpace.pages')}
+                  />
                 </div>
               </div>
             )}
           </section>
         </div>
       )}
-      {onboarding && <ClubMemberOnboardDialog clubId={clubId} onClose={() => setOnboarding(false)} onSaved={setStateNotice} />}
-      {dialog?.kind === "state" && clubId && <ClubMemberStateDialog member={dialog.member} clubId={clubId}
-        onClose={closeDialog} onSaved={setStateNotice} />}
-      {dialog?.kind === "history" && (
-        <AppDialog open title={t("memberSpace.history")} closeLabel={t("memberSpace.close")} onClose={closeDialog}>
+      {onboarding && (
+        <ClubMemberOnboardDialog
+          clubId={clubId}
+          onClose={() => setOnboarding(false)}
+          onSaved={setStateNotice}
+        />
+      )}
+      {dialog?.kind === 'state' && clubId && (
+        <ClubMemberStateDialog
+          member={dialog.member}
+          clubId={clubId}
+          onClose={closeDialog}
+          onSaved={setStateNotice}
+        />
+      )}
+      {dialog?.kind === 'history' && (
+        <AppDialog
+          open
+          title={t('memberSpace.history')}
+          closeLabel={t('memberSpace.close')}
+          onClose={closeDialog}
+        >
           <p className="mb-3 font-semibold break-words">{dialog.member.displayName}</p>
-          {(dialog.member.statusHistory ?? []).length === 0 ? <AppEmptyState variant="boxed" message={t("memberSpace.historyEmpty")} /> : (
+          {(dialog.member.statusHistory ?? []).length === 0 ? (
+            <AppEmptyState variant="boxed" message={t('memberSpace.historyEmpty')} />
+          ) : (
             <ol className="space-y-2 text-sm">
               {(dialog.member.statusHistory ?? []).map((item, index) => (
-                <li key={`${item.at}-${index}`} className="rounded-lg border border-border-app px-3 py-2">
-                  <span>{t("memberSpace.historyItem", { from: t(membershipStateLabels[item.fromState]),
-                    to: t(membershipStateLabels[item.toState]), date: formatDay(item.effectiveDate, locale) })}</span>
-                  {item.reason && <span className="block break-words text-muted-app">{item.reason}</span>}
+                <li
+                  key={`${item.at}-${index}`}
+                  className="rounded-lg border border-border-app px-3 py-2"
+                >
+                  <span>
+                    {t('memberSpace.historyItem', {
+                      from: t(membershipStateLabels[item.fromState]),
+                      to: t(membershipStateLabels[item.toState]),
+                      date: formatDay(item.effectiveDate, locale),
+                    })}
+                  </span>
+                  {item.reason && (
+                    <span className="block break-words text-muted-app">{item.reason}</span>
+                  )}
                 </li>
               ))}
             </ol>
@@ -253,34 +484,49 @@ export function ClubMembersPage() {
         </AppDialog>
       )}
     </>
-  );
+  )
 }
 
 // Danh sách thành viên chỉ đọc cho người không có quyền quản lý
 function ClubRosterReadOnly({ clubId }: { clubId: string }) {
-  const { t } = useTranslation();
-  const space = useMemberSpace(clubId, true);
+  const { t } = useTranslation()
+  const space = useMemberSpace(clubId, true)
   return (
     <>
-      <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.rosterReadOnlyDescription")} />
-      {space.isPending ? <AppSkeleton className="h-48 w-full" /> : space.error || !space.data
-        ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")} /> : (
-          <ul className="grid gap-x-6 gap-y-1 rounded-2xl border border-border-app bg-bg-app p-3 shadow-xs sm:grid-cols-2">
-            {space.data.members.map((member, index) => (
-              <li key={`${member.displayName}-${index}`} className="flex items-center gap-3 rounded-lg px-2 py-2">
-                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app">
-                  {member.displayName.trim().charAt(0).toUpperCase()}</span>
-                <span className="min-w-0">
-                  <span className="block truncate font-medium" title={member.displayName}>{member.displayName}</span>
-                  <span className="block text-xs text-muted-app">
-                    {member.positions.join(", ") || t("memberSpace.noPosition")}
-                    {member.state === "Inactive" && ` · ${t("memberSpace.stateInactive")}`}
-                  </span>
+      <PageHeader
+        title={t('memberSpace.membersPageTitle')}
+        description={t('memberSpace.rosterReadOnlyDescription')}
+      />
+      {space.isPending ? (
+        <AppSkeleton className="h-48 w-full" />
+      ) : space.error || !space.data ? (
+        <AppNotice tone="danger" role="alert" title={t('memberSpace.loadError')} />
+      ) : (
+        <ul className="grid gap-x-6 gap-y-1 rounded-2xl border border-border-app bg-bg-app p-3 shadow-xs sm:grid-cols-2">
+          {space.data.members.map((member, index) => (
+            <li
+              key={`${member.displayName}-${index}`}
+              className="flex items-center gap-3 rounded-lg px-2 py-2"
+            >
+              <span
+                aria-hidden="true"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app"
+              >
+                {member.displayName.trim().charAt(0).toUpperCase()}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate font-medium" title={member.displayName}>
+                  {member.displayName}
                 </span>
-              </li>
-            ))}
-          </ul>
-        )}
+                <span className="block text-xs text-muted-app">
+                  {member.positions.join(', ') || t('memberSpace.noPosition')}
+                  {member.state === 'Inactive' && ` · ${t('memberSpace.stateInactive')}`}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
-  );
+  )
 }

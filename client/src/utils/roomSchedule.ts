@@ -1,18 +1,18 @@
-import type { TFunction } from "i18next";
-import type { BookingSlot } from "@/services/facilityBookings";
+import type { TFunction } from 'i18next'
+import type { BookingSlot } from '@/services/facilityBookings'
 
-export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
-export type Weekday = typeof WEEKDAYS[number];
+export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const
+export type Weekday = (typeof WEEKDAYS)[number]
 
 // Nhãn thứ trong tuần theo ngôn ngữ hiện tại
 /** "Thứ 4" / "Wednesday" for 1 = Monday … 7 = Sunday. */
 export function weekdayLabel(t: TFunction, weekday: number): string {
-  return t(`roomAllocations.weekday${weekday as Weekday}`);
+  return t(`roomAllocations.weekday${weekday as Weekday}`)
 }
 
 // Nhãn ca học kèm giờ bắt đầu và kết thúc nếu có
 /** "Slot 4 · 15:20–17:40" khi đã biết danh mục slot. */
 export function slotLabel(t: TFunction, slot: number, slots: readonly BookingSlot[]): string {
-  const found = slots.find((item) => item.number === slot);
-  return `${t("facilityBookings.slot", { number: slot })}${found ? ` · ${found.start}–${found.end}` : ""}`;
+  const found = slots.find((item) => item.number === slot)
+  return `${t('facilityBookings.slot', { number: slot })}${found ? ` · ${found.start}–${found.end}` : ''}`
 }

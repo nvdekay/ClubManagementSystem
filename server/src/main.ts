@@ -1,209 +1,250 @@
-import { mongoApplicationExpiryRepository } from "./infra/db/mongo-application-expiry-repository.js";
-import { startApplicationExpiryJob } from "./interface/jobs/application-expiry-job.js";
-import { startComplaintResponseJob } from "./interface/jobs/complaint-response-job.js";
-import { mongoClubEvaluationRepository } from "./infra/db/mongo-club-evaluation-repository.js";
-import { mongoClubViolationRepository } from "./infra/db/mongo-club-violation-repository.js";
-import { startMembershipReconfirmationJob } from "./interface/jobs/membership-reconfirmation-job.js";
-import { mongoMembershipReconfirmationRepository } from "./infra/db/mongo-membership-reconfirmation-repository.js";
-import { mongoSuspensionRequestRepository } from "./infra/db/mongo-suspension-request-repository.js";
-import { mongoClubTransitionPlanRepository } from "./infra/db/mongo-club-transition-plan-repository.js";
-import { mongoClubPeriodicReportRepository } from "./infra/db/mongo-club-periodic-report-repository.js";
-import { mongoEventFinanceRepository } from "./infra/db/mongo-event-finance-repository.js";
-import { mongoClubInvitationRepository } from "./infra/db/mongo-club-invitation-repository.js";
-import { mongoAccountabilityReminderRepository } from "./infra/db/mongo-accountability-reminder-repository.js";
-import { startAccountabilityReminderJob } from "./interface/jobs/accountability-reminder-job.js";
-import { mongoPostEventReportRepository } from "./infra/db/mongo-post-event-report-repository.js";
-import { mongoClubEventRepository } from "./infra/db/mongo-club-event-repository.js";
-import { mongoFacilityBookingRepository } from "./infra/db/mongo-facility-booking-repository.js";
-import { mongoRoomAllocationRepository } from "./infra/db/mongo-room-allocation-repository.js";
-import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.js";
-import { startNotificationDeliveryJob } from "./interface/jobs/notification-delivery-job.js";
-import { mongoMailOutboxRepository, mongoNotificationRepository } from "./infra/db/mongo-notification-repository.js";
-import { logMailTransport } from "./infra/mail/log-mail-transport.js";
-import { createSmtpSender, smtpMailTransport } from "./infra/mail/smtp-mail-transport.js";
-import mongoose from "mongoose";
-import { buildApp } from "./interface/http/server.js";
-import { loadConfig, mailConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
-import { ensureUcmsDatabase } from "./infra/db/ucms-models.js";
-import { ensureAuthSessionIndexes, mongoSessionRepository } from "./infra/db/mongo-auth-session-repository.js";
-import { mongoAuthRepository } from "./infra/db/mongo-auth-repository.js";
-import { mongoAccessRepository } from "./infra/db/mongo-access-repository.js";
-import { mongoAccountAdminRepository } from "./infra/db/mongo-account-admin-repository.js";
-import { googleIdentityProvider } from "./infra/auth/google-oidc.js";
-import { createSessionService } from "./infra/auth/session-service.js";
-import { createOAuthFlowService } from "./infra/auth/oauth-flow-service.js";
-import { ensureAuthBootstrap } from "./infra/db/bootstrap-auth.js";
-import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discovery-repository.js";
-import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
-import { mongoPropertyRepository } from "./infra/db/mongo-property-repository.js";
-import { mongoEvaluationSchemeRepository } from "./infra/db/mongo-evaluation-scheme-repository.js";
-import { mongoExportRepository } from "./infra/db/mongo-export-repository.js";
-import { mongoClubLifecycleRepository } from "./infra/db/mongo-club-lifecycle-repository.js";
-import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
-import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-proposal-review-repository.js";
-import { mongoEventDefenseRepository } from "./infra/db/mongo-event-defense-repository.js";
-import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
-import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
-import { mongoPeriodicReportRepository } from "./infra/db/mongo-periodic-report-repository.js";
-import { mongoSchoolEventRepository } from "./infra/db/mongo-school-event-repository.js";
-import { mongoEvaluationRepository } from "./infra/db/mongo-evaluation-repository.js";
-import { startEventLifecycleJob } from "./interface/jobs/event-lifecycle-job.js";
-import { exportFileWriter } from "./infra/files/export-file-writer.js";
-import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
-import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
-import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
-import { mongoClubProfileRepository } from "./infra/db/mongo-club-profile-repository.js";
-import { mongoBoardNominationRepository } from "./infra/db/mongo-board-nomination-repository.js";
-import { mongoRecruitmentCampaignRepository } from "./infra/db/mongo-recruitment-campaign-repository.js";
-import { mongoRecruitmentApplicationRepository } from "./infra/db/mongo-recruitment-application-repository.js";
-import { mongoCandidateEvaluationRepository } from "./infra/db/mongo-candidate-evaluation-repository.js";
-import { mongoMembershipRepository } from "./infra/db/mongo-membership-repository.js";
-import { mongoDashboardRepository } from "./infra/db/mongo-dashboard-repository.js";
-import { mongoLeadershipTransitionRepository } from "./infra/db/mongo-leadership-transition-repository.js";
-import { mongoEventRegistrationRepository } from "./infra/db/mongo-event-registration-repository.js";
-import { mongoEventCheckInRepository } from "./infra/db/mongo-event-checkin-repository.js";
-import { mongoEventFeedbackRepository } from "./infra/db/mongo-event-feedback-repository.js";
-import { mongoComplaintRepository } from "./infra/db/mongo-complaint-repository.js";
-import { mongoApprovalRoutingRepository } from "./infra/db/mongo-approval-routing-repository.js";
-import { mongoMemberSpaceRepository } from "./infra/db/mongo-member-space-repository.js";
-import { mongoAccessDenialAuditRepository } from "./infra/db/mongo-access-denial-audit-repository.js";
-import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
-import { mongoSponsoredItemRepository } from "./infra/db/mongo-sponsored-item-repository.js";
-import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
-import { cloudinaryEventProposalFiles } from "./infra/files/event-proposal-files.js";
+import { mongoApplicationExpiryRepository } from './infra/db/mongo-application-expiry-repository.js'
+import { startApplicationExpiryJob } from './interface/jobs/application-expiry-job.js'
+import { startComplaintResponseJob } from './interface/jobs/complaint-response-job.js'
+import { mongoClubEvaluationRepository } from './infra/db/mongo-club-evaluation-repository.js'
+import { mongoClubViolationRepository } from './infra/db/mongo-club-violation-repository.js'
+import { startMembershipReconfirmationJob } from './interface/jobs/membership-reconfirmation-job.js'
+import { mongoMembershipReconfirmationRepository } from './infra/db/mongo-membership-reconfirmation-repository.js'
+import { mongoSuspensionRequestRepository } from './infra/db/mongo-suspension-request-repository.js'
+import { mongoClubTransitionPlanRepository } from './infra/db/mongo-club-transition-plan-repository.js'
+import { mongoClubPeriodicReportRepository } from './infra/db/mongo-club-periodic-report-repository.js'
+import { mongoEventFinanceRepository } from './infra/db/mongo-event-finance-repository.js'
+import { mongoClubInvitationRepository } from './infra/db/mongo-club-invitation-repository.js'
+import { mongoAccountabilityReminderRepository } from './infra/db/mongo-accountability-reminder-repository.js'
+import { startAccountabilityReminderJob } from './interface/jobs/accountability-reminder-job.js'
+import { mongoPostEventReportRepository } from './infra/db/mongo-post-event-report-repository.js'
+import { mongoClubEventRepository } from './infra/db/mongo-club-event-repository.js'
+import { mongoFacilityBookingRepository } from './infra/db/mongo-facility-booking-repository.js'
+import { mongoRoomAllocationRepository } from './infra/db/mongo-room-allocation-repository.js'
+import { startFacilityBookingJob } from './interface/jobs/facility-booking-job.js'
+import { startNotificationDeliveryJob } from './interface/jobs/notification-delivery-job.js'
+import {
+  mongoMailOutboxRepository,
+  mongoNotificationRepository,
+} from './infra/db/mongo-notification-repository.js'
+import { logMailTransport } from './infra/mail/log-mail-transport.js'
+import { createSmtpSender, smtpMailTransport } from './infra/mail/smtp-mail-transport.js'
+import mongoose from 'mongoose'
+import { buildApp } from './interface/http/server.js'
+import {
+  loadConfig,
+  mailConfig,
+  optionalAuthConfig,
+  optionalCloudinaryConfig,
+} from './infra/config/index.js'
+import { ensureUcmsDatabase } from './infra/db/ucms-models.js'
+import {
+  ensureAuthSessionIndexes,
+  mongoSessionRepository,
+} from './infra/db/mongo-auth-session-repository.js'
+import { mongoAuthRepository } from './infra/db/mongo-auth-repository.js'
+import { mongoAccessRepository } from './infra/db/mongo-access-repository.js'
+import { mongoAccountAdminRepository } from './infra/db/mongo-account-admin-repository.js'
+import { googleIdentityProvider } from './infra/auth/google-oidc.js'
+import { createSessionService } from './infra/auth/session-service.js'
+import { createOAuthFlowService } from './infra/auth/oauth-flow-service.js'
+import { ensureAuthBootstrap } from './infra/db/bootstrap-auth.js'
+import { mongoPublicDiscoveryRepository } from './infra/db/mongo-public-discovery-repository.js'
+import { mongoPolicyRepository } from './infra/db/mongo-policy-repository.js'
+import { mongoPropertyRepository } from './infra/db/mongo-property-repository.js'
+import { mongoEvaluationSchemeRepository } from './infra/db/mongo-evaluation-scheme-repository.js'
+import { mongoExportRepository } from './infra/db/mongo-export-repository.js'
+import { mongoClubLifecycleRepository } from './infra/db/mongo-club-lifecycle-repository.js'
+import { startClubLifecycleJob } from './interface/jobs/club-lifecycle-job.js'
+import { mongoEventProposalReviewRepository } from './infra/db/mongo-event-proposal-review-repository.js'
+import { mongoEventDefenseRepository } from './infra/db/mongo-event-defense-repository.js'
+import { mongoBudgetDisbursementRepository } from './infra/db/mongo-budget-disbursement-repository.js'
+import { mongoViolationRepository } from './infra/db/mongo-violation-repository.js'
+import { mongoPeriodicReportRepository } from './infra/db/mongo-periodic-report-repository.js'
+import { mongoSchoolEventRepository } from './infra/db/mongo-school-event-repository.js'
+import { mongoEvaluationRepository } from './infra/db/mongo-evaluation-repository.js'
+import { startEventLifecycleJob } from './interface/jobs/event-lifecycle-job.js'
+import { exportFileWriter } from './infra/files/export-file-writer.js'
+import {
+  ensureDefaultClubFields,
+  mongoClubFieldRepository,
+} from './infra/db/mongo-club-field-repository.js'
+import { mongoClubApplicationRepository } from './infra/db/mongo-club-application-repository.js'
+import { mongoClubApplicationReviewRepository } from './infra/db/mongo-club-application-review-repository.js'
+import { mongoClubProfileRepository } from './infra/db/mongo-club-profile-repository.js'
+import { mongoBoardNominationRepository } from './infra/db/mongo-board-nomination-repository.js'
+import { mongoRecruitmentCampaignRepository } from './infra/db/mongo-recruitment-campaign-repository.js'
+import { mongoRecruitmentApplicationRepository } from './infra/db/mongo-recruitment-application-repository.js'
+import { mongoCandidateEvaluationRepository } from './infra/db/mongo-candidate-evaluation-repository.js'
+import { mongoMembershipRepository } from './infra/db/mongo-membership-repository.js'
+import { mongoDashboardRepository } from './infra/db/mongo-dashboard-repository.js'
+import { mongoLeadershipTransitionRepository } from './infra/db/mongo-leadership-transition-repository.js'
+import { mongoEventRegistrationRepository } from './infra/db/mongo-event-registration-repository.js'
+import { mongoEventCheckInRepository } from './infra/db/mongo-event-checkin-repository.js'
+import { mongoEventFeedbackRepository } from './infra/db/mongo-event-feedback-repository.js'
+import { mongoComplaintRepository } from './infra/db/mongo-complaint-repository.js'
+import { mongoApprovalRoutingRepository } from './infra/db/mongo-approval-routing-repository.js'
+import { mongoMemberSpaceRepository } from './infra/db/mongo-member-space-repository.js'
+import { mongoAccessDenialAuditRepository } from './infra/db/mongo-access-denial-audit-repository.js'
+import { cloudinaryApplicationFiles } from './infra/files/cloudinary-application-files.js'
+import { mongoSponsoredItemRepository } from './infra/db/mongo-sponsored-item-repository.js'
+import { cloudinaryRecruitmentFiles } from './infra/files/cloudinary-recruitment-files.js'
+import { cloudinaryEventProposalFiles } from './infra/files/event-proposal-files.js'
 
-const config = loadConfig(); // việc đầu tiên — thoát nếu env không hợp lệ
-const authConfig = optionalAuthConfig(config);
+const config = loadConfig() // việc đầu tiên — thoát nếu env không hợp lệ
+const authConfig = optionalAuthConfig(config)
 // EXT-02: dùng SMTP khi đã cấu hình (bắt buộc ở production); log transport chỉ dành cho môi trường dev.
-const mail = mailConfig(config);
-const mailTransport = mail.transport === "smtp" ? smtpMailTransport(mail, createSmtpSender(mail)) : logMailTransport();
-const cloudinaryConfig = optionalCloudinaryConfig(config);
+const mail = mailConfig(config)
+const mailTransport =
+  mail.transport === 'smtp' ? smtpMailTransport(mail, createSmtpSender(mail)) : logMailTransport()
+const cloudinaryConfig = optionalCloudinaryConfig(config)
 
 try {
-  await mongoose.connect(config.MONGO_URI);
-  await ensureUcmsDatabase();
-  await ensureDefaultClubFields();
+  await mongoose.connect(config.MONGO_URI)
+  await ensureUcmsDatabase()
+  await ensureDefaultClubFields()
   if (authConfig) {
-    await ensureAuthSessionIndexes();
-    await ensureAuthBootstrap(authConfig);
+    await ensureAuthSessionIndexes()
+    await ensureAuthBootstrap(authConfig)
   }
 } catch (err) {
-  console.error("❌ mongo connection failed:", err instanceof Error ? err.message : err);
-  process.exit(1); // fail fast — không bao giờ phục vụ khi không có database
+  console.error('❌ mongo connection failed:', err instanceof Error ? err.message : err)
+  process.exit(1) // fail fast — không bao giờ phục vụ khi không có database
 }
-console.log("mongo connected");
+console.log('mongo connected')
 
-const membershipReconfirmationRepo = mongoMembershipReconfirmationRepository();
+const membershipReconfirmationRepo = mongoMembershipReconfirmationRepository()
 const commonDeps = {
   publicRepo: mongoPublicDiscoveryRepository(),
   dbReady: () => mongoose.connection.readyState === 1,
-};
-const clubLifecycleRepo = mongoClubLifecycleRepository();
-const eventProposalReviewRepo = mongoEventProposalReviewRepository();
-const eventDefenseRepo = mongoEventDefenseRepository(eventProposalReviewRepo);
-const facilityBookingRepo = mongoFacilityBookingRepository();
-const schoolEventRepo = mongoSchoolEventRepository();
-const app = authConfig ? buildApp({
-  ...commonDeps,
-  accessDenialAudit: mongoAccessDenialAuditRepository(),
-  clubEvaluationRepo: mongoClubEvaluationRepository(),
-  clubViolationRepo: mongoClubViolationRepository(),
+}
+const clubLifecycleRepo = mongoClubLifecycleRepository()
+const eventProposalReviewRepo = mongoEventProposalReviewRepository()
+const eventDefenseRepo = mongoEventDefenseRepository(eventProposalReviewRepo)
+const facilityBookingRepo = mongoFacilityBookingRepository()
+const schoolEventRepo = mongoSchoolEventRepository()
+const app = authConfig
+  ? buildApp({
+      ...commonDeps,
+      accessDenialAudit: mongoAccessDenialAuditRepository(),
+      clubEvaluationRepo: mongoClubEvaluationRepository(),
+      clubViolationRepo: mongoClubViolationRepository(),
+      membershipReconfirmationRepo,
+      suspensionRequestRepo: mongoSuspensionRequestRepository(),
+      clubTransitionPlanRepo: mongoClubTransitionPlanRepository(),
+      adminRepo: mongoAccountAdminRepository(),
+      policyRepo: mongoPolicyRepository(),
+      applicationRepo: mongoClubApplicationRepository(),
+      clubFieldRepo: mongoClubFieldRepository(),
+      propertyRepo: mongoPropertyRepository(),
+      facilityBookingRepo,
+      roomAllocationRepo: mongoRoomAllocationRepository(),
+      evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
+      exportRepo: mongoExportRepository(),
+      exportWriter: exportFileWriter(),
+      clubLifecycleRepo,
+      eventProposalReviewRepo,
+      eventDefenseRepo,
+      budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
+      postEventReportRepo: mongoPostEventReportRepository(),
+      violationRepo: mongoViolationRepository(),
+      periodicReportRepo: mongoPeriodicReportRepository(),
+      clubPeriodicReportRepo: mongoClubPeriodicReportRepository(),
+      eventFinanceRepo: mongoEventFinanceRepository({
+        recoveryDueDays: 7,
+        evidenceTypes: ['INVOICE', 'RECEIPT', 'PROOF_OF_PAYMENT'],
+      }),
+      sponsoredItemRepo: mongoSponsoredItemRepository(),
+      schoolEventRepo,
+      clubInvitationRepo: mongoClubInvitationRepository(),
+      clubEventRepo: mongoClubEventRepository({
+        proposalNoticeHours: 168,
+        cancellationNoticeHours: 24,
+      }),
+      evaluationRepo: mongoEvaluationRepository(),
+      applicationReviewRepo: mongoClubApplicationReviewRepository(),
+      clubProfileRepo: mongoClubProfileRepository(),
+      boardNominationRepo: mongoBoardNominationRepository(),
+      leadershipTransitionRepo: mongoLeadershipTransitionRepository(),
+      eventRegistrationRepo: mongoEventRegistrationRepository(),
+      eventCheckInRepo: mongoEventCheckInRepository(),
+      eventFeedbackRepo: mongoEventFeedbackRepository(),
+      complaintRepo: mongoComplaintRepository(),
+      approvalRoutingRepo: mongoApprovalRoutingRepository(),
+      memberSpaceRepo: mongoMemberSpaceRepository(),
+      notificationRepo: mongoNotificationRepository(),
+      recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
+      recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
+      candidateEvaluationRepo: mongoCandidateEvaluationRepository(),
+      membershipRepo: mongoMembershipRepository(),
+      dashboardRepo: mongoDashboardRepository(),
+      recruitmentAttachmentStorage: cloudinaryConfig
+        ? cloudinaryRecruitmentFiles(cloudinaryConfig)
+        : null,
+      applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
+      eventProposalFiles: cloudinaryConfig ? cloudinaryEventProposalFiles(cloudinaryConfig) : null,
+      auth: {
+        repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
+        accessRepo: mongoAccessRepository(),
+        sessions: createSessionService(mongoSessionRepository(), authConfig.SESSION_SECRET),
+        google: googleIdentityProvider({
+          clientId: authConfig.GOOGLE_CLIENT_ID,
+          clientSecret: authConfig.GOOGLE_CLIENT_SECRET,
+          redirectUri: new URL('/api/v1/auth/callback', authConfig.APP_BASE_URL).toString(),
+        }),
+        oauthFlow: createOAuthFlowService(authConfig.SESSION_SECRET),
+        clientBaseUrl: authConfig.CLIENT_BASE_URL,
+        // Deploy qua HTTPS mà quên NODE_ENV=production vẫn phải có cookie Secure.
+        secureCookies:
+          config.NODE_ENV === 'production' ||
+          new URL(authConfig.APP_BASE_URL).protocol === 'https:',
+      },
+    })
+  : buildApp(commonDeps)
+const stopApplicationExpiryJob = startApplicationExpiryJob(mongoApplicationExpiryRepository())
+const stopComplaintResponseJob = startComplaintResponseJob(mongoComplaintRepository())
+const stopReconfirmationJob = startMembershipReconfirmationJob(
   membershipReconfirmationRepo,
-  suspensionRequestRepo: mongoSuspensionRequestRepository(),
-  clubTransitionPlanRepo: mongoClubTransitionPlanRepository(),
-  adminRepo: mongoAccountAdminRepository(),
-  policyRepo: mongoPolicyRepository(),
-  applicationRepo: mongoClubApplicationRepository(),
-  clubFieldRepo: mongoClubFieldRepository(),
-  propertyRepo: mongoPropertyRepository(),
-  facilityBookingRepo,
-  roomAllocationRepo: mongoRoomAllocationRepository(),
-  evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
-  exportRepo: mongoExportRepository(),
-  exportWriter: exportFileWriter(),
-  clubLifecycleRepo,
+  mongoPolicyRepository(),
+)
+const stopAccountabilityJob = startAccountabilityReminderJob(
+  mongoAccountabilityReminderRepository(),
+)
+const stopBookingJob = startFacilityBookingJob(facilityBookingRepo)
+const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo)
+const stopEventLifecycleJob = startEventLifecycleJob(
   eventProposalReviewRepo,
-  eventDefenseRepo,
-  budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
-  postEventReportRepo: mongoPostEventReportRepository(),
-  violationRepo: mongoViolationRepository(),
-  periodicReportRepo: mongoPeriodicReportRepository(),
-  clubPeriodicReportRepo: mongoClubPeriodicReportRepository(),
-  eventFinanceRepo: mongoEventFinanceRepository({ recoveryDueDays: 7, evidenceTypes: ["INVOICE", "RECEIPT", "PROOF_OF_PAYMENT"] }),
-  sponsoredItemRepo: mongoSponsoredItemRepository(),
   schoolEventRepo,
-  clubInvitationRepo: mongoClubInvitationRepository(),
-  clubEventRepo: mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 }),
-  evaluationRepo: mongoEvaluationRepository(),
-  applicationReviewRepo: mongoClubApplicationReviewRepository(),
-  clubProfileRepo: mongoClubProfileRepository(),
-  boardNominationRepo: mongoBoardNominationRepository(),
-  leadershipTransitionRepo: mongoLeadershipTransitionRepository(),
-  eventRegistrationRepo: mongoEventRegistrationRepository(),
-  eventCheckInRepo: mongoEventCheckInRepository(),
-  eventFeedbackRepo: mongoEventFeedbackRepository(),
-  complaintRepo: mongoComplaintRepository(),
-  approvalRoutingRepo: mongoApprovalRoutingRepository(),
-  memberSpaceRepo: mongoMemberSpaceRepository(),
-  notificationRepo: mongoNotificationRepository(),
-  recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
-    recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
-    candidateEvaluationRepo: mongoCandidateEvaluationRepository(),
-    membershipRepo: mongoMembershipRepository(),
-    dashboardRepo: mongoDashboardRepository(),
-  recruitmentAttachmentStorage: cloudinaryConfig ? cloudinaryRecruitmentFiles(cloudinaryConfig) : null,
-  applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
-  eventProposalFiles: cloudinaryConfig ? cloudinaryEventProposalFiles(cloudinaryConfig) : null,
-  auth: {
-    repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
-    accessRepo: mongoAccessRepository(),
-    sessions: createSessionService(mongoSessionRepository(), authConfig.SESSION_SECRET),
-    google: googleIdentityProvider({
-      clientId: authConfig.GOOGLE_CLIENT_ID,
-      clientSecret: authConfig.GOOGLE_CLIENT_SECRET,
-      redirectUri: new URL("/api/v1/auth/callback", authConfig.APP_BASE_URL).toString(),
-    }),
-    oauthFlow: createOAuthFlowService(authConfig.SESSION_SECRET),
-    clientBaseUrl: authConfig.CLIENT_BASE_URL,
-    // Deploy qua HTTPS mà quên NODE_ENV=production vẫn phải có cookie Secure.
-    secureCookies: config.NODE_ENV === "production" || new URL(authConfig.APP_BASE_URL).protocol === "https:",
-  },
-}) : buildApp(commonDeps);
-const stopApplicationExpiryJob = startApplicationExpiryJob(mongoApplicationExpiryRepository());
-const stopComplaintResponseJob = startComplaintResponseJob(mongoComplaintRepository());
-const stopReconfirmationJob = startMembershipReconfirmationJob(membershipReconfirmationRepo, mongoPolicyRepository());
-const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountabilityReminderRepository());
-const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
-const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
-const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo, eventDefenseRepo);
+  eventDefenseRepo,
+)
 // ponytail: dùng log transport cho tới khi SMTP client dependency được duyệt (xem infra/mail/README.md).
-const stopNotificationJob = startNotificationDeliveryJob(mongoMailOutboxRepository(), mailTransport,
-  authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {});
+const stopNotificationJob = startNotificationDeliveryJob(
+  mongoMailOutboxRepository(),
+  mailTransport,
+  authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {},
+)
 const server = app.listen(config.PORT, () => {
-  console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`);
-});
+  console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`)
+})
 
-let shuttingDown = false;
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
+let shuttingDown = false
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {
-    if (shuttingDown) process.exit(1); // tín hiệu thứ hai = ngừng chờ, thoát ngay
-    shuttingDown = true;
-    stopApplicationExpiryJob();
-    stopComplaintResponseJob();
-    stopReconfirmationJob();
-    stopLifecycleJob();
-    stopBookingJob();
-    stopAccountabilityJob();
-    stopEventLifecycleJob();
-    stopNotificationJob();
+    if (shuttingDown) {
+      process.exit(1)
+    } // tín hiệu thứ hai = ngừng chờ, thoát ngay
+    shuttingDown = true
+    stopApplicationExpiryJob()
+    stopComplaintResponseJob()
+    stopReconfirmationJob()
+    stopLifecycleJob()
+    stopBookingJob()
+    stopAccountabilityJob()
+    stopEventLifecycleJob()
+    stopNotificationJob()
     // Hạn xả — một request đang xử lý bị treo không được chặn SIGTERM cho tới khi nền tảng SIGKILL.
     setTimeout(() => {
-      console.error("shutdown deadline hit — forcing exit");
-      process.exit(1);
-    }, 10_000);
+      console.error('shutdown deadline hit — forcing exit')
+      process.exit(1)
+    }, 10_000)
     server.close(() => {
-      mongoose.disconnect().finally(() => process.exit(0));
-    });
-    server.closeIdleConnections();
-  });
+      mongoose.disconnect().finally(() => process.exit(0))
+    })
+    server.closeIdleConnections()
+  })
 }

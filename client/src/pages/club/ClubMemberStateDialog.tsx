@@ -1,109 +1,198 @@
-import { useId, useRef, useState, type FormEvent } from "react";
-import { useTranslation } from "react-i18next";
+import { useId, useRef, useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { membershipStateLabels } from "@/components/custom/MembershipStateBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppDialog } from "@/components/ui/dialog/AppDialog";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
-import { useAuth } from "@/hooks/useAuth";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { useMembershipAction } from "@/hooks/useMemberSpace";
-import type { ClubRosterMember, ManagedMembershipState } from "@/services/memberSpace";
-import { cn } from "@/utils/cn";
+import { membershipStateLabels } from '@/components/custom/MembershipStateBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppDialog } from '@/components/ui/dialog/AppDialog'
+import { AppFieldError } from '@/components/ui/field/AppFieldError'
+import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { useAuth } from '@/hooks/useAuth'
+import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { useMembershipAction } from '@/hooks/useMemberSpace'
+import type { ClubRosterMember, ManagedMembershipState } from '@/services/memberSpace'
+import { cn } from '@/utils/cn'
 
-const nextStates: Record<"Active" | "Inactive", ManagedMembershipState[]> = {
-  Active: ["Inactive", "Banned"],
-  Inactive: ["Active", "Banned"],
-};
-const actionLabels = { Active: "memberSpace.toActive", Inactive: "memberSpace.toInactive",
-  Banned: "memberSpace.toBanned" } as const;
-const formTitles = { Active: "memberSpace.stateFormTitle_Active", Inactive: "memberSpace.stateFormTitle_Inactive",
-  Banned: "memberSpace.stateFormTitle_Banned" } as const;
+const nextStates: Record<'Active' | 'Inactive', ManagedMembershipState[]> = {
+  Active: ['Inactive', 'Banned'],
+  Inactive: ['Active', 'Banned'],
+}
+const actionLabels = {
+  Active: 'memberSpace.toActive',
+  Inactive: 'memberSpace.toInactive',
+  Banned: 'memberSpace.toBanned',
+} as const
+const formTitles = {
+  Active: 'memberSpace.stateFormTitle_Active',
+  Inactive: 'memberSpace.stateFormTitle_Inactive',
+  Banned: 'memberSpace.stateFormTitle_Banned',
+} as const
 
 interface ClubMemberStateDialogProps {
-  member: ClubRosterMember;
-  clubId: string;
-  onClose: () => void;
-  onSaved: (message: string) => void;
+  member: ClubRosterMember
+  clubId: string
+  onClose: () => void
+  onSaved: (message: string) => void
 }
 
 // Hộp thoại đổi trạng thái thành viên CLB (Active, Inactive, ban...)
 /** UC21: đổi trạng thái của một thành viên (có hiệu lực từ hôm nay); ban cần có lý do. Chỉ mount khi đang mở. */
-export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: ClubMemberStateDialogProps) {
-  const { t } = useTranslation();
-  const auth = useAuth();
-  const action = useMembershipAction();
-  const inFlight = useRef(false);
-  const reasonId = useId();
-  const options = member.state === "Active" || member.state === "Inactive" ? nextStates[member.state] : [];
+export function ClubMemberStateDialog({
+  member,
+  clubId,
+  onClose,
+  onSaved,
+}: ClubMemberStateDialogProps) {
+  const { t } = useTranslation()
+  const auth = useAuth()
+  const action = useMembershipAction()
+  const inFlight = useRef(false)
+  const reasonId = useId()
+  const options =
+    member.state === 'Active' || member.state === 'Inactive' ? nextStates[member.state] : []
   // Mặc định chọn thay đổi có thể đảo ngược; ban luôn phải là lựa chọn có chủ ý.
-  const [target, setTarget] = useState<ManagedMembershipState | undefined>(options[0]);
-  const [reason, setReason] = useState("");
-  const banned = target === "Banned";
-  const field = useFieldValidation({ reason: banned && !reason.trim() ? t("common.fieldRequired") : null });
-  const name = member.displayName ?? "";
+  const [target, setTarget] = useState<ManagedMembershipState | undefined>(options[0])
+  const [reason, setReason] = useState('')
+  const banned = target === 'Banned'
+  const field = useFieldValidation({
+    reason: banned && !reason.trim() ? t('common.fieldRequired') : null,
+  })
+  const name = member.displayName ?? ''
 
   // Gửi yêu cầu đổi trạng thái thành viên kèm lý do
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!field.touchAll() || !auth.data || !target || inFlight.current || !event.currentTarget.reportValidity()) return;
-    inFlight.current = true;
+    event.preventDefault()
+    if (
+      !field.touchAll() ||
+      !auth.data ||
+      !target ||
+      inFlight.current ||
+      !event.currentTarget.reportValidity()
+    ) {
+      return
+    }
+    inFlight.current = true
     try {
-      await action.mutateAsync({ kind: "state", clubId, membershipId: member.id, state: target,
-        ...(reason.trim() ? { reason: reason.trim() } : {}), csrfToken: auth.data.csrfToken });
-      onSaved(t("memberSpace.stateSaved", { name, state: t(membershipStateLabels[target]) }));
-      onClose();
+      await action.mutateAsync({
+        kind: 'state',
+        clubId,
+        membershipId: member.id,
+        state: target,
+        ...(reason.trim() ? { reason: reason.trim() } : {}),
+        csrfToken: auth.data.csrfToken,
+      })
+      onSaved(t('memberSpace.stateSaved', { name, state: t(membershipStateLabels[target]) }))
+      onClose()
     } catch {
       // action.isError hiển thị bên dưới.
     } finally {
-      inFlight.current = false;
+      inFlight.current = false
     }
   }
 
   return (
-    <AppDialog open title={t("memberSpace.changeState")} closeLabel={t("memberSpace.close")} onClose={onClose}
-      footer={<>
-        <AppButton type="button" variant="ghost" onClick={onClose}>{t("memberSpace.cancel")}</AppButton>
-        <AppButton type="submit" form={`${reasonId}-form`} disabled={!target || action.isPending}
-          className={cn({ "bg-danger-app": banned })}>
-          {action.isPending ? t("memberSpace.stateSaving") : t("memberSpace.stateConfirm")}</AppButton>
-      </>}>
-      <form id={`${reasonId}-form`} noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
+    <AppDialog
+      open
+      title={t('memberSpace.changeState')}
+      closeLabel={t('memberSpace.close')}
+      onClose={onClose}
+      footer={
+        <>
+          <AppButton type="button" variant="ghost" onClick={onClose}>
+            {t('memberSpace.cancel')}
+          </AppButton>
+          <AppButton
+            type="submit"
+            form={`${reasonId}-form`}
+            disabled={!target || action.isPending}
+            className={cn({ 'bg-danger-app': banned })}
+          >
+            {action.isPending ? t('memberSpace.stateSaving') : t('memberSpace.stateConfirm')}
+          </AppButton>
+        </>
+      }
+    >
+      <form
+        id={`${reasonId}-form`}
+        noValidate
+        onSubmit={(event) => void submit(event)}
+        className="space-y-4"
+      >
         <fieldset>
-          <legend className="mb-1.5 text-sm font-medium text-text-app">{t("memberSpace.newState")}</legend>
+          <legend className="mb-1.5 text-sm font-medium text-text-app">
+            {t('memberSpace.newState')}
+          </legend>
           <div className="flex flex-wrap gap-2">
             {options.map((state) => (
-              <label key={state} className={cn("flex min-h-11 items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium text-muted-app hover:bg-surface-app sm:min-h-9", {
-                "border-brand-app bg-primary-soft-app text-primary-app hover:bg-primary-soft-app": target === state && state !== "Banned",
-                "border-danger-app bg-danger-app/10 text-danger-app": target === state && state === "Banned",
-              })}>
-                <input type="radio" name="target" value={state} checked={target === state}
-                  onChange={() => { setTarget(state); action.reset(); }} />
+              <label
+                key={state}
+                className={cn(
+                  'flex min-h-11 items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium text-muted-app hover:bg-surface-app sm:min-h-9',
+                  {
+                    'border-brand-app bg-primary-soft-app text-primary-app hover:bg-primary-soft-app':
+                      target === state && state !== 'Banned',
+                    'border-danger-app bg-danger-app/10 text-danger-app':
+                      target === state && state === 'Banned',
+                  },
+                )}
+              >
+                <input
+                  type="radio"
+                  name="target"
+                  value={state}
+                  checked={target === state}
+                  onChange={() => {
+                    setTarget(state)
+                    action.reset()
+                  }}
+                />
                 {t(actionLabels[state])}
               </label>
             ))}
           </div>
         </fieldset>
         {target && (
-          <div className={cn("space-y-3 rounded-xl border border-border-app bg-surface-app p-4", { "border-danger-app/30 bg-danger-app/10": banned })}>
+          <div
+            className={cn('space-y-3 rounded-xl border border-border-app bg-surface-app p-4', {
+              'border-danger-app/30 bg-danger-app/10': banned,
+            })}
+          >
             <p className="font-semibold break-words">{t(formTitles[target], { name })}</p>
-            <p className="text-sm text-muted-app">{t("memberSpace.stateEffective")}</p>
-            {banned && <p className="text-sm font-medium text-danger-app">{t("memberSpace.banWarning")}</p>}
+            <p className="text-sm text-muted-app">{t('memberSpace.stateEffective')}</p>
+            {banned && (
+              <p className="text-sm font-medium text-danger-app">{t('memberSpace.banWarning')}</p>
+            )}
             <div className="space-y-1.5">
               <label htmlFor={reasonId} className="block text-sm font-medium text-text-app">
-                {banned ? <>{t("memberSpace.stateReason")}<AppRequiredMark /></> : t("memberSpace.stateReasonOptional")}</label>
-              <AppTextarea id={reasonId} value={reason} maxLength={2000} rows={3} {...field.control("reason", banned)}
-                className="w-full" onChange={(event) => setReason(event.target.value)} />
-              <AppFieldError message={field.error("reason")} />
+                {banned ? (
+                  <>
+                    {t('memberSpace.stateReason')}
+                    <AppRequiredMark />
+                  </>
+                ) : (
+                  t('memberSpace.stateReasonOptional')
+                )}
+              </label>
+              <AppTextarea
+                id={reasonId}
+                value={reason}
+                maxLength={2000}
+                rows={3}
+                {...field.control('reason', banned)}
+                className="w-full"
+                onChange={(event) => setReason(event.target.value)}
+              />
+              <AppFieldError message={field.error('reason')} />
             </div>
           </div>
         )}
-        {action.isError && <AppNotice tone="danger" role="alert" title={t("memberSpace.stateError")}>
-          <p>{action.error.message}</p></AppNotice>}
+        {action.isError && (
+          <AppNotice tone="danger" role="alert" title={t('memberSpace.stateError')}>
+            <p>{action.error.message}</p>
+          </AppNotice>
+        )}
       </form>
     </AppDialog>
-  );
+  )
 }

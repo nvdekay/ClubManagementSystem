@@ -1,34 +1,57 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  activateRoutingRuleSet, createRoutingDraft, fetchRoutingRuleSets, fetchRoutingSimulation, saveRoutingDraft, type RoutingRule,
-} from "@/services/approvalRouting";
+  activateRoutingRuleSet,
+  createRoutingDraft,
+  fetchRoutingRuleSets,
+  fetchRoutingSimulation,
+  saveRoutingDraft,
+  type RoutingRule,
+} from '@/services/approvalRouting'
 
-const routingKeyRoot = ["routing-rules"] as const;
+const routingKeyRoot = ['routing-rules'] as const
 const routingKey = {
-  list: () => [...routingKeyRoot, "list"] as const,
-  simulation: (id: string, limit: number) => [...routingKeyRoot, "simulation", id, limit] as const,
-};
+  list: () => [...routingKeyRoot, 'list'] as const,
+  simulation: (id: string, limit: number) => [...routingKeyRoot, 'simulation', id, limit] as const,
+}
 
 // Query các bộ luật định tuyến phê duyệt
 export function useRoutingRuleSets(enabled: boolean) {
-  return useQuery({ queryKey: routingKey.list(), queryFn: ({ signal }) => fetchRoutingRuleSets(signal), enabled, retry: false });
+  return useQuery({
+    queryKey: routingKey.list(),
+    queryFn: ({ signal }) => fetchRoutingRuleSets(signal),
+    enabled,
+    retry: false,
+  })
 }
 // Query mô phỏng một bộ luật định tuyến
 export function useRoutingSimulation(id: string, limit: number, enabled: boolean) {
-  return useQuery({ queryKey: routingKey.simulation(id, limit), queryFn: ({ signal }) => fetchRoutingSimulation(id, limit, signal),
-    enabled: enabled && Boolean(id), retry: false });
+  return useQuery({
+    queryKey: routingKey.simulation(id, limit),
+    queryFn: ({ signal }) => fetchRoutingSimulation(id, limit, signal),
+    enabled: enabled && Boolean(id),
+    retry: false,
+  })
 }
 // Mutation tạo, lưu hoặc kích hoạt bộ luật định tuyến, rồi làm mới cache
 export function useRoutingAction() {
-  const client = useQueryClient();
+  const client = useQueryClient()
   return useMutation({
-    mutationFn: (input: { kind: "create"; rules: RoutingRule[]; csrfToken: string }
-      | { kind: "save"; id: string; rules: RoutingRule[]; csrfToken: string }
-      | { kind: "activate"; id: string; csrfToken: string }) => {
-      if (input.kind === "create") return createRoutingDraft(input.rules, input.csrfToken);
-      if (input.kind === "save") return saveRoutingDraft(input.id, input.rules, input.csrfToken);
-      return activateRoutingRuleSet(input.id, input.csrfToken);
+    mutationFn: (
+      input:
+        | { kind: 'create'; rules: RoutingRule[]; csrfToken: string }
+        | { kind: 'save'; id: string; rules: RoutingRule[]; csrfToken: string }
+        | { kind: 'activate'; id: string; csrfToken: string },
+    ) => {
+      if (input.kind === 'create') {
+        return createRoutingDraft(input.rules, input.csrfToken)
+      }
+      if (input.kind === 'save') {
+        return saveRoutingDraft(input.id, input.rules, input.csrfToken)
+      }
+      return activateRoutingRuleSet(input.id, input.csrfToken)
     },
-    onSuccess: async () => { await client.invalidateQueries({ queryKey: routingKeyRoot }); },
-  });
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: routingKeyRoot })
+    },
+  })
 }

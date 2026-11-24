@@ -1,87 +1,87 @@
-import { ClubEvaluationsPage } from "@/pages/club/ClubEvaluationsPage";
-import { ClubViolationsPage } from "@/pages/club/ClubViolationsPage";
-import { SuspensionRequestsPage } from "@/pages/icpdp/SuspensionRequestsPage";
-import { ClubSuspensionRequestsPage } from "@/pages/club/ClubSuspensionRequestsPage";
-import { ClubTransitionPlansPage } from "@/pages/club/ClubTransitionPlansPage";
-import { ClubPeriodicReportsPage } from "@/pages/club/ClubPeriodicReportsPage";
-import { ClubInvitationsPage } from "@/pages/club/ClubInvitationsPage";
-import { ClubReportsPage } from "./pages/club/ClubReportsPage.js";
-import { ClubBudgetsPage } from "./pages/club/ClubBudgetsPage.js";
-import { EventReportsPage } from "./pages/icpdp/EventReportsPage.js";
-import { ReconciliationPage } from "./pages/icpdp/ReconciliationPage.js";
-import { ClubEventsPage } from "./pages/club/ClubEventsPage.js";
-import { ClubEventProposalPage } from "./pages/club/ClubEventProposalPage.js";
-import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
-import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
-import { RoomAllocationsPage } from "./pages/icpdp/RoomAllocationsPage.js";
-import { ClubRoomsPage } from "./pages/club/ClubRoomsPage.js";
-import "./index.css";
-import "./i18n"; // khởi tạo i18next trước lần render đầu tiên
-import { applyInitialTheme } from "./hooks/useTheme.js";
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router";
-import { App } from "./App.js";
-import { AppConfirmProvider } from "./components/ui/dialog/AppConfirmProvider.js";
-import { PublicLayout } from "./components/layout/PublicLayout.js";
-import { WorkspaceShell } from "./components/layout/WorkspaceShell.js";
-import { ClubDetail } from "./pages/public/ClubDetail.js";
-import { ClubDirectory } from "./pages/public/ClubDirectory.js";
-import { EventDetail } from "./pages/public/EventDetail.js";
-import { EventDirectory } from "./pages/public/EventDirectory.js";
-import { PublicHome } from "./pages/public/PublicHome.js";
-import { PublicNotFound } from "./pages/public/PublicNotFound.js";
-import { PolicyPage } from "./pages/icpdp/PolicyPage.js";
-import { ClubFieldsPage } from "./pages/icpdp/ClubFieldsPage.js";
-import { PropertiesPage } from "./pages/icpdp/PropertiesPage.js";
-import { EvaluationSchemesPage } from "./pages/icpdp/EvaluationSchemesPage.js";
-import { DataExportPage } from "./pages/icpdp/DataExportPage.js";
-import { IcpdpClubsPage } from "./pages/icpdp/IcpdpClubsPage.js";
-import { IcpdpHomePage } from "./pages/icpdp/IcpdpHomePage.js";
-import { AccountsPage } from "./pages/icpdp/AccountsPage.js";
-import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
-import { ApplicationEditorPage } from "./pages/student/ApplicationEditorPage.js";
-import { StudentHomePage } from "./pages/student/StudentHomePage.js";
-import { ClubHomePage } from "./pages/club/ClubHomePage.js";
-import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueuePage.js";
-import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
-import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js";
-import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
-import { LiveDefenseRoomPage } from "./pages/icpdp/LiveDefenseRoomPage.js";
-import { BudgetDetailPage, BudgetsPage } from "./pages/icpdp/BudgetsPage.js";
-import { ViolationDetailPage, ViolationsPage } from "./pages/icpdp/ViolationsPage.js";
-import { PeriodicReportReviewPage, PeriodicReportsPage } from "./pages/icpdp/PeriodicReportsPage.js";
-import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
-import { EvaluationDetailPage, EvaluationsPage } from "./pages/icpdp/EvaluationsPage.js";
-import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
-import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
-import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
-import { BoardNominationDetailPage } from "./pages/icpdp/BoardNominationDetailPage.js";
-import { LeadershipTransitionQueuePage } from "./pages/icpdp/LeadershipTransitionQueuePage.js";
-import { LeadershipTransitionDetailPage } from "./pages/icpdp/LeadershipTransitionDetailPage.js";
-import { RecruitmentCampaignPage } from "./pages/club/RecruitmentCampaignPage.js";
-import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
-import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
-import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
-import { MyEventRegistrationsPage } from "./pages/student/MyEventRegistrationsPage.js";
-import { ComplaintsPage } from "./pages/student/ComplaintsPage.js";
-import { MyClubsPage } from "./pages/student/MyClubsPage.js";
-import { MemberSpacePage } from "./pages/student/MemberSpacePage.js";
-import { ClubMembersPage } from "./pages/club/ClubMembersPage.js";
-import { ClubComplaintsPage } from "./pages/club/ClubComplaintsPage.js";
-import { ComplaintReviewPage } from "./pages/icpdp/ComplaintReviewPage.js";
-import { RoutingRulesPage } from "./pages/icpdp/RoutingRulesPage.js";
-import { ClubBoardHistoryPage } from "./pages/club/ClubBoardHistoryPage.js";
+import { ClubEvaluationsPage } from '@/pages/club/ClubEvaluationsPage'
+import { ClubViolationsPage } from '@/pages/club/ClubViolationsPage'
+import { SuspensionRequestsPage } from '@/pages/icpdp/SuspensionRequestsPage'
+import { ClubSuspensionRequestsPage } from '@/pages/club/ClubSuspensionRequestsPage'
+import { ClubTransitionPlansPage } from '@/pages/club/ClubTransitionPlansPage'
+import { ClubPeriodicReportsPage } from '@/pages/club/ClubPeriodicReportsPage'
+import { ClubInvitationsPage } from '@/pages/club/ClubInvitationsPage'
+import { ClubReportsPage } from './pages/club/ClubReportsPage.js'
+import { ClubBudgetsPage } from './pages/club/ClubBudgetsPage.js'
+import { EventReportsPage } from './pages/icpdp/EventReportsPage.js'
+import { ReconciliationPage } from './pages/icpdp/ReconciliationPage.js'
+import { ClubEventsPage } from './pages/club/ClubEventsPage.js'
+import { ClubEventProposalPage } from './pages/club/ClubEventProposalPage.js'
+import { ClubBookingsPage } from './pages/club/ClubBookingsPage.js'
+import { BookingReviewPage } from './pages/icpdp/BookingReviewPage.js'
+import { RoomAllocationsPage } from './pages/icpdp/RoomAllocationsPage.js'
+import { ClubRoomsPage } from './pages/club/ClubRoomsPage.js'
+import './index.css'
+import './i18n' // khởi tạo i18next trước lần render đầu tiên
+import { applyInitialTheme } from './hooks/useTheme.js'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Route, Routes } from 'react-router'
+import { App } from './App.js'
+import { AppConfirmProvider } from './components/ui/dialog/AppConfirmProvider.js'
+import { PublicLayout } from './components/layout/PublicLayout.js'
+import { WorkspaceShell } from './components/layout/WorkspaceShell.js'
+import { ClubDetail } from './pages/public/ClubDetail.js'
+import { ClubDirectory } from './pages/public/ClubDirectory.js'
+import { EventDetail } from './pages/public/EventDetail.js'
+import { EventDirectory } from './pages/public/EventDirectory.js'
+import { PublicHome } from './pages/public/PublicHome.js'
+import { PublicNotFound } from './pages/public/PublicNotFound.js'
+import { PolicyPage } from './pages/icpdp/PolicyPage.js'
+import { ClubFieldsPage } from './pages/icpdp/ClubFieldsPage.js'
+import { PropertiesPage } from './pages/icpdp/PropertiesPage.js'
+import { EvaluationSchemesPage } from './pages/icpdp/EvaluationSchemesPage.js'
+import { DataExportPage } from './pages/icpdp/DataExportPage.js'
+import { IcpdpClubsPage } from './pages/icpdp/IcpdpClubsPage.js'
+import { IcpdpHomePage } from './pages/icpdp/IcpdpHomePage.js'
+import { AccountsPage } from './pages/icpdp/AccountsPage.js'
+import { ApplicationsPage } from './pages/student/ApplicationsPage.js'
+import { ApplicationEditorPage } from './pages/student/ApplicationEditorPage.js'
+import { StudentHomePage } from './pages/student/StudentHomePage.js'
+import { ClubHomePage } from './pages/club/ClubHomePage.js'
+import { ApplicationReviewQueuePage } from './pages/icpdp/ApplicationReviewQueuePage.js'
+import { ApplicationReviewDetailPage } from './pages/icpdp/ApplicationReviewDetailPage.js'
+import { EventProposalQueuePage } from './pages/icpdp/EventProposalQueuePage.js'
+import { EventProposalReviewPage } from './pages/icpdp/EventProposalReviewPage.js'
+import { LiveDefenseRoomPage } from './pages/icpdp/LiveDefenseRoomPage.js'
+import { BudgetDetailPage, BudgetsPage } from './pages/icpdp/BudgetsPage.js'
+import { ViolationDetailPage, ViolationsPage } from './pages/icpdp/ViolationsPage.js'
+import { PeriodicReportReviewPage, PeriodicReportsPage } from './pages/icpdp/PeriodicReportsPage.js'
+import { SchoolEventDetailPage, SchoolEventsPage } from './pages/icpdp/SchoolEventsPage.js'
+import { EvaluationDetailPage, EvaluationsPage } from './pages/icpdp/EvaluationsPage.js'
+import { ClubSettingsPage } from './pages/club/ClubSettingsPage.js'
+import { BoardNominationPage } from './pages/club/BoardNominationPage.js'
+import { BoardNominationQueuePage } from './pages/icpdp/BoardNominationQueuePage.js'
+import { BoardNominationDetailPage } from './pages/icpdp/BoardNominationDetailPage.js'
+import { LeadershipTransitionQueuePage } from './pages/icpdp/LeadershipTransitionQueuePage.js'
+import { LeadershipTransitionDetailPage } from './pages/icpdp/LeadershipTransitionDetailPage.js'
+import { RecruitmentCampaignPage } from './pages/club/RecruitmentCampaignPage.js'
+import { RecruitmentReviewPage } from './pages/club/RecruitmentReviewPage.js'
+import { RecruitmentApplicationPage } from './pages/student/RecruitmentApplicationPage.js'
+import { RecruitmentApplicationsPage } from './pages/student/RecruitmentApplicationsPage.js'
+import { MyEventRegistrationsPage } from './pages/student/MyEventRegistrationsPage.js'
+import { ComplaintsPage } from './pages/student/ComplaintsPage.js'
+import { MyClubsPage } from './pages/student/MyClubsPage.js'
+import { MemberSpacePage } from './pages/student/MemberSpacePage.js'
+import { ClubMembersPage } from './pages/club/ClubMembersPage.js'
+import { ClubComplaintsPage } from './pages/club/ClubComplaintsPage.js'
+import { ComplaintReviewPage } from './pages/icpdp/ComplaintReviewPage.js'
+import { RoutingRulesPage } from './pages/icpdp/RoutingRulesPage.js'
+import { ClubBoardHistoryPage } from './pages/club/ClubBoardHistoryPage.js'
 
 const queryClient = new QueryClient({
   // Dữ liệu trang được coi là mới trong 30 giây — quay lại trang trong khoảng này sẽ dùng cache, không tải lại.
   defaultOptions: { queries: { staleTime: 30_000 } },
-});
+})
 
-applyInitialTheme();
+applyInitialTheme()
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AppConfirmProvider>
@@ -105,7 +105,10 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
               <Route path="club/:clubId/event-reports" element={<ClubReportsPage />} />
               <Route path="club/:clubId/transition-plans" element={<ClubTransitionPlansPage />} />
-              <Route path="club/:clubId/suspension-requests" element={<ClubSuspensionRequestsPage />} />
+              <Route
+                path="club/:clubId/suspension-requests"
+                element={<ClubSuspensionRequestsPage />}
+              />
               <Route path="workspace/suspension-requests" element={<SuspensionRequestsPage />} />
               <Route path="club/:clubId/violations" element={<ClubViolationsPage />} />
               <Route path="club/:clubId/evaluations" element={<ClubEvaluationsPage />} />
@@ -117,8 +120,14 @@ createRoot(document.getElementById("root")!).render(
               <Route path="club/:clubId/events" element={<ClubEventsPage />} />
               <Route path="club/:clubId/events/new" element={<ClubEventProposalPage />} />
               <Route path="club/:clubId/events/:eventId/edit" element={<ClubEventProposalPage />} />
-              <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
-              <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
+              <Route
+                path="club/:clubId/event-attendance"
+                element={<ClubEventsPage mode="attendance" />}
+              />
+              <Route
+                path="club/:clubId/event-feedback"
+                element={<ClubEventsPage mode="feedback" />}
+              />
               <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
               <Route path="workspace/bookings" element={<BookingReviewPage />} />
               <Route path="workspace/room-allocations" element={<RoomAllocationsPage />} />
@@ -130,7 +139,10 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
               <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
               <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
-              <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
+              <Route
+                path="workspace/recruitment/:campaignId"
+                element={<RecruitmentApplicationPage />}
+              />
               <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
               <Route path="workspace/complaints" element={<ComplaintsPage />} />
               <Route path="workspace/clubs" element={<MyClubsPage />} />
@@ -144,7 +156,10 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
               <Route path="club/:clubId/board-history" element={<ClubBoardHistoryPage />} />
               <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
-              <Route path="workspace/event-proposals/:id/defense" element={<LiveDefenseRoomPage />} />
+              <Route
+                path="workspace/event-proposals/:id/defense"
+                element={<LiveDefenseRoomPage />}
+              />
               <Route path="workspace/budgets" element={<BudgetsPage />} />
               <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
               <Route path="workspace/periodic-reports" element={<PeriodicReportsPage />} />
@@ -156,13 +171,25 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/evaluations" element={<EvaluationsPage />} />
               <Route path="workspace/evaluations/:id" element={<EvaluationDetailPage />} />
               <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
-              <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
-              <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
-              <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
+              <Route
+                path="workspace/board-nominations/:id"
+                element={<BoardNominationDetailPage />}
+              />
+              <Route
+                path="workspace/leadership-transitions"
+                element={<LeadershipTransitionQueuePage />}
+              />
+              <Route
+                path="workspace/leadership-transitions/:id"
+                element={<LeadershipTransitionDetailPage />}
+              />
               <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
               <Route path="club/:clubId/board" element={<BoardNominationPage />} />
               <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
-              <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />
+              <Route
+                path="club/:clubId/recruitment/:campaignId/review"
+                element={<RecruitmentReviewPage />}
+              />
             </Route>
             <Route path="login" element={<App />} />
             <Route path="workspace" element={<App />} />
@@ -171,4 +198,4 @@ createRoot(document.getElementById("root")!).render(
       </AppConfirmProvider>
     </QueryClientProvider>
   </StrictMode>,
-);
+)

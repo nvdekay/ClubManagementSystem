@@ -1,99 +1,87 @@
-import mongoose, { Types, type ClientSession } from "mongoose";
-import { publicEventPayload } from "../../domain/club-event.js";
-import { DomainError } from "../../domain/errors.js";
-import {
-  summarizeFeedback,
-  FEEDBACK_CRITERION,
-} from "../../domain/event-feedback.js";
+import mongoose, { Types, type ClientSession } from 'mongoose'
+import { publicEventPayload } from '../../domain/club-event.js'
+import { DomainError } from '../../domain/errors.js'
+import { summarizeFeedback, FEEDBACK_CRITERION } from '../../domain/event-feedback.js'
 import {
   assertReportSubmission,
   type PostEventReport,
   type PostEventReportRepository,
   type ReportDetail,
   type ReportSnapshot,
-} from "../../domain/post-event-report.js";
-import { postEventDeadline } from "./post-event-report-deadlines.js";
-import { assertEventWriteAccess } from "./club-event-access.js";
+} from '../../domain/post-event-report.js'
+import { postEventDeadline } from './post-event-report-deadlines.js'
+import { assertEventWriteAccess } from './club-event-access.js'
 import {
   accountabilityAudit,
   assertAccountabilityOfficer,
   claimAccountabilityTask,
   decideAccountabilityTask,
   openAccountabilityTask,
-} from "./accountability-workflow.js";
-import { ucmsModels as m } from "./ucms-models.js";
+} from './accountability-workflow.js'
+import { ucmsModels as m } from './ucms-models.js'
 
-type Doc = Record<string, unknown>;
+type Doc = Record<string, unknown>
 // Chuyển chuỗi id thành ObjectId
 function oid(value: string) {
-  return new Types.ObjectId(value);
+  return new Types.ObjectId(value)
 }
 // Chuyển giá trị tiền thành số, mặc định 0
 function money(value: unknown) {
-  return Number(String(value ?? 0));
+  return Number(String(value ?? 0))
 }
 // Repository báo cáo sau sự kiện của CLB và duyệt của ICPDP
 export function mongoPostEventReportRepository(): PostEventReportRepository {
   // Dựng snapshot số liệu của sự kiện để lập báo cáo
-  async function snapshot(
-    event: Doc,
-    now: Date,
-    session?: ClientSession,
-  ): Promise<ReportSnapshot> {
-    const eventId = event._id;
+  async function snapshot(event: Doc, now: Date, session?: ClientSession): Promise<ReportSnapshot> {
+    const eventId = event._id
     const policy = await m
       .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
       .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
       .session(session ?? null)
-      .lean();
-    if (!policy)
-      throw new DomainError("policy is not configured", "unavailable");
-    const deadline = await postEventDeadline(event, session);
-    const [proposal, attendees, confirmed, budget, feedbacks] =
-      await Promise.all([
-        m
-          .eventProposalVersions!.findOne({
-            eventId,
-            revisionNo: event.currentRevisionNo,
-          })
-          .session(session ?? null)
-          .lean(),
-        m
-          .attendances!.find({ eventId, finalized: true })
-          .session(session ?? null)
-          .lean(),
-        m
-          .eventRegistrations!.countDocuments({ eventId, state: "Confirmed" })
-          .session(session ?? null),
-        m
-          .eventBudgets!.findOne({ eventId })
-          .session(session ?? null)
-          .lean(),
-        m
-          .eventFeedbacks!.find({ eventId })
-          .session(session ?? null)
-          .lean(),
-      ]);
+      .lean()
+    if (!policy) {
+      throw new DomainError('policy is not configured', 'unavailable')
+    }
+    const deadline = await postEventDeadline(event, session)
+    const [proposal, attendees, confirmed, budget, feedbacks] = await Promise.all([
+      m
+        .eventProposalVersions!.findOne({
+          eventId,
+          revisionNo: event.currentRevisionNo,
+        })
+        .session(session ?? null)
+        .lean(),
+      m
+        .attendances!.find({ eventId, finalized: true })
+        .session(session ?? null)
+        .lean(),
+      m
+        .eventRegistrations!.countDocuments({ eventId, state: 'Confirmed' })
+        .session(session ?? null),
+      m
+        .eventBudgets!.findOne({ eventId })
+        .session(session ?? null)
+        .lean(),
+      m
+        .eventFeedbacks!.find({ eventId })
+        .session(session ?? null)
+        .lean(),
+    ])
     const expenses = budget
       ? await m
           .expenses!.find({ eventBudgetId: budget._id })
           .session(session ?? null)
           .lean()
-      : [];
+      : []
     const ratings = feedbacks.map((f) =>
       Number(
-        ((f.scores ?? []) as Doc[]).find(
-          (s) => s.criterionCode === FEEDBACK_CRITERION,
-        )?.score ?? 0,
+        ((f.scores ?? []) as Doc[]).find((s) => s.criterionCode === FEEDBACK_CRITERION)?.score ?? 0,
       ),
-    );
-    const summary = summarizeFeedback(
-      ratings,
-      Number(policy.feedbackMinRespondents),
-    );
+    )
+    const summary = summarizeFeedback(ratings, Number(policy.feedbackMinRespondents))
     const attended = attendees.filter(
-      (a) => !((a.abnormalFlags ?? []) as string[]).includes("no-show"),
-    ).length;
+      (a) => !((a.abnormalFlags ?? []) as string[]).includes('no-show'),
+    ).length
     return {
       proposal: proposal
         ? {
@@ -114,8 +102,7 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
             state: budget.state,
             approvedTotal: money(budget.approvedTotal),
             disbursedTotal: money(budget.disbursedTotal),
-            acceptedTotal:
-              budget.acceptedTotal == null ? null : money(budget.acceptedTotal),
+            acceptedTotal: budget.acceptedTotal == null ? null : money(budget.acceptedTotal),
           }
         : null,
       expenses: expenses.map((e) => ({
@@ -128,13 +115,11 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         ? summary
         : {
             ...summary,
-            comments: feedbacks
-              .map((f) => String(f.comment ?? ""))
-              .filter(Boolean),
+            comments: feedbacks.map((f) => String(f.comment ?? '')).filter(Boolean),
           },
       policyVersionId: deadline.policyVersionId,
       dueAt: deadline.dueAt,
-    };
+    }
   }
   // Dựng chi tiết báo cáo sau sự kiện của một sự kiện
   async function detail(
@@ -146,36 +131,34 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
     const event = await m
       .events!.findOne({
         _id: oid(eventId),
-        organizerType: "CLUB",
+        organizerType: 'CLUB',
         ...(clubId ? { clubId: oid(clubId) } : {}),
       })
       .session(session ?? null)
-      .lean();
-    if (
-      !event ||
-      !["Completed", "Report Submitted", "Closed"].includes(String(event.state))
-    )
-      return null;
-    const budget = await m
-      .eventBudgets!.exists({ eventId: event._id })
-      .session(session ?? null);
-    if (event.audienceScope === "MEMBERS_ONLY" && !budget) return null;
+      .lean()
+    if (!event || !['Completed', 'Report Submitted', 'Closed'].includes(String(event.state))) {
+      return null
+    }
+    const budget = await m.eventBudgets!.exists({ eventId: event._id }).session(session ?? null)
+    if (event.audienceScope === 'MEMBERS_ONLY' && !budget) {
+      return null
+    }
     const docs = await m
       .postEventReports!.find({ eventId: event._id })
       .sort({ versionNo: -1, _id: -1 })
       .session(session ?? null)
-      .lean();
-    const preview = await snapshot(event, now, session);
+      .lean()
+    const preview = await snapshot(event, now, session)
     const tasks = await m
       .approvalTasks!.find({
-        entityType: "POST_EVENT_REPORT",
+        entityType: 'POST_EVENT_REPORT',
         entityId: { $in: docs.map((d) => d._id) },
-        state: "Open",
+        state: 'Open',
       })
       .session(session ?? null)
-      .lean();
+      .lean()
     const versions: PostEventReport[] = docs.map((d) => {
-      const task = tasks.find((t) => String(t.entityId) === String(d._id));
+      const task = tasks.find((t) => String(t.entityId) === String(d._id))
       return {
         id: String(d._id),
         eventId,
@@ -189,13 +172,11 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         actualResult: String(d.actualResult),
         incidents: d.incidents as string | undefined,
         lessonsLearned: d.lessonsLearned as string | undefined,
-        evidence: (d.evidence ?? []) as PostEventReport["evidence"],
+        evidence: (d.evidence ?? []) as PostEventReport['evidence'],
         submittedAt: d.submittedAt as Date | undefined,
         decisionOutcome: d.decisionOutcome as string | undefined,
         decisionReason: d.decisionReason as string | undefined,
-        findingViolationId: d.findingViolationId
-          ? String(d.findingViolationId)
-          : undefined,
+        findingViolationId: d.findingViolationId ? String(d.findingViolationId) : undefined,
         preloadedFigures: d.preloadedFigures as unknown as ReportSnapshot,
         task: task
           ? {
@@ -203,11 +184,9 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
               assigneeId: task.assigneeId ? String(task.assigneeId) : undefined,
             }
           : undefined,
-      };
-    });
-    const dueAt =
-      versions.find((v) => v.submittedAt)?.preloadedFigures.dueAt ??
-      preview.dueAt;
+      }
+    })
+    const dueAt = versions.find((v) => v.submittedAt)?.preloadedFigures.dueAt ?? preview.dueAt
     return {
       obligation: {
         eventId,
@@ -215,103 +194,99 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         state: String(event.state),
         revision: Number(event.__v ?? 0),
         dueAt,
-        overdue:
-          now > dueAt &&
-          !versions.some((version) => Boolean(version.submittedAt)),
+        overdue: now > dueAt && !versions.some((version) => Boolean(version.submittedAt)),
         attendanceFinalized: event.attendanceFinalized === true,
         report: versions[0],
       },
       versions,
       preview,
-    };
+    }
   }
   return {
     // Liệt kê báo cáo sau sự kiện của các sự kiện CLB đã kết thúc
     async list(clubId, now) {
       const events = await m
         .events!.find({
-          organizerType: "CLUB",
-          state: { $in: ["Completed", "Report Submitted", "Closed"] },
+          organizerType: 'CLUB',
+          state: { $in: ['Completed', 'Report Submitted', 'Closed'] },
           ...(clubId ? { clubId: oid(clubId) } : {}),
         })
         .sort({ endAt: -1, _id: -1 })
-        .lean();
+        .lean()
       const details = await Promise.all(
         events.map(async (e) => {
-          try { const d = await detail(String(e._id), clubId, now); return d?.obligation; }
-          catch (error) {
-            if (!(error instanceof DomainError) || error.kind !== "unavailable") throw error;
-            return { eventId: String(e._id), eventTitle: String(e.title), state: String(e.state), revision: Number(e.__v ?? 0), configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" as const };
+          try {
+            const d = await detail(String(e._id), clubId, now)
+            return d?.obligation
+          } catch (error) {
+            if (!(error instanceof DomainError) || error.kind !== 'unavailable') {
+              throw error
+            }
+            return {
+              eventId: String(e._id),
+              eventTitle: String(e.title),
+              state: String(e.state),
+              revision: Number(e.__v ?? 0),
+              configurationError: 'REPORT_DEADLINE_NOT_CONFIGURED' as const,
+            }
           }
         }),
-      );
-      return details.filter((d): d is NonNullable<typeof d> => Boolean(d));
+      )
+      return details.filter((d): d is NonNullable<typeof d> => Boolean(d))
     },
     find: detail,
     // Xử lý hành động trên báo cáo sau sự kiện: lưu, nộp, claim, quyết định, quá hạn
     async act(eventId, clubId, actor, action, now) {
       await mongoose.connection.transaction(async (session) => {
-        const actorId = oid(actor);
+        const actorId = oid(actor)
         const event = await m
           .events!.findOne({
             _id: oid(eventId),
-            organizerType: "CLUB",
+            organizerType: 'CLUB',
             ...(clubId ? { clubId: oid(clubId) } : {}),
           })
           .session(session)
-          .lean();
-        if (!event) throw new DomainError("event not found", "not_found");
-        const eventClub = event.clubId as Types.ObjectId;
-        if (clubId)
-          await assertEventWriteAccess(
-            session,
-            eventClub,
-            actorId,
-            "club.report.submit",
-            now,
-          );
-        else await assertAccountabilityOfficer(session, actorId);
+          .lean()
+        if (!event) {
+          throw new DomainError('event not found', 'not_found')
+        }
+        const eventClub = event.clubId as Types.ObjectId
+        if (clubId) {
+          await assertEventWriteAccess(session, eventClub, actorId, 'club.report.submit', now)
+        } else {
+          await assertAccountabilityOfficer(session, actorId)
+        }
         const locked = await m
           .events!.findOneAndUpdate(
             { _id: event._id, __v: action.revision },
             { $inc: { __v: 1 } },
             { session },
           )
-          .lean();
-        if (!locked)
-          throw new DomainError(
-            "event changed; reload before continuing",
-            "conflict",
-          );
-        const current = await detail(eventId, clubId, now, session);
-        if (!current)
-          throw new DomainError(
-            "event has no reporting obligation",
-            "conflict",
-          );
-        const report = current.versions[0];
-        let reportId = report ? oid(report.id) : new Types.ObjectId();
-        let after: unknown = {};
-        let reason: string | undefined;
-        if (action.kind === "save") {
-          assertReportSubmission(
-            String(event.state),
-            event.attendanceFinalized === true,
-            false,
-          );
-          if (
-            report &&
-            !["Draft", "Returned for correction"].includes(report.state)
-          )
-            throw new DomainError("submitted report is immutable", "conflict");
-          if (report?.state === "Draft")
+          .lean()
+        if (!locked) {
+          throw new DomainError('event changed; reload before continuing', 'conflict')
+        }
+        const current = await detail(eventId, clubId, now, session)
+        if (!current) {
+          throw new DomainError('event has no reporting obligation', 'conflict')
+        }
+        const report = current.versions[0]
+        let reportId = report ? oid(report.id) : new Types.ObjectId()
+        let after: unknown = {}
+        let reason: string | undefined
+        if (action.kind === 'save') {
+          assertReportSubmission(String(event.state), event.attendanceFinalized === true, false)
+          if (report && !['Draft', 'Returned for correction'].includes(report.state)) {
+            throw new DomainError('submitted report is immutable', 'conflict')
+          }
+          if (report?.state === 'Draft') {
             await m.postEventReports!.updateOne(
-              { _id: reportId, state: "Draft" },
+              { _id: reportId, state: 'Draft' },
               { $set: action.input },
               { session },
-            );
-          else {
-            reportId = new Types.ObjectId();
+            )
+          } else {
+            reportId = new Types.ObjectId()
             await m.postEventReports!.create(
               [
                 {
@@ -319,32 +294,26 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
                   eventId: event._id,
                   clubId: eventClub,
                   ...action.input,
-                  state: "Draft",
+                  state: 'Draft',
                   versionNo: (report?.versionNo ?? 0) + 1,
                   preloadedFigures: current.preview,
                 },
               ],
               { session },
-            );
+            )
           }
-          after = { reportId, input: action.input };
-        } else if (action.kind === "submit") {
-          assertReportSubmission(
-            String(event.state),
-            event.attendanceFinalized === true,
-            false,
-          );
-          if (!report || report.state !== "Draft")
-            throw new DomainError(
-              "save a draft report before submitting",
-              "conflict",
-            );
-          const figures = await snapshot(event, now, session);
+          after = { reportId, input: action.input }
+        } else if (action.kind === 'submit') {
+          assertReportSubmission(String(event.state), event.attendanceFinalized === true, false)
+          if (!report || report.state !== 'Draft') {
+            throw new DomainError('save a draft report before submitting', 'conflict')
+          }
+          const figures = await snapshot(event, now, session)
           await m.postEventReports!.updateOne(
-            { _id: reportId, state: "Draft" },
+            { _id: reportId, state: 'Draft' },
             {
               $set: {
-                state: "Submitted",
+                state: 'Submitted',
                 preloadedFigures: figures,
                 lateFlag: now > figures.dueAt,
                 submittedBy: actorId,
@@ -352,134 +321,116 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
               },
             },
             { session },
-          );
+          )
           await m.events!.updateOne(
             { _id: event._id },
-            { $set: { state: "Report Submitted" } },
+            { $set: { state: 'Report Submitted' } },
             { session },
-          );
+          )
           await openAccountabilityTask(
             session,
-            "POST_EVENT_REPORT",
+            'POST_EVENT_REPORT',
             reportId,
             eventClub,
             current.obligation.eventTitle,
             now,
-          );
-          after = { reportId, versionNo: report.versionNo, figures };
-        } else if (action.kind === "claim") {
-          if (!report || report.state !== "Submitted")
-            throw new DomainError("no report awaits review", "conflict");
-          await claimAccountabilityTask(
-            session,
-            "POST_EVENT_REPORT",
-            reportId,
-            actorId,
-          );
-        } else if (action.kind === "overdue") {
-          if (!current.obligation.overdue)
-            throw new DomainError("report is not overdue", "conflict");
+          )
+          after = { reportId, versionNo: report.versionNo, figures }
+        } else if (action.kind === 'claim') {
+          if (!report || report.state !== 'Submitted') {
+            throw new DomainError('no report awaits review', 'conflict')
+          }
+          await claimAccountabilityTask(session, 'POST_EVENT_REPORT', reportId, actorId)
+        } else if (action.kind === 'overdue') {
+          if (!current.obligation.overdue) {
+            throw new DomainError('report is not overdue', 'conflict')
+          }
           if (
             await m
               .auditLogs!.exists({
-                entityType: "Event",
+                entityType: 'Event',
                 entityId: event._id,
-                action: "REPORT_OVERDUE",
+                action: 'REPORT_OVERDUE',
               })
               .session(session)
-          )
-            throw new DomainError(
-              "missing report already recorded",
-              "conflict",
-            );
-          reason = action.reason;
-          after = { dueAt: current.obligation.dueAt };
+          ) {
+            throw new DomainError('missing report already recorded', 'conflict')
+          }
+          reason = action.reason
+          after = { dueAt: current.obligation.dueAt }
         } else {
+          if (!report || report.state !== 'Submitted' || event.state !== 'Report Submitted') {
+            throw new DomainError('no report awaits review', 'conflict')
+          }
+          reason = action.reason.trim()
           if (
-            !report ||
-            report.state !== "Submitted" ||
-            event.state !== "Report Submitted"
-          )
-            throw new DomainError("no report awaits review", "conflict");
-          reason = action.reason.trim();
-          if (
-            action.outcome !== "return" &&
+            action.outcome !== 'return' &&
             (event.attendanceFinalized !== true ||
-              report.preloadedFigures.attendance.attended !==
-                current.preview.attendance.attended ||
-              report.preloadedFigures.attendance.absent !==
-                current.preview.attendance.absent ||
-              report.preloadedFigures.attendance.confirmed !==
-                current.preview.attendance.confirmed)
+              report.preloadedFigures.attendance.attended !== current.preview.attendance.attended ||
+              report.preloadedFigures.attendance.absent !== current.preview.attendance.absent ||
+              report.preloadedFigures.attendance.confirmed !== current.preview.attendance.confirmed)
           ) {
             throw new DomainError(
-              "attendance figures disagree; return the report for correction",
-              "conflict",
-            );
+              'attendance figures disagree; return the report for correction',
+              'conflict',
+            )
           }
-          if (action.outcome === "finding") {
+          if (action.outcome === 'finding') {
             if (
               !action.violationId ||
               !(await m
                 .violations!.exists({
                   _id: oid(action.violationId),
                   clubId: eventClub,
-                  originType: "REPORT_FINDING",
+                  originType: 'REPORT_FINDING',
                   originRefId: event._id,
                 })
                 .session(session))
-            )
-              throw new DomainError(
-                "linked report finding case is required",
-                "validation",
-              );
+            ) {
+              throw new DomainError('linked report finding case is required', 'validation')
+            }
           }
           await decideAccountabilityTask(
             session,
-            "POST_EVENT_REPORT",
+            'POST_EVENT_REPORT',
             reportId,
             actorId,
-            action.outcome === "return" ? "Request revision" : "Approve",
+            action.outcome === 'return' ? 'Request revision' : 'Approve',
             reason,
             now,
-          );
+          )
           await m.postEventReports!.updateOne(
             { _id: reportId },
             {
               $set: {
-                state:
-                  action.outcome === "return"
-                    ? "Returned for correction"
-                    : "Accepted",
+                state: action.outcome === 'return' ? 'Returned for correction' : 'Accepted',
                 decisionOutcome: action.outcome,
                 decisionReason: reason,
                 decidedBy: actorId,
                 decidedAt: now,
-                ...(action.violationId
-                  ? { findingViolationId: oid(action.violationId) }
-                  : {}),
+                ...(action.violationId ? { findingViolationId: oid(action.violationId) } : {}),
               },
             },
             { session },
-          );
+          )
           await m.events!.updateOne(
             { _id: event._id },
             {
               $set: {
-                state: action.outcome === "return" ? "Completed" : "Closed",
+                state: action.outcome === 'return' ? 'Completed' : 'Closed',
               },
             },
             { session },
-          );
+          )
           after = {
             reportId,
             outcome: action.outcome,
             violationId: action.violationId,
-          };
+          }
         }
         await accountabilityAudit(
           session,
-          "Event",
+          'Event',
           event._id as Types.ObjectId,
           eventClub,
           actorId,
@@ -488,9 +439,9 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
           now,
           !clubId,
           reason,
-        );
-      });
-      return (await detail(eventId, clubId, now))!;
+        )
+      })
+      return (await detail(eventId, clubId, now))!
     },
-  };
+  }
 }

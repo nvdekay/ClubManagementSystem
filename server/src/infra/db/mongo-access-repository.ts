@@ -1,80 +1,105 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose'
 import type {
   ClubAccessRepository,
   ClubAccessSnapshot,
   ClubAssignmentAccess,
   ClubPositionAccess,
   ClubTermAccess,
-} from "../../domain/access.js";
-import { ucmsModels } from "./ucms-models.js";
+} from '../../domain/access.js'
+import { ucmsModels } from './ucms-models.js'
 
 // Chuyển giá trị id thành chuỗi
 function id(value: unknown): string {
-  return String(value);
+  return String(value)
 }
 
 // Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
 function date(value: unknown): Date {
-  if (!(value instanceof Date)) throw new Error("invalid access date in database");
-  return value;
+  if (!(value instanceof Date)) {
+    throw new Error('invalid access date in database')
+  }
+  return value
 }
 
 // Repository đọc dữ liệu phân quyền của user trong một CLB
 export function mongoAccessRepository(): ClubAccessRepository {
-  const clubs = ucmsModels.clubs!;
-  const memberships = ucmsModels.clubMemberships!;
-  const terms = ucmsModels.clubTerms!;
-  const positions = ucmsModels.clubPositions!;
-  const assignments = ucmsModels.clubPositionAssignments!;
-  const applications = ucmsModels.clubApplications!;
+  const clubs = ucmsModels.clubs!
+  const memberships = ucmsModels.clubMemberships!
+  const terms = ucmsModels.clubTerms!
+  const positions = ucmsModels.clubPositions!
+  const assignments = ucmsModels.clubPositionAssignments!
+  const applications = ucmsModels.clubApplications!
 
   return {
     // Dựng snapshot quyền (membership, nhiệm kỳ, vị trí) của user tại CLB
     async findSnapshot(userId, clubId): Promise<ClubAccessSnapshot | null> {
-      const userObjectId = new Types.ObjectId(userId);
-      const clubObjectId = new Types.ObjectId(clubId);
+      const userObjectId = new Types.ObjectId(userId)
+      const clubObjectId = new Types.ObjectId(clubId)
       const [club, membership, termDocs, positionDocs, application] = await Promise.all([
         clubs.findById(clubObjectId).lean(),
         memberships.findOne({ clubId: clubObjectId, userId: userObjectId }).lean(),
-        terms.find({ clubId: clubObjectId, state: "Active" }).lean(),
+        terms.find({ clubId: clubObjectId, state: 'Active' }).lean(),
         positions.find({ clubId: clubObjectId, isActive: true }).lean(),
-        applications.findOne({
-          createdClubId: clubObjectId, founderUserId: userObjectId, state: "Approved",
-        }).lean(),
-      ]);
-      if (!club) return null;
-      const assignmentDocs = membership ? await assignments.find({
-        clubId: clubObjectId, membershipId: membership._id,
-      }).lean() : [];
+        applications
+          .findOne({
+            createdClubId: clubObjectId,
+            founderUserId: userObjectId,
+            state: 'Approved',
+          })
+          .lean(),
+      ])
+      if (!club) {
+        return null
+      }
+      const assignmentDocs = membership
+        ? await assignments
+            .find({
+              clubId: clubObjectId,
+              membershipId: membership._id,
+            })
+            .lean()
+        : []
 
       const mappedTerms: ClubTermAccess[] = termDocs.map((term) => ({
-        id: id(term._id), clubId: id(term.clubId), state: String(term.state),
-        startAt: date(term.startAt), endAt: date(term.endAt),
-      }));
+        id: id(term._id),
+        clubId: id(term.clubId),
+        state: String(term.state),
+        startAt: date(term.startAt),
+        endAt: date(term.endAt),
+      }))
       const mappedPositions: ClubPositionAccess[] = positionDocs.map((position) => ({
-        id: id(position._id), clubId: id(position.clubId),
-        code: String(position.code), isActive: position.isActive === true,
-        isLeaderRole: position.isLeaderRole === true, isBoardSeat: position.isBoardSeat === true,
-      }));
+        id: id(position._id),
+        clubId: id(position.clubId),
+        code: String(position.code),
+        isActive: position.isActive === true,
+        isLeaderRole: position.isLeaderRole === true,
+        isBoardSeat: position.isBoardSeat === true,
+      }))
       const mappedAssignments: ClubAssignmentAccess[] = assignmentDocs.map((assignment) => ({
-        clubId: id(assignment.clubId), termId: id(assignment.termId),
-        positionId: id(assignment.positionId), membershipId: id(assignment.membershipId),
+        clubId: id(assignment.clubId),
+        termId: id(assignment.termId),
+        positionId: id(assignment.positionId),
+        membershipId: id(assignment.membershipId),
         effectiveFrom: date(assignment.effectiveFrom),
         effectiveTo: assignment.effectiveTo ? date(assignment.effectiveTo) : null,
         confirmedBy: assignment.confirmedBy ? id(assignment.confirmedBy) : null,
-      }));
+      }))
       return {
         clubId,
         clubName: String(club.name),
         clubState: String(club.state),
-        membership: membership ? {
-          id: id(membership._id), clubId: id(membership.clubId), state: String(membership.state),
-        } : null,
+        membership: membership
+          ? {
+              id: id(membership._id),
+              clubId: id(membership.clubId),
+              state: String(membership.state),
+            }
+          : null,
         terms: mappedTerms,
         positions: mappedPositions,
         assignments: mappedAssignments,
         isApprovedFounder: Boolean(application),
-      };
+      }
     },
-  };
+  }
 }

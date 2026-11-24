@@ -1,89 +1,144 @@
-import { Link } from "react-router";
-import { useTranslation } from "react-i18next";
+import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 
-import { AppButton } from "@/components/ui/button/AppButton";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { useAuth } from "@/hooks/useAuth";
-import { useMyApplications } from "@/hooks/useApplications";
+import { AppButton } from '@/components/ui/button/AppButton'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { useAuth } from '@/hooks/useAuth'
+import { useMyApplications } from '@/hooks/useApplications'
 
 // Trang danh sách đơn thành lập CLB của sinh viên
 export function ApplicationsPage() {
-  const { t } = useTranslation();
-  const auth = useAuth();
-  const applications = useMyApplications(Boolean(auth.data));
+  const { t } = useTranslation()
+  const auth = useAuth()
+  const applications = useMyApplications(Boolean(auth.data))
   // Nhãn đã dịch của trạng thái đơn
   function stateLabel(state: string): string {
     switch (state) {
-      case "Draft": return t("applications.statusDraft");
-      case "Submitted": return t("applications.statusSubmitted");
-      case "Under Review": return t("applications.statusUnderReview");
-      case "Revision Requested": return t("applications.statusRevisionRequested");
-      case "Approved": return t("applications.statusApproved");
-      case "Rejected": return t("applications.statusRejected");
-      case "Withdrawn": return t("applications.statusWithdrawn");
-      case "Expired": return t("applications.statusExpired");
-      default: return t("applications.state");
+      case 'Draft':
+        return t('applications.statusDraft')
+      case 'Submitted':
+        return t('applications.statusSubmitted')
+      case 'Under Review':
+        return t('applications.statusUnderReview')
+      case 'Revision Requested':
+        return t('applications.statusRevisionRequested')
+      case 'Approved':
+        return t('applications.statusApproved')
+      case 'Rejected':
+        return t('applications.statusRejected')
+      case 'Withdrawn':
+        return t('applications.statusWithdrawn')
+      case 'Expired':
+        return t('applications.statusExpired')
+      default:
+        return t('applications.state')
     }
   }
 
   // Màu badge theo trạng thái đơn
   function stateTone(state: string): AppBadgeTone {
-    if (state === "Approved") return "success";
-    if (state === "Rejected" || state === "Expired") return "danger";
-    if (state === "Revision Requested") return "warning";
-    if (state === "Draft" || state === "Withdrawn") return "neutral";
-    return "info";
+    if (state === 'Approved') {
+      return 'success'
+    }
+    if (state === 'Rejected' || state === 'Expired') {
+      return 'danger'
+    }
+    if (state === 'Revision Requested') {
+      return 'warning'
+    }
+    if (state === 'Draft' || state === 'Withdrawn') {
+      return 'neutral'
+    }
+    return 'info'
   }
 
   return (
     <>
-      <PageHeader title={t("applications.title")} description={t("applications.description")} actions={
-        <Link to="/workspace/applications/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9">
-          <AppIcon name="plus" className="size-4" />{t("applications.new")}
-        </Link>
-      } />
+      <PageHeader
+        title={t('applications.title')}
+        description={t('applications.description')}
+        actions={
+          <Link
+            to="/workspace/applications/new"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
+          >
+            <AppIcon name="plus" className="size-4" />
+            {t('applications.new')}
+          </Link>
+        }
+      />
       {auth.isPending || applications.isPending ? (
-        <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-18 w-full" />)}</div>
+        <div className="space-y-2">
+          {[0, 1, 2].map((item) => (
+            <AppSkeleton key={item} className="h-18 w-full" />
+          ))}
+        </div>
       ) : auth.isError || applications.isError ? (
-        <AppNotice tone="danger" role="alert" title={applications.error?.message ?? auth.error?.message ?? t("applications.loadError")}>
-          <AppButton variant="secondary" onClick={() => void applications.refetch()}>{t("applications.retry")}</AppButton>
+        <AppNotice
+          tone="danger"
+          role="alert"
+          title={applications.error?.message ?? auth.error?.message ?? t('applications.loadError')}
+        >
+          <AppButton variant="secondary" onClick={() => void applications.refetch()}>
+            {t('applications.retry')}
+          </AppButton>
         </AppNotice>
       ) : !auth.data ? (
         <AppNotice>
-          <p>{t("applications.signIn")}</p>
-          <Link to="/login?returnTo=%2Fworkspace%2Fapplications" className="inline-block font-medium text-primary-app hover:underline">
-            {t("applications.signInLink")}
+          <p>{t('applications.signIn')}</p>
+          <Link
+            to="/login?returnTo=%2Fworkspace%2Fapplications"
+            className="inline-block font-medium text-primary-app hover:underline"
+          >
+            {t('applications.signInLink')}
           </Link>
         </AppNotice>
       ) : applications.data?.length ? (
         <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {applications.data.map((application) => (
             <li key={application.id}>
-              <Link to={`/workspace/applications/${application.id}`} className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-                <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
+              <Link
+                to={`/workspace/applications/${application.id}`}
+                className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app"
+                >
                   <AppIcon name="file" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium break-words text-text-app">{application.draft.clubName}</span>
-                  {application.state !== "Draft" && <span className="mt-0.5 block text-sm text-muted-app">
-                    {t("applications.version", { number: application.currentVersionNo })}</span>}
+                  <span className="block font-medium break-words text-text-app">
+                    {application.draft.clubName}
+                  </span>
+                  {application.state !== 'Draft' && (
+                    <span className="mt-0.5 block text-sm text-muted-app">
+                      {t('applications.version', { number: application.currentVersionNo })}
+                    </span>
+                  )}
                 </span>
-                <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state)}</AppBadge>
+                <AppBadge tone={stateTone(application.state)}>
+                  {stateLabel(application.state)}
+                </AppBadge>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app group-hover:text-text-app">
-                  {t("applications.edit")}<AppIcon name="chevronRight" className="size-4 transition-transform group-hover:translate-x-0.5" />
+                  {t('applications.edit')}
+                  <AppIcon
+                    name="chevronRight"
+                    className="size-4 transition-transform group-hover:translate-x-0.5"
+                  />
                 </span>
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <AppEmptyState variant="boxed" message={t("applications.none")} />
+        <AppEmptyState variant="boxed" message={t('applications.none')} />
       )}
     </>
-  );
+  )
 }

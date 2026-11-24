@@ -1,123 +1,221 @@
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { ClubDashboard } from "@/components/custom/ClubDashboard";
-import { IcpdpDashboard } from "@/components/custom/IcpdpDashboard";
-import { useDashboard } from "@/hooks/useDashboard";
-import type { DashboardContext, DashboardPanelKey } from "@/services/dashboard";
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { ClubDashboard } from '@/components/custom/ClubDashboard'
+import { IcpdpDashboard } from '@/components/custom/IcpdpDashboard'
+import { useDashboard } from '@/hooks/useDashboard'
+import type { DashboardContext, DashboardPanelKey } from '@/services/dashboard'
 
 // Chọn trang đích khi bấm vào một panel dashboard
 function panelHref(key: DashboardPanelKey, context: DashboardContext): string | null {
-  if (key === "foundingApplications") return "/workspace/applications";
-  if (key === "recruitmentApplications") return "/workspace/recruitment";
-  if (key === "openRecruitment") return "/clubs";
-  if (key === "activeClubs" || key === "suspendedClubs" || key === "roleStructures" || key === "boardHistory") return "/icpdp/clubs";
-  if (key === "upcomingEvents") return "/events";
-  if (context.workspace === "student" && key === "registrations") return "/workspace/event-registrations";
-  if (context.workspace === "student" && key === "complaints") return "/workspace/complaints";
-  if (context.workspace === "student" && (key === "memberships" || key === "withdrawalRequests")) return "/workspace/clubs";
-  if (context.workspace === "student" && key === "attendanceHistory") return "/workspace/event-registrations?tab=attended";
-  if (key === "pendingClubApplications" || key === "approvalTasks" || key === "overdueApprovals") return "/workspace/reviews";
-  if (context.workspace === "icpdp") {
-    if (key === "pendingEventProposals") return "/workspace/event-proposals";
-    if (key === "pendingReports" || key === "overdueReports") return "/workspace/periodic-reports";
-    if (key === "unreconciledBudgets" || key === "overdueSettlements" || key === "overdueRefunds") return "/workspace/budgets";
-    if (key === "openViolations") return "/workspace/violations";
-    if (key === "upcomingBookings") return "/workspace/bookings";
+  if (key === 'foundingApplications') {
+    return '/workspace/applications'
   }
-  if (context.workspace === "club" && key === "openCampaigns") {
-    return `/club/${encodeURIComponent(context.clubId)}/recruitment`;
+  if (key === 'recruitmentApplications') {
+    return '/workspace/recruitment'
   }
-  if (context.workspace === "club") {
-    const base = `/club/${encodeURIComponent(context.clubId)}`;
+  if (key === 'openRecruitment') {
+    return '/clubs'
+  }
+  if (
+    key === 'activeClubs' ||
+    key === 'suspendedClubs' ||
+    key === 'roleStructures' ||
+    key === 'boardHistory'
+  ) {
+    return '/icpdp/clubs'
+  }
+  if (key === 'upcomingEvents') {
+    return '/events'
+  }
+  if (context.workspace === 'student' && key === 'registrations') {
+    return '/workspace/event-registrations'
+  }
+  if (context.workspace === 'student' && key === 'complaints') {
+    return '/workspace/complaints'
+  }
+  if (context.workspace === 'student' && (key === 'memberships' || key === 'withdrawalRequests')) {
+    return '/workspace/clubs'
+  }
+  if (context.workspace === 'student' && key === 'attendanceHistory') {
+    return '/workspace/event-registrations?tab=attended'
+  }
+  if (key === 'pendingClubApplications' || key === 'approvalTasks' || key === 'overdueApprovals') {
+    return '/workspace/reviews'
+  }
+  if (context.workspace === 'icpdp') {
+    if (key === 'pendingEventProposals') {
+      return '/workspace/event-proposals'
+    }
+    if (key === 'pendingReports' || key === 'overdueReports') {
+      return '/workspace/periodic-reports'
+    }
+    if (key === 'unreconciledBudgets' || key === 'overdueSettlements' || key === 'overdueRefunds') {
+      return '/workspace/budgets'
+    }
+    if (key === 'openViolations') {
+      return '/workspace/violations'
+    }
+    if (key === 'upcomingBookings') {
+      return '/workspace/bookings'
+    }
+  }
+  if (context.workspace === 'club' && key === 'openCampaigns') {
+    return `/club/${encodeURIComponent(context.clubId)}/recruitment`
+  }
+  if (context.workspace === 'club') {
+    const base = `/club/${encodeURIComponent(context.clubId)}`
     const clubPages: Partial<Record<DashboardPanelKey, string>> = {
-      activeMembers: "members", pendingEventProposals: "events", activeBudgets: "budgets", missingEvidence: "budgets",
-      overdueReports: "periodic-reports", upcomingBookings: "bookings", feedback: "event-feedback",
-      openViolations: "violations", currentTerms: "board-history", structureHistory: "board-history",
-      transitionFollowUps: "transition-plans",
-    };
-    const page = clubPages[key];
-    if (page) return `${base}/${page}`;
+      activeMembers: 'members',
+      pendingEventProposals: 'events',
+      activeBudgets: 'budgets',
+      missingEvidence: 'budgets',
+      overdueReports: 'periodic-reports',
+      upcomingBookings: 'bookings',
+      feedback: 'event-feedback',
+      openViolations: 'violations',
+      currentTerms: 'board-history',
+      structureHistory: 'board-history',
+      transitionFollowUps: 'transition-plans',
+    }
+    const page = clubPages[key]
+    if (page) {
+      return `${base}/${page}`
+    }
   }
-  return null;
+  return null
 }
 
 // Dashboard theo vai trò: tải số liệu rồi hiển thị bản ICPDP, CLB hoặc chung
 export function RoleDashboard({ context }: { context: DashboardContext }) {
-  const { t, i18n } = useTranslation();
-  const dashboard = useDashboard(context);
+  const { t, i18n } = useTranslation()
+  const dashboard = useDashboard(context)
 
   if (dashboard.isPending) {
-    return <section aria-label={t("dashboard.title")} className="mt-8">
-      <p role="status" className="text-sm text-muted-app">{t("dashboard.loading")}</p>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((item) => <AppSkeleton key={item} className="h-32" />)}
-        <AppSkeleton className="h-72 sm:col-span-2 xl:col-span-3" /><AppSkeleton className="h-72" />
-      </div>
-    </section>;
+    return (
+      <section aria-label={t('dashboard.title')} className="mt-8">
+        <p role="status" className="text-sm text-muted-app">
+          {t('dashboard.loading')}
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <AppSkeleton key={item} className="h-32" />
+          ))}
+          <AppSkeleton className="h-72 sm:col-span-2 xl:col-span-3" />
+          <AppSkeleton className="h-72" />
+        </div>
+      </section>
+    )
   }
 
   if (dashboard.isError) {
-    return <AppNotice tone="danger" role="alert" title={t("dashboard.loadError")} className="mt-8">
-      <p>{dashboard.error.message}</p>
-      <AppButton variant="secondary" onClick={() => void dashboard.refetch()}>{t("dashboard.retry")}</AppButton>
-    </AppNotice>;
+    return (
+      <AppNotice tone="danger" role="alert" title={t('dashboard.loadError')} className="mt-8">
+        <p>{dashboard.error.message}</p>
+        <AppButton variant="secondary" onClick={() => void dashboard.refetch()}>
+          {t('dashboard.retry')}
+        </AppButton>
+      </AppNotice>
+    )
   }
 
-  const generated = t("dashboard.generatedAt", {
-    time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" })
-      .format(new Date(dashboard.data.generatedAt)),
-  });
+  const generated = t('dashboard.generatedAt', {
+    time: new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(dashboard.data.generatedAt)),
+  })
   // ICPDP và Club Leader xem tổng quan dạng biểu đồ; sinh viên và Club Member vẫn dùng các thẻ tóm tắt.
-  const charts = dashboard.data.icpdpCharts ?? dashboard.data.clubCharts;
+  const charts = dashboard.data.icpdpCharts ?? dashboard.data.clubCharts
   if (charts) {
-    return <section aria-labelledby="dashboard-title" className="mt-8">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-        <h2 id="dashboard-title" className="font-heading text-base font-semibold">{t("dashboard.overviewTitle")}</h2>
+    return (
+      <section aria-labelledby="dashboard-title" className="mt-8">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <h2 id="dashboard-title" className="font-heading text-base font-semibold">
+            {t('dashboard.overviewTitle')}
+          </h2>
+          <p className="text-xs text-muted-app">{generated}</p>
+        </div>
+        {dashboard.data.icpdpCharts ? (
+          <IcpdpDashboard data={dashboard.data} charts={dashboard.data.icpdpCharts} />
+        ) : (
+          context.workspace === 'club' &&
+          dashboard.data.clubCharts && (
+            <ClubDashboard
+              clubId={context.clubId}
+              data={dashboard.data}
+              charts={dashboard.data.clubCharts}
+            />
+          )
+        )}
+      </section>
+    )
+  }
+
+  const allEmpty = dashboard.data.panels.every(
+    (item) => item.status === 'ready' && item.count === 0,
+  )
+  return (
+    <section aria-labelledby="dashboard-title" className="mt-8">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 id="dashboard-title" className="font-heading text-base font-semibold">
+            {t('dashboard.title')}
+          </h2>
+          <p className="mt-1 text-sm text-muted-app">{t('dashboard.description')}</p>
+        </div>
         <p className="text-xs text-muted-app">{generated}</p>
       </div>
-      {dashboard.data.icpdpCharts ? <IcpdpDashboard data={dashboard.data} charts={dashboard.data.icpdpCharts} />
-        : context.workspace === "club" && dashboard.data.clubCharts
-          && <ClubDashboard clubId={context.clubId} data={dashboard.data} charts={dashboard.data.clubCharts} />}
-    </section>;
-  }
 
-  const allEmpty = dashboard.data.panels.every((item) => item.status === "ready" && item.count === 0);
-  return <section aria-labelledby="dashboard-title" className="mt-8">
-    <div className="flex flex-wrap items-end justify-between gap-2">
-      <div>
-        <h2 id="dashboard-title" className="font-heading text-base font-semibold">{t("dashboard.title")}</h2>
-        <p className="mt-1 text-sm text-muted-app">{t("dashboard.description")}</p>
-      </div>
-      <p className="text-xs text-muted-app">{generated}</p>
-    </div>
+      {allEmpty && (
+        <AppNotice tone="info" title={t('dashboard.emptyTitle')} className="mt-5">
+          <p>{t('dashboard.emptyDescription')}</p>
+        </AppNotice>
+      )}
 
-    {allEmpty && <AppNotice tone="info" title={t("dashboard.emptyTitle")} className="mt-5">
-      <p>{t("dashboard.emptyDescription")}</p>
-    </AppNotice>}
-
-    <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {dashboard.data.panels.map((item) => {
-        const href = panelHref(item.key, context);
-        const labelKey: `dashboard.${DashboardPanelKey}` = `dashboard.${item.key}`;
-        const content = <>
-          <p className="text-sm font-medium text-muted-app">
-            {t(labelKey)}
-          </p>
-          {item.status === "ready" ? <p className="mt-2 font-heading text-3xl font-semibold tabular-nums text-text-app">
-            {item.count}<span className="sr-only"> {t("dashboard.itemCount", { count: item.count })}</span>
-          </p> : <p role="status" className="mt-3 text-sm text-danger-app">{t("dashboard.panelError")}</p>}
-        </>;
-        return <li key={item.key} className="min-w-0">
-          {href && item.status === "ready" ? <Link to={href}
-            className="block h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-            {content}
-          </Link> : <div className="h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">{content}</div>}
-        </li>;
-      })}
-    </ul>
-  </section>;
+      <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {dashboard.data.panels.map((item) => {
+          const href = panelHref(item.key, context)
+          const labelKey: `dashboard.${DashboardPanelKey}` = `dashboard.${item.key}`
+          const content = (
+            <>
+              <p className="text-sm font-medium text-muted-app">{t(labelKey)}</p>
+              {item.status === 'ready' ? (
+                <p className="mt-2 font-heading text-3xl font-semibold tabular-nums text-text-app">
+                  {item.count}
+                  <span className="sr-only">
+                    {' '}
+                    {t('dashboard.itemCount', { count: item.count })}
+                  </span>
+                </p>
+              ) : (
+                <p role="status" className="mt-3 text-sm text-danger-app">
+                  {t('dashboard.panelError')}
+                </p>
+              )}
+            </>
+          )
+          return (
+            <li key={item.key} className="min-w-0">
+              {href && item.status === 'ready' ? (
+                <Link
+                  to={href}
+                  className="block h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div className="h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+                  {content}
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
 }

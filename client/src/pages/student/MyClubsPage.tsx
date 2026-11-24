@@ -1,58 +1,89 @@
-import { MembershipReconfirmationPanel } from "./MembershipReconfirmationPanel";
-import { MyWithdrawalRequests } from "./MyWithdrawalRequests";
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { MembershipReconfirmationPanel } from './MembershipReconfirmationPanel'
+import { MyWithdrawalRequests } from './MyWithdrawalRequests'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 
-import { ClubLogo } from "@/components/custom/ClubLogo";
-import { MembershipStateBadge } from "@/components/custom/MembershipStateBadge";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { useMyMemberships } from "@/hooks/useMemberSpace";
-import type { Locale } from "@/i18n";
-import { formatDay } from "@/utils/formatDate";
+import { ClubLogo } from '@/components/custom/ClubLogo'
+import { MembershipStateBadge } from '@/components/custom/MembershipStateBadge'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { useAuth } from '@/hooks/useAuth'
+import { useMyMemberships } from '@/hooks/useMemberSpace'
+import type { Locale } from '@/i18n'
+import { formatDay } from '@/utils/formatDate'
 
 // Trang danh sách CLB mà sinh viên đang là thành viên
 /** Điểm vào UC24: các CLB sinh viên đang tham gia (Active hoặc Inactive). */
 export function MyClubsPage() {
-  const { t, i18n } = useTranslation();
-  const locale: Locale = i18n.language === "vi" ? "vi" : "en";
-  const auth = useAuth();
-  const memberships = useMyMemberships(Boolean(auth.data));
+  const { t, i18n } = useTranslation()
+  const locale: Locale = i18n.language === 'vi' ? 'vi' : 'en'
+  const auth = useAuth()
+  const memberships = useMyMemberships(Boolean(auth.data))
   return (
     <>
-      <PageHeader title={t("memberSpace.myClubsTitle")} description={t("memberSpace.myClubsDescription")} />
+      <PageHeader
+        title={t('memberSpace.myClubsTitle')}
+        description={t('memberSpace.myClubsDescription')}
+      />
       <MembershipReconfirmationPanel />
-      {memberships.isPending ? <div className="space-y-2">{[0, 1].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>
-        : memberships.isError ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}>
-          <AppButton variant="secondary" onClick={() => void memberships.refetch()}>{t("memberSpace.retry")}</AppButton></AppNotice>
-          : memberships.data.length === 0 ? (
-            <AppEmptyState variant="boxed" icon="users" message={t("memberSpace.myClubsEmpty")}
-      action={<Link to="/clubs" className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
-                {t("memberSpace.browseClubs")}</Link>} />
-          ) : (
-            <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
-              {memberships.data.map((membership) => (
-                <li key={membership.id}>
-                  <Link to={`/workspace/clubs/${membership.clubId}`} className="group flex flex-wrap items-center gap-4 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-                    <ClubLogo name={membership.clubName ?? ""} size={48} />
-                    <span className="min-w-0 flex-1 basis-48">
-                      <span className="block font-medium break-words text-text-app">{membership.clubName}</span>
-                      <span className="block text-sm text-muted-app">{t("memberSpace.joinedOn", { date: formatDay(membership.joinedAt, locale) })}</span>
-                    </span>
-                    <MembershipStateBadge state={membership.state} />
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app group-hover:text-text-app">
-                      {t("memberSpace.open")}<AppIcon name="chevronRight" className="size-4" /></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+      {memberships.isPending ? (
+        <div className="space-y-2">
+          {[0, 1].map((item) => (
+            <AppSkeleton key={item} className="h-20 w-full" />
+          ))}
+        </div>
+      ) : memberships.isError ? (
+        <AppNotice tone="danger" role="alert" title={t('memberSpace.loadError')}>
+          <AppButton variant="secondary" onClick={() => void memberships.refetch()}>
+            {t('memberSpace.retry')}
+          </AppButton>
+        </AppNotice>
+      ) : memberships.data.length === 0 ? (
+        <AppEmptyState
+          variant="boxed"
+          icon="users"
+          message={t('memberSpace.myClubsEmpty')}
+          action={
+            <Link
+              to="/clubs"
+              className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9"
+            >
+              {t('memberSpace.browseClubs')}
+            </Link>
+          }
+        />
+      ) : (
+        <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
+          {memberships.data.map((membership) => (
+            <li key={membership.id}>
+              <Link
+                to={`/workspace/clubs/${membership.clubId}`}
+                className="group flex flex-wrap items-center gap-4 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app"
+              >
+                <ClubLogo name={membership.clubName ?? ''} size={48} />
+                <span className="min-w-0 flex-1 basis-48">
+                  <span className="block font-medium break-words text-text-app">
+                    {membership.clubName}
+                  </span>
+                  <span className="block text-sm text-muted-app">
+                    {t('memberSpace.joinedOn', { date: formatDay(membership.joinedAt, locale) })}
+                  </span>
+                </span>
+                <MembershipStateBadge state={membership.state} />
+                <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app group-hover:text-text-app">
+                  {t('memberSpace.open')}
+                  <AppIcon name="chevronRight" className="size-4" />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
       <MyWithdrawalRequests />
     </>
-  );
+  )
 }

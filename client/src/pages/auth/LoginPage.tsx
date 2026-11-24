@@ -1,33 +1,33 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 
-import { UniversityLogo } from "@/components/custom/UniversityLogo";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { googleLoginUrl } from "@/services/auth";
-import { CAMPUS_IMAGE_URL } from "@/utils/campusImage";
-import { cn } from "@/utils/cn";
+import { UniversityLogo } from '@/components/custom/UniversityLogo'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { googleLoginUrl } from '@/services/auth'
+import { CAMPUS_IMAGE_URL } from '@/utils/campusImage'
+import { cn } from '@/utils/cn'
 
 // Chọn trang đích cho khách, chỉ giữ returnTo nếu là trang công khai
 /** UC06: khách chỉ được vào các trang khám phá; đích nào khác sẽ quay về trang chủ. */
 function guestTarget(returnTo: string): string {
-  const path = returnTo.split(/[?#]/)[0]!;
-  return path === "/" || /^\/(clubs|events)(\/|$)/.test(path) ? returnTo : "/";
+  const path = returnTo.split(/[?#]/)[0]!
+  return path === '/' || /^\/(clubs|events)(\/|$)/.test(path) ? returnTo : '/'
 }
 
 // Ảnh cơ sở Hoà Lạc của Trường Đại học FPT, do website của trường cung cấp.
 
 interface LoginPageProps {
-  authError: string | null;
-  isPending: boolean;
-  lockedReason?: string | null;
-  returnTo: string;
+  authError: string | null
+  isPending: boolean
+  lockedReason?: string | null
+  returnTo: string
 }
 
 // Trang đăng nhập Google, hiện lỗi hoặc lý do bị khóa nếu có
 export function LoginPage({ authError, isPending, lockedReason, returnTo }: LoginPageProps) {
-  const { t } = useTranslation();
-  const [loginBusy, setLoginBusy] = useState(false);
+  const { t } = useTranslation()
+  const [loginBusy, setLoginBusy] = useState(false)
 
   return (
     <main className="flex min-h-full flex-wrap content-start bg-auth-page-bg-app min-[840px]:content-stretch font-auth-body text-auth-page-text-app">
@@ -42,18 +42,24 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_center]"
         />
         {/* Làm tối phần dưới ảnh để chữ thương hiệu màu trắng vẫn đọc rõ ở cả hai theme. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/75 via-black/35 to-transparent" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/75 via-black/35 to-transparent"
+        />
         <div className="relative self-start">
-          <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
+          <UniversityLogo alt={t('auth.schoolLogo')} priority className="w-66 sm:w-76" />
         </div>
         <div className="relative w-full max-w-md text-white">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
-            <AppIcon name="graduationCap" className="size-4" />{t("auth.loginChip")}
+            <AppIcon name="graduationCap" className="size-4" />
+            {t('auth.loginChip')}
           </span>
           <p className="mt-3 font-auth-heading text-4xl leading-tight font-extrabold tracking-[-0.025em] text-shadow-lg sm:text-5xl">
-            {t("auth.brand")}
+            {t('auth.brand')}
           </p>
-          <p className="mt-2 text-base text-pretty text-white/85 text-shadow-md">{t("auth.systemDescription")}</p>
+          <p className="mt-2 text-base text-pretty text-white/85 text-shadow-md">
+            {t('auth.systemDescription')}
+          </p>
         </div>
       </section>
 
@@ -61,18 +67,31 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
         <div className="flex w-full max-w-100 flex-col gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="m-0 font-auth-heading text-3xl leading-[1.2] font-semibold tracking-tight">
-              {t("auth.signInTitle")}
+              {t('auth.signInTitle')}
             </h1>
-            <p className="m-0 text-auth-page-muted-app">{t("auth.signInDescription")}</p>
+            <p className="m-0 text-auth-page-muted-app">{t('auth.signInDescription')}</p>
           </div>
 
           {authError && (
-            <div role="alert" className="flex items-start gap-3 rounded-lg border-l-4 border-danger-app bg-auth-danger-surface-app p-4 text-danger-app">
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 size-5 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-lg border-l-4 border-danger-app bg-auth-danger-surface-app p-4 text-danger-app"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="mt-0.5 size-5 shrink-0 fill-none stroke-current"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z" />
-                <path d="M12 9v4" /><path d="M12 17h.01" />
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
               </svg>
-              <span className="text-[15px] text-pretty">{authError} {lockedReason}</span>
+              <span className="text-[15px] text-pretty">
+                {authError} {lockedReason}
+              </span>
             </div>
           )}
 
@@ -80,38 +99,70 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
             href={googleLoginUrl(returnTo)}
             aria-disabled={isPending || loginBusy}
             onClick={(event) => {
-              if (isPending || loginBusy) event.preventDefault();
-              else setLoginBusy(true);
+              if (isPending || loginBusy) {
+                event.preventDefault()
+              } else {
+                setLoginBusy(true)
+              }
             }}
-            className={cn("flex min-h-12 items-center justify-center gap-3 rounded-lg border border-auth-button-border-app bg-auth-page-bg-app px-5 text-sm font-medium text-auth-page-text-app no-underline shadow-xs transition-[color,background-color,border-color,scale] hover:bg-auth-button-hover-app active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
-              "pointer-events-none opacity-50": isPending || loginBusy,
-            })}
+            className={cn(
+              'flex min-h-12 items-center justify-center gap-3 rounded-lg border border-auth-button-border-app bg-auth-page-bg-app px-5 text-sm font-medium text-auth-page-text-app no-underline shadow-xs transition-[color,background-color,border-color,scale] hover:bg-auth-button-hover-app active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app',
+              {
+                'pointer-events-none opacity-50': isPending || loginBusy,
+              },
+            )}
           >
             {loginBusy ? (
-              <span aria-hidden="true" className="size-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+              <span
+                aria-hidden="true"
+                className="size-4 animate-spin rounded-full border-2 border-current border-r-transparent"
+              />
             ) : (
               <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24">
-                <path className="fill-google-blue-app" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path className="fill-google-green-app" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path className="fill-google-yellow-app" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
-                <path className="fill-google-red-app" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                <path
+                  className="fill-google-blue-app"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  className="fill-google-green-app"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  className="fill-google-yellow-app"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                />
+                <path
+                  className="fill-google-red-app"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
               </svg>
             )}
-            <span>{loginBusy ? t("auth.signingInGoogle") : t("auth.signInGoogle")}</span>
+            <span>{loginBusy ? t('auth.signingInGoogle') : t('auth.signInGoogle')}</span>
           </a>
 
           <p className="m-0 flex items-center gap-2 text-sm text-auth-page-muted-app">
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="size-4 shrink-0 fill-none stroke-current"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
             </svg>
-            {t("auth.allowedDomain")}
+            {t('auth.allowedDomain')}
           </p>
-          <Link to={guestTarget(returnTo)}
-            className="self-center text-sm font-semibold text-primary-app underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-            {t("auth.continueAsGuest")}
+          <Link
+            to={guestTarget(returnTo)}
+            className="self-center text-sm font-semibold text-primary-app underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app"
+          >
+            {t('auth.continueAsGuest')}
           </Link>
         </div>
       </section>
     </main>
-  );
+  )
 }

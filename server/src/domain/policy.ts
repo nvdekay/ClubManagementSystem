@@ -1,100 +1,123 @@
 export interface ReportDeadline {
-  reportType: string;
-  dueDaysAfterPeriodEnd: number;
-  remindBeforeDays: number;
-  overdueAfterDays: number;
-  escalateAfterDays: number;
+  reportType: string
+  dueDaysAfterPeriodEnd: number
+  remindBeforeDays: number
+  overdueAfterDays: number
+  escalateAfterDays: number
 }
 
 export interface AcademicSemester {
-  code: string;
-  startAt: Date;
-  endAt: Date;
+  code: string
+  startAt: Date
+  endAt: Date
 }
 
 export const FOUNDING_FORM_FIELDS = [
-  "summary", "objectives", "proposal", "logo", "fanpageUrl", "contactEmail",
-] as const;
-export type FoundingFormField = (typeof FOUNDING_FORM_FIELDS)[number];
+  'summary',
+  'objectives',
+  'proposal',
+  'logo',
+  'fanpageUrl',
+  'contactEmail',
+] as const
+export type FoundingFormField = (typeof FOUNDING_FORM_FIELDS)[number]
 
 export const CLUB_PROFILE_FORM_FIELDS = [
-  "description", "contactEmail", "contactPhone", "charterUrl", "channels", "operatingScope",
-] as const;
-export type ClubProfileFormField = (typeof CLUB_PROFILE_FORM_FIELDS)[number];
+  'description',
+  'contactEmail',
+  'contactPhone',
+  'charterUrl',
+  'channels',
+  'operatingScope',
+] as const
+export type ClubProfileFormField = (typeof CLUB_PROFILE_FORM_FIELDS)[number]
 
 /** Những trường nào của các form cố định do hệ thống sở hữu mà ICPDP đánh dấu là bắt buộc, theo từng luồng nghiệp vụ. */
 export interface FormRequirements {
-  clubFounding: Readonly<Record<FoundingFormField, boolean>>;
-  clubProfile: Readonly<Record<ClubProfileFormField, boolean>>;
+  clubFounding: Readonly<Record<FoundingFormField, boolean>>
+  clubProfile: Readonly<Record<ClubProfileFormField, boolean>>
 }
 
 export const DEFAULT_FORM_REQUIREMENTS: FormRequirements = {
-  clubFounding: { summary: true, objectives: true, proposal: true, logo: true,
-    fanpageUrl: false, contactEmail: false },
-  clubProfile: { description: false, contactEmail: false, contactPhone: false,
-    charterUrl: false, channels: false, operatingScope: false },
-};
+  clubFounding: {
+    summary: true,
+    objectives: true,
+    proposal: true,
+    logo: true,
+    fanpageUrl: false,
+    contactEmail: false,
+  },
+  clubProfile: {
+    description: false,
+    contactEmail: false,
+    contactPhone: false,
+    charterUrl: false,
+    channels: false,
+    operatingScope: false,
+  },
+}
 
 export interface SchoolRefundAccount {
-  accountHolder: string;
-  accountNumber: string;
-  bankName: string;
-  bankBranch?: string;
-  transferNote?: string;
+  accountHolder: string
+  accountNumber: string
+  bankName: string
+  bankBranch?: string
+  transferNote?: string
 }
 
 export interface PolicySettings {
-  minFoundingMembers: number;
-  formRequirements: FormRequirements;
-  reportDeadlines: readonly ReportDeadline[];
-  conflictThresholdMinutes: number;
-  feedbackWindowHours: number;
-  feedbackMinRespondents: number;
-  allowOverbooking: boolean;
-  enforceOverdueReportBlock: boolean;
-  academicCalendar: readonly AcademicSemester[];
-  schoolRefundAccount?: SchoolRefundAccount;
+  minFoundingMembers: number
+  formRequirements: FormRequirements
+  reportDeadlines: readonly ReportDeadline[]
+  conflictThresholdMinutes: number
+  feedbackWindowHours: number
+  feedbackMinRespondents: number
+  allowOverbooking: boolean
+  enforceOverdueReportBlock: boolean
+  academicCalendar: readonly AcademicSemester[]
+  schoolRefundAccount?: SchoolRefundAccount
 }
 
 export interface PolicyVersion extends PolicySettings {
-  id: string;
-  effectiveFrom: Date;
-  createdBy: string;
-  createdAt: Date;
+  id: string
+  effectiveFrom: Date
+  createdBy: string
+  createdAt: Date
 }
 
 export type PolicyImpactReason =
-  | "EVENT_OUTSIDE_ACADEMIC_CALENDAR"
-  | "BOOKING_OUTSIDE_ACADEMIC_CALENDAR"
-  | "DISSOLUTION_SEMESTER_REMOVED"
-  | "APPROVED_OVERBOOKING_DISALLOWED";
+  | 'EVENT_OUTSIDE_ACADEMIC_CALENDAR'
+  | 'BOOKING_OUTSIDE_ACADEMIC_CALENDAR'
+  | 'DISSOLUTION_SEMESTER_REMOVED'
+  | 'APPROVED_OVERBOOKING_DISALLOWED'
 
 export interface PolicyDecisionImpact {
-  entityType: "Event" | "PropertyBooking" | "Club";
-  entityId: string;
-  reasons: PolicyImpactReason[];
+  entityType: 'Event' | 'PropertyBooking' | 'Club'
+  entityId: string
+  reasons: PolicyImpactReason[]
 }
 
 export interface PolicyRepository {
-  findEffective(at: Date): Promise<PolicyVersion | null>;
+  findEffective(at: Date): Promise<PolicyVersion | null>
 }
 
 export interface PolicyManagementRepository extends PolicyRepository {
-  listRecent(limit: number): Promise<PolicyVersion[]>;
+  listRecent(limit: number): Promise<PolicyVersion[]>
   findDecisionImpacts(
-    settings: PolicySettings, effectiveFrom: Date,
-  ): Promise<PolicyDecisionImpact[]>;
+    settings: PolicySettings,
+    effectiveFrom: Date,
+  ): Promise<PolicyDecisionImpact[]>
   append(input: {
-    settings: PolicySettings;
-    effectiveFrom: Date;
-    createdBy: string;
-    createdAt: Date;
-    reason?: string;
-  }): Promise<PolicyVersion>;
+    settings: PolicySettings
+    effectiveFrom: Date
+    createdBy: string
+    createdAt: Date
+    reason?: string
+  }): Promise<PolicyVersion>
 }
 
 export interface FoundingRequirements {
-  policyVersionId: string;
-  minFoundingMembers: number;
-  required: Readonly<Record<FoundingFormField, boolean>>;
+  policyVersionId: string
+  minFoundingMembers: number
+  required: Readonly<Record<FoundingFormField, boolean>>
 }

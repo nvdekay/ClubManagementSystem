@@ -1,281 +1,483 @@
-import { useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router";
+import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, useSearchParams } from 'react-router'
 
-import { EventCheckInForm } from "@/components/custom/EventCheckInForm";
-import { EventFeedbackForm, EventFeedbackSummary } from "@/components/custom/EventFeedbackForm";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { useMyAttendances } from "@/hooks/useEventCheckIns";
-import { useMyEventFeedback } from "@/hooks/useEventFeedback";
-import { useEventRegistrationAction, useMyEventRegistrations } from "@/hooks/useEventRegistrations";
-import type { Locale } from "@/i18n";
-import type { Attendance, CheckInResult } from "@/services/eventCheckIns";
-import type { MyEventFeedback } from "@/services/eventFeedback";
-import type { EventRegistration } from "@/services/eventRegistrations";
-import { cn } from "@/utils/cn";
-import { formatDate } from "@/utils/formatDate";
-import { useConfirm } from "@/hooks/useConfirm";
+import { EventCheckInForm } from '@/components/custom/EventCheckInForm'
+import { EventFeedbackForm, EventFeedbackSummary } from '@/components/custom/EventFeedbackForm'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
+import { AppButton } from '@/components/ui/button/AppButton'
+import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { AppIcon } from '@/components/ui/icon/AppIcon'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
+import { useAuth } from '@/hooks/useAuth'
+import { useMyAttendances } from '@/hooks/useEventCheckIns'
+import { useMyEventFeedback } from '@/hooks/useEventFeedback'
+import { useEventRegistrationAction, useMyEventRegistrations } from '@/hooks/useEventRegistrations'
+import type { Locale } from '@/i18n'
+import type { Attendance, CheckInResult } from '@/services/eventCheckIns'
+import type { MyEventFeedback } from '@/services/eventFeedback'
+import type { EventRegistration } from '@/services/eventRegistrations'
+import { cn } from '@/utils/cn'
+import { formatDate } from '@/utils/formatDate'
+import { useConfirm } from '@/hooks/useConfirm'
 
-type Filter = "active" | "attended" | "cancelled";
-const objectId = /^[0-9a-f]{24}$/i;
+type Filter = 'active' | 'attended' | 'cancelled'
+const objectId = /^[0-9a-f]{24}$/i
 
 // Trang đăng ký sự kiện, điểm danh và phản hồi của sinh viên
 export function MyEventRegistrationsPage() {
-  const { t, i18n } = useTranslation();
-  const askConfirm = useConfirm();
-  const locale: Locale = i18n.language === "vi" ? "vi" : "en";
-  const auth = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const signedIn = Boolean(auth.data);
-  const registrations = useMyEventRegistrations(signedIn);
-  const attendances = useMyAttendances(signedIn);
-  const feedback = useMyEventFeedback(signedIn);
-  const action = useEventRegistrationAction();
-  const inFlight = useRef(false);
-  const [filter, setFilter] = useState<Filter>(() => (searchParams.get("tab") === "attended" ? "attended" : "active"));
-  const [cancelledId, setCancelledId] = useState<string | null>(null);
-  const [openCheckIn, setOpenCheckIn] = useState<string | null>(null);
+  const { t, i18n } = useTranslation()
+  const askConfirm = useConfirm()
+  const locale: Locale = i18n.language === 'vi' ? 'vi' : 'en'
+  const auth = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const signedIn = Boolean(auth.data)
+  const registrations = useMyEventRegistrations(signedIn)
+  const attendances = useMyAttendances(signedIn)
+  const feedback = useMyEventFeedback(signedIn)
+  const action = useEventRegistrationAction()
+  const inFlight = useRef(false)
+  const [filter, setFilter] = useState<Filter>(() =>
+    searchParams.get('tab') === 'attended' ? 'attended' : 'active',
+  )
+  const [cancelledId, setCancelledId] = useState<string | null>(null)
+  const [openCheckIn, setOpenCheckIn] = useState<string | null>(null)
   // Form nội tuyến của dòng bị unmount khi danh sách làm mới, nên hộp xác nhận đặt ở cấp trang.
-  const [lastCheckIn, setLastCheckIn] = useState<CheckInResult | null>(null);
+  const [lastCheckIn, setLastCheckIn] = useState<CheckInResult | null>(null)
   // Chỉ đọc một lần mỗi lượt vào trang: render phải thuần tuý, và lệch vài phút không ảnh hưởng ở đây.
-  const [nowTime] = useState(() => Date.now());
+  const [nowTime] = useState(() => Date.now())
   // Quét QR sẽ mở /workspace/event-registrations?checkin=<eventId>&code=<code>.
-  const deepLinkEvent = searchParams.get("checkin");
-  const deepLink = deepLinkEvent && objectId.test(deepLinkEvent)
-    ? { eventId: deepLinkEvent, code: searchParams.get("code") ?? "" } : null;
+  const deepLinkEvent = searchParams.get('checkin')
+  const deepLink =
+    deepLinkEvent && objectId.test(deepLinkEvent)
+      ? { eventId: deepLinkEvent, code: searchParams.get('code') ?? '' }
+      : null
 
   // Xác nhận rồi hủy đăng ký sự kiện
   async function cancel(registration: EventRegistration) {
-    if (!auth.data || inFlight.current || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
-    inFlight.current = true;
-    setCancelledId(null);
+    if (
+      !auth.data ||
+      inFlight.current ||
+      !(await askConfirm(t('eventRegistrations.cancelConfirm')))
+    ) {
+      return
+    }
+    inFlight.current = true
+    setCancelledId(null)
     try {
-      await action.mutateAsync({ kind: "cancel", registrationId: registration.id, csrfToken: auth.data.csrfToken });
-      setCancelledId(registration.id);
+      await action.mutateAsync({
+        kind: 'cancel',
+        registrationId: registration.id,
+        csrfToken: auth.data.csrfToken,
+      })
+      setCancelledId(registration.id)
     } catch {
       // action.isError hiển thị thông báo.
     } finally {
-      inFlight.current = false;
+      inFlight.current = false
     }
   }
 
   // Đóng hộp thoại check-in mở từ liên kết và xóa tham số URL
   function closeDeepLink() {
-    setSearchParams((params) => {
-      params.delete("checkin");
-      params.delete("code");
-      return params;
-    }, { replace: true });
+    setSearchParams(
+      (params) => {
+        params.delete('checkin')
+        params.delete('code')
+        return params
+      },
+      { replace: true },
+    )
   }
 
-  const all = registrations.data ?? [];
-  const attended = attendances.data ?? [];
-  const attendedEvents = new Set(attended.map((item) => item.eventId));
-  const counts = { active: all.filter((item) => item.state !== "Cancelled").length,
-    attended: attended.length, cancelled: all.filter((item) => item.state === "Cancelled").length };
-  const items = all.filter((item) => (filter === "cancelled" ? item.state === "Cancelled" : item.state !== "Cancelled"));
-  const deepLinkTitle = deepLink && all.find((item) => item.eventId === deepLink.eventId)?.eventTitle;
-  const pending = registrations.isPending || attendances.isPending || feedback.isPending;
-  const error = registrations.error ?? attendances.error ?? feedback.error;
-  const feedbackByEvent = new Map((feedback.data ?? []).map((item) => [item.eventId, item]));
+  const all = registrations.data ?? []
+  const attended = attendances.data ?? []
+  const attendedEvents = new Set(attended.map((item) => item.eventId))
+  const counts = {
+    active: all.filter((item) => item.state !== 'Cancelled').length,
+    attended: attended.length,
+    cancelled: all.filter((item) => item.state === 'Cancelled').length,
+  }
+  const items = all.filter((item) =>
+    filter === 'cancelled' ? item.state === 'Cancelled' : item.state !== 'Cancelled',
+  )
+  const deepLinkTitle =
+    deepLink && all.find((item) => item.eventId === deepLink.eventId)?.eventTitle
+  const pending = registrations.isPending || attendances.isPending || feedback.isPending
+  const error = registrations.error ?? attendances.error ?? feedback.error
+  const feedbackByEvent = new Map((feedback.data ?? []).map((item) => [item.eventId, item]))
 
   return (
     <>
-      <PageHeader title={t("eventRegistrations.title")} description={t("eventRegistrations.description")} />
+      <PageHeader
+        title={t('eventRegistrations.title')}
+        description={t('eventRegistrations.description')}
+      />
 
       {deepLink && !pending && (
-        <section aria-labelledby="deep-link-check-in" className="mb-6 rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs sm:p-6">
+        <section
+          aria-labelledby="deep-link-check-in"
+          className="mb-6 rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs sm:p-6"
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 id="deep-link-check-in" className="font-heading text-base font-semibold">{t("eventRegistrations.deepLinkTitle")}</h2>
-              {deepLinkTitle && <p className="mt-1 text-sm break-words text-muted-app">{deepLinkTitle}</p>}
+              <h2 id="deep-link-check-in" className="font-heading text-base font-semibold">
+                {t('eventRegistrations.deepLinkTitle')}
+              </h2>
+              {deepLinkTitle && (
+                <p className="mt-1 text-sm break-words text-muted-app">{deepLinkTitle}</p>
+              )}
             </div>
-            <AppButton variant="ghost" aria-label={t("eventRegistrations.closeCheckIn")} onClick={closeDeepLink} className="size-10 shrink-0 px-0">
+            <AppButton
+              variant="ghost"
+              aria-label={t('eventRegistrations.closeCheckIn')}
+              onClick={closeDeepLink}
+              className="size-10 shrink-0 px-0"
+            >
               <AppIcon name="close" className="size-4" />
             </AppButton>
           </div>
           <div className="mt-4">
-            <EventCheckInForm eventId={deepLink.eventId} initialCode={deepLink.code} autoFocus={!deepLink.code} />
+            <EventCheckInForm
+              eventId={deepLink.eventId}
+              initialCode={deepLink.code}
+              autoFocus={!deepLink.code}
+            />
           </div>
         </section>
       )}
 
       {pending ? (
-        <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>
+        <div className="space-y-2">
+          {[0, 1, 2].map((item) => (
+            <AppSkeleton key={item} className="h-20 w-full" />
+          ))}
+        </div>
       ) : error ? (
-        <AppNotice tone="danger" role="alert" title={t("eventRegistrations.loadError")}>
+        <AppNotice tone="danger" role="alert" title={t('eventRegistrations.loadError')}>
           <p>{error.message}</p>
-          <AppButton variant="secondary" onClick={() => { void registrations.refetch(); void attendances.refetch(); void feedback.refetch(); }}>
-            {t("eventRegistrations.retry")}</AppButton>
+          <AppButton
+            variant="secondary"
+            onClick={() => {
+              void registrations.refetch()
+              void attendances.refetch()
+              void feedback.refetch()
+            }}
+          >
+            {t('eventRegistrations.retry')}
+          </AppButton>
         </AppNotice>
       ) : (
         <>
-          <div role="group" aria-label={t("eventRegistrations.title")} className="mb-4 inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
-            {(["active", "attended", "cancelled"] as const).map((value) => (
-              <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}
-                className={cn("inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-                  "bg-segment-app text-text-app shadow-xs": filter === value,
-                })}>
-                {value === "active" ? t("eventRegistrations.filterActive")
-                  : value === "attended" ? t("eventRegistrations.filterAttended") : t("eventRegistrations.filterCancelled")}
+          <div
+            role="group"
+            aria-label={t('eventRegistrations.title')}
+            className="mb-4 inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1"
+          >
+            {(['active', 'attended', 'cancelled'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+                className={cn(
+                  'inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app',
+                  {
+                    'bg-segment-app text-text-app shadow-xs': filter === value,
+                  },
+                )}
+              >
+                {value === 'active'
+                  ? t('eventRegistrations.filterActive')
+                  : value === 'attended'
+                    ? t('eventRegistrations.filterAttended')
+                    : t('eventRegistrations.filterCancelled')}
                 <span className="ml-1.5 text-muted-app tabular-nums">{counts[value]}</span>
               </button>
             ))}
           </div>
-          {action.isError && <AppNotice tone="danger" role="alert" title={t("eventRegistrations.actionError")} className="mb-4">
-            <p>{action.error.message}</p></AppNotice>}
-          {cancelledId && !action.isError && <p role="status" className="mb-4 text-sm font-semibold text-success-app">
-            {t("eventRegistrations.cancelSuccess")}</p>}
+          {action.isError && (
+            <AppNotice
+              tone="danger"
+              role="alert"
+              title={t('eventRegistrations.actionError')}
+              className="mb-4"
+            >
+              <p>{action.error.message}</p>
+            </AppNotice>
+          )}
+          {cancelledId && !action.isError && (
+            <p role="status" className="mb-4 text-sm font-semibold text-success-app">
+              {t('eventRegistrations.cancelSuccess')}
+            </p>
+          )}
           {lastCheckIn && (
-            <AppNotice tone="success" role="status" className="mb-4"
-              title={lastCheckIn.alreadyCheckedIn ? t("eventRegistrations.checkInAlready") : t("eventRegistrations.checkInSuccess")}>
-              <p className="break-words">{lastCheckIn.eventTitle} · {t("eventRegistrations.checkedInAt", { date: formatDate(lastCheckIn.checkedInAt, locale) })}</p>
-              <p>{lastCheckIn.feedbackClosesAt
-                ? t("eventRegistrations.feedbackOpenUntil", { date: formatDate(lastCheckIn.feedbackClosesAt, locale) })
-                : t("eventRegistrations.feedbackOpenNoDeadline")}</p>
+            <AppNotice
+              tone="success"
+              role="status"
+              className="mb-4"
+              title={
+                lastCheckIn.alreadyCheckedIn
+                  ? t('eventRegistrations.checkInAlready')
+                  : t('eventRegistrations.checkInSuccess')
+              }
+            >
+              <p className="break-words">
+                {lastCheckIn.eventTitle} ·{' '}
+                {t('eventRegistrations.checkedInAt', {
+                  date: formatDate(lastCheckIn.checkedInAt, locale),
+                })}
+              </p>
+              <p>
+                {lastCheckIn.feedbackClosesAt
+                  ? t('eventRegistrations.feedbackOpenUntil', {
+                      date: formatDate(lastCheckIn.feedbackClosesAt, locale),
+                    })
+                  : t('eventRegistrations.feedbackOpenNoDeadline')}
+              </p>
             </AppNotice>
           )}
 
-          {filter === "attended" ? (
-            attended.length === 0 ? <EmptyState message={t("eventRegistrations.attendedEmpty")} />
-              : <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
-                {attended.map((item) => <AttendanceRow key={item.id} attendance={item} locale={locale} nowTime={nowTime}
-                  feedback={feedbackByEvent.get(item.eventId)} />)}
+          {filter === 'attended' ? (
+            attended.length === 0 ? (
+              <EmptyState message={t('eventRegistrations.attendedEmpty')} />
+            ) : (
+              <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+                {attended.map((item) => (
+                  <AttendanceRow
+                    key={item.id}
+                    attendance={item}
+                    locale={locale}
+                    nowTime={nowTime}
+                    feedback={feedbackByEvent.get(item.eventId)}
+                  />
+                ))}
               </ul>
-          ) : items.length === 0 ? <EmptyState message={t("eventRegistrations.empty")} /> : (
+            )
+          ) : items.length === 0 ? (
+            <EmptyState message={t('eventRegistrations.empty')} />
+          ) : (
             <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {items.map((registration) => {
-                const started = new Date(registration.eventStartAt).getTime() <= nowTime;
-                const checkedIn = attendedEvents.has(registration.eventId);
-                const inCheckInWindow = new Date(registration.checkInOpensAt).getTime() <= nowTime
-                  && nowTime < new Date(registration.checkInClosesAt).getTime();
-                const canCheckIn = registration.state === "Confirmed" && !checkedIn && inCheckInWindow;
+                const started = new Date(registration.eventStartAt).getTime() <= nowTime
+                const checkedIn = attendedEvents.has(registration.eventId)
+                const inCheckInWindow =
+                  new Date(registration.checkInOpensAt).getTime() <= nowTime &&
+                  nowTime < new Date(registration.checkInClosesAt).getTime()
+                const canCheckIn =
+                  registration.state === 'Confirmed' && !checkedIn && inCheckInWindow
                 return (
                   <li key={registration.id} className="px-5 py-4">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                      <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
-                        <AppIcon name="calendar" /></span>
+                      <span
+                        aria-hidden="true"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app"
+                      >
+                        <AppIcon name="calendar" />
+                      </span>
                       <div className="min-w-0 flex-1 basis-56">
-                        <Link to={`/events/${registration.eventId}`} className="font-medium break-words text-text-app hover:text-primary-app">
-                          {registration.eventTitle}</Link>
+                        <Link
+                          to={`/events/${registration.eventId}`}
+                          className="font-medium break-words text-text-app hover:text-primary-app"
+                        >
+                          {registration.eventTitle}
+                        </Link>
                         <p className="mt-0.5 text-sm text-muted-app">
-                          {registration.clubName} · {t("eventRegistrations.starts", { date: formatDate(registration.eventStartAt, locale) })}
+                          {registration.clubName} ·{' '}
+                          {t('eventRegistrations.starts', {
+                            date: formatDate(registration.eventStartAt, locale),
+                          })}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-app">
-                          {registration.state === "Cancelled" && registration.cancelledAt
-                            ? t("eventRegistrations.cancelledAt", { date: formatDate(registration.cancelledAt, locale) })
-                            : t("eventRegistrations.registeredAt", { date: formatDate(registration.createdAt, locale) })}
+                          {registration.state === 'Cancelled' && registration.cancelledAt
+                            ? t('eventRegistrations.cancelledAt', {
+                                date: formatDate(registration.cancelledAt, locale),
+                              })
+                            : t('eventRegistrations.registeredAt', {
+                                date: formatDate(registration.createdAt, locale),
+                              })}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        {checkedIn && <AppBadge tone="success">{t("eventRegistrations.checkedInBadge")}</AppBadge>}
-                        <AppBadge tone={registration.state === "Confirmed" ? "info" : registration.state === "Waitlisted" ? "warning" : "neutral"}>
-                          {registration.state === "Confirmed" ? t("eventRegistrations.confirmed")
-                            : registration.state === "Waitlisted"
-                              ? t("eventRegistrations.waitlisted", { position: registration.waitlistPosition ?? "—" })
-                              : t("eventRegistrations.cancelled")}
+                        {checkedIn && (
+                          <AppBadge tone="success">
+                            {t('eventRegistrations.checkedInBadge')}
+                          </AppBadge>
+                        )}
+                        <AppBadge
+                          tone={
+                            registration.state === 'Confirmed'
+                              ? 'info'
+                              : registration.state === 'Waitlisted'
+                                ? 'warning'
+                                : 'neutral'
+                          }
+                        >
+                          {registration.state === 'Confirmed'
+                            ? t('eventRegistrations.confirmed')
+                            : registration.state === 'Waitlisted'
+                              ? t('eventRegistrations.waitlisted', {
+                                  position: registration.waitlistPosition ?? '—',
+                                })
+                              : t('eventRegistrations.cancelled')}
                         </AppBadge>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {canCheckIn && (
-                          <AppButton aria-expanded={openCheckIn === registration.id}
-                            onClick={() => setOpenCheckIn((current) => (current === registration.id ? null : registration.id))}>
-                            {t("eventRegistrations.checkInTitle")}
+                          <AppButton
+                            aria-expanded={openCheckIn === registration.id}
+                            onClick={() =>
+                              setOpenCheckIn((current) =>
+                                current === registration.id ? null : registration.id,
+                              )
+                            }
+                          >
+                            {t('eventRegistrations.checkInTitle')}
                           </AppButton>
                         )}
-                        {registration.state !== "Cancelled" && !started && (
-                          <AppButton variant="secondary" disabled={action.isPending} onClick={() => void cancel(registration)}>
-                            {t("eventRegistrations.cancel")}
+                        {registration.state !== 'Cancelled' && !started && (
+                          <AppButton
+                            variant="secondary"
+                            disabled={action.isPending}
+                            onClick={() => void cancel(registration)}
+                          >
+                            {t('eventRegistrations.cancel')}
                           </AppButton>
                         )}
                       </div>
                     </div>
                     {canCheckIn && openCheckIn === registration.id && (
                       <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
-                        <EventCheckInForm eventId={registration.eventId} autoFocus
-                          onCheckedIn={(result) => { setLastCheckIn(result); setOpenCheckIn(null); }} />
+                        <EventCheckInForm
+                          eventId={registration.eventId}
+                          autoFocus
+                          onCheckedIn={(result) => {
+                            setLastCheckIn(result)
+                            setOpenCheckIn(null)
+                          }}
+                        />
                       </div>
                     )}
                   </li>
-                );
+                )
               })}
             </ul>
           )}
         </>
       )}
     </>
-  );
+  )
 }
 
 interface AttendanceRowProps {
-  attendance: Attendance;
-  locale: Locale;
-  nowTime: number;
-  feedback: MyEventFeedback | undefined;
+  attendance: Attendance
+  locale: Locale
+  nowTime: number
+  feedback: MyEventFeedback | undefined
 }
 
 // Dòng một lần tham dự kèm form gửi phản hồi sự kiện
 function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowProps) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [justSent, setJustSent] = useState(false);
-  const feedbackOpen = !attendance.feedbackClosesAt || new Date(attendance.feedbackClosesAt).getTime() > nowTime;
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [justSent, setJustSent] = useState(false)
+  const feedbackOpen =
+    !attendance.feedbackClosesAt || new Date(attendance.feedbackClosesAt).getTime() > nowTime
   return (
     <li className="px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-success-app">
-          <AppIcon name="badge" /></span>
+        <span
+          aria-hidden="true"
+          className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-success-app"
+        >
+          <AppIcon name="badge" />
+        </span>
         <div className="min-w-0 flex-1 basis-56">
-          <Link to={`/events/${attendance.eventId}`} className="font-medium break-words text-text-app hover:text-primary-app">
-            {attendance.eventTitle}</Link>
+          <Link
+            to={`/events/${attendance.eventId}`}
+            className="font-medium break-words text-text-app hover:text-primary-app"
+          >
+            {attendance.eventTitle}
+          </Link>
           <p className="mt-0.5 text-sm text-muted-app">
-            {attendance.clubName} · {t("eventRegistrations.checkedInAt", { date: formatDate(attendance.checkedInAt, locale) })}
+            {attendance.clubName} ·{' '}
+            {t('eventRegistrations.checkedInAt', {
+              date: formatDate(attendance.checkedInAt, locale),
+            })}
           </p>
-          {!feedback && <p className={cn("mt-0.5 text-xs", feedbackOpen ? "text-success-app" : "text-muted-app")}>
-            {!feedbackOpen ? t("eventRegistrations.feedbackClosed")
-              : attendance.feedbackClosesAt
-                ? t("eventRegistrations.feedbackOpenUntil", { date: formatDate(attendance.feedbackClosesAt, locale) })
-                : t("eventRegistrations.feedbackOpenNoDeadline")}
-          </p>}
+          {!feedback && (
+            <p
+              className={cn('mt-0.5 text-xs', feedbackOpen ? 'text-success-app' : 'text-muted-app')}
+            >
+              {!feedbackOpen
+                ? t('eventRegistrations.feedbackClosed')
+                : attendance.feedbackClosesAt
+                  ? t('eventRegistrations.feedbackOpenUntil', {
+                      date: formatDate(attendance.feedbackClosesAt, locale),
+                    })
+                  : t('eventRegistrations.feedbackOpenNoDeadline')}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <AppBadge tone="success">{t("eventRegistrations.checkedInBadge")}</AppBadge>
-          {attendance.method === "walk-in" && <AppBadge tone="warning">{t("eventRegistrations.walkInBadge")}</AppBadge>}
+          <AppBadge tone="success">{t('eventRegistrations.checkedInBadge')}</AppBadge>
+          {attendance.method === 'walk-in' && (
+            <AppBadge tone="warning">{t('eventRegistrations.walkInBadge')}</AppBadge>
+          )}
         </div>
         {!feedback && feedbackOpen && (
           <AppButton aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-            <AppIcon name="star" className="size-4" />{t("eventFeedback.giveFeedback")}
+            <AppIcon name="star" className="size-4" />
+            {t('eventFeedback.giveFeedback')}
           </AppButton>
         )}
       </div>
       {feedback ? (
         <div className="mt-3 space-y-2 rounded-xl border border-border-app bg-surface-app p-4">
-          {justSent && <p role="status" className="text-sm font-semibold text-success-app">{t("eventFeedback.submitted")}</p>}
+          {justSent && (
+            <p role="status" className="text-sm font-semibold text-success-app">
+              {t('eventFeedback.submitted')}
+            </p>
+          )}
           <EventFeedbackSummary feedback={feedback} />
         </div>
-      ) : open && feedbackOpen && (
-        <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
-          <EventFeedbackForm eventId={attendance.eventId} closesAt={attendance.feedbackClosesAt}
-            onSubmitted={() => { setOpen(false); setJustSent(true); }} />
-        </div>
+      ) : (
+        open &&
+        feedbackOpen && (
+          <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
+            <EventFeedbackForm
+              eventId={attendance.eventId}
+              closesAt={attendance.feedbackClosesAt}
+              onSubmitted={() => {
+                setOpen(false)
+                setJustSent(true)
+              }}
+            />
+          </div>
+        )
       )}
     </li>
-  );
+  )
 }
 
 // Trạng thái trống có liên kết tới danh sách sự kiện
 function EmptyState({ message }: { message: string }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   return (
-    <AppEmptyState variant="boxed" icon="calendar" message={message}
-      action={<Link to="/events" className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
-        {t("eventRegistrations.browseEvents")}</Link>} />
-  );
+    <AppEmptyState
+      variant="boxed"
+      icon="calendar"
+      message={message}
+      action={
+        <Link
+          to="/events"
+          className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9"
+        >
+          {t('eventRegistrations.browseEvents')}
+        </Link>
+      }
+    />
+  )
 }

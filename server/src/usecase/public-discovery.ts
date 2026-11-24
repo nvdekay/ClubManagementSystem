@@ -1,94 +1,108 @@
-import { z } from "zod";
-import { DomainError } from "../domain/errors.js";
+import { z } from 'zod'
+import { DomainError } from '../domain/errors.js'
 import {
-  isDiscoverableClub, isHistoricalPublicEvent, isUpcomingPublicEvent,
-  isVisibleCampaign, publicEventStatus, type ClubSearch, type EventSearch,
-  type PublicDiscoveryRepository, type PublicEvent,
-} from "../domain/public-discovery.js";
+  isDiscoverableClub,
+  isHistoricalPublicEvent,
+  isUpcomingPublicEvent,
+  isVisibleCampaign,
+  publicEventStatus,
+  type ClubSearch,
+  type EventSearch,
+  type PublicDiscoveryRepository,
+  type PublicEvent,
+} from '../domain/public-discovery.js'
 
-const objectId = z.string().regex(/^[0-9a-f]{24}$/i);
+const objectId = z.string().regex(/^[0-9a-f]{24}$/i)
 
 // Kiểm định dạng ObjectId
 function validId(id: string): string {
-  if (!objectId.safeParse(id).success) throw new DomainError("invalid identifier", "validation");
-  return id;
+  if (!objectId.safeParse(id).success) {
+    throw new DomainError('invalid identifier', 'validation')
+  }
+  return id
 }
 
 // Khách tìm kiếm CLB công khai, gợi ý CLB mới khi không có kết quả
 export async function listPublicClubs(
-  repo: PublicDiscoveryRepository, input: ClubSearch, now = new Date(),
+  repo: PublicDiscoveryRepository,
+  input: ClubSearch,
+  now = new Date(),
 ) {
-  const [page, fields] = await Promise.all([repo.listClubs(input, now), repo.fields()]);
+  const [page, fields] = await Promise.all([repo.listClubs(input, now), repo.fields()])
   // UC06 E1: tìm kiếm có lọc mà không khớp thì gợi ý các CLB Active mới nhất thay vì bế tắc.
   if (page.total === 0 && (input.search || input.field)) {
-    const newest = await repo.listClubs({ search: "", field: "", page: 1, pageSize: 4, newestActive: true }, now);
-    return { ...page, fields, suggestions: newest.items };
+    const newest = await repo.listClubs(
+      { search: '', field: '', page: 1, pageSize: 4, newestActive: true },
+      now,
+    )
+    return { ...page, fields, suggestions: newest.items }
   }
-  return { ...page, fields };
+  return { ...page, fields }
 }
 
 // Xem trang công khai của CLB gồm ban chủ nhiệm, đợt tuyển và sự kiện
-export async function publicClubDetail(
-  repo: PublicDiscoveryRepository, id: string, now: Date,
-) {
-  const club = await repo.getClub(validId(id));
+export async function publicClubDetail(repo: PublicDiscoveryRepository, id: string, now: Date) {
+  const club = await repo.getClub(validId(id))
   if (!club || !isDiscoverableClub(club)) {
-    throw new DomainError("club not found", "not_found");
+    throw new DomainError('club not found', 'not_found')
   }
   const [board, rawCampaigns, rawUpcoming, rawHistory] = await Promise.all([
     repo.board(id, now),
-    club.state === "Active" ? repo.campaigns(id, now) : Promise.resolve([]),
-    club.state === "Active" ? repo.clubUpcomingEvents(id, now) : Promise.resolve([]),
+    club.state === 'Active' ? repo.campaigns(id, now) : Promise.resolve([]),
+    club.state === 'Active' ? repo.clubUpcomingEvents(id, now) : Promise.resolve([]),
     repo.clubHistory(id, now),
-  ]);
+  ])
   return {
-    club, board,
+    club,
+    board,
     campaigns: rawCampaigns.filter((campaign) => isVisibleCampaign(campaign, now)),
-    upcomingEvents: rawUpcoming.filter((event) => isUpcomingPublicEvent(event, now))
-      .map((event) => ({ ...event, status: "upcoming" as const })),
-    history: rawHistory.filter((event) => isHistoricalPublicEvent(event, now))
-      .map((event) => ({ ...event, status: "ended" as const })),
-  };
+    upcomingEvents: rawUpcoming
+      .filter((event) => isUpcomingPublicEvent(event, now))
+      .map((event) => ({ ...event, status: 'upcoming' as const })),
+    history: rawHistory
+      .filter((event) => isHistoricalPublicEvent(event, now))
+      .map((event) => ({ ...event, status: 'ended' as const })),
+  }
 }
 
 // Xem công khai chi tiết đợt tuyển thành viên đang hiển thị
-export async function publicCampaignDetail(
-  repo: PublicDiscoveryRepository, id: string, now: Date,
-) {
-  const campaign = await repo.getCampaign(validId(id), now);
+export async function publicCampaignDetail(repo: PublicDiscoveryRepository, id: string, now: Date) {
+  const campaign = await repo.getCampaign(validId(id), now)
   if (!campaign || !isVisibleCampaign(campaign, now)) {
-    throw new DomainError("recruitment campaign not found", "not_found");
+    throw new DomainError('recruitment campaign not found', 'not_found')
   }
-  return campaign;
+  return campaign
 }
 
 // Gắn trạng thái công khai (sắp diễn ra, đã kết thúc) vào sự kiện
 function withStatus(event: PublicEvent, now: Date) {
-  const status = publicEventStatus(event, now);
-  return status ? { ...event, status } : null;
+  const status = publicEventStatus(event, now)
+  return status ? { ...event, status } : null
 }
 
 // Khách xem danh sách sự kiện công khai kèm trạng thái
 export async function listPublicEvents(
-  repo: PublicDiscoveryRepository, input: EventSearch, now: Date,
+  repo: PublicDiscoveryRepository,
+  input: EventSearch,
+  now: Date,
 ) {
-  const page = await repo.listEvents(input, now);
-  return { ...page, items: page.items.flatMap((event) => withStatus(event, now) ?? []) };
+  const page = await repo.listEvents(input, now)
+  return { ...page, items: page.items.flatMap((event) => withStatus(event, now) ?? []) }
 }
 
 // Xem công khai chi tiết sự kiện và CLB tổ chức
-export async function publicEventDetail(
-  repo: PublicDiscoveryRepository, id: string, now: Date,
-) {
-  const found = await repo.getEvent(validId(id));
-  const event = found && withStatus(found, now);
+export async function publicEventDetail(repo: PublicDiscoveryRepository, id: string, now: Date) {
+  const found = await repo.getEvent(validId(id))
+  const event = found && withStatus(found, now)
   if (!event) {
-    throw new DomainError("event not found", "not_found");
+    throw new DomainError('event not found', 'not_found')
   }
-  if (!event.clubId) return { event, club: null };
-  const club = await repo.getClub(event.clubId);
-  if (!club || club.state !== "Active") {
-    throw new DomainError("event not found", "not_found");
+  if (!event.clubId) {
+    return { event, club: null }
   }
-  return { event, club: { id: club.id, name: club.name } };
+  const club = await repo.getClub(event.clubId)
+  if (!club || club.state !== 'Active') {
+    throw new DomainError('event not found', 'not_found')
+  }
+  return { event, club: { id: club.id, name: club.name } }
 }

@@ -1,10 +1,10 @@
-import { percent } from "./chartScale";
+import { percent } from './chartScale'
 
 interface AppMeterProps {
-  label: string;
-  value: number;
-  max: number;
-  valueText: string;
+  label: string
+  value: number
+  max: number
+  valueText: string
 }
 
 // Thanh đo một giá trị so với giới hạn
@@ -16,10 +16,20 @@ export function AppMeter({ label, value, max, valueText }: AppMeterProps) {
         <span className="text-muted-app">{label}</span>
         <span className="font-semibold text-text-app">{valueText}</span>
       </div>
-      <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={max || 1} aria-valuenow={value} aria-valuetext={valueText}
-        className="mt-2 h-2.5 overflow-hidden rounded-full bg-primary-soft-app">
-        <div className="h-full rounded-full bg-chart-1-app" style={{ width: percent(value, max || 1) }} />
+      <div
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max || 1}
+        aria-valuenow={value}
+        aria-valuetext={valueText}
+        className="mt-2 h-2.5 overflow-hidden rounded-full bg-primary-soft-app"
+      >
+        <div
+          className="h-full rounded-full bg-chart-1-app"
+          style={{ width: percent(value, max || 1) }}
+        />
       </div>
     </div>
-  );
+  )
 }

@@ -1,38 +1,41 @@
-import type { ClubAccessRepository } from "../domain/access.js";
-import type { AuthRepository } from "../domain/auth.js";
+import type { ClubAccessRepository } from '../domain/access.js'
+import type { AuthRepository } from '../domain/auth.js'
 import {
   type EventFinanceRepository,
   type FinanceAction,
   validateExpense,
   validateFinancialEvidence,
-} from "../domain/event-finance.js";
-import { DomainError } from "../domain/errors.js";
-import { assertClubAccess, type AccessActor } from "./access.js";
+} from '../domain/event-finance.js'
+import { DomainError } from '../domain/errors.js'
+import { assertClubAccess, type AccessActor } from './access.js'
 
 export interface EventFinanceDeps {
-  repo: EventFinanceRepository;
-  access: ClubAccessRepository;
-  auth: Pick<AuthRepository, "systemRoleCodes">;
+  repo: EventFinanceRepository
+  access: ClubAccessRepository
+  auth: Pick<AuthRepository, 'systemRoleCodes'>
 }
 // Kiểm định dạng id tài chính sự kiện
 export function financeId(value: string): string {
-  if (!/^[0-9a-f]{24}$/i.test(value))
-    throw new DomainError("invalid finance identifier", "validation");
-  return value;
+  if (!/^[0-9a-f]{24}$/i.test(value)) {
+    throw new DomainError('invalid finance identifier', 'validation')
+  }
+  return value
 }
 // Kiểm actor là ICPDP officer phụ trách tài chính sự kiện
 export async function assertFinanceOfficer(
-  auth: Pick<AuthRepository, "systemRoleCodes">,
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
 ): Promise<string> {
-  if (!actor) throw new DomainError("authentication required", "unauthorized");
-  if (actor.accountState !== "Active")
-    throw new DomainError("account locked", "locked");
-  if (
-    !(await auth.systemRoleCodes(financeId(actor.id))).includes("ICPDP_OFFICER")
-  )
-    throw new DomainError("ICPDP officer role required", "forbidden");
-  return actor.id;
+  if (!actor) {
+    throw new DomainError('authentication required', 'unauthorized')
+  }
+  if (actor.accountState !== 'Active') {
+    throw new DomainError('account locked', 'locked')
+  }
+  if (!(await auth.systemRoleCodes(financeId(actor.id))).includes('ICPDP_OFFICER')) {
+    throw new DomainError('ICPDP officer role required', 'forbidden')
+  }
+  return actor.id
 }
 // Liệt kê ngân sách sự kiện, theo CLB hoặc cho ICPDP
 export async function listEventFinances(
@@ -41,16 +44,12 @@ export async function listEventFinances(
   clubId: string | undefined,
   now: Date,
 ) {
-  if (clubId)
-    await assertClubAccess(
-      deps.access,
-      actor,
-      financeId(clubId),
-      "club.expense.record",
-      now,
-    );
-  else await assertFinanceOfficer(deps.auth, actor);
-  return deps.repo.list(clubId);
+  if (clubId) {
+    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
+  } else {
+    await assertFinanceOfficer(deps.auth, actor)
+  }
+  return deps.repo.list(clubId)
 }
 // Xem chi tiết ngân sách và chi tiêu của một sự kiện
 export async function getEventFinance(
@@ -60,18 +59,16 @@ export async function getEventFinance(
   clubId: string | undefined,
   now: Date,
 ) {
-  if (clubId)
-    await assertClubAccess(
-      deps.access,
-      actor,
-      financeId(clubId),
-      "club.expense.record",
-      now,
-    );
-  else await assertFinanceOfficer(deps.auth, actor);
-  const result = await deps.repo.find(financeId(id), clubId);
-  if (!result) throw new DomainError("budget not found", "not_found");
-  return result;
+  if (clubId) {
+    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
+  } else {
+    await assertFinanceOfficer(deps.auth, actor)
+  }
+  const result = await deps.repo.find(financeId(id), clubId)
+  if (!result) {
+    throw new DomainError('budget not found', 'not_found')
+  }
+  return result
 }
 // Thực hiện thao tác tài chính sự kiện (chi tiêu, minh chứng, nộp, nhận, trả, chốt)
 export async function actOnEventFinance(
@@ -83,38 +80,35 @@ export async function actOnEventFinance(
   now: Date,
 ) {
   if (clubId) {
-    await assertClubAccess(
-      deps.access,
-      actor,
-      financeId(clubId),
-      "club.expense.record",
-      now,
-    );
-    if (!["expense", "evidence", "submit"].includes(action.kind))
-      throw new DomainError("officer action required", "forbidden");
+    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
+    if (!['expense', 'evidence', 'submit'].includes(action.kind)) {
+      throw new DomainError('officer action required', 'forbidden')
+    }
   } else {
-    await assertFinanceOfficer(deps.auth, actor);
-    if (!["claim", "return", "finalize"].includes(action.kind))
-      throw new DomainError("club action required", "forbidden");
+    await assertFinanceOfficer(deps.auth, actor)
+    if (!['claim', 'return', 'finalize'].includes(action.kind)) {
+      throw new DomainError('club action required', 'forbidden')
+    }
   }
-  if (!Number.isInteger(action.revision) || action.revision < 0)
-    throw new DomainError("invalid revision", "validation");
-  if (action.kind === "expense")
+  if (!Number.isInteger(action.revision) || action.revision < 0) {
+    throw new DomainError('invalid revision', 'validation')
+  }
+  if (action.kind === 'expense') {
     action = {
       ...action,
       expenseId: action.expenseId ? financeId(action.expenseId) : undefined,
       input: validateExpense(action.input, now),
-    };
-  if (action.kind === "evidence")
+    }
+  }
+  if (action.kind === 'evidence') {
     action = {
       ...action,
       expenseId: financeId(action.expenseId),
       input: validateFinancialEvidence(action.input),
-    };
-  if (
-    action.kind === "return" &&
-    (!action.reason.trim() || action.reason.length > 2000)
-  )
-    throw new DomainError("a correction reason is required", "validation");
-  return deps.repo.act(financeId(id), clubId, actor!.id, action, now);
+    }
+  }
+  if (action.kind === 'return' && (!action.reason.trim() || action.reason.length > 2000)) {
+    throw new DomainError('a correction reason is required', 'validation')
+  }
+  return deps.repo.act(financeId(id), clubId, actor!.id, action, now)
 }

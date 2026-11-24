@@ -1,28 +1,56 @@
-import { ApiError, apiFetch } from "@/services/apiError";
+import { ApiError, apiFetch } from '@/services/apiError'
 export interface ClubInvitation {
-  id: string; clubId: string; status: "Pending" | "Accepted" | "Declined" | "Expired" | "Withdrawn"; deadline: string; responseNote?: string;
-  responseDetails?: Record<string, string | number>;
-  event: { id: string; title: string; state: string; startAt: string; endAt: string;
-    venue?: string; objective?: string; coordination?: string };
+  id: string
+  clubId: string
+  status: 'Pending' | 'Accepted' | 'Declined' | 'Expired' | 'Withdrawn'
+  deadline: string
+  responseNote?: string
+  responseDetails?: Record<string, string | number>
+  event: {
+    id: string
+    title: string
+    state: string
+    startAt: string
+    endAt: string
+    venue?: string
+    objective?: string
+    coordination?: string
+  }
 }
 export interface InvitationResponse {
-  outcome: "Accepted" | "Declined"; responseNote?: string; responseDetails?: Record<string, string | number>;
+  outcome: 'Accepted' | 'Declined'
+  responseNote?: string
+  responseDetails?: Record<string, string | number>
 }
 // Gọi API /clubs/:clubId/invitations và trả về data, ném ApiError nếu lỗi
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, { credentials: "same-origin", ...init });
+  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, {
+    credentials: 'same-origin',
+    ...init,
+  })
   if (!res.ok) {
-    const body = await res.json().catch(() => null) as { message?: string } | null;
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`);
+    const body = (await res.json().catch(() => null)) as { message?: string } | null
+    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
   }
-  return (await res.json() as { data: T }).data;
+  return ((await res.json()) as { data: T }).data
 }
 // GET lời mời tham gia sự kiện trường gửi tới CLB
-export function fetchClubInvitations(clubId: string, signal: AbortSignal): Promise<ClubInvitation[]> {
-  return request(clubId, "", { signal });
+export function fetchClubInvitations(
+  clubId: string,
+  signal: AbortSignal,
+): Promise<ClubInvitation[]> {
+  return request(clubId, '', { signal })
 }
 // POST /response: CLB phản hồi lời mời
-export function respondToInvitation(clubId: string, id: string, input: InvitationResponse, csrfToken: string): Promise<ClubInvitation> {
-  return request(clubId, `/${encodeURIComponent(id)}/response`, { method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(input) });
+export function respondToInvitation(
+  clubId: string,
+  id: string,
+  input: InvitationResponse,
+  csrfToken: string,
+): Promise<ClubInvitation> {
+  return request(clubId, `/${encodeURIComponent(id)}/response`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify(input),
+  })
 }
