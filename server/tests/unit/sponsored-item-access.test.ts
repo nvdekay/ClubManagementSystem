@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_FORM_REQUIREMENTS, type SchoolRefundAccount } from '../../src/domain/policy.js'
 import type { SponsoredItem } from '../../src/domain/sponsored-item.js'
 import {
+  actOnSponsoredItem,
   getRefundAccount,
+  getSponsoredBudget,
   invoiceImageUrl,
   type SponsoredItemDeps,
 } from '../../src/usecase/sponsored-item.js'
@@ -108,8 +110,8 @@ describe('private invoice access', () => {
     expect(sign).not.toHaveBeenCalled()
   })
 
-  it('binds the signed asset to the requested item and image (including refundProofs) for both preview and download', async () => {
-    const { deps, sign } = fixture()
+  it('binds the signed asset to the requested item and image (including refundProofs) for both preview and download once submitted', async () => {
+    const { deps, sign } = fixture({ status: 'Submitted' })
     await expect(
       invoiceImageUrl(deps, actor, id, undefined, 'other', 'image', new Date()),
     ).rejects.toMatchObject({ kind: 'not_found' })
@@ -122,14 +124,177 @@ describe('private invoice access', () => {
       mimeType: 'image/png',
     })
     expect(sign).toHaveBeenCalledWith('private', { inline: true })
+
+    const refundFixture = fixture({ status: 'RefundSubmitted', refundAmount: 50 })
     await expect(
-      invoiceImageUrl(deps, actor, id, undefined, 'item', 'refund-img', new Date(), false),
+      invoiceImageUrl(
+        refundFixture.deps,
+        actor,
+        id,
+        undefined,
+        'item',
+        'refund-img',
+        new Date(),
+        false,
+      ),
     ).resolves.toEqual({
       url: 'https://storage.example/signed',
       fileName: 'refund.pdf',
       mimeType: 'application/pdf',
     })
-    expect(sign).toHaveBeenCalledWith('private-refund', { inline: false })
+    expect(refundFixture.sign).toHaveBeenCalledWith('private-refund', { inline: false })
+  })
+
+  it('hides Draft invoice details, vendor bank info, and attachments from ICPDP until submitted', async () => {
+    const now = new Date('2026-11-22T00:00:00Z')
+    const draftFixture = fixture({
+      fundingDecision: 'AFTER_EVENT',
+      approvedAmount: 2_000_000,
+      paymentChannel: 'DIRECT_VENDOR',
+      status: 'Draft',
+      amount: 1_800_000,
+      description: 'Draft receipt notes',
+      vendorBankInfo: {
+        vendorName: 'Vendor A',
+        accountHolder: 'VENDOR A',
+        accountNumber: '123456789',
+        bankName: 'TPBank',
+      },
+    })
+
+    // Officer receives redacted Draft item and cannot sign Draft attachments
+    const officerView = await getSponsoredBudget(draftFixture.deps, actor, id, undefined, now)
+    expect(officerView.items[0]).toMatchObject({
+      status: 'Draft',
+      paymentChannel: 'VIA_OFFICER_REIMBURSE',
+      amount: 0,
+      description: '',
+      images: [],
+    })
+    expect(officerView.items[0]?.vendorBankInfo).toBeUndefined()
+    await expect(
+      invoiceImageUrl(draftFixture.deps, actor, id, undefined, 'item', 'image', now),
+    ).rejects.toMatchObject({ kind: 'not_found' })
+    expect(draftFixture.sign).not.toHaveBeenCalled()
+
+    // Officer action result also redacts any Draft item returned by the repository
+    const actFixture = fixture({ status: 'AwaitingAdvance' })
+    const rawWithDraft = {
+      id,
+      eventId: id,
+      clubId: id,
+      eventState: 'Approved',
+      revision: 1,
+      items: [
+        {
+          id: 'item-adv',
+          category: 'Advance item',
+          requestedAmount: 100,
+          approvedAmount: 100,
+          fundingDecision: 'BEFORE_EVENT' as const,
+          paymentChannel: 'VIA_OFFICER_ADVANCE' as const,
+          approvedAt: '2026-11-01',
+          eventEndAt: '2026-11-20',
+          status: 'AdvanceSent' as const,
+          amount: 0,
+          description: '',
+          images: [],
+        },
+        {
+          id: 'item-draft',
+          category: 'Draft item',
+          requestedAmount: 200,
+          approvedAmount: 200,
+          fundingDecision: 'AFTER_EVENT' as const,
+          paymentChannel: 'VIA_OFFICER_REIMBURSE' as const,
+          approvedAt: '2026-11-01',
+          eventEndAt: '2026-11-20',
+          status: 'Draft' as const,
+          amount: 180,
+          description: 'Unsaved club draft',
+          images: [
+            {
+              id: 'draft-img',
+              assetId: 'private-draft',
+              fileName: 'draft.png',
+              mimeType: 'image/png' as const,
+              bytes: 100,
+              digest: 'draft-digest',
+              uploadedAt: '2026-11-02',
+              uploadedBy: id,
+            },
+          ],
+        },
+      ],
+    }
+    actFixture.deps.repo.act = vi.fn(async () => rawWithDraft)
+    const afterAct = await actOnSponsoredItem(
+      actFixture.deps,
+      actor,
+      id,
+      undefined,
+      'item-adv',
+      0,
+      { kind: 'recordAdvance' },
+      now,
+    )
+    expect(afterAct.items[1]).toMatchObject({
+      status: 'Draft',
+      amount: 0,
+      description: '',
+      images: [],
+    })
+
+    // Club leader still sees full Draft details and can preview own Draft image
+    draftFixture.deps.access = {
+      findSnapshot: async () => ({
+        clubId: id,
+        clubName: 'HEBE Club',
+        clubState: 'Active',
+        membership: { id: 'm1', clubId: id, state: 'Active' },
+        terms: [
+          {
+            id: 't1',
+            clubId: id,
+            state: 'Active',
+            startAt: new Date('2026-01-01'),
+            endAt: new Date('2026-12-31'),
+          },
+        ],
+        positions: [
+          {
+            id: 'p1',
+            clubId: id,
+            code: 'CLUB_LEADER',
+            isActive: true,
+            isLeaderRole: true,
+            isBoardSeat: true,
+          },
+        ],
+        assignments: [
+          {
+            clubId: id,
+            termId: 't1',
+            positionId: 'p1',
+            membershipId: 'm1',
+            effectiveFrom: new Date('2026-01-01'),
+            effectiveTo: null,
+            confirmedBy: 'officer-1',
+          },
+        ],
+        isApprovedFounder: false,
+      }),
+    }
+    const clubView = await getSponsoredBudget(draftFixture.deps, actor, id, id, now)
+    expect(clubView.items[0]).toMatchObject({
+      amount: 1_800_000,
+      description: 'Draft receipt notes',
+      paymentChannel: 'DIRECT_VENDOR',
+    })
+    expect(clubView.items[0]?.images).toHaveLength(1)
+    await expect(
+      invoiceImageUrl(draftFixture.deps, actor, id, id, 'item', 'image', now),
+    ).resolves.toMatchObject({ fileName: 'invoice.png' })
   })
 
   it('denies a locked officer and a user without the officer role', async () => {

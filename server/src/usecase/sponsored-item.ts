@@ -7,6 +7,7 @@ import {
   canAccessRefundAccount,
   isClubAction,
   MAX_INVOICE_IMAGES,
+  redactSponsoredBudgetForOfficer,
   validateInvoiceImage,
   type SponsoredItemAction,
   type SponsoredItemRepository,
@@ -39,7 +40,7 @@ export async function getSponsoredBudget(
   if (!budget) {
     throw new DomainError('sponsored budget not found', 'not_found')
   }
-  return budget
+  return clubId ? budget : redactSponsoredBudgetForOfficer(budget)
 }
 
 // Thực hiện thao tác trên hạng mục tài trợ theo vai trò CLB hoặc ICPDP
@@ -60,7 +61,8 @@ export async function actOnSponsoredItem(
   if (isClubAction(action) !== Boolean(clubId)) {
     throw new DomainError('action not allowed for this role', 'forbidden')
   }
-  return deps.repo.act(id, itemId, revision, actor!.id, clubId, action, now)
+  const updated = await deps.repo.act(id, itemId, revision, actor!.id, clubId, action, now)
+  return clubId ? updated : redactSponsoredBudgetForOfficer(updated)
 }
 
 // CLB tải ảnh/PDF chứng từ hóa đơn hoặc biên lai hoàn trả cho hạng mục, chặn tệp trùng và quá giới hạn

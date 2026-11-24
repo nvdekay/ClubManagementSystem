@@ -27,6 +27,8 @@ export const sponsoredItems = {
     images: 'Chứng từ (hóa đơn, hợp đồng)',
     officerImages: 'Chứng từ CLB đã tải lên',
     noAttachmentsYet: 'CLB chưa tải lên chứng từ nào.',
+    draftHiddenOfficer:
+      'CLB đang chuẩn bị chứng từ — thông tin và tệp đính kèm sẽ hiển thị sau khi CLB bấm nộp.',
     notEntered: 'Chưa nhập',
     imageHint:
       'Chọn hoặc kéo thả JPG/PNG (tối đa 5 MB) hoặc PDF (tối đa 10 MB) · Tối đa 5 tệp/hạng mục',
@@ -38,7 +40,7 @@ export const sponsoredItems = {
     downloading: 'Đang tải...',
     downloadError: 'Không tải được tệp chứng từ. Vui lòng thử lại.',
     pdfFile: 'Tệp PDF',
-    save: 'Lưu thông tin',
+    save: 'Lưu nháp',
     submit: 'Nộp bộ chứng từ đầy đủ',
     submitConfirm:
       'Bạn đã tập hợp đủ chứng từ (và thông tin chuyển khoản nhà cung cấp nếu có)? Sau khi nộp, hồ sơ sẽ bị khóa để ICPDP đối soát.',
@@ -175,6 +177,8 @@ export const sponsoredItems = {
     images: 'Supporting documents (invoices, contracts)',
     officerImages: 'Documents uploaded by club',
     noAttachmentsYet: 'The club has not uploaded any documents yet.',
+    draftHiddenOfficer:
+      'The club is preparing this document pack — details and attachments will appear after submission.',
     notEntered: 'Not provided',
     imageHint: 'Choose or drop JPG/PNG (max 5 MB) or PDF (max 10 MB) · Up to 5 files per item',
     upload: 'Add files',
@@ -185,7 +189,7 @@ export const sponsoredItems = {
     downloading: 'Saving...',
     downloadError: 'Unable to download this attachment. Please try again.',
     pdfFile: 'PDF document',
-    save: 'Save details',
+    save: 'Save draft',
     submit: 'Submit complete document pack',
     submitConfirm:
       'Have you uploaded all documents (and vendor bank details if required)? Submission locks the pack for ICPDP review.',

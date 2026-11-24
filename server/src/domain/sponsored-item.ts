@@ -161,6 +161,35 @@ export function initialSponsoredItemStatus(fundingDecision: FundingDecision): In
   return fundingDecision === 'BEFORE_EVENT' ? 'AwaitingAdvance' : 'Draft'
 }
 
+// Hide club draft invoice details and attachments from ICPDP until submitted
+export function redactSponsoredItemForOfficer(item: SponsoredItem): SponsoredItem {
+  if (item.status !== 'Draft') {
+    return item
+  }
+  const defaultChannel = initialPaymentChannel(item.fundingDecision, item.approvedAmount)
+  const redacted: SponsoredItem = {
+    ...item,
+    amount: 0,
+    description: '',
+    images: [],
+  }
+  delete redacted.vendorBankInfo
+  if (defaultChannel) {
+    redacted.paymentChannel = defaultChannel
+  } else {
+    delete redacted.paymentChannel
+  }
+  return redacted
+}
+
+// Redact all Draft items in a budget when viewed by an ICPDP officer
+export function redactSponsoredBudgetForOfficer(budget: SponsoredBudget): SponsoredBudget {
+  return {
+    ...budget,
+    items: budget.items.map(redactSponsoredItemForOfficer),
+  }
+}
+
 // Suy ra kênh giải ngân hiệu lực của hạng mục (tương thích dữ liệu cũ chưa lưu paymentChannel)
 export function resolvePaymentChannel(
   item: Pick<SponsoredItem, 'fundingDecision' | 'approvedAmount' | 'paymentChannel'>,
