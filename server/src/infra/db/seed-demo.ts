@@ -190,8 +190,6 @@ const boardPermissions = {
     'club.recruitment.manage',
     'club.feedback.view',
   ],
-  TREASURER: ['club.expense.record', 'club.report.submit'],
-  MEDIA: ['club.profile.manage', 'club.recruitment.manage', 'club.feedback.view'],
 }
 
 try {
@@ -366,12 +364,10 @@ try {
     'HEBE',
     termFA,
     owner,
+    [{ code: 'VICE', name: 'Phó chủ nhiệm', user: s[0]! }],
     [
-      { code: 'VICE', name: 'Phó chủ nhiệm', user: s[0]! },
-      { code: 'TREASURER', name: 'Thủ quỹ', user: s[1]! },
-      { code: 'MEDIA', name: 'Trưởng ban Truyền thông', user: s[2]! },
-    ],
-    [
+      { user: s[1]! },
+      { user: s[2]! },
       { user: s[3]! },
       { user: s[4]! },
       { user: s[5]! },

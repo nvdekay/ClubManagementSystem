@@ -1,6 +1,12 @@
 import { Types, type ClientSession } from 'mongoose'
 import { notificationChannels } from '../../domain/notification.js'
 import { ucmsModels } from './ucms-models.js'
+import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
+
+// BR47, BR55: chỉ ghế Chủ nhiệm và Phó chủ nhiệm là ghế ban chủ nhiệm; chức danh khác không phải ghế
+export const LEADER_SEAT_FILTER = {
+  $or: [{ isLeaderRole: true }, { isBoardSeat: true, code: { $in: [...VICE_LEADER_SEAT_CODES] } }],
+}
 
 // Lấy user giữ chức Club Leader hoặc ghế ban chủ nhiệm đang hiệu lực
 /** Id các user hiện giữ vai trò leader hoặc một ghế ban chủ nhiệm của CLB — những người ICPDP cần thông báo. */
@@ -13,7 +19,7 @@ export async function clubBoardUserIds(
     .clubPositions!.find({
       clubId,
       isActive: true,
-      $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+      ...LEADER_SEAT_FILTER,
     })
     .session(session ?? null)
     .distinct('_id')

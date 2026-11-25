@@ -12,7 +12,7 @@ import type {
   TransitionObligation,
   TransitionTerm,
 } from '../../domain/leadership-transition.js'
-import { otherClubLeaderUserIds } from './club-board.js'
+import { LEADER_SEAT_FILTER, otherClubLeaderUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -275,7 +275,7 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
   // Xác định người nhận thông báo: người gửi, ban cũ và ứng viên
   async function recipients(plan: Doc, session: ClientSession): Promise<Types.ObjectId[]> {
     const boardPositions = await positions
-      .find({ clubId: plan.clubId, isBoardSeat: true })
+      .find({ clubId: plan.clubId, ...LEADER_SEAT_FILTER })
       .select({ _id: 1 })
       .session(session)
       .lean()

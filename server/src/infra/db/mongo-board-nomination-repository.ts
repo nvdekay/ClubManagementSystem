@@ -14,6 +14,7 @@ import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
 import { MAX_VICE_LEADERS } from '../../domain/club-application.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
+import { LEADER_SEAT_FILTER } from './club-board.js'
 
 // Ném lỗi not_found với thông báo cho trước
 function notFound(message: string): never {
@@ -232,7 +233,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
         .find({
           clubId: clubObjectId,
           isActive: true,
-          $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+          ...LEADER_SEAT_FILTER,
         })
         .lean()
       const memberDocs = await memberships
@@ -365,7 +366,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
               _id: { $in: positionIds },
               clubId: clubObjectId,
               isActive: true,
-              $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+              ...LEADER_SEAT_FILTER,
             })
             .session(session)
             .lean(),
