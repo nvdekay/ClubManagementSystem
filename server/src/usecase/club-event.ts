@@ -119,8 +119,8 @@ export async function actOnClubEvent(
     if (actor.accountState === 'Locked') {
       throw new DomainError('account locked', 'locked')
     }
-    if (!(await deps.auth.systemRoleCodes(clubEventId(actor.id))).includes('ATTENDANCE_UNLOCK')) {
-      throw new DomainError('attendance unlock role required', 'forbidden')
+    if (!(await deps.auth.systemRoleCodes(clubEventId(actor.id))).includes('ICPDP_OFFICER')) {
+      throw new DomainError('ICPDP officer role required', 'forbidden')
     }
   } else {
     await assertClubAccess(deps.access, actor, clubId, eventActionPermission(action), now)

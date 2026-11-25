@@ -23,8 +23,7 @@ async function holder(
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
   const roles = await auth.systemRoleCodes(actor.id)
-  // D1: ICPDP_HEAD chỉ được tính khi đi cùng ICPDP_OFFICER.
-  if (!roles.includes('ICPDP_OFFICER') || !roles.includes(role)) {
+  if (!roles.includes(role)) {
     throw new DomainError(`${role} role required`, 'forbidden')
   }
   return actor.id
@@ -39,7 +38,7 @@ function id(value: string): string {
 }
 
 // UC05: liệt kê các bộ quy tắc định tuyến phê duyệt
-/** UC05: mọi ICPDP officer đọc được các rule set; chỉ ICPDP_HEAD được đổi chúng. */
+/** UC05: mọi ICPDP officer đọc, tạo, sửa và kích hoạt các rule set. */
 export async function listRoutingRuleSets(
   repo: ApprovalRoutingRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
@@ -49,7 +48,7 @@ export async function listRoutingRuleSets(
   return repo.list()
 }
 
-// UC05: ICPDP_HEAD tạo bản nháp bộ quy tắc định tuyến
+// UC05: ICPDP officer tạo bản nháp bộ quy tắc định tuyến
 export async function createRoutingDraft(
   repo: ApprovalRoutingRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
@@ -57,11 +56,11 @@ export async function createRoutingDraft(
   rules: RoutingRule[],
   now: Date,
 ) {
-  const actorId = await holder(auth, actor, 'ICPDP_HEAD')
+  const actorId = await holder(auth, actor, 'ICPDP_OFFICER')
   return repo.createDraft(validateRoutingRules(rules), actorId, now)
 }
 
-// UC05: ICPDP_HEAD lưu chỉnh sửa bản nháp bộ quy tắc
+// UC05: ICPDP officer lưu chỉnh sửa bản nháp bộ quy tắc
 export async function saveRoutingDraft(
   repo: ApprovalRoutingRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
@@ -70,7 +69,7 @@ export async function saveRoutingDraft(
   rules: RoutingRule[],
   now: Date,
 ) {
-  const actorId = await holder(auth, actor, 'ICPDP_HEAD')
+  const actorId = await holder(auth, actor, 'ICPDP_OFFICER')
   return repo.saveDraft(id(ruleSetId), validateRoutingRules(rules), actorId, now)
 }
 
@@ -83,7 +82,7 @@ export async function activateRoutingRuleSet(
   ruleSetId: string,
   now: Date,
 ) {
-  const actorId = await holder(auth, actor, 'ICPDP_HEAD')
+  const actorId = await holder(auth, actor, 'ICPDP_OFFICER')
   const draft = await repo.find(id(ruleSetId))
   if (!draft) {
     throw new DomainError('routing rule set not found', 'not_found')

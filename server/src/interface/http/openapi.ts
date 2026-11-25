@@ -4359,7 +4359,8 @@ export const openApiDocument = createDocument({
         },
       },
       post: {
-        summary: 'UC05: create a draft rule set (ICPDP_HEAD, CSRF); overlapping rules are refused',
+        summary:
+          'UC05: create a draft rule set (ICPDP officer, CSRF); overlapping rules are refused',
         requestBody: { content: { 'application/json': { schema: routingRulesBody } } },
         responses: {
           '201': {
@@ -4371,7 +4372,7 @@ export const openApiDocument = createDocument({
             content: { 'application/json': { schema: ApiError } },
           },
           '403': {
-            description: 'ICPDP_HEAD role required',
+            description: 'ICPDP officer role required',
             content: { 'application/json': { schema: ApiError } },
           },
         },
@@ -4379,7 +4380,7 @@ export const openApiDocument = createDocument({
     },
     '/admin/routing-rules/{id}': {
       put: {
-        summary: 'UC05: replace the rules of a draft (ICPDP_HEAD, CSRF)',
+        summary: 'UC05: replace the rules of a draft (ICPDP officer, CSRF)',
         requestParams: { path: z.object({ id: z.string() }) },
         requestBody: { content: { 'application/json': { schema: routingRulesBody } } },
         responses: {
@@ -4397,7 +4398,7 @@ export const openApiDocument = createDocument({
     '/admin/routing-rules/{id}/activate': {
       post: {
         summary:
-          'UC05: activate a draft; the previous set is superseded and only new requests use it (ICPDP_HEAD, CSRF)',
+          'UC05: activate a draft; the previous set is superseded and only new requests use it (ICPDP officer, CSRF)',
         requestParams: { path: z.object({ id: z.string() }) },
         responses: {
           '200': {
