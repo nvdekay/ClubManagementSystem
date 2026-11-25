@@ -188,12 +188,12 @@ describe('club event access and HTTP validation', () => {
     })
     expect(d.repo.feedback).not.toHaveBeenCalled()
   })
-  it('requires the special system role to unlock attendance', async () => {
+  it('requires the ICPDP officer role to unlock attendance', async () => {
     const d = deps()
     await expect(
       actOnClubEvent(d, actor, clubId, id, { kind: 'unlock', reason: 'Correction' }, now),
     ).rejects.toMatchObject({ kind: 'forbidden' })
-    d.auth.systemRoleCodes = async () => ['ATTENDANCE_UNLOCK']
+    d.auth.systemRoleCodes = async () => ['ICPDP_OFFICER']
     vi.mocked(d.repo.act).mockResolvedValue({
       event: {} as Awaited<ReturnType<ClubEventRepository['act']>>['event'],
       versions: [],

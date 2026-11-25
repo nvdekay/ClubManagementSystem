@@ -13,7 +13,7 @@ export async function assertEventWriteAccess(
   session: ClientSession,
   clubId: Types.ObjectId,
   actorId: Types.ObjectId,
-  permission: ClubPermission | 'ATTENDANCE_UNLOCK',
+  permission: ClubPermission | 'ICPDP_OFFICER',
   now: Date,
 ): Promise<ClubPermission[]> {
   // These writes serialize against lifecycle, account locking, role edits and membership changes.
@@ -33,7 +33,7 @@ export async function assertEventWriteAccess(
   if (!club) {
     throw new DomainError('club not found', 'not_found')
   }
-  if (permission === 'ATTENDANCE_UNLOCK') {
+  if (permission === 'ICPDP_OFFICER') {
     const roles = await m.roles!.find({ code: permission, scope: 'system' }).session(session).lean()
     const assignment = await m
       .userRoleAssignments!.findOneAndUpdate(
@@ -43,7 +43,7 @@ export async function assertEventWriteAccess(
       )
       .lean()
     if (!assignment) {
-      throw new DomainError('attendance unlock role required', 'forbidden')
+      throw new DomainError('ICPDP officer role required', 'forbidden')
     }
     return []
   }

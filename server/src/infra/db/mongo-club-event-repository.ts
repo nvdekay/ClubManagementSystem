@@ -838,7 +838,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           session,
           oid(clubId),
           oid(actorId),
-          action.kind === 'unlock' ? 'ATTENDANCE_UNLOCK' : eventActionPermission(action),
+          action.kind === 'unlock' ? 'ICPDP_OFFICER' : eventActionPermission(action),
           now,
         )
         const event = await m

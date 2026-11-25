@@ -273,7 +273,7 @@ const operations: [string, z.ZodType, string][] = [
   [
     'attendance/unlock',
     clubEventReasonBody,
-    'Unlock finalized attendance with ATTENDANCE_UNLOCK role',
+    'Unlock finalized attendance with the ICPDP officer role',
   ],
 ]
 for (const [path, schema, summary] of operations) {

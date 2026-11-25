@@ -16,7 +16,7 @@ import type { AccountAction, AdminUserPage, SystemRoleCode } from '@/services/ac
 
 type AccountRow = AdminUserPage['items'][number]
 
-const ROLES: SystemRoleCode[] = ['ICPDP_OFFICER', 'ICPDP_HEAD', 'ATTENDANCE_UNLOCK']
+const ROLES: SystemRoleCode[] = ['ICPDP_OFFICER']
 
 // Dialog ICPDP cấp/thu hồi vai trò hệ thống và khoá/mở khoá một tài khoản
 /**
@@ -52,19 +52,13 @@ export function AccountManageDialog({
       .map((item) => ({ value: item.id, label: `${item.title} · ${item.clubName}` })),
   ]
 
+  // Tên hiển thị của vai trò hệ thống
   function roleName(code: SystemRoleCode) {
-    return code === 'ICPDP_OFFICER'
-      ? t('auth.officerRoleShort')
-      : code === 'ICPDP_HEAD'
-        ? t('auth.headRoleShort')
-        : t('auth.attendanceRoleShort')
+    return code === 'ICPDP_OFFICER' ? t('auth.officerRoleShort') : code
   }
+  // Mô tả ngắn của vai trò hệ thống
   function roleHint(code: SystemRoleCode) {
-    return code === 'ICPDP_OFFICER'
-      ? t('auth.officerRoleHint')
-      : code === 'ICPDP_HEAD'
-        ? t('auth.headRoleHint')
-        : t('auth.attendanceRoleHint')
+    return code === 'ICPDP_OFFICER' ? t('auth.officerRoleHint') : ''
   }
 
   // Đóng dialog và xoá toàn bộ trạng thái nhập liệu
@@ -145,8 +139,6 @@ export function AccountManageDialog({
           <ul className="mt-3 divide-y divide-border-app rounded-xl border border-border-app">
             {ROLES.map((code) => {
               const held = systemRoles.includes(code)
-              const needsOfficer =
-                code === 'ICPDP_HEAD' && !held && !systemRoles.includes('ICPDP_OFFICER')
               return (
                 <li key={code} className="p-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -156,11 +148,6 @@ export function AccountManageDialog({
                         {held && <AppBadge tone="success">{t('auth.roleHeld')}</AppBadge>}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-app">{roleHint(code)}</p>
-                      {needsOfficer && (
-                        <p className="mt-1 text-xs text-warning-app">
-                          {t('auth.headNeedsOfficer')}
-                        </p>
-                      )}
                     </div>
                     {held ? (
                       <AppButton
@@ -176,7 +163,7 @@ export function AccountManageDialog({
                       </AppButton>
                     ) : (
                       <AppButton
-                        disabled={action.isPending || needsOfficer}
+                        disabled={action.isPending}
                         onClick={() =>
                           void run(
                             { kind: 'grant', userId: user.id, roleCode: code, reason: '' },

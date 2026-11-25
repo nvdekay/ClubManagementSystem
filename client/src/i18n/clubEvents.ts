@@ -413,7 +413,7 @@ export const clubEvents = {
       policyMissing: 'Operating policy is not configured for this date. Please contact ICPDP.',
       accountLocked: 'Your account is locked or inactive. Please contact ICPDP for assistance.',
       clubNotFound: 'Club not found.',
-      unlockRoleRequired: 'You need the attendance unlock role to perform this action.',
+      unlockRoleRequired: 'Only ICPDP officers can unlock finalized attendance.',
       membershipRequired: 'Active club membership is required to perform this action.',
       obligationsGeneric:
         'The club has overdue obligations that must be resolved before submitting a proposal.',
@@ -845,7 +845,7 @@ export const clubEvents = {
       accountLocked:
         'Tài khoản đã bị khoá hoặc không hoạt động. Vui lòng liên hệ ICPDP để được hỗ trợ.',
       clubNotFound: 'Không tìm thấy câu lạc bộ.',
-      unlockRoleRequired: 'Tài khoản cần có quyền mở khoá điểm danh để thực hiện thao tác này.',
+      unlockRoleRequired: 'Chỉ cán bộ ICPDP được mở khoá điểm danh đã chốt.',
       membershipRequired: 'Bạn cần là thành viên đang hoạt động của CLB để thực hiện thao tác này.',
       obligationsGeneric: 'CLB cần xử lý các nghĩa vụ quá hạn trước khi nộp đề xuất.',
       storageUnavailable: 'Dịch vụ lưu trữ tệp chưa sẵn sàng. Vui lòng liên hệ ICPDP.',

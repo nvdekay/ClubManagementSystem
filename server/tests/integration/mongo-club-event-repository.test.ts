@@ -185,8 +185,8 @@ describe.skipIf(!uri)('Mongo club event lifecycle', () => {
     const unlockRole = new Types.ObjectId()
     await m.roles!.create({
       _id: unlockRole,
-      code: 'ATTENDANCE_UNLOCK',
-      name: 'Unlock',
+      code: 'ICPDP_OFFICER',
+      name: 'ICPDP officer',
       scope: 'system',
       permissionCodes: [],
     })

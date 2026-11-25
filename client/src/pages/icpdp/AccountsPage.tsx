@@ -48,12 +48,6 @@ export function AccountsPage() {
     if (code === 'ICPDP_OFFICER') {
       return t('auth.officerRoleShort')
     }
-    if (code === 'ICPDP_HEAD') {
-      return t('auth.headRoleShort')
-    }
-    if (code === 'ATTENDANCE_UNLOCK') {
-      return t('auth.attendanceRoleShort')
-    }
     return code
   }
 

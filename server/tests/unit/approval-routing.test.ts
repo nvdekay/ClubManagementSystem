@@ -145,26 +145,20 @@ describe('UC05 use cases (D1)', () => {
   }
   const actor = { id: 'b'.repeat(24), accountState: 'Active' as const }
 
-  it('lets officers read but only ICPDP_HEAD (with ICPDP_OFFICER) change or activate', async () => {
+  it('lets every ICPDP officer read, change and activate, and nobody else', async () => {
     const r = repo()
-    await listRoutingRuleSets(r, auth(['ICPDP_OFFICER']), actor)
+    await expect(listRoutingRuleSets(r, auth([]), actor)).rejects.toMatchObject({
+      kind: 'forbidden',
+    })
+    await expect(createRoutingDraft(r, auth([]), actor, [stage], now)).rejects.toMatchObject({
+      kind: 'forbidden',
+    })
     await expect(
-      createRoutingDraft(r, auth(['ICPDP_OFFICER']), actor, [stage], now),
-    ).rejects.toMatchObject({ kind: 'forbidden' })
-    await expect(
-      createRoutingDraft(r, auth(['ICPDP_HEAD']), actor, [stage], now),
-    ).rejects.toMatchObject({ kind: 'forbidden' })
-    await expect(
-      activateRoutingRuleSet(r, auth(['ICPDP_OFFICER']), actor, 'a'.repeat(24), now),
+      activateRoutingRuleSet(r, auth([]), actor, 'a'.repeat(24), now),
     ).rejects.toMatchObject({ kind: 'forbidden' })
     expect(r.activate).not.toHaveBeenCalled()
-    await activateRoutingRuleSet(
-      r,
-      auth(['ICPDP_OFFICER', 'ICPDP_HEAD']),
-      actor,
-      'a'.repeat(24),
-      now,
-    )
+    await listRoutingRuleSets(r, auth(['ICPDP_OFFICER']), actor)
+    await activateRoutingRuleSet(r, auth(['ICPDP_OFFICER']), actor, 'a'.repeat(24), now)
     expect(r.activate).toHaveBeenCalledWith('a'.repeat(24), actor.id, now)
   })
 })

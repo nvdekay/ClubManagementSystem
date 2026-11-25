@@ -104,39 +104,20 @@ describe('UC03 account administration', () => {
     expect(changes).toEqual([])
   })
 
-  it('D1: grants ICPDP_HEAD only to a current ICPDP officer', async () => {
-    const plain = fixture()
-    await expect(
-      changeSystemRole(
-        plain.repo,
-        plain.sessions,
-        actor,
-        target.id,
-        'ICPDP_HEAD',
-        'grant',
-        undefined,
-        now,
-      ),
-    ).rejects.toMatchObject({ kind: 'conflict' })
-    expect(plain.changes).toEqual([])
-    const officerTarget = fixture(['ICPDP_OFFICER'], ['ICPDP_OFFICER'])
-    await changeSystemRole(
-      officerTarget.repo,
-      officerTarget.sessions,
-      actor,
-      target.id,
-      'ICPDP_HEAD',
-      'grant',
-      undefined,
-      now,
-    )
-    expect(officerTarget.changes).toEqual(['grant:ICPDP_HEAD', `revoke:${target.id}`])
+  it('manages only the single ICPDP officer system role', async () => {
+    const { repo, sessions, changes } = fixture()
+    for (const removed of ['ICPDP_HEAD', 'ATTENDANCE_UNLOCK']) {
+      await expect(
+        changeSystemRole(repo, sessions, actor, target.id, removed, 'grant', undefined, now),
+      ).rejects.toMatchObject({ kind: 'validation' })
+    }
+    expect(changes).toEqual([])
   })
 
   it('requires a reason for revoke, lock and unlock', async () => {
     const { repo, sessions, changes } = fixture()
     await expect(
-      changeSystemRole(repo, sessions, actor, target.id, 'ATTENDANCE_UNLOCK', 'revoke', '', now),
+      changeSystemRole(repo, sessions, actor, target.id, 'ICPDP_OFFICER', 'revoke', '', now),
     ).rejects.toMatchObject({ kind: 'validation' })
     await expect(
       setAccountLock(repo, sessions, actor, target.id, true, '', now),
@@ -162,14 +143,14 @@ describe('UC03 account administration', () => {
       sessions,
       actor,
       target.id,
-      'ATTENDANCE_UNLOCK',
+      'ICPDP_OFFICER',
       'grant',
       undefined,
       now,
     )
     await setAccountLock(repo, sessions, actor, target.id, true, 'incident', now)
     expect(changes).toEqual([
-      'grant:ATTENDANCE_UNLOCK',
+      'grant:ICPDP_OFFICER',
       `revoke:${target.id}`,
       'locked',
       `revoke:${target.id}`,

@@ -228,20 +228,6 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
           if (existing) {
             throw new DomainError('role already granted', 'conflict')
           }
-          if (input.roleCode === 'ICPDP_HEAD') {
-            const officer = await roles
-              .findOne({ code: 'ICPDP_OFFICER', scope: 'system' })
-              .session(session)
-              .lean()
-            if (
-              !officer ||
-              !(await assignments
-                .exists({ userId: targetId, roleId: officer._id, revokedAt: null })
-                .session(session))
-            ) {
-              throw new DomainError('grant ICPDP_OFFICER before ICPDP_HEAD', 'conflict')
-            }
-          }
           await assignments.create(
             [
               {
@@ -267,38 +253,6 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
             },
             { session },
           )
-          // D1: ICPDP_HEAD không bao giờ được giữ khi thiếu ICPDP_OFFICER, nên mất cùng lúc.
-          if (input.roleCode === 'ICPDP_OFFICER') {
-            const head = await roles
-              .findOne({ code: 'ICPDP_HEAD', scope: 'system' })
-              .session(session)
-              .lean()
-            const dropped = head
-              ? await assignments.updateOne(
-                  { userId: targetId, roleId: head._id, revokedAt: null },
-                  { $set: { revokedAt: input.now, revokedBy: actorId, reason: input.reason } },
-                  { session },
-                )
-              : null
-            if (dropped?.modifiedCount) {
-              await audits.create(
-                [
-                  {
-                    entityType: 'User',
-                    entityId: targetId,
-                    action: 'SYSTEM_ROLE_REVOKED',
-                    actorId,
-                    before: { roleCode: 'ICPDP_HEAD', active: true },
-                    after: { roleCode: 'ICPDP_HEAD', active: false },
-                    reason: input.reason,
-                    correlationId: randomUUID(),
-                    at: input.now,
-                  },
-                ],
-                { session },
-              )
-            }
-          }
         }
         await audits.create(
           [
