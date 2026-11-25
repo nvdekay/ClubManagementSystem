@@ -8,6 +8,7 @@ import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppSwitch } from '@/components/ui/switch/AppSwitch'
+import { appToast } from '@/components/ui/toast/AppToast'
 import { useCreatePolicy } from '@/hooks/usePolicy'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
@@ -28,6 +29,8 @@ import { cn } from '@/utils/cn'
 interface PolicyEditorProps {
   latest?: PolicyVersion
   csrfToken: string
+  /** Gọi sau khi tạo phiên bản thành công, để trang chuyển về phần chính sách đang hiệu lực. */
+  onSaved?: () => void
 }
 
 interface DeadlineForm {
@@ -100,6 +103,24 @@ export function sectionTitleKey(section: PolicySection) {
       return 'policy.sectionReports' as const
     case 'finance':
       return 'policy.sectionFinance' as const
+  }
+}
+
+// Icon đại diện của từng nhóm chính sách
+export function sectionIcon(section: PolicySection) {
+  switch (section) {
+    case 'founding':
+      return 'building' as const
+    case 'profile':
+      return 'idCard' as const
+    case 'events':
+      return 'ticket' as const
+    case 'calendar':
+      return 'calendar' as const
+    case 'reports':
+      return 'clipboardCheck' as const
+    case 'finance':
+      return 'wallet' as const
   }
 }
 
@@ -420,7 +441,7 @@ function impactEntityKey(entityType: PolicyDecisionImpact['entityType']) {
   }
 }
 
-interface ToggleRowProps {
+interface ToggleTileProps {
   label: string
   checked: boolean
   locked?: boolean
@@ -428,39 +449,44 @@ interface ToggleRowProps {
   onChange?: (checked: boolean) => void
 }
 
-// Một dòng bật/tắt cho yêu cầu hoặc quyền của chính sách
-/** Một dòng kiểu "có bắt buộc / có được phép không": nhãn đơn giản, công tắc và ý nghĩa hiện tại của nó. */
-function ToggleRow({ label, checked, locked, hint, onChange }: ToggleRowProps) {
+// Ô bật/tắt cho yêu cầu hoặc quyền của chính sách
+/** Một ô kiểu "có bắt buộc / có được phép không": nhãn, ý nghĩa hiện tại và công tắc. */
+function ToggleTile({ label, checked, locked, hint, onChange }: ToggleTileProps) {
   const { t } = useTranslation()
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 py-3">
-      <div className={cn('min-w-0 flex-1', { 'basis-56': Boolean(hint) })}>
+    <li
+      className={cn(
+        'flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors',
+        checked ? 'border-primary-app/30 bg-primary-soft-app/60' : 'border-border-app bg-bg-app',
+      )}
+    >
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
-        {hint && <p className="mt-0.5 text-xs text-muted-app">{hint}</p>}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={cn('text-xs text-muted-app', { 'font-semibold text-primary-app': checked })}
+        <p
+          className={cn('mt-0.5 text-xs text-muted-app', {
+            'font-semibold text-primary-app': checked,
+          })}
         >
           {locked
             ? t('policy.alwaysRequired')
             : checked
               ? t('policy.required')
               : t('policy.optional')}
-        </span>
-        <AppSwitch
-          checked={checked}
-          disabled={locked}
-          aria-label={label}
-          onChange={(value) => onChange?.(value)}
-        />
+        </p>
+        {hint && <p className="mt-1 text-xs text-muted-app">{hint}</p>}
       </div>
+      <AppSwitch
+        checked={checked}
+        disabled={locked}
+        aria-label={label}
+        onChange={(value) => onChange?.(value)}
+      />
     </li>
   )
 }
 
-// Một ô nhập số nằm trong câu mô tả chính sách
-function NumberSentence({
+// Một dòng cài đặt số: nhãn bên trái, ô nhập bên phải
+function NumberSetting({
   label,
   value,
   min,
@@ -476,14 +502,14 @@ function NumberSentence({
   error: string | null
 }) {
   return (
-    <>
-      <label className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-        <span className="min-w-0 flex-1 basis-56">
+    <li className="py-3.5 first:pt-0 last:pb-0">
+      <label className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-sm">
+        <span className="min-w-0 flex-1 basis-60 text-text-app">
           {label}
           <AppRequiredMark />
         </span>
         <AppInput
-          className="w-28"
+          className="w-28 text-right tabular-nums"
           type="number"
           min={min}
           value={value}
@@ -491,13 +517,25 @@ function NumberSentence({
           onChange={(event) => onChange(event.target.value)}
         />
       </label>
-      <AppFieldError message={error} />
-    </>
+      <div className="text-right">
+        <AppFieldError message={error} />
+      </div>
+    </li>
+  )
+}
+
+// Tiêu đề phụ trong một nhóm chính sách
+function SubHeading({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div>
+      <h4 className="font-heading text-sm font-semibold">{title}</h4>
+      {hint && <p className="mt-0.5 text-xs text-muted-app">{hint}</p>}
+    </div>
   )
 }
 
 // Form ICPDP tạo phiên bản chính sách mới theo từng nhóm
-export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
+export function PolicyEditor({ latest, csrfToken, onSaved }: PolicyEditorProps) {
   const { t } = useTranslation()
   const [form, setForm] = useState<PolicyForm>(() => initialForm(latest))
   const [section, setSection] = useState<PolicySection>('founding')
@@ -505,6 +543,14 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   const create = useCreatePolicy()
   const errors = formErrors(t, form)
   const field = useFieldValidation(errors)
+  // Nhóm có trường sai, chỉ đánh dấu sau lần bấm lưu đầu tiên
+  const invalidSections = new Set(
+    localError
+      ? Object.keys(errors)
+          .filter((key) => errors[key])
+          .map(errorSection)
+      : [],
+  )
 
   // Cập nhật một trường của hạn nộp báo cáo
   function updateDeadline(index: number, field: keyof DeadlineForm, value: string) {
@@ -553,7 +599,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     event.preventDefault()
     setLocalError(null)
     if (!field.touchAll()) {
-      // Trường sai đầu tiên có thể nằm ở tab khác, nên mở tab đó và giữ dòng tóm tắt.
+      // Trường sai đầu tiên có thể nằm ở nhóm khác, nên mở nhóm đó và giữ dòng tóm tắt.
       const first = Object.keys(errors).find((key) => errors[key])
       if (first) {
         setSection(errorSection(first))
@@ -573,19 +619,24 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     }
     try {
       await create.mutateAsync({ input, csrfToken })
+      appToast.success(t('policy.saveSuccess'))
+      onSaved?.()
     } catch {
       /* Lỗi của mutation được hiển thị bên dưới. */
     }
   }
 
+  const fieldLabel = 'block text-sm font-medium text-text-app'
+  const fieldInput = 'mt-1.5 block w-full'
+
   let body: ReactNode
   if (section === 'founding') {
     body = (
-      <>
-        <label className="flex flex-wrap items-center gap-2 text-sm">
+      <div className="space-y-6">
+        <label className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-app px-4 py-3 text-sm">
           <span>{t('policy.minFoundersBefore')}</span>
           <AppInput
-            className="w-24"
+            className="w-20 text-center tabular-nums"
             type="number"
             min="1"
             aria-label={t('policy.minFounders')}
@@ -599,35 +650,37 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
           </span>
         </label>
         <AppFieldError message={field.error('minFoundingMembers')} />
-        <div>
-          <h4 className="font-heading font-semibold">{t('policy.foundingFieldsTitle')}</h4>
-          <p className="mt-1 text-xs text-muted-app">{t('policy.foundingFieldsHint')}</p>
-          <ul className="mt-2 divide-y divide-border-app">
-            <ToggleRow label={t('policy.fieldClubName')} checked locked />
-            <ToggleRow label={t('policy.fieldClubField')} checked locked />
-            {FOUNDING_FORM_FIELDS.map((field) => (
-              <ToggleRow
-                key={field}
-                label={t(foundingFieldKey(field))}
-                checked={form.formRequirements.clubFounding[field]}
-                onChange={(value) => setFounding(field, value)}
+        <div className="space-y-3">
+          <SubHeading
+            title={t('policy.foundingFieldsTitle')}
+            hint={t('policy.foundingFieldsHint')}
+          />
+          <ul className="grid gap-2 sm:grid-cols-2">
+            <ToggleTile label={t('policy.fieldClubName')} checked locked />
+            <ToggleTile label={t('policy.fieldClubField')} checked locked />
+            {FOUNDING_FORM_FIELDS.map((item) => (
+              <ToggleTile
+                key={item}
+                label={t(foundingFieldKey(item))}
+                checked={form.formRequirements.clubFounding[item]}
+                onChange={(value) => setFounding(item, value)}
               />
             ))}
           </ul>
         </div>
-      </>
+      </div>
     )
   } else if (section === 'profile') {
     body = (
-      <div>
+      <div className="space-y-3">
         <p className="text-xs text-muted-app">{t('policy.profileFieldsHint')}</p>
-        <ul className="mt-2 divide-y divide-border-app">
-          {CLUB_PROFILE_FORM_FIELDS.map((field) => (
-            <ToggleRow
-              key={field}
-              label={t(profileFieldKey(field))}
-              checked={form.formRequirements.clubProfile[field]}
-              onChange={(value) => setProfile(field, value)}
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {CLUB_PROFILE_FORM_FIELDS.map((item) => (
+            <ToggleTile
+              key={item}
+              label={t(profileFieldKey(item))}
+              checked={form.formRequirements.clubProfile[item]}
+              onChange={(value) => setProfile(item, value)}
             />
           ))}
         </ul>
@@ -635,9 +688,9 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     )
   } else if (section === 'events') {
     body = (
-      <ul className="divide-y divide-border-app">
-        <li>
-          <NumberSentence
+      <div className="space-y-5">
+        <ul className="divide-y divide-border-app rounded-xl border border-border-app px-4 py-3.5">
+          <NumberSetting
             label={t('policy.feedbackWindow')}
             min={1}
             value={form.feedbackWindowHours}
@@ -645,9 +698,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             error={field.error('feedbackWindowHours')}
             onChange={(value) => setForm({ ...form, feedbackWindowHours: value })}
           />
-        </li>
-        <li>
-          <NumberSentence
+          <NumberSetting
             label={t('policy.feedbackMinimum')}
             min={2}
             value={form.feedbackMinRespondents}
@@ -655,9 +706,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             error={field.error('feedbackMinRespondents')}
             onChange={(value) => setForm({ ...form, feedbackMinRespondents: value })}
           />
-        </li>
-        <li>
-          <NumberSentence
+          <NumberSetting
             label={t('policy.conflictMinutes')}
             min={0}
             value={form.conflictThresholdMinutes}
@@ -665,39 +714,41 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             error={field.error('conflictThresholdMinutes')}
             onChange={(value) => setForm({ ...form, conflictThresholdMinutes: value })}
           />
-        </li>
-        <ToggleRow
-          label={t('policy.overbooking')}
-          hint={t('policy.overbookingHint')}
-          checked={form.allowOverbooking}
-          onChange={(value) => setForm({ ...form, allowOverbooking: value })}
-        />
-      </ul>
+        </ul>
+        <ul>
+          <ToggleTile
+            label={t('policy.overbooking')}
+            hint={t('policy.overbookingHint')}
+            checked={form.allowOverbooking}
+            onChange={(value) => setForm({ ...form, allowOverbooking: value })}
+          />
+        </ul>
+      </div>
     )
   } else if (section === 'calendar') {
     body = (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {form.academicCalendar.map((item, index) => (
           <div
             key={index}
-            className="grid items-end gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-2 lg:grid-cols-4"
+            className="grid items-start gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-[minmax(0,10rem)_1fr_1fr_auto]"
           >
-            <label className="block text-sm font-medium text-text-app">
+            <label className={fieldLabel}>
               {t('policy.semesterCode')}
               <AppRequiredMark />
               <AppInput
-                className="mt-1.5 block w-full"
+                className={fieldInput}
                 value={item.code}
                 {...field.control(`semesterCode${index}`)}
                 onChange={(event) => updateSemester(index, 'code', event.target.value)}
               />
               <AppFieldError message={field.error(`semesterCode${index}`)} />
             </label>
-            <label className="block text-sm font-medium text-text-app">
+            <label className={fieldLabel}>
               {t('policy.semesterStart')}
               <AppRequiredMark />
               <AppInput
-                className="mt-1.5 block w-full"
+                className={fieldInput}
                 type="datetime-local"
                 value={item.startAt}
                 {...field.control(`semesterStart${index}`)}
@@ -705,11 +756,11 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
               />
               <AppFieldError message={field.error(`semesterStart${index}`)} />
             </label>
-            <label className="block text-sm font-medium text-text-app">
+            <label className={fieldLabel}>
               {t('policy.semesterEnd')}
               <AppRequiredMark />
               <AppInput
-                className="mt-1.5 block w-full"
+                className={fieldInput}
                 type="datetime-local"
                 value={item.endAt}
                 {...field.control(`semesterEnd${index}`)}
@@ -719,7 +770,8 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             </label>
             <AppButton
               type="button"
-              variant="secondary"
+              variant="ghost"
+              className="sm:mt-7"
               disabled={form.academicCalendar.length === 1}
               onClick={() =>
                 setForm({
@@ -730,6 +782,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
                 })
               }
             >
+              <AppIcon name="close" className="size-4" />
               {t('policy.removeSemester')}
             </AppButton>
           </div>
@@ -760,16 +813,13 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     )
     body = (
       <div className="space-y-4">
-        <div>
-          <h4 className="font-heading font-semibold">{t('policy.refundAccountTitle')}</h4>
-          <p className="mt-1 text-xs text-muted-app">{t('policy.refundAccountHint')}</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-medium text-text-app">
+        <SubHeading title={t('policy.refundAccountTitle')} hint={t('policy.refundAccountHint')} />
+        <div className="grid gap-4 rounded-xl border border-border-app p-4 sm:grid-cols-2">
+          <label className={fieldLabel}>
             {t('policy.refundAccountHolder')}
             {anyFilled ? <AppRequiredMark /> : null}
             <AppInput
-              className="mt-1.5 block w-full"
+              className={fieldInput}
               maxLength={200}
               value={refund.accountHolder}
               {...field.control('refundAccountHolder')}
@@ -782,11 +832,11 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             />
             <AppFieldError message={field.error('refundAccountHolder')} />
           </label>
-          <label className="block text-sm font-medium text-text-app">
+          <label className={fieldLabel}>
             {t('policy.refundAccountNumber')}
             {anyFilled ? <AppRequiredMark /> : null}
             <AppInput
-              className="mt-1.5 block w-full"
+              className={fieldInput}
               maxLength={50}
               value={refund.accountNumber}
               {...field.control('refundAccountNumber')}
@@ -799,11 +849,11 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             />
             <AppFieldError message={field.error('refundAccountNumber')} />
           </label>
-          <label className="block text-sm font-medium text-text-app">
+          <label className={fieldLabel}>
             {t('policy.refundBankName')}
             {anyFilled ? <AppRequiredMark /> : null}
             <AppInput
-              className="mt-1.5 block w-full"
+              className={fieldInput}
               maxLength={200}
               value={refund.bankName}
               {...field.control('refundBankName')}
@@ -816,10 +866,10 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             />
             <AppFieldError message={field.error('refundBankName')} />
           </label>
-          <label className="block text-sm font-medium text-text-app">
+          <label className={fieldLabel}>
             {t('policy.refundBankBranch')}
             <AppInput
-              className="mt-1.5 block w-full"
+              className={fieldInput}
               maxLength={200}
               value={refund.bankBranch}
               onChange={(event) =>
@@ -830,10 +880,10 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
               }
             />
           </label>
-          <label className="block text-sm font-medium text-text-app sm:col-span-2">
+          <label className={cn(fieldLabel, 'sm:col-span-2')}>
             {t('policy.refundTransferNote')}
             <AppInput
-              className="mt-1.5 block w-full"
+              className={fieldInput}
               maxLength={500}
               value={refund.transferNote}
               onChange={(event) =>
@@ -851,49 +901,50 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     body = (
       <div className="space-y-4">
         {form.reportDeadlines.map((item, index) => (
-          <div
-            key={index}
-            className="grid items-end gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-2"
-          >
-            <label className="block text-sm sm:col-span-2 font-medium text-text-app">
-              {t('policy.reportType')}
-              <AppRequiredMark />
-              <AppInput
-                className="mt-1.5 block w-full"
-                value={item.reportType}
-                {...field.control(`reportType${index}`)}
-                onChange={(event) => updateDeadline(index, 'reportType', event.target.value)}
-              />
-              <AppFieldError message={field.error(`reportType${index}`)} />
-            </label>
-            {deadlineNumberFields.map((name) => (
-              <label key={name} className="block text-sm font-medium text-text-app">
-                {t(deadlineLabelKey(name))}
+          <div key={index} className="rounded-xl border border-border-app bg-surface-app p-4">
+            <div className="flex flex-wrap items-start gap-3">
+              <label className={cn(fieldLabel, 'min-w-0 flex-1 basis-56')}>
+                {t('policy.reportType')}
                 <AppRequiredMark />
                 <AppInput
-                  className="mt-1.5 block w-full"
-                  type="number"
-                  min="0"
-                  {...field.control(`${name}${index}`)}
-                  value={item[name]}
-                  onChange={(event) => updateDeadline(index, name, event.target.value)}
+                  className={fieldInput}
+                  value={item.reportType}
+                  {...field.control(`reportType${index}`)}
+                  onChange={(event) => updateDeadline(index, 'reportType', event.target.value)}
                 />
-                <AppFieldError message={field.error(`${name}${index}`)} />
+                <AppFieldError message={field.error(`reportType${index}`)} />
               </label>
-            ))}
-            <AppButton
-              type="button"
-              variant="secondary"
-              disabled={form.reportDeadlines.length === 1}
-              onClick={() =>
-                setForm({
-                  ...form,
-                  reportDeadlines: form.reportDeadlines.filter((_, position) => position !== index),
-                })
-              }
-            >
-              {t('policy.removeDeadline')}
-            </AppButton>
+              <AppButton
+                type="button"
+                variant="ghost"
+                className="sm:mt-7"
+                disabled={form.reportDeadlines.length === 1}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    reportDeadlines: form.reportDeadlines.filter(
+                      (_, position) => position !== index,
+                    ),
+                  })
+                }
+              >
+                <AppIcon name="close" className="size-4" />
+                {t('policy.removeDeadline')}
+              </AppButton>
+            </div>
+            <ul className="mt-3 divide-y divide-border-app rounded-xl bg-bg-app px-4 py-3.5">
+              {deadlineNumberFields.map((name) => (
+                <NumberSetting
+                  key={name}
+                  label={t(deadlineLabelKey(name))}
+                  min={0}
+                  value={item[name]}
+                  control={field.control(`${name}${index}`)}
+                  error={field.error(`${name}${index}`)}
+                  onChange={(value) => updateDeadline(index, name, value)}
+                />
+              ))}
+            </ul>
           </div>
         ))}
         <AppButton
@@ -918,8 +969,8 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
           <AppIcon name="plus" className="size-4" />
           {t('policy.addDeadline')}
         </AppButton>
-        <ul className="divide-y divide-border-app">
-          <ToggleRow
+        <ul>
+          <ToggleTile
             label={t('policy.overdueBlock')}
             checked={form.enforceOverdueReportBlock}
             onChange={(value) => setForm({ ...form, enforceOverdueReportBlock: value })}
@@ -930,107 +981,124 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   }
 
   return (
-    <form
-      className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"
-      noValidate
-      onSubmit={(event) => void submit(event)}
-    >
-      <div>
+    <form noValidate onSubmit={(event) => void submit(event)} className="space-y-5">
+      <div className="rounded-2xl border border-border-app bg-bg-app px-5 py-4 shadow-xs">
         <h2 className="font-heading text-base font-semibold">{t('policy.formTitle')}</h2>
         <p className="mt-1 text-sm text-muted-app">{t('policy.formDescription')}</p>
       </div>
 
-      <div
-        role="tablist"
-        aria-label={t('policy.formTitle')}
-        className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1"
-      >
-        {sections.map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={section === item}
-            onClick={() => setSection(item)}
-            className={cn(
-              'inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app',
-              { 'bg-segment-app text-text-app shadow-xs': section === item },
-            )}
-          >
-            {t(sectionTitleKey(item))}
-          </button>
-        ))}
-      </div>
-
-      <section role="tabpanel" className="space-y-5 rounded-xl border border-border-app p-5">
-        <div>
-          <h3 className="font-heading text-sm font-semibold">{t(sectionTitleKey(section))}</h3>
-          <p className="mt-1 text-sm text-muted-app">
-            {t('policy.appliesTo', { flows: t(sectionAppliesKey(section)) })}
-          </p>
-        </div>
-        {body}
-      </section>
-
-      <div className="grid gap-5 border-t border-border-app pt-6 sm:grid-cols-2">
-        <h3 className="font-heading text-sm font-semibold sm:col-span-2">
-          {t('policy.saveSection')}
-        </h3>
-        <label className="block text-sm font-medium text-text-app">
-          {t('policy.effectiveFrom')}
-          <AppInput
-            className="mt-1.5 block w-full"
-            type="datetime-local"
-            value={form.effectiveFrom}
-            onChange={(event) => setForm({ ...form, effectiveFrom: event.target.value })}
-          />
-          <span className="mt-1 block text-xs text-muted-app">{t('policy.effectiveHint')}</span>
-        </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('policy.reason')}
-          <AppInput
-            className="mt-1.5 block w-full"
-            maxLength={1000}
-            value={form.reason}
-            onChange={(event) => setForm({ ...form, reason: event.target.value })}
-          />
-        </label>
-      </div>
-      {localError && (
-        <p role="alert" className="text-sm text-danger-app">
-          {localError}
-        </p>
-      )}
-      {create.isError && create.error instanceof PolicyConflictError ? (
-        <div
-          role="alert"
-          className="rounded-xl border-l-4 border-danger-app bg-danger-app/10 px-4 py-3 text-sm"
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <nav
+          aria-label={t('policy.formTitle')}
+          className="min-w-0 lg:sticky lg:top-4 lg:self-start"
         >
-          <p className="font-semibold text-danger-app">{t('policy.impactTitle')}</p>
-          <p className="mt-1 text-text-app">{t('policy.impactDescription')}</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-text-app">
-            {create.error.affectedRecords.map((record) => (
-              <li key={`${record.entityType}:${record.entityId}`}>
-                <span className="font-medium">{t(impactEntityKey(record.entityType))}</span> ·{' '}
-                {record.entityId}:{' '}
-                {record.reasons.map((reason) => t(impactReasonKey(reason))).join(', ')}
+          <ul
+            role="tablist"
+            className="flex gap-1 overflow-x-auto rounded-2xl border border-border-app bg-bg-app p-1.5 shadow-xs lg:flex-col"
+          >
+            {sections.map((item) => (
+              <li key={item} className="shrink-0">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={section === item}
+                  onClick={() => setSection(item)}
+                  className={cn(
+                    'flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm font-medium whitespace-nowrap text-muted-app transition-colors hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app',
+                    {
+                      'bg-primary-soft-app text-primary-app hover:bg-primary-soft-app hover:text-primary-app':
+                        section === item,
+                    },
+                  )}
+                >
+                  <AppIcon name={sectionIcon(item)} className="size-4 shrink-0" />
+                  <span className="flex-1">{t(sectionTitleKey(item))}</span>
+                  {invalidSections.has(item) && (
+                    <span className="size-2 rounded-full bg-danger-app" aria-hidden="true" />
+                  )}
+                </button>
               </li>
             ))}
           </ul>
+        </nav>
+
+        <section
+          role="tabpanel"
+          className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6"
+        >
+          <div className="mb-5 flex items-start gap-3 border-b border-border-app pb-4">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-soft-app text-primary-app">
+              <AppIcon name={sectionIcon(section)} className="size-4.5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-heading text-base font-semibold">
+                {t(sectionTitleKey(section))}
+              </h3>
+              <p className="mt-0.5 text-sm text-muted-app">
+                {t('policy.appliesTo', { flows: t(sectionAppliesKey(section)) })}
+              </p>
+            </div>
+          </div>
+          {body}
+        </section>
+      </div>
+
+      <div className="rounded-2xl border border-border-app bg-bg-app/95 p-5 shadow-sm backdrop-blur lg:sticky lg:bottom-0 lg:z-10">
+        <h3 className="font-heading text-sm font-semibold">{t('policy.saveSection')}</h3>
+        <div className="mt-3 grid items-start gap-4 lg:grid-cols-[1fr_1fr_auto]">
+          <label className={fieldLabel}>
+            {t('policy.effectiveFrom')}
+            <AppInput
+              className={fieldInput}
+              type="datetime-local"
+              value={form.effectiveFrom}
+              onChange={(event) => setForm({ ...form, effectiveFrom: event.target.value })}
+            />
+            <span className="mt-1 block text-xs font-normal text-muted-app">
+              {t('policy.effectiveHint')}
+            </span>
+          </label>
+          <label className={fieldLabel}>
+            {t('policy.reason')}
+            <AppInput
+              className={fieldInput}
+              maxLength={1000}
+              value={form.reason}
+              onChange={(event) => setForm({ ...form, reason: event.target.value })}
+            />
+          </label>
+          <AppButton type="submit" className="lg:mt-7" disabled={create.isPending}>
+            {create.isPending ? t('policy.saving') : t('policy.save')}
+          </AppButton>
         </div>
-      ) : create.isError ? (
-        <p role="alert" className="text-sm text-danger-app">
-          {t('policy.saveError')} {create.error.message}
-        </p>
-      ) : null}
-      {create.isSuccess && (
-        <p role="status" className="text-sm text-success-app">
-          {t('policy.saveSuccess')}
-        </p>
-      )}
-      <AppButton type="submit" disabled={create.isPending}>
-        {create.isPending ? t('policy.saving') : t('policy.save')}
-      </AppButton>
+        {localError && (
+          <p role="alert" className="mt-3 text-sm text-danger-app">
+            {localError}
+          </p>
+        )}
+        {create.isError && create.error instanceof PolicyConflictError ? (
+          <div
+            role="alert"
+            className="mt-3 max-h-64 overflow-y-auto rounded-xl border-l-4 border-danger-app bg-danger-app/10 px-4 py-3 text-sm"
+          >
+            <p className="font-semibold text-danger-app">{t('policy.impactTitle')}</p>
+            <p className="mt-1 text-text-app">{t('policy.impactDescription')}</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-text-app">
+              {create.error.affectedRecords.map((record) => (
+                <li key={`${record.entityType}:${record.entityId}`}>
+                  <span className="font-medium">{t(impactEntityKey(record.entityType))}</span> ·{' '}
+                  {record.entityId}:{' '}
+                  {record.reasons.map((reason) => t(impactReasonKey(reason))).join(', ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : create.isError ? (
+          <p role="alert" className="mt-3 text-sm text-danger-app">
+            {t('policy.saveError')} {create.error.message}
+          </p>
+        ) : null}
+      </div>
     </form>
   )
 }
