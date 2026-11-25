@@ -320,7 +320,7 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
     async listOpen() {
       const open = await tasks
         .find({ entityType: 'TRANSITION_PLAN', state: { $in: ['Open', 'Escalated'] } })
-        .sort({ openedAt: 1 })
+        .sort({ openedAt: -1, _id: -1 })
         .lean()
       return (
         await Promise.all(open.map((item) => detail(item.entityId as Types.ObjectId)))
