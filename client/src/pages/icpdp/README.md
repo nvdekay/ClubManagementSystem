@@ -98,6 +98,6 @@ hàng đợi và xác nhận chuyển giao nhiệm kỳ.
 `RoomAllocationsPage` (UC58) là trang "Phân phòng CLB" mô tả ở trên; `PropertyBookingConflicts` là component con
 của `PropertiesPage`.
 
-`RoutingRulesPage` (UC05, `/workspace/routing-rules`): mọi ICPDP Officer đọc và mô phỏng rule định tuyến; chỉ
-`ICPDP_HEAD` tạo nháp, sửa và kích hoạt. Rule chỉ đặt SLA thẩm định; mọi hồ sơ UC08/UC26/UC46 đều do một cán bộ
+`RoutingRulesPage` (UC05, `/workspace/routing-rules`): mọi ICPDP Officer đọc, mô phỏng,
+tạo nháp, sửa và kích hoạt rule định tuyến. Rule chỉ đặt SLA thẩm định; mọi hồ sơ UC08/UC26/UC46 đều do một cán bộ
 ICPDP quyết định ở một cấp.

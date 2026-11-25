@@ -319,7 +319,7 @@ Table permissions {
 
 Table roles {
   id objectId [pk]
-  code string [unique, not null, note: 'Vai trò hệ thống: ICPDP_OFFICER, ICPDP_HEAD (cấu hình rule định tuyến UC05, chỉ cấp kèm ICPDP_OFFICER — D1), ATTENDANCE_UNLOCK.']
+  code string [unique, not null, note: 'Vai trò hệ thống duy nhất: ICPDP_OFFICER (D1, 25/11/2026).']
   name string [not null]
   scope roleScope [not null, note: 'Một vai trò gắn CLB chỉ có hiệu lực thông qua một bản gán chức vụ bên trong một nhiệm kỳ đang hoạt động (SEC-04). Phía CLB chỉ có hai role cố định Club Leader / Club Member, suy ra từ membership và ghế đã xác nhận, không lưu ở bảng này (UC23 đã rút).']
   permissionCodes "string[]" [not null]

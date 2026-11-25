@@ -29,7 +29,7 @@
 > mới chỉ được ghi log, chưa gửi qua Google SMTP (đã nối SMTP ngày 07/11/2026, xem EXT-02); UC48/UC49 dùng một điểm tổng 1–5; audit ghi
 > ở repository trong cùng transaction; thêm §12.1 Cơ chế bảo mật
 > và sửa các dòng SEC. UC05, UC51, UC52 được khôi phục: duyệt nhiều cấp theo rule định tuyến
-> (UC05, `ICPDP_HEAD`; từ 09/11/2026 bỏ cấp duyệt thứ hai, UC05 chỉ đặt SLA, mọi hồ sơ duyệt một cấp), khiếu nại đi qua phân loại và chuyển xuống CLB (UC50–UC52); context diagram
+> (UC05; từ 09/11/2026 bỏ cấp duyệt thứ hai, UC05 chỉ đặt SLA, mọi hồ sơ duyệt một cấp), khiếu nại đi qua phân loại và chuyển xuống CLB (UC50–UC52); context diagram
 > giữ 46 luồng. **UC23 không được khôi phục**: theo sơ đồ cơ cấu tổ chức mới nhất trên `main` và
 > quyết định người dùng ngày 07/11/2026, role/quyền CLB là tập cố định do hệ thống quản lý, không
 > có RBAC tuỳ biến theo từng CLB.
@@ -345,8 +345,8 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
   khoa **không tương tác trực tiếp** với UCMS. Khi cần ý kiến chuyên môn của họ, ICPDP lấy ý
   kiến **ngoài hệ thống** và ghi vào review note của chính quyết định mình. Hệ quả: hệ thống chỉ
   có một cấp phê duyệt và mọi hồ sơ được một ICPDP Officer quyết định ở một cấp (BR16); rule định
-  tuyến của UC05 chỉ đặt SLA thẩm định. Phân cấp trong ICPDP là RBAC: quyền `ICPDP_HEAD` (chỉ tính
-  khi đi kèm `ICPDP_OFFICER`) sửa và kích hoạt bộ rule UC05, không thêm cấp duyệt — xem D1 (đã chốt).
+  tuyến của UC05 chỉ đặt SLA thẩm định. ICPDP chỉ có một vai trò hệ thống `ICPDP_OFFICER`; mọi cán bộ
+  đều sửa và kích hoạt bộ rule UC05 và mở khoá điểm danh đã chốt — xem D1 (sửa 25/11/2026).
 - **Use case:** UC01, UC02, UC03, UC04, UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35,
   UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51, UC53, UC55, UC58.
 
@@ -371,7 +371,7 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 
 | Cấp | Nguồn cấp quyền | Ví dụ |
 |---|---|---|
-| Vai trò hệ thống | Cấp trong UC03 | `ICPDP_OFFICER`, `ICPDP_HEAD` (cấu hình định tuyến UC05, D1), `ATTENDANCE_UNLOCK` (BR19) |
+| Vai trò hệ thống | Cấp trong UC03 | `ICPDP_OFFICER` — vai trò hệ thống duy nhất (D1, 25/11/2026) |
 | Club Leader (ghế Chủ nhiệm hoặc Phó chủ nhiệm) | Duyệt cùng hồ sơ thành lập ở UC08 hoặc xác nhận ở UC11 / UC13, gắn nhiệm kỳ; tập permission quản lý cố định | Chủ nhiệm, Phó chủ nhiệm |
 | Club Member | Membership `Active`; tập khả năng thành viên cố định, không cấu hình theo CLB | Members |
 | Chức danh tổ chức | Khai báo trong hồ sơ/cơ cấu và dùng để hiển thị, không cấp thêm permission | Trưởng ban, Thủ quỹ, Event coordinator |
@@ -422,8 +422,7 @@ Mục này mô tả **bộ máy thật** mà UCMS phục vụ: ai đứng ở đ
 ```text
 Nhà trường
 ├── ICPDP ─────────────────────────────── cấp phê duyệt duy nhất phía nhà trường (BR31)
-│   ├── ICPDP Head          vai trò ICPDP_HEAD — cấu hình rule định tuyến UC05 (D1)
-│   └── ICPDP Officer       vai trò ICPDP_OFFICER — thẩm định, quyết định, giải ngân, đối soát
+│   └── ICPDP Officer       vai trò ICPDP_OFFICER — thẩm định, quyết định, giải ngân, đối soát, rule UC05
 │
 ├── Đơn vị tham vấn (ngoài hệ thống): Tài chính, Cơ sở vật chất, An ninh, cố vấn khoa
 │       ý kiến do ICPDP lấy ngoài hệ thống và ghi vào review note — không phải actor
@@ -441,7 +440,6 @@ kiện, người gửi phản hồi / khiếu nại, người đứng đơn thà
 | Vị trí trong tổ chức | Actor / quyền trong UCMS | Ai cấp, ở đâu | Quyết định thuộc về vị trí này |
 |---|---|---|---|
 | ICPDP Officer | ICPDP Officer, vai trò `ICPDP_OFFICER` | UC03 | Thành lập CLB, xác nhận ban chủ nhiệm và chuyển giao, duyệt sự kiện kèm ngân sách, giải ngân và đối soát, duyệt cơ sở vật chất, phân loại khiếu nại, hồ sơ vi phạm, đánh giá, cấu hình |
-| ICPDP Head | ICPDP Officer, vai trò `ICPDP_HEAD` | UC03 | Tạo, sửa và kích hoạt bộ rule định tuyến UC05; vẫn duyệt hồ sơ ở một cấp như mọi ICPDP Officer |
 | Đơn vị tham vấn | — (không dùng hệ thống) | — | Không quyết định trong hệ thống; ý kiến nằm trong review note của ICPDP |
 | Chủ nhiệm, Phó chủ nhiệm CLB | Club Leader | UC08 (ban sáng lập) hoặc UC11 / UC13 (ghế Chủ nhiệm / Phó chủ nhiệm) | Mọi việc vận hành CLB (BR54), đề cử ban chủ nhiệm, kế hoạch chuyển giao, xin tạm ngừng; có tập permission quản lý cố định |
 | Người đứng đơn thành lập | Student; sau UC08 giữ ghế đã khai trong hồ sơ | UC08 | Là Club Leader nếu giữ ghế Chủ nhiệm hoặc Phó chủ nhiệm, ngược lại là Club Member (BR47, sửa 2026-11-01) |
@@ -932,9 +930,9 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Mục tiêu nghiệp vụ** | Kiểm soát ai được phép hành động, tách biệt với ai được phép đăng nhập |
 | **Kích hoạt** | Có officer mới, cần thu hồi một vai trò, hoặc cần khoá một tài khoản |
 | **Tiền điều kiện** | Người gọi có quyền quản trị tài khoản |
-| **Dữ liệu vào** | Người dùng đích; vai trò cần cấp hoặc thu hồi (vai trò ICPDP hoặc vai trò đặc biệt của BR19); lý do khoá, mở khoá hoặc thu hồi |
+| **Dữ liệu vào** | Người dùng đích; vai trò `ICPDP_OFFICER` cần cấp hoặc thu hồi; lý do khoá, mở khoá hoặc thu hồi |
 | **Thực thể / trạng thái** | Trạng thái tài khoản `User`: `Active ⇄ Locked`; các bản gán vai trò |
-| **Quy tắc** | BR19 (vai trò mở khoá điểm danh được cấp tại đây); BR47 (UC03 không bao giờ cấp quyền CMB) |
+| **Quy tắc** | BR19 (mở khoá điểm danh do ICPDP Officer thực hiện); BR47 (UC03 không bao giờ cấp quyền CMB) |
 | **Liên quan** | UC01, UC11, UC13, UC40 |
 
 | ID | Hệ thống phải … |
@@ -999,10 +997,10 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 | | |
 |---|---|
 | **Module · Ưu tiên** | M01 · P1 |
-| **Actor chính** | ICPDP Officer (sửa và kích hoạt cần thêm quyền `ICPDP_HEAD`) |
+| **Actor chính** | ICPDP Officer |
 | **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, mức rủi ro, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
 | **Kích hoạt** | ICPDP cần đổi SLA thẩm định cho một nhóm hồ sơ |
-| **Tiền điều kiện** | Mọi ICPDP Officer xem và mô phỏng bộ rule; chỉ người giữ `ICPDP_HEAD` (kèm `ICPDP_OFFICER`) tạo, sửa và kích hoạt |
+| **Tiền điều kiện** | Người gọi giữ vai trò `ICPDP_OFFICER`; mọi ICPDP Officer xem, mô phỏng, tạo, sửa và kích hoạt bộ rule |
 | **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định |
 | **Thực thể / trạng thái** | `RoutingRuleSet` — đánh phiên bản, `Draft → Active` |
 | **Quy tắc** | BR16 (đã sửa đổi), BR31 |
@@ -1010,7 +1008,7 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC05-01 | Cho người giữ `ICPDP_HEAD` thêm hoặc sửa một rule định tuyến gồm điều kiện và SLA thẩm định áp cho hồ sơ khớp điều kiện |
+| FR-UC05-01 | Cho ICPDP Officer thêm hoặc sửa một rule định tuyến gồm điều kiện và SLA thẩm định áp cho hồ sơ khớp điều kiện |
 | FR-UC05-02 | Validate rằng không có hai rule nào chồng nhau, để mỗi hồ sơ khớp nhiều nhất một rule (BR16) |
 | FR-UC05-03 | *(E1)* Từ chối kích hoạt khi hai rule chồng nhau |
 | FR-UC05-04 | Đánh phiên bản và audit bộ rule đã kích hoạt, và chỉ áp dụng cho hồ sơ mới |
@@ -2606,7 +2604,7 @@ của nó không bao giờ được dùng lại.**
 | BR16 | **Đã sửa đổi (09/11/2026)** — mọi hồ sơ được một ICPDP Officer quyết định ở một cấp; rule định tuyến của UC05 chỉ đặt SLA thẩm định cho hồ sơ khớp rule, nên BR31 vẫn đúng | UC05, UC08, UC26, UC46 |
 | BR17 | Số đăng ký đã xác nhận không bao giờ vượt sức chứa trừ khi chính sách cho phép overbooking | UC29, UC30 |
 | BR18 | Mỗi người tham dự chỉ có một bản ghi điểm danh chính thức cho mỗi sự kiện | UC31, UC32 |
-| BR19 | Bảng điểm danh đã chốt chỉ được mở khoá bởi một vai trò đặc biệt, cấp ở UC03 | UC32, UC03 |
+| BR19 | Bảng điểm danh đã chốt chỉ được mở khoá bởi ICPDP Officer (vai trò `ICPDP_OFFICER`, cấp ở UC03) | UC32, UC03 |
 | BR20 | Deadline báo cáo sau sự kiện và báo cáo định kỳ là cấu hình được | UC04, UC33, UC38 |
 | BR21 | CLB quá hạn một nghĩa vụ bắt buộc — báo cáo, quyết toán hoặc hoàn trả (BR57, BR58) — có thể bị chặn đề xuất sự kiện mới nếu chính sách bật cưỡng chế | UC04, UC25, UC34, UC36, UC37, UC39 |
 | BR22 | **Đã sửa (I59)** — Ngân sách chỉ tồn tại như một phần của đề xuất sự kiện (UC25) và được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện | UC25, UC26 |
@@ -3387,7 +3385,7 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 - `GET /auth/me` trả các workspace được vào: Student (mọi người), ICPDP (chỉ người giữ `ICPDP_OFFICER`), và một workspace CLB cho mỗi CLB mà người dùng là thành viên `Active` — hoặc là người sáng lập đã được duyệt của CLB còn ở `Pending Setup` (quy tắc tương thích; luồng hiện tại không tạo CLB ở trạng thái này). `WorkspaceShell` phía client chỉ là trợ giúp điều hướng; server kiểm tra lại mọi thứ.
 - `authGuard` xác thực mọi route ghi; một test dựng app với các nhóm route chính được mount, duyệt router Express thật và làm hỏng build nếu route POST / PATCH / PUT / DELETE nào của các nhóm đó thiếu guard; các nhóm route còn lại theo cùng quy ước và được kiểm bằng code review.
 - Ba kiểu kiểm tra trong use case:
-  - *Vai trò hệ thống* — thao tác ICPDP đòi `ICPDP_OFFICER` (không có → 403 "ICPDP officer role required"); `ATTENDANCE_UNLOCK` bảo vệ việc mở lại điểm danh đã chốt (BR19).
+  - *Vai trò hệ thống* — thao tác ICPDP đòi `ICPDP_OFFICER` (không có → 403 "ICPDP officer role required"); mở lại điểm danh đã chốt cũng đòi `ICPDP_OFFICER` (BR19).
   - *Phạm vi CLB, ghế và nhiệm kỳ* — implementation đích dựng snapshot của người dùng trong đúng CLB: membership `Active` → Club Member với capability cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong nhiệm kỳ `Active` → Club Leader với tập quyền quản lý cố định. Mọi chức danh khác và `permissionCodes` trên position không được tham gia quyết định quyền. Sai phạm vi → 403; `clubId` luôn lấy từ URL nên người của CLB này không thao tác được CLB khác. Code đã theo đúng mô hình này (`resolveClubPermissions` ở `domain/access.ts`); không còn role/permission tuỳ biến.
   - *Quyền sở hữu* — bản ghi cá nhân (hồ sơ thành lập, đơn ứng tuyển, đăng ký sự kiện của chính mình) được tải theo cả id lẫn id người gọi; bản ghi của người khác coi như không tồn tại (404).
 - Officer không tự khoá được tài khoản mình hay tự thu hồi vai trò `ICPDP_OFFICER` cuối cùng của mình.
@@ -3715,7 +3713,7 @@ UC45 A2), và vòng 9 đặt cuối vì UC42 cần dữ liệu trọn một kỳ
 
 | # | Quyết định | Vì sao không thể mặc định | Hệ quả nếu chốt muộn |
 |---|---|---|---|
-| **D1 — đã chốt 2026-11-07, sửa 2026-11-09** | `ICPDP_HEAD` là quyền RBAC chỉ cấp cho người giữ `ICPDP_OFFICER`; không thêm actor. Từ 09/11/2026 bỏ cấp duyệt thứ hai: Head chỉ cấu hình rule UC05, mọi hồ sơ duyệt một cấp | Người dùng chọn phương án giữ diagram bốn actor (07/11), rồi chọn bỏ cấp 2 (09/11) | Code: `ICPDP_HEAD` cấu hình UC05; UC08/UC26/UC46 một cấp (09/11/2026) |
+| **D1 — đã chốt 2026-11-07, sửa 2026-11-09 và 2026-11-25** | Từ 09/11/2026 bỏ cấp duyệt thứ hai, mọi hồ sơ duyệt một cấp. Từ 25/11/2026 gộp `ICPDP_HEAD` và `ATTENDANCE_UNLOCK` vào `ICPDP_OFFICER`: chỉ còn một vai trò hệ thống, mọi cán bộ ICPDP cấu hình rule UC05 và mở khoá điểm danh | Người dùng chọn bỏ cấp 2 (09/11), rồi chọn gộp vai trò (25/11) | Code: `SYSTEM_ROLE_CODES = ['ICPDP_OFFICER']`; UC05 và mở khoá điểm danh kiểm `ICPDP_OFFICER` (25/11/2026) |
 | **D2** | Ngoài danh sách của UC04, những giá trị nào nữa được sửa trong sản phẩm? | Mỗi giá trị thêm vào tốn một màn hình, một schema và một đường validate; danh sách phải đến từ quy trình thật của ICPDP | Đổi UC04 và BR42 — cần chốt trước khi đóng băng màn hình cấu hình |
 | **D3** | Số người phản hồi tối thiểu ban đầu cho BR40 | Đây là con số chính sách, không phải con số kỹ thuật. Năm là mức sàn phổ biến | Thấp — giá trị này cấu hình được ở UC04 |
 | **D4 — đã chốt 2026-10-11** | Mọi thay đổi thời gian/địa điểm của sự kiện đã duyệt phải được UC26 duyệt lại (ngoại lệ cho sự kiện nội bộ CLB theo BR53 đã bỏ cùng BR53 ngày 19/11/2026) | Người dùng chọn phương án đề xuất khi lập kế hoạch Wave 3 | FR-UC28-02 đã cập nhật; chính sách triển khai Wave 3 ghi bên dưới và trong SPEC |
