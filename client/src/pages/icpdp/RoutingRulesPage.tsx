@@ -77,12 +77,12 @@ function toggle<T>(list: T[] | undefined, value: T): T[] | undefined {
   return next.length ? next : undefined
 }
 
-/** UC05: cán bộ ICPDP xem các quy tắc điều phối; chỉ trưởng ICPDP được sửa, mô phỏng và kích hoạt. */
+/** UC05: cán bộ ICPDP xem, sửa, mô phỏng và kích hoạt các quy tắc điều phối. */
 export function RoutingRulesPage() {
   const { t } = useTranslation()
   const auth = useAuth()
   const sets = useRoutingRuleSets(Boolean(auth.data))
-  const isHead = Boolean(auth.data?.systemRoles.includes('ICPDP_HEAD'))
+  const canEdit = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   if (sets.isPending) {
     return (
       <>
@@ -110,7 +110,7 @@ export function RoutingRulesPage() {
   return (
     <>
       <PageHeader title={t('routing.title')} description={t('routing.description')} />
-      {!isHead && <AppNotice className="mb-4">{t('routing.readOnly')}</AppNotice>}
+      {!canEdit && <AppNotice className="mb-4">{t('routing.readOnly')}</AppNotice>}
       <div className="space-y-5">
         <section
           aria-labelledby="routing-active"
@@ -122,7 +122,7 @@ export function RoutingRulesPage() {
           {active && <RuleList rules={active.rules} />}
           {active && <Simulation set={active} />}
         </section>
-        {isHead && <DraftEditor key={draft?.id ?? 'none'} draft={draft} base={active} />}
+        {canEdit && <DraftEditor key={draft?.id ?? 'none'} draft={draft} base={active} />}
         {older.length > 0 && (
           <section
             aria-labelledby="routing-history"

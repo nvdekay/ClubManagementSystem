@@ -2,7 +2,7 @@ const en = {
   title: 'Approval routing',
   description:
     'Set the review SLA for requests that match a rule. Every request is decided at one level by an ICPDP officer.',
-  readOnly: 'Only the ICPDP head can change routing rules.',
+  readOnly: 'Only ICPDP officers can change routing rules.',
   active: 'Active rules (version {{version}})',
   noActive: 'No active rules: requests get no rule SLA.',
   draft: 'Draft (version {{version}})',
@@ -47,7 +47,7 @@ const vi: Record<keyof typeof en, string> = {
   title: 'Định tuyến phê duyệt',
   description:
     'Đặt SLA thẩm định cho hồ sơ khớp rule. Mọi hồ sơ đều do một cán bộ ICPDP quyết định ở một cấp.',
-  readOnly: 'Chỉ Trưởng ICPDP được sửa rule định tuyến.',
+  readOnly: 'Chỉ cán bộ ICPDP được sửa rule định tuyến.',
   active: 'Rule đang áp dụng (phiên bản {{version}})',
   noActive: 'Chưa có rule nào: hồ sơ không có SLA theo rule.',
   draft: 'Bản nháp (phiên bản {{version}})',

@@ -1,7 +1,7 @@
 import { ApiError, apiFetch } from '@/services/apiError'
 import type { AuthUser } from '@/services/auth'
 
-export type SystemRoleCode = 'ICPDP_OFFICER' | 'ICPDP_HEAD' | 'ATTENDANCE_UNLOCK'
+export type SystemRoleCode = 'ICPDP_OFFICER'
 
 export interface AdminUserClub {
   clubId: string

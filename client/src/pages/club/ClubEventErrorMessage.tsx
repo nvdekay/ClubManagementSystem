@@ -104,7 +104,7 @@ const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
   'account is not active': 'accountLocked',
   'account locked': 'accountLocked',
   'club not found': 'clubNotFound',
-  'attendance unlock role required': 'unlockRoleRequired',
+  'ICPDP officer role required': 'unlockRoleRequired',
   'active club membership required': 'membershipRequired',
   'overdue club obligations prevent proposal submission': 'obligationsGeneric',
   'file storage is not configured': 'storageUnavailable',

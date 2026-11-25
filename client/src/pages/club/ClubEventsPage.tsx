@@ -1421,7 +1421,7 @@ export function ClubEventsPage({
                 {t('clubEvents.finalize')}
               </AppButton>
             )}
-            {active.attendanceFinalized && auth.data?.systemRoles.includes('ATTENDANCE_UNLOCK') && (
+            {active.attendanceFinalized && auth.data?.systemRoles.includes('ICPDP_OFFICER') && (
               <AppButton onClick={() => openOperation('unlock')}>
                 {t('clubEvents.unlock')}
               </AppButton>
