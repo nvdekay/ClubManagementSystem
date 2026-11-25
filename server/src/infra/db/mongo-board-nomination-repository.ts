@@ -571,7 +571,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
     async listOpen() {
       const taskDocs = await tasks
         .find({ entityType: 'BOARD_NOMINATION', state: 'Open' })
-        .sort({ openedAt: 1, _id: 1 })
+        .sort({ openedAt: -1, _id: -1 })
         .lean()
       const results = await Promise.all(
         taskDocs.map((task) => detail(task.entityId as Types.ObjectId)),
