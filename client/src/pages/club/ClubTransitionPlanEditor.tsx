@@ -8,6 +8,7 @@ import { AppInput } from '@/components/ui/input/AppInput'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { appToast } from '@/components/ui/toast/AppToast'
 import { useWriteTransitionPlan } from '@/hooks/useClubTransitionPlans'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { cn } from '@/utils/cn'
@@ -113,6 +114,7 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
           ...(!submit ? { input } : {}),
         },
       })
+      appToast.success(t(submit ? 'clubTransitionPlans.submitted' : 'clubTransitionPlans.saved'))
     } catch {
       /* Lỗi của mutation được hiển thị bên dưới. */
     }
