@@ -10,7 +10,7 @@ import { DomainError } from '../../domain/errors.js'
 import type { TransitionObligation, TransitionTerm } from '../../domain/leadership-transition.js'
 import { assertEventWriteAccess } from './club-event-access.js'
 import { openAccountabilityTask } from './accountability-workflow.js'
-import { otherClubLeaderUserIds } from './club-board.js'
+import { LEADER_SEAT_FILTER, otherClubLeaderUserIds } from './club-board.js'
 import { clubOutstandingObligations } from './club-obligations.js'
 import { ucmsModels as m } from './ucms-models.js'
 type Doc = Record<string, unknown>
@@ -170,7 +170,7 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
           .clubPositions!.find({
             clubId: club,
             isActive: true,
-            $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+            ...LEADER_SEAT_FILTER,
           })
           .lean(),
         m.clubMemberships!.find({ clubId: club, state: 'Active' }).lean(),
@@ -307,7 +307,7 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
             .clubPositions!.find({
               clubId: new Types.ObjectId(clubId),
               isActive: true,
-              $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+              ...LEADER_SEAT_FILTER,
             })
             .session(session)
             .lean(),

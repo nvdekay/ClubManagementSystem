@@ -8,6 +8,7 @@ import type {
   PublicDiscoveryRepository,
   PublicEvent,
 } from '../../domain/public-discovery.js'
+import { LEADER_SEAT_FILTER } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 const clubStates = ['Active', 'Suspended']
@@ -223,7 +224,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
             endAt: { $gt: now },
           })
           .lean(),
-        positions.find({ clubId: clubObjectId, isBoardSeat: true, isActive: true }).lean(),
+        positions.find({ clubId: clubObjectId, isActive: true, ...LEADER_SEAT_FILTER }).lean(),
       ])
       if (!termDocs.length || !positionDocs.length) {
         return []

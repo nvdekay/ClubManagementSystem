@@ -12,6 +12,7 @@ import type {
 import { isBeforeToday } from '../../domain/membership.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
+import { LEADER_SEAT_FILTER } from './club-board.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function objectArray(value: unknown): Record<string, unknown>[] {
@@ -137,7 +138,7 @@ export function mongoMembershipRepository(): MembershipRepository {
           _id: { $in: docs.map((item) => item.positionId) },
           clubId,
           isActive: true,
-          $or: [{ isBoardSeat: true }, { isLeaderRole: true }],
+          ...LEADER_SEAT_FILTER,
         })
         .session(session ?? null),
     )
