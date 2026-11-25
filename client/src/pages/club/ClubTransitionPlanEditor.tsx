@@ -99,9 +99,10 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
         .split('\n')
         .filter((v) => v.trim())
         .map((description, n) => ({ id: String(n + 1), description })),
+      // Chỉ gửi ứng viên của các ghế hiện có; bản nháp cũ có thể còn ứng viên cho ghế đã bỏ.
       candidates: Object.entries(candidates)
-        .filter(([, id]) => id)
-        .map(([key, membershipId]) => ({ positionCode: key.split(':')[0]!, membershipId })),
+        .map(([key, membershipId]) => ({ positionCode: key.split(':')[0]!, membershipId }))
+        .filter((c) => c.membershipId && context.positions.some((p) => p.code === c.positionCode)),
       assignees: Object.fromEntries(Object.entries(assignees).filter(([, id]) => id)),
     }
     try {
