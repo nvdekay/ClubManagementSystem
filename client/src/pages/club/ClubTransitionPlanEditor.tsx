@@ -17,6 +17,25 @@ import type {
   TransitionInput,
   TransitionPlan,
 } from '@/services/clubTransitionPlans'
+// Nhãn hành động của từng mốc trong lịch sử kế hoạch chuyển giao
+function historyLabel(action: string) {
+  switch (action) {
+    case 'TRANSITION_PLAN_CREATED':
+      return 'clubTransitionPlans.historyCreated' as const
+    case 'TRANSITION_PLAN_SAVED':
+      return 'clubTransitionPlans.historySaved' as const
+    case 'TRANSITION_PLAN_SUBMITTED':
+      return 'clubTransitionPlans.historySubmitted' as const
+    case 'TRANSITION_PLAN_CLAIMED':
+      return 'clubTransitionPlans.historyClaimed' as const
+    case 'TRANSITION_PLAN_RETURNED':
+      return 'clubTransitionPlans.historyReturned' as const
+    case 'TRANSITION_PLAN_CONFIRMED':
+      return 'clubTransitionPlans.historyConfirmed' as const
+    default:
+      return 'clubTransitionPlans.historyOther' as const
+  }
+}
 interface Props {
   clubId: string
   csrfToken: string
@@ -282,21 +301,37 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
           <summary className="font-medium text-primary-app">
             {t('clubTransitionPlans.history')}
           </summary>
-          {plan.history.map((h, n) => (
-            <div key={n} className="my-3 border-t border-border-app py-2">
-              <p>
-                {new Date(h.at).toLocaleString(i18n.language)} · {h.reason}
-              </p>
-              {h.snapshot && (
-                <>
-                  <p>{h.snapshot.toTerm.name}</p>
-                  <p className="whitespace-pre-wrap">
-                    {h.snapshot.handoverItems.map((i) => i.description).join('\n')}
+          {[...plan.history]
+            .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+            .map((h, n) => (
+              <div key={n} className="my-3 space-y-1 border-t border-border-app py-2">
+                <p>
+                  <span className="font-medium text-text-app">{t(historyLabel(h.action))}</span>
+                  <span className="text-muted-app">
+                    {' · '}
+                    {new Date(h.at).toLocaleString(i18n.language)}
+                  </span>
+                </p>
+                {h.reason && (
+                  <p className="text-muted-app">
+                    {t('clubTransitionPlans.historyReason')}: {h.reason}
                   </p>
-                </>
-              )}
-            </div>
-          ))}
+                )}
+                {h.snapshot && (
+                  <>
+                    <p className="text-muted-app">
+                      {t('clubTransitionPlans.historyTerm')}: {h.snapshot.toTerm.name}
+                    </p>
+                    {h.snapshot.handoverItems.length > 0 && (
+                      <p className="whitespace-pre-wrap text-muted-app">
+                        {t('clubTransitionPlans.historyHandover')}:{'\n'}
+                        {h.snapshot.handoverItems.map((i) => i.description).join('\n')}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
         </details>
       )}
     </section>
