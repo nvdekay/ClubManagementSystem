@@ -75,7 +75,6 @@ describe.skipIf(!uri)('Mongo auth repository', () => {
     const actorId = new Types.ObjectId()
     const targetId = new Types.ObjectId()
     const officerRoleId = new Types.ObjectId()
-    const attendanceRoleId = new Types.ObjectId()
     await ucmsModels.users!.create([
       {
         _id: actorId,
@@ -97,14 +96,6 @@ describe.skipIf(!uri)('Mongo auth repository', () => {
         _id: officerRoleId,
         code: 'ICPDP_OFFICER',
         name: 'Officer',
-        scope: 'system',
-        permissionCodes: [],
-        isSystem: true,
-      },
-      {
-        _id: attendanceRoleId,
-        code: 'ATTENDANCE_UNLOCK',
-        name: 'Attendance unlock',
         scope: 'system',
         permissionCodes: [],
         isSystem: true,
@@ -137,14 +128,14 @@ describe.skipIf(!uri)('Mongo auth repository', () => {
       sessions,
       actor,
       targetId.toString(),
-      'ATTENDANCE_UNLOCK',
+      'ICPDP_OFFICER',
       'grant',
       undefined,
       now,
     )
     await setAccountLock(repo, sessions, actor, targetId.toString(), true, 'manual review', now)
 
-    expect(await repo.systemRoles(targetId.toString())).toContain('ATTENDANCE_UNLOCK')
+    expect(await repo.systemRoles(targetId.toString())).toContain('ICPDP_OFFICER')
     expect(await repo.findUser(targetId.toString())).toMatchObject({
       accountState: 'Locked',
       lockReason: 'manual review',
