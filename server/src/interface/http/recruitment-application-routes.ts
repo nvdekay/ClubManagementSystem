@@ -1,4 +1,4 @@
-import { Router, raw, type Response } from 'express'
+import { Router, json, raw, type Response } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
@@ -293,20 +293,26 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     )
   })
   // Lưu chỉnh sửa bản nháp đơn ứng tuyển
-  router.patch('/applications/recruitment/:id/draft', authGuard(guard), async (req, res) => {
-    ok(
-      res,
-      publicApplication(
-        await saveRecruitmentApplicationDraft(
-          deps.repo,
-          actor(res),
-          parsed(id, req.params.id),
-          parsed(updateRecruitmentApplicationBody, req.body),
-          new Date(),
+  // Tới 30 câu trả lời x 10.000 ký tự nên vượt giới hạn JSON 100kb chung.
+  router.patch(
+    '/applications/recruitment/:id/draft',
+    authGuard(guard),
+    json({ limit: '1mb' }),
+    async (req, res) => {
+      ok(
+        res,
+        publicApplication(
+          await saveRecruitmentApplicationDraft(
+            deps.repo,
+            actor(res),
+            parsed(id, req.params.id),
+            parsed(updateRecruitmentApplicationBody, req.body),
+            new Date(),
+          ),
         ),
-      ),
-    )
-  })
+      )
+    },
+  )
   // Tải tệp đính kèm lên đơn ứng tuyển
   router.post(
     '/applications/recruitment/:id/attachments',

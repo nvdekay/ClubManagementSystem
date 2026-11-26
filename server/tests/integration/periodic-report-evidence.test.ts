@@ -289,4 +289,33 @@ describe.skipIf(!uri)('Periodic report evidence images', () => {
     expect(detail.body.data.evidence[0].url).toBe(legacyDataUrl)
     expect(detail.body.data.evidenceUrls[reference]).toMatch(/signed=1$/)
   })
+
+  it('4. caps JSON bodies at 100kb except on routes that parse larger bodies after auth', async () => {
+    const tooLarge = await call(leader, 'POST', reports, { periodCode: 'x'.repeat(150_000) })
+    expect(tooLarge.status).toBe(413)
+
+    const members = Array.from({ length: 300 }, (_, index) => ({
+      fullName: `Nguyễn Văn Thành Viên Số ${index} ${'đ'.repeat(160)}`,
+      studentCode: `HE${String(index).padStart(6, '0')}`,
+      email: `member${index}@evidence.edu`,
+      activityScore: 8,
+    }))
+    const body = { revision: 0, members }
+    expect(Buffer.byteLength(JSON.stringify(body))).toBeGreaterThan(100 * 1024)
+
+    const anonymous = await fetch(`${base}/api/v1${reports}/${reportId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    expect(anonymous.status).toBe(401)
+
+    const current = (await m.periodicReports!.findById(reportId).lean()) as { __v?: number }
+    const saved = await call(leader, 'PUT', `${reports}/${reportId}`, {
+      ...body,
+      revision: current.__v ?? 0,
+    })
+    expect(saved.status).toBe(200)
+    expect(saved.body.data.members).toHaveLength(300)
+  })
 })

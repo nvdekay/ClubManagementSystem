@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router, json, type Response } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { AuthRepository } from '../../domain/auth.js'
@@ -238,20 +238,26 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   )
 
   // Lưu ghi chú của phiên bảo vệ
-  router.put('/admin/event-proposals/:id/defense/notes', authGuard(guard), async (req, res) => {
-    const body = parsed(defenseNoteBody, req.body)
-    ok(
-      res,
-      await saveDefenseNote(
-        deps.repo,
-        deps.authRepo,
-        actor(res),
-        parsed(id, req.params.id),
-        body.content,
-        new Date(),
-      ),
-    )
-  })
+  // Ghi chú tới 50.000 ký tự nên vượt giới hạn JSON 100kb chung.
+  router.put(
+    '/admin/event-proposals/:id/defense/notes',
+    authGuard(guard),
+    json({ limit: '256kb' }),
+    async (req, res) => {
+      const body = parsed(defenseNoteBody, req.body)
+      ok(
+        res,
+        await saveDefenseNote(
+          deps.repo,
+          deps.authRepo,
+          actor(res),
+          parsed(id, req.params.id),
+          body.content,
+          new Date(),
+        ),
+      )
+    },
+  )
 
   // ICPDP kết thúc phiên bảo vệ
   router.post('/admin/event-proposals/:id/defense/end', authGuard(guard), async (req, res) => {

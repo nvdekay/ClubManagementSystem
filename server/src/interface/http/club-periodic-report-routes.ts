@@ -1,4 +1,4 @@
-import { Router, raw } from 'express'
+import { Router, json, raw } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { AuthRepository } from '../../domain/auth.js'
@@ -178,24 +178,30 @@ export function clubPeriodicReportRoutes(deps: {
     )
   })
   // Cập nhật nội dung báo cáo định kỳ
-  router.put('/clubs/:clubId/periodic-reports/:id', authGuard(guard), async (req, res) => {
-    const { clubId, id } = parse(path, req.params)
-    const { revision, ...input } = parse(clubPeriodicDraftBody, req.body)
-    ok(
-      res,
-      await changeClubPeriodicReport(
-        deps.repo,
-        deps.access,
-        res.locals.actor as AccessActor,
-        clubId,
-        id!,
-        revision,
-        input,
-        new Date(),
-        deps.files,
-      ),
-    )
-  })
+  // Bản nháp đầy đủ (500 thành viên, 200 sự kiện) vượt giới hạn JSON 100kb chung.
+  router.put(
+    '/clubs/:clubId/periodic-reports/:id',
+    authGuard(guard),
+    json({ limit: '2mb' }),
+    async (req, res) => {
+      const { clubId, id } = parse(path, req.params)
+      const { revision, ...input } = parse(clubPeriodicDraftBody, req.body)
+      ok(
+        res,
+        await changeClubPeriodicReport(
+          deps.repo,
+          deps.access,
+          res.locals.actor as AccessActor,
+          clubId,
+          id!,
+          revision,
+          input,
+          new Date(),
+          deps.files,
+        ),
+      )
+    },
+  )
   // Nộp báo cáo định kỳ cho ICPDP
   router.post('/clubs/:clubId/periodic-reports/:id/submit', authGuard(guard), async (req, res) => {
     const { clubId, id } = parse(path, req.params)
