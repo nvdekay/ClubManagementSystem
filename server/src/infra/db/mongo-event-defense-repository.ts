@@ -278,6 +278,9 @@ export function mongoEventDefenseRepository(
             'defense session can only be scheduled for an event under review or pending re-defense',
           )
         }
+        // Ghi __v của sự kiện trước khi kiểm tra phiên đang mở để hai lượt lên lịch đồng thời
+        // tuần tự hoá trên cùng document thay vì cùng tạo một phiên active
+        await events.updateOne({ _id: id }, { $inc: { __v: 1 } }, { session })
         const existingActive = await sessions
           .findOne({
             eventId: id,

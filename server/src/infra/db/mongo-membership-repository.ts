@@ -522,9 +522,13 @@ export function mongoMembershipRepository(): MembershipRepository {
       const userId = new Types.ObjectId(input.userId)
       let requestId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
+        // Ghi __v của membership trước để hai đơn rút đồng thời tuần tự hoá trên cùng document
         const membership = await memberships
-          .findOne({ _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } })
-          .session(session)
+          .findOneAndUpdate(
+            { _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } },
+            { $inc: { __v: 1 } },
+            { session },
+          )
           .lean()
         if (!membership) {
           throw new DomainError('active membership not found', 'not_found')
