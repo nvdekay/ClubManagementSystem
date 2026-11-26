@@ -75,6 +75,10 @@ chuyển Upcoming, Ongoing hoặc Completed; không gọi claim khi mở từ m�
 CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên quan, chứng cứ) và `ViolationDetailPage`: chứng
 cứ, giải trình của CLB, quyết định, biện pháp khắc phục, lịch sử, và khung "Bước tiếp theo" chỉ hiện những bước
 hợp lệ ở trạng thái hiện tại.
+Hai route này dùng chung `ViolationGate` (đăng nhập + quyền ICPDP). Danh sách (`ViolationList`, kèm
+`ViolationOpenCaseForm`) đếm số hồ sơ của mọi tab trong một lượt, lọc bằng `useMemo` và phân trang 20 hồ sơ/trang
+bằng `AppPagination`. Chi tiết (`ViolationDetailView`) ghép `ViolationEvidenceList`, `ViolationActionsSection` và
+`ViolationNextSteps` (mỗi bước dùng `ViolationStep`, tự giữ state form); nhãn/màu/ngày nằm trong `violationFormat.ts`.
 
 `SchoolEventsPage` (UC53) gồm `SchoolEventsPage` (danh sách sự kiện cấp trường kèm số CLB nhận lời/chưa trả
 lời, form tạo: thời gian, phòng trong danh mục hoặc nơi khác với cảnh báo trùng lịch BR15, số chỗ, CLB mời,
