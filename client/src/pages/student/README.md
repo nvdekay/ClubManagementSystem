@@ -24,5 +24,8 @@ liệt kê mọi yêu cầu rời CLB đã gửi và trạng thái của chúng.
 
 `ApplicationsPage` (UC07, route `/workspace/applications`) liệt kê hồ sơ thành lập CLB của Student;
 `ApplicationEditorPage` (`/workspace/applications/new` và `/workspace/applications/:id`) là form lập/sửa draft và
-nộp hồ sơ theo policy hiện hành. `RecruitmentApplicationsPage` (UC17, `/workspace/recruitment`) liệt kê các đợt
+nộp hồ sơ theo policy hiện hành; các phần chỉ trang này dùng: `ApplicationStepNav`, `ApplicationClubStep`,
+`ApplicationFoundersStep` (tự tra email sáng lập viên), `ApplicationFileCard`, `ApplicationReviewStep`, `ApplicationSummary`
++ `ApplicationFounderRow`, `ApplicationFieldLabel`, `ApplicationDecisionFeedback`, `ApplicationVersionHistory`; nhãn, quy tắc
+tệp và ánh xạ lỗi → bước nằm trong `applicationEditorFormat.ts`. `RecruitmentApplicationsPage` (UC17, `/workspace/recruitment`) liệt kê các đợt
 tuyển đang mở và đơn ứng tuyển của chính Student, dẫn tới `RecruitmentApplicationPage` (`/workspace/recruitment/:campaignId`).
