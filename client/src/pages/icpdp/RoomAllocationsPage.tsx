@@ -33,6 +33,7 @@ import {
 } from '@/services/roomAllocations'
 import { cn } from '@/utils/cn'
 import { WEEKDAYS, slotLabel, weekdayLabel } from '@/utils/roomSchedule'
+import { dateFormatter } from '@/utils/formatDate'
 
 const statuses = ['active', 'revoked', 'all'] as const
 type Status = (typeof statuses)[number]
@@ -123,24 +124,16 @@ export function RoomAllocationsPage() {
     () => [...new Set(rooms.map((item) => item.location))].sort((a, b) => a.localeCompare(b, 'vi')),
     [rooms],
   )
-  const date = useMemo(
-    () =>
-      new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
-        dateStyle: 'medium',
-        timeZone: 'Asia/Ho_Chi_Minh',
-      }),
-    [i18n.language],
-  )
+  const date = useMemo(() => dateFormatter(i18n.language, { dateStyle: 'medium' }), [i18n.language])
   const dateTime = useMemo(
     () =>
-      new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
+      dateFormatter(i18n.language, {
         weekday: 'short',
         day: 'numeric',
         month: 'numeric',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Asia/Ho_Chi_Minh',
       }),
     [i18n.language],
   )

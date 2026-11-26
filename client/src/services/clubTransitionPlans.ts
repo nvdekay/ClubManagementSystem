@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface TransitionInput {
   toTerm: { name: string; startAt: string; endAt: string }
   candidates: { positionCode: string; membershipId: string }[]
@@ -20,17 +20,12 @@ export interface TransitionContext {
   obligations: { id: string; description: string }[]
   plans: TransitionPlan[]
 }
-// Gọi API /clubs/:clubId/transition-plans và trả về data, ném ApiError nếu lỗi
-async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const r = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/transition-plans${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!r.ok) {
-    const b = (await r.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(b?.message ?? `HTTP ${r.status}`)
-  }
-  return ((await r.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(clubId: string, path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(
+    `/api/v1/clubs/${encodeURIComponent(clubId)}/transition-plans${path}`,
+    options,
+  )
 }
 // GET ngữ cảnh và kế hoạch chuyển giao nhiệm kỳ của CLB
 export function fetchTransitionContext(
@@ -48,10 +43,10 @@ export function writeTransitionPlan(
   const path = action.id ? `/${encodeURIComponent(action.id)}${action.input ? '' : '/submit'}` : ''
   return request(clubId, path, {
     method: action.id && action.input ? 'PUT' : 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify({
+    csrfToken,
+    body: {
       ...(action.input ?? {}),
       ...(action.revision !== undefined ? { revision: action.revision } : {}),
-    }),
+    },
   })
 }

@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure } from '@/services/apiRequest'
 export interface ReportDeadline {
   reportType: string
   dueDaysAfterPeriodEnd: number
@@ -113,20 +114,14 @@ export class PolicyConflictError extends ApiError {
     message: string,
     readonly affectedRecords: PolicyDecisionImpact[],
   ) {
-    super(message)
+    super(message, 409)
     this.name = 'PolicyConflictError'
   }
 }
 
 // GET /admin/policies: các chính sách và phiên bản
 export async function fetchPolicies(signal: AbortSignal): Promise<PolicyList> {
-  const response = await apiFetch('/api/v1/admin/policies', { signal, credentials: 'same-origin' })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: PolicyList } = await response.json()
-  return body.data
+  return apiRequest<PolicyList>('/api/v1/admin/policies', { signal })
 }
 
 // POST /admin/policies: tạo phiên bản chính sách mới
@@ -134,25 +129,21 @@ export async function createPolicy(
   input: CreatePolicyInput,
   csrfToken: string,
 ): Promise<PolicyVersion> {
-  const response = await apiFetch('/api/v1/admin/policies', {
+  return apiRequest<PolicyVersion>('/api/v1/admin/policies', {
     method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(input),
+    csrfToken,
+    body: input,
+    toError: toPolicyError,
   })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { affectedRecords?: PolicyDecisionImpact[] }
-    } | null
-    if (response.status === 409 && Array.isArray(body?.details?.affectedRecords)) {
-      throw new PolicyConflictError(
-        body.message ?? 'Policy conflicts with existing decisions',
-        body.details.affectedRecords,
-      )
-    }
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
+}
+
+// A 409 that lists affected records becomes PolicyConflictError; other failures stay ApiError
+function toPolicyError(failure: ApiFailure): Error {
+  const affected = (failure.details as { affectedRecords?: PolicyDecisionImpact[] } | undefined)
+    ?.affectedRecords
+  if (failure.status === 409 && Array.isArray(affected)) {
+    const message = typeof failure.body?.message === 'string' ? failure.body.message : undefined
+    return new PolicyConflictError(message ?? 'Policy conflicts with existing decisions', affected)
   }
-  const body: { data: PolicyVersion } = await response.json()
-  return body.data
+  return new ApiError(failure.message, failure.status)
 }

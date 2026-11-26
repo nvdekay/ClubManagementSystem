@@ -8,6 +8,7 @@ import { ClubDashboard } from '@/components/custom/ClubDashboard'
 import { IcpdpDashboard } from '@/components/custom/IcpdpDashboard'
 import { useDashboard } from '@/hooks/useDashboard'
 import type { DashboardContext, DashboardPanelKey } from '@/services/dashboard'
+import { formatDate } from '@/utils/formatDate'
 
 // Chọn trang đích khi bấm vào một panel dashboard
 function panelHref(key: DashboardPanelKey, context: DashboardContext): string | null {
@@ -123,10 +124,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
   }
 
   const generated = t('dashboard.generatedAt', {
-    time: new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(dashboard.data.generatedAt)),
+    time: formatDate(dashboard.data.generatedAt, i18n.language),
   })
   // ICPDP và Club Leader xem tổng quan dạng biểu đồ; sinh viên và Club Member vẫn dùng các thẻ tóm tắt.
   const charts = dashboard.data.icpdpCharts ?? dashboard.data.clubCharts

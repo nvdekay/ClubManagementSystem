@@ -20,7 +20,7 @@ import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { isNotAMember, useMemberSpace, useMembershipAction } from '@/hooks/useMemberSpace'
 import type { Locale } from '@/i18n'
 import type { MemberSpace } from '@/services/memberSpace'
-import { formatDate, formatDay } from '@/utils/formatDate'
+import { formatDate, formatDay, vnDateInput } from '@/utils/formatDate'
 
 const registrationLabels = {
   Confirmed: 'memberSpace.regConfirmed',
@@ -31,12 +31,7 @@ const registrationLabels = {
 // Ngày hôm nay (YYYY-MM-DD) theo múi giờ Việt Nam
 /** Hôm nay theo giờ Việt Nam (server so sánh ngày rời CLB theo lịch Asia/Ho_Chi_Minh). */
 function todayInVietnam(): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
+  return vnDateInput()
 }
 
 // Khối nội dung có tiêu đề trong không gian thành viên

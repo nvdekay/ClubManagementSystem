@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface ClubInvitation {
   id: string
   clubId: string
@@ -22,17 +22,9 @@ export interface InvitationResponse {
   responseNote?: string
   responseDetails?: Record<string, string | number>
 }
-// Gọi API /clubs/:clubId/invitations và trả về data, ném ApiError nếu lỗi
-async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
-  }
-  return ((await res.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(clubId: string, path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, options)
 }
 // GET lời mời tham gia sự kiện trường gửi tới CLB
 export function fetchClubInvitations(
@@ -50,7 +42,7 @@ export function respondToInvitation(
 ): Promise<ClubInvitation> {
   return request(clubId, `/${encodeURIComponent(id)}/response`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(input),
+    csrfToken,
+    body: input,
   })
 }

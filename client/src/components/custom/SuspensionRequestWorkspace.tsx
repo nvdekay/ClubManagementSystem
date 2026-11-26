@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDay, vnDayBoundary, vnTomorrowInput } from '@/utils/formatDate'
+import { formatDate, formatDay, vnDayBoundary, vnTomorrowInput } from '@/utils/formatDate'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
@@ -12,6 +12,7 @@ import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { useSuspensionRequests, useSuspensionRequestAction } from '@/hooks/useSuspensionRequests'
 interface Props {
@@ -21,16 +22,8 @@ interface Props {
 export function SuspensionRequestWorkspace({ clubId }: Props) {
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const allowed = Boolean(
-    clubId
-      ? auth.data?.workspaces.some(
-          (w) =>
-            w.kind === 'club' &&
-            w.clubId === clubId &&
-            w.permissions.includes('club.suspension.request'),
-        )
-      : auth.data?.systemRoles.includes('ICPDP_OFFICER'),
-  )
+  const canRequest = useWorkspacePermission(clubId, 'club.suspension.request')
+  const allowed = clubId ? canRequest : Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const query = useSuspensionRequests(clubId, allowed)
   const action = useSuspensionRequestAction(clubId)
   const [reason, setReason] = useState('')
@@ -191,7 +184,7 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
           <ul className="list-inside list-disc">
             {query.data.impacts.map((i) => (
               <li key={i.id}>
-                {i.title} · {new Date(i.startAt).toLocaleString(i18n.language)}
+                {i.title} · {formatDate(i.startAt, i18n.language)}
               </li>
             ))}
           </ul>

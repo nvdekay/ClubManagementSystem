@@ -10,6 +10,7 @@ import { AppInput } from '@/components/ui/input/AppInput'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubSettings, useClubSettingsAction } from '@/hooks/useClubSettings'
 import { cn } from '@/utils/cn'
 import {
@@ -60,10 +61,7 @@ export function ClubSettingsPage() {
   const { t } = useTranslation()
   const askConfirm = useConfirm()
   const auth = useAuth()
-  const workspace = auth.data?.workspaces.find(
-    (item) => item.kind === 'club' && item.clubId === clubId,
-  )
-  const canManage = Boolean(workspace?.permissions.includes('club.profile.manage'))
+  const canManage = useWorkspacePermission(clubId, 'club.profile.manage')
   const settings = useClubSettings(clubId, canManage)
   const action = useClubSettingsAction()
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null)

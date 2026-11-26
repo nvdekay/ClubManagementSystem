@@ -19,6 +19,7 @@ import {
 } from '@/hooks/useEventProposalReviews'
 import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL } from '@/services/clubEvents'
 import { formatBytes, proposalFileType } from '@/utils/proposalFile'
+import { formatDate } from '@/utils/formatDate'
 
 /** Chỉ tải danh sách chờ duyệt sau khi xác nhận người dùng có vai trò ICPDP. */
 export function EventProposalQueuePage() {
@@ -57,10 +58,7 @@ export function EventProposalQueuePage() {
 
   /** Định dạng thời gian trong danh sách theo ngôn ngữ giao diện đang chọn. */
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
 
   /** Dịch mức rủi ro đã biết; giữ nguyên giá trị khác do server trả về. */

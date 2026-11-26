@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export interface RecruitmentSelectionStep {
   name: string
   description?: string
@@ -84,34 +85,14 @@ export class CampaignApiError extends ApiError {
   }
 }
 
-// Gọi API /api/v1 và trả về data, ném lỗi kèm chi tiết nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: unknown
-    } | null
-    throw new CampaignApiError(
-      body?.message ?? `HTTP ${response.status}`,
-      response.status,
-      body?.details,
-    )
-  }
-  const body: { data: T } = await response.json()
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toCampaignError })
 }
 
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toCampaignError(failure: ApiFailure): Error {
+  return new CampaignApiError(failure.message, failure.status, failure.details)
 }
 
 // GET các đợt tuyển của CLB
@@ -135,10 +116,11 @@ export function createRecruitmentCampaign(
   input: RecruitmentCampaignInput,
   csrfToken: string,
 ) {
-  return request<CampaignResult>(
-    `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns`,
-    mutation('POST', csrfToken, input),
-  )
+  return request<CampaignResult>(`/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // Cập nhật đợt tuyển của CLB
@@ -150,7 +132,7 @@ export function updateRecruitmentCampaign(
 ) {
   return request<CampaignResult>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}`,
-    mutation('PATCH', csrfToken, input),
+    { method: 'PATCH', csrfToken, body: input },
   )
 }
 
@@ -163,7 +145,7 @@ export function publishRecruitmentCampaign(
 ) {
   return request<CampaignResult>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/publish`,
-    mutation('POST', csrfToken, { confirmOverlap }),
+    { method: 'POST', csrfToken, body: { confirmOverlap } },
   )
 }
 
@@ -171,6 +153,6 @@ export function publishRecruitmentCampaign(
 export function cancelRecruitmentCampaign(clubId: string, campaignId: string, csrfToken: string) {
   return request<RecruitmentCampaign>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/cancel`,
-    mutation('POST', csrfToken),
+    { method: 'POST', csrfToken },
   )
 }

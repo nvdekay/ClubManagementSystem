@@ -13,6 +13,7 @@ import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { appToast } from '@/components/ui/toast/AppToast'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubComplaints, useRespondToComplaint } from '@/hooks/useComplaints'
 import type { ComplaintEvidence, ComplaintForClub } from '@/services/complaints'
 
@@ -22,11 +23,7 @@ export function ClubComplaintsPage() {
   const { clubId = '' } = useParams()
   const { t } = useTranslation()
   const auth = useAuth()
-  const allowed = Boolean(
-    auth.data?.workspaces.some(
-      (item) => item.clubId === clubId && item.permissions.includes('club.complaint.respond'),
-    ),
-  )
+  const allowed = useWorkspacePermission(clubId, 'club.complaint.respond')
   const inbox = useClubComplaints(clubId, allowed)
   if (auth.isPending) {
     return <AppSkeleton className="h-48 w-full" />

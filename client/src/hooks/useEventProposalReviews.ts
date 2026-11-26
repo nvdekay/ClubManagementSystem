@@ -22,7 +22,6 @@ export function useEventProposalQueue(enabled: boolean, view: 'pending' | 'appro
     queryKey: [...eventProposalKey, 'queue', view],
     queryFn: ({ signal }) => fetchEventProposalQueue(signal, view),
     enabled,
-    retry: false,
   })
 }
 
@@ -32,7 +31,6 @@ export function useEventProposal(id: string | undefined, enabled: boolean) {
     queryKey: [...eventProposalKey, 'detail', id],
     queryFn: ({ signal }) => fetchEventProposal(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 
@@ -100,7 +98,6 @@ export function useReviewProposalPreview(
     queryKey: [...eventProposalKey, 'document-preview', id, revisionNo, documentId],
     queryFn: ({ signal }) => fetchReviewProposalPreviewFile(id, revisionNo, signal),
     enabled: enabled && Boolean(id && revisionNo && documentId),
-    retry: false,
     staleTime: 5 * 60_000,
   })
 }

@@ -21,6 +21,5 @@ export function useClubBoardHistory(clubId: string | undefined, enabled: boolean
     queryKey: [...dashboardKeyRoot, 'board-history', clubId],
     queryFn: ({ signal }) => fetchClubBoardHistory(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }

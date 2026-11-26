@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface TransitionTerm {
   id: string
   name: string
@@ -62,24 +62,9 @@ export interface TransitionDecisionInput {
   followUpObligationIds: string[]
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body = (await response.json()) as { data: T }
-  return body.data
-}
-
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function mutation(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 
 // GET hàng đợi chuyển giao lãnh đạo CLB cho ICPDP
@@ -98,7 +83,7 @@ export function fetchLeadershipTransition(id: string, signal: AbortSignal) {
 export function claimLeadershipTransition(id: string, csrfToken: string) {
   return request<LeadershipTransition>(
     `/admin/leadership-transitions/${encodeURIComponent(id)}/claim`,
-    mutation(csrfToken),
+    { method: 'POST', csrfToken },
   )
 }
 
@@ -110,6 +95,6 @@ export function decideLeadershipTransition(
 ) {
   return request<LeadershipTransition>(
     `/admin/leadership-transitions/${encodeURIComponent(id)}/decision`,
-    mutation(csrfToken, input),
+    { method: 'POST', csrfToken, body: input },
   )
 }

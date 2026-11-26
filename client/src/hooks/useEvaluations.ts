@@ -16,7 +16,6 @@ export function useEvaluationOverview(period: string | undefined, enabled: boole
     queryKey: [...evaluationKey, 'overview', period ?? ''],
     queryFn: ({ signal }) => fetchEvaluationOverview(period, signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -26,7 +25,6 @@ export function useEvaluation(id: string | undefined, enabled: boolean) {
     queryKey: [...evaluationKey, 'detail', id],
     queryFn: ({ signal }) => fetchEvaluation(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 

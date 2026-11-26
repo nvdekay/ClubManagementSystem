@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type EventRegistrationState = 'Confirmed' | 'Waitlisted' | 'Cancelled'
 export type EventRegistrationAnswer = string | string[]
 
@@ -60,24 +61,14 @@ export class EventRegistrationError extends ApiError {
   }
 }
 
-// Gọi API /api/v1 và trả về data, ném lỗi kèm status nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new EventRegistrationError(body?.message ?? `HTTP ${response.status}`, response.status)
-  }
-  const body = (await response.json()) as { data: T }
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRegistrationError })
 }
 
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function mutation(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toRegistrationError(failure: ApiFailure): Error {
+  return new EventRegistrationError(failure.message, failure.status)
 }
 
 // GET /events/:id/registration: điều kiện đăng ký sự kiện
@@ -98,16 +89,17 @@ export function registerForEvent(
   answers: Record<string, EventRegistrationAnswer>,
   csrfToken: string,
 ) {
-  return request<EventRegistration>(
-    `/events/${encodeURIComponent(eventId)}/registrations`,
-    mutation(csrfToken, { answers }),
-  )
+  return request<EventRegistration>(`/events/${encodeURIComponent(eventId)}/registrations`, {
+    method: 'POST',
+    csrfToken,
+    body: { answers },
+  })
 }
 
 // POST /cancel: huỷ đăng ký sự kiện
 export function cancelEventRegistration(registrationId: string, csrfToken: string) {
   return request<EventRegistration>(
     `/event-registrations/${encodeURIComponent(registrationId)}/cancel`,
-    mutation(csrfToken),
+    { method: 'POST', csrfToken },
   )
 }

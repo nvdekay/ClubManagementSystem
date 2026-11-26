@@ -15,7 +15,6 @@ export function useLeadershipTransitionQueue(enabled: boolean) {
     queryKey: [...key, 'queue'],
     queryFn: ({ signal }) => fetchLeadershipTransitionQueue(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -25,7 +24,6 @@ export function useLeadershipTransition(id: string | undefined, enabled: boolean
     queryKey: [...key, 'detail', id],
     queryFn: ({ signal }) => fetchLeadershipTransition(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 

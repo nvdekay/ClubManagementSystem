@@ -43,7 +43,6 @@ export function useMyRecruitmentApplications(enabled: boolean) {
     queryKey: applicationListKey(),
     queryFn: ({ signal }) => fetchMyRecruitmentApplications(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -53,7 +52,6 @@ export function useMyCampaignApplication(campaignId: string | undefined, enabled
     queryKey: campaignApplicationKey(campaignId),
     queryFn: ({ signal }) => fetchMyCampaignApplication(campaignId!, signal),
     enabled: enabled && Boolean(campaignId),
-    retry: false,
   })
 }
 
@@ -63,7 +61,6 @@ export function useMyRecruitmentApplication(applicationId: string | undefined, e
     queryKey: applicationDetailKey(applicationId),
     queryFn: ({ signal }) => fetchMyRecruitmentApplication(applicationId!, signal),
     enabled: enabled && Boolean(applicationId),
-    retry: false,
   })
 }
 
@@ -76,7 +73,6 @@ export function useApplicationsForReview(
     queryKey: [...recruitmentApplicationKey, 'review', clubId, campaignId],
     queryFn: ({ signal }) => fetchApplicationsForReview(clubId!, campaignId!, signal),
     enabled: Boolean(clubId && campaignId),
-    retry: false,
   })
 }
 
@@ -145,7 +141,6 @@ export function useCandidateEvaluations(
     queryKey: evaluationsKey(clubId, campaignId),
     queryFn: ({ signal }) => fetchCandidateEvaluations(clubId!, campaignId!, signal),
     enabled: Boolean(clubId && campaignId),
-    retry: false,
   })
 }
 

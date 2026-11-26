@@ -189,3 +189,44 @@ export function bookingsScheduleError(
   }
   return null
 }
+
+/** Thao tác mở trong hộp thoại của trang sự kiện CLB. */
+export type ClubEventOperation =
+  'publish' | 'cancel' | 'reschedule' | 'capacity' | 'check-in' | 'correct' | 'unlock'
+
+/** Đề xuất đã được duyệt: huỷ phải gửi yêu cầu cho ICPDP thay vì huỷ ngay. */
+export function isApprovedProposalState(state: string) {
+  return ['Approved', 'Upcoming', 'Ongoing'].includes(state)
+}
+
+// Tiêu đề hộp thoại thao tác theo loại thao tác và trạng thái sự kiện
+export function operationTitle(
+  t: TFunction,
+  operation: ClubEventOperation | null,
+  state: string | undefined,
+) {
+  return t(
+    `clubEvents.${operation === 'check-in' ? 'checkin' : operation === 'capacity' ? 'maxParticipants' : operation === 'cancel' && state && isApprovedProposalState(state) ? 'requestCancel' : (operation ?? 'details')}`,
+  )
+}
+
+// Tông màu huy hiệu của trạng thái buổi bảo vệ đề xuất
+export function defenseStateTone(state: string): AppBadgeTone {
+  if (state === 'CONFIRMED' || state === 'IN_PROGRESS') {
+    return 'success'
+  }
+  if (state === 'RESCHEDULE_REQUESTED') {
+    return 'warning'
+  }
+  return state === 'NO_SHOW' ? 'danger' : 'info'
+}
+
+// Nhãn kết quả một quyết định ICPDP trên đề xuất
+export function decisionOutcomeLabel(t: TFunction, outcome: string) {
+  if (outcome === 'Re-defense') {
+    return t('eventDefense.outcomeReDefense')
+  }
+  return t(
+    `eventReviews.${outcome === 'Approve' ? 'approve' : outcome === 'Reject' ? 'reject' : 'requestRevision'}`,
+  )
+}

@@ -18,7 +18,6 @@ export function useBoardNominationContext(clubId: string | undefined, enabled: b
     queryKey: [...boardNominationKey, 'context', clubId],
     queryFn: ({ signal }) => fetchBoardNominationContext(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 
@@ -28,7 +27,6 @@ export function useClubBoardNominations(clubId: string | undefined, enabled: boo
     queryKey: [...boardNominationKey, 'club', clubId],
     queryFn: ({ signal }) => fetchClubBoardNominations(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 
@@ -38,7 +36,6 @@ export function useBoardNominationQueue(enabled: boolean) {
     queryKey: [...boardNominationKey, 'queue'],
     queryFn: ({ signal }) => fetchBoardNominationQueue(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -48,7 +45,6 @@ export function useBoardNomination(id: string | undefined, enabled: boolean) {
     queryKey: [...boardNominationKey, 'detail', id],
     queryFn: ({ signal }) => fetchBoardNomination(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 

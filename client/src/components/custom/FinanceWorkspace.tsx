@@ -9,6 +9,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubFinances } from '@/hooks/useAccountability'
 import type { AccountabilityContext } from '@/services/accountability'
 
@@ -54,15 +55,12 @@ export function FinanceWorkspace({
     )
   }
 
+  const canRecordExpenses = useWorkspacePermission(
+    context.kind === 'club' ? context.clubId : undefined,
+    'club.expense.record',
+  )
   const allowed =
-    context.kind === 'admin'
-      ? auth.data?.systemRoles.includes('ICPDP_OFFICER')
-      : auth.data?.workspaces.some(
-          (w) =>
-            w.kind === 'club' &&
-            w.clubId === context.clubId &&
-            w.permissions.includes('club.expense.record'),
-        )
+    context.kind === 'admin' ? auth.data?.systemRoles.includes('ICPDP_OFFICER') : canRecordExpenses
 
   const list = useClubFinances(
     context.kind === 'club' ? context.clubId : '',

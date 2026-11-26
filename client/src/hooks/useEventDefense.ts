@@ -38,7 +38,6 @@ export function useAvailableDefenseRooms(
       Number.isInteger(durationMinutes) &&
       durationMinutes >= 15 &&
       durationMinutes <= 240,
-    retry: false,
   })
 }
 
@@ -49,7 +48,6 @@ export function useLiveDefenseSession(eventId: string | undefined, enabled: bool
     queryFn: ({ signal }) => fetchLiveDefenseSession(eventId!, signal),
     enabled: enabled && Boolean(eventId),
     refetchInterval: enabled ? 3000 : false,
-    retry: false,
   })
 }
 
@@ -59,7 +57,6 @@ export function useClubEventDefense(clubId: string, eventId: string | undefined,
     queryKey: [...defenseKey, 'club', clubId, eventId],
     queryFn: ({ signal }) => fetchClubEventDefense(clubId, eventId!, signal),
     enabled: enabled && Boolean(clubId) && Boolean(eventId),
-    retry: false,
   })
 }
 

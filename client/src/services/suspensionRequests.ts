@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface SuspensionRequest {
   id: string
   clubId: string
@@ -15,14 +15,9 @@ export interface SuspensionContext {
   requests: SuspensionRequest[]
   impacts: { id: string; kind: string; title: string; startAt: string }[]
 }
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const r = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!r.ok) {
-    const b = (await r.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(b?.message ?? `HTTP ${r.status}`)
-  }
-  return ((await r.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 // GET yêu cầu tạm ngưng CLB (của CLB hoặc cho ICPDP)
 export async function fetchSuspensions(
@@ -49,7 +44,11 @@ export function submitSuspension(
   },
   csrfToken: string,
 ): Promise<SuspensionRequest> {
-  return request(`/clubs/${encodeURIComponent(clubId)}/suspension-requests`, post(input, csrfToken))
+  return request(`/clubs/${encodeURIComponent(clubId)}/suspension-requests`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 // POST /decision: ICPDP duyệt hoặc từ chối yêu cầu tạm ngưng
 export function decideSuspension(
@@ -58,16 +57,9 @@ export function decideSuspension(
   reason: string,
   csrfToken: string,
 ): Promise<SuspensionRequest[]> {
-  return request(
-    `/admin/suspension-requests/${encodeURIComponent(id)}/decision`,
-    post({ outcome, reason }, csrfToken),
-  )
-}
-// Dựng RequestInit POST có CSRF và body JSON
-function post(body: object, csrfToken: string): RequestInit {
-  return {
+  return request(`/admin/suspension-requests/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
-  }
+    csrfToken,
+    body: { outcome, reason },
+  })
 }

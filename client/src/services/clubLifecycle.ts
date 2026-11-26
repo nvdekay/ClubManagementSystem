@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export interface ClubSuspension {
   reason: string
   suspendedAt: string
@@ -76,34 +77,19 @@ export class LifecycleRequestError extends ApiError {
   }
 }
 
-// Gọi API /admin/clubs và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/clubs${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { field?: unknown }
-    } | null
-    throw new LifecycleRequestError(
-      body?.message ?? `HTTP ${response.status}`,
-      response.status,
-      typeof body?.details?.field === 'string' ? body.details.field : undefined,
-    )
-  }
-  const body: { data: T } = await response.json()
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/clubs${path}`, { ...options, toError: toLifecycleError })
 }
 
-// Dựng RequestInit POST có CSRF và body JSON
-function post(path: string, csrfToken: string, body: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
-  }
+// Maps a failed response to this module's error type
+function toLifecycleError(failure: ApiFailure): Error {
+  const field = (failure.details as { field?: unknown } | undefined)?.field
+  return new LifecycleRequestError(
+    failure.message,
+    failure.status,
+    typeof field === 'string' ? field : undefined,
+  )
 }
 
 // GET trạng thái vòng đời của các CLB cho ICPDP
@@ -131,7 +117,7 @@ export function suspendClub(
   input: { reason: string; until?: string },
   csrfToken: string,
 ): Promise<CascadeResult> {
-  return request(`/${encodeURIComponent(id)}/suspend`, post('', csrfToken, input))
+  return request(`/${encodeURIComponent(id)}/suspend`, { method: 'POST', csrfToken, body: input })
 }
 
 // POST /reactivate: kích hoạt lại CLB
@@ -140,7 +126,11 @@ export function reactivateClub(
   reason: string,
   csrfToken: string,
 ): Promise<{ reactivated: true }> {
-  return request(`/${encodeURIComponent(id)}/reactivate`, post('', csrfToken, { reason }))
+  return request(`/${encodeURIComponent(id)}/reactivate`, {
+    method: 'POST',
+    csrfToken,
+    body: { reason },
+  })
 }
 
 // POST /dissolve: giải thể CLB
@@ -154,5 +144,9 @@ export function dissolveClub(
     unreconciledBudgets: number
   }
 > {
-  return request(`/${encodeURIComponent(id)}/dissolve`, post('', csrfToken, { reason }))
+  return request(`/${encodeURIComponent(id)}/dissolve`, {
+    method: 'POST',
+    csrfToken,
+    body: { reason },
+  })
 }

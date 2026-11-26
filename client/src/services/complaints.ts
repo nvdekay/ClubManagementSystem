@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export const COMPLAINT_TYPES = ['CONDUCT', 'EVENT', 'FINANCE', 'SAFETY', 'OTHER'] as const
 export type ComplaintType = (typeof COMPLAINT_TYPES)[number]
 export type ComplaintState =
@@ -97,24 +97,9 @@ export type ComplaintDecisionInput =
   | { kind: 'escalate'; severity: Severity; reason: string }
   | { kind: 'link'; targetId: string; reason: string }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body = (await response.json()) as { data: T }
-  return body.data
-}
-
-// Gửi POST có CSRF và body JSON tuỳ chọn
-function post<T>(path: string, csrfToken: string, body?: unknown) {
-  return request<T>(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body ?? {}),
-  })
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 
 // GET /complaints/mine: khiếu nại của tôi
@@ -123,11 +108,15 @@ export function fetchMyComplaints(signal: AbortSignal) {
 }
 // POST /complaints: gửi khiếu nại mới
 export function submitComplaint(input: ComplaintInput, csrfToken: string) {
-  return post<Complaint>('/complaints', csrfToken, input)
+  return request<Complaint>('/complaints', { method: 'POST', csrfToken, body: input ?? {} })
 }
 // POST /withdraw: rút khiếu nại
 export function withdrawComplaint(id: string, csrfToken: string) {
-  return post<Complaint>(`/complaints/${encodeURIComponent(id)}/withdraw`, csrfToken)
+  return request<Complaint>(`/complaints/${encodeURIComponent(id)}/withdraw`, {
+    method: 'POST',
+    csrfToken,
+    body: {},
+  })
 }
 // GET /admin/complaints: hàng đợi khiếu nại của ICPDP, lọc theo trạng thái
 export function fetchComplaintQueue(state: ComplaintState | '', signal: AbortSignal) {
@@ -139,11 +128,11 @@ export function fetchComplaintQueue(state: ComplaintState | '', signal: AbortSig
 // POST /admin/complaints/:id: ICPDP mở hoặc ra quyết định khiếu nại
 export function decideComplaint(id: string, decision: ComplaintDecisionInput, csrfToken: string) {
   const { kind, ...body } = decision
-  return post<ComplaintForIcpdp>(
-    `/admin/complaints/${encodeURIComponent(id)}/${kind}`,
+  return request<ComplaintForIcpdp>(`/admin/complaints/${encodeURIComponent(id)}/${kind}`, {
+    method: 'POST',
     csrfToken,
-    kind === 'open' ? {} : body,
-  )
+    body: kind === 'open' ? {} : (body ?? {}),
+  })
 }
 // GET khiếu nại liên quan tới CLB
 export function fetchClubComplaints(clubId: string, signal: AbortSignal) {
@@ -156,9 +145,8 @@ export function respondToComplaint(
   input: Omit<ComplaintClubResponse, 'at'>,
   csrfToken: string,
 ) {
-  return post<ComplaintForClub>(
+  return request<ComplaintForClub>(
     `/clubs/${encodeURIComponent(clubId)}/complaints/${encodeURIComponent(id)}/response`,
-    csrfToken,
-    input,
+    { method: 'POST', csrfToken, body: input ?? {} },
   )
 }

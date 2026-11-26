@@ -25,6 +25,10 @@ vi phạm, lịch đặt, sự kiện nội bộ và lịch sử cơ cấu/ban �
 
 `PolicyPage` + `PolicyEditor` (UC04) chia chính sách theo luồng nghiệp vụ (Thành lập CLB, Hồ sơ CLB,
 Sự kiện, Năm học, Báo cáo); ICPDP bật/tắt field bắt buộc của form cố định, mỗi lần lưu tạo phiên bản mới.
+`PolicyEditor` giữ state form, menu nhóm và phần lưu; mỗi nhóm là một component riêng (`PolicyFoundingSection`,
+`PolicyProfileSection`, `PolicyEventsSection`, `PolicyCalendarSection`, `PolicyFinanceSection`, `PolicyReportsSection`)
+dùng `PolicyToggleTile`/`PolicyNumberSetting`/`PolicySubHeading`. Kiểu form, khởi tạo, kiểm tra, dựng payload và các key
+nhãn (dùng chung với `PolicyPage`) nằm trong `policyEditorForm.ts`. Rời trang khi còn thay đổi chưa lưu sẽ được hỏi lại.
 
 `ClubFieldsPage` quản lý danh mục lĩnh vực CLB sinh viên chọn khi lập hồ sơ: thêm, đổi tên/thứ tự,
 xoá (chưa ai dùng thì xoá hẳn, đang dùng thì ẩn khỏi danh sách chọn).
@@ -56,6 +60,10 @@ liệt kê sự kiện `MEMBERS_ONLY` CLB đã ghi nhận, lọc theo CLB/học 
 tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính
 kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
 duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
+Trang chi tiết ghép các khối chỉ trang này dùng: `ProposalDocumentsSection`, `ProposalOverviewSection`,
+`ProposalBudgetSection`, `ProposalClubBookingsSection`, `ProposalSubmissionHistory` (cột nội dung) và
+`ProposalDefensePanel` (buổi bảo vệ + hộp thoại đặt lịch/lý do), `ProposalCancellationPanel`, `ProposalDecisionHistory`
+(cột thao tác); nhãn, màu và các trường so sánh phiên bản nằm trong `eventProposalReviewFormat.ts`.
 
 Trang chi tiết dùng cùng trình xem toàn văn và hồ sơ trích xuất với CLB, tải tài liệu của phiên bản đã nộp
 qua API ICPDP; có trạng thái tải, lỗi và thử lại, vẫn giữ tải file và lịch sử các lần nộp.
@@ -71,6 +79,10 @@ chuyển Upcoming, Ongoing hoặc Completed; không gọi claim khi mở từ m�
 CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên quan, chứng cứ) và `ViolationDetailPage`: chứng
 cứ, giải trình của CLB, quyết định, biện pháp khắc phục, lịch sử, và khung "Bước tiếp theo" chỉ hiện những bước
 hợp lệ ở trạng thái hiện tại.
+Hai route này dùng chung `ViolationGate` (đăng nhập + quyền ICPDP). Danh sách (`ViolationList`, kèm
+`ViolationOpenCaseForm`) đếm số hồ sơ của mọi tab trong một lượt, lọc bằng `useMemo` và phân trang 20 hồ sơ/trang
+bằng `AppPagination`. Chi tiết (`ViolationDetailView`) ghép `ViolationEvidenceList`, `ViolationActionsSection` và
+`ViolationNextSteps` (mỗi bước dùng `ViolationStep`, tự giữ state form); nhãn/màu/ngày nằm trong `violationFormat.ts`.
 
 `SchoolEventsPage` (UC53) gồm `SchoolEventsPage` (danh sách sự kiện cấp trường kèm số CLB nhận lời/chưa trả
 lời, form tạo: thời gian, phòng trong danh mục hoặc nơi khác với cảnh báo trùng lịch BR15, số chỗ, CLB mời,

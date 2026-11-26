@@ -9,6 +9,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoardNominationQueue } from '@/hooks/useBoardNominations'
+import { formatDate } from '@/utils/formatDate'
 
 // Hàng đợi ICPDP các đề cử ban chủ nhiệm cần xác nhận
 export function BoardNominationQueuePage() {
@@ -18,10 +19,7 @@ export function BoardNominationQueuePage() {
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const queue = useBoardNominationQueue(isOfficer)
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   const loading = (
     <div className="space-y-2">

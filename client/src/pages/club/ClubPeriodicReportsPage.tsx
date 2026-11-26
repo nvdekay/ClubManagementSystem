@@ -11,21 +11,18 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubPeriodicReports, useChangePeriodicReport } from '@/hooks/useClubPeriodicReports'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { ClubPeriodicReportEditor } from './ClubPeriodicReportEditor'
+import { formatDay } from '@/utils/formatDate'
 
 // Trang danh sách và tạo báo cáo định kỳ của CLB theo kỳ
 export function ClubPeriodicReportsPage() {
   const { clubId = '' } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const allowed = Boolean(
-    auth.data?.workspaces.some(
-      (w) =>
-        w.kind === 'club' && w.clubId === clubId && w.permissions.includes('club.report.submit'),
-    ),
-  )
+  const allowed = useWorkspacePermission(clubId, 'club.report.submit')
   const query = useClubPeriodicReports(clubId, allowed)
   const action = useChangePeriodicReport(clubId)
   const [period, setPeriod] = useState('')
@@ -95,7 +92,7 @@ export function ClubPeriodicReportsPage() {
                   ) : (
                     <AppBadge tone="success">
                       {t('clubPeriodicReports.periodOpenBadge', {
-                        date: new Date(p.dueAt).toLocaleDateString(i18n.language),
+                        date: formatDay(p.dueAt, i18n.language),
                       })}
                     </AppBadge>
                   )}

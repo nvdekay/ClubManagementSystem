@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 import type { Property } from './properties'
 
 export interface RoomAllocationOccurrence {
@@ -64,25 +65,14 @@ export class RoomAllocationError extends ApiError {
   }
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      message?: string
-      details?: unknown
-    } | null
-    throw new RoomAllocationError(body?.message ?? `HTTP ${res.status}`, body?.details)
-  }
-  return ((await res.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRoomAllocationError })
 }
-// POST có CSRF và body JSON
-function post<T>(path: string, body: unknown, csrfToken: string): Promise<T> {
-  return request(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
-  })
+
+// Maps a failed response to this module's error type
+function toRoomAllocationError(failure: ApiFailure): Error {
+  return new RoomAllocationError(failure.message, failure.details)
 }
 
 // GET /options: CLB, phòng và học kỳ có thể phân bổ
@@ -119,7 +109,7 @@ export function createRoomAllocation(
   input: RoomAllocationInput,
   csrfToken: string,
 ): Promise<RoomAllocation> {
-  return post('/admin/room-allocations', input, csrfToken)
+  return request('/admin/room-allocations', { method: 'POST', csrfToken, body: input })
 }
 // POST /revoke: thu hồi phân bổ phòng
 export function revokeRoomAllocation(
@@ -127,5 +117,9 @@ export function revokeRoomAllocation(
   reason: string,
   csrfToken: string,
 ): Promise<RoomAllocation> {
-  return post(`/admin/room-allocations/${encodeURIComponent(id)}/revoke`, { reason }, csrfToken)
+  return request(`/admin/room-allocations/${encodeURIComponent(id)}/revoke`, {
+    method: 'POST',
+    csrfToken,
+    body: { reason },
+  })
 }

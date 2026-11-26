@@ -12,7 +12,6 @@ export function useAccounts(search: string, page: number, pageSize: number, enab
     queryKey: [...accountsKeyRoot, search, page, pageSize],
     queryFn: ({ signal }) => fetchAdminUsers(search, page, pageSize, signal),
     enabled,
-    retry: false,
     placeholderData: keepPreviousData,
   })
 }

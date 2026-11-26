@@ -1,6 +1,12 @@
 # utils/
 
-Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatDate`, `formatDay` và các helper ngày theo giờ Việt Nam (`vnDateInput`, `vnDayBoundary`, `vnTomorrowInput`), `formatMoney` (số tiền VND).
+Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatMoney` (số tiền VND).
+
+`formatDate` là nơi duy nhất định dạng mốc thời gian: luôn theo giờ `Asia/Ho_Chi_Minh`, locale lấy từ ngôn ngữ i18n qua
+`dateLocale` (`vi` → `vi-VN`, còn lại → `en-GB`), formatter được cache theo locale + tuỳ chọn. Dùng `formatDate` (ngày giờ),
+`formatShortDateTime`, `formatDay` (chỉ ngày), `formatTime`, `formatEventWhen`, `formatDayBadge`; định dạng khác thì
+`formatDateWith`/`dateFormatter(language, options)`. Không tự tạo `new Intl.DateTimeFormat` hay gọi `toLocaleString` cho
+ngày ở component. Các helper ô nhập ngày: `vnDateInput`, `vnDayBoundary`, `vnTomorrowInput`.
 `proposalReason` gộp nhận xét có tên mục vào lý do hiện có, giữ nguyên nội dung và chặn vượt 5.000 ký tự.
 `roomSchedule` — nhãn thứ trong tuần và slot dùng chung cho trang phân phòng (ICPDP) và phòng được phân (CLB).
 `notificationLink` — ánh xạ `eventCode` của thông báo sang trang đích thuộc đúng workspace của người nhận (sinh viên / ICPDP / CLB, khớp danh sách audience ở `server/src/domain/notification.ts`), nhóm chủ đề (tiêu đề dự phòng) và chủ thể hiển thị lấy từ payload.
@@ -28,3 +34,12 @@ cell và các field Overview, kể cả ô gộp/nhãn trùng khác đích. Khô
 `docx-preview`, phân trang với `pagedjs`. `proposalDocumentFrame.css` chỉ áp dụng bên trong frame tài liệu,
 không phải styling của ứng dụng: giữ font/bảng/ảnh nguồn, trang giấy cố định sáng, canvas theo theme.
 `pagedjs.d.ts` khai báo phần API thư viện thực sự được dùng. Không import entry frame vào app React.
+
+`openInNewTab(resolveUrl)` mở tab mới ngay trong lúc người dùng bấm (để trình duyệt không chặn popup), rồi chuyển tab đó tới
+URL khi lời gọi API trả về; nếu lời gọi lỗi thì đóng tab trống và ném lại lỗi. Dùng cho link truy cập tài liệu có thời hạn.
+
+`queryRetry` — `shouldRetryQuery` là chính sách retry mặc định của `QueryClient` (không retry `ApiError` 4xx, lỗi 5xx/mạng
+tối đa 2 lần); `isUnauthorized` nhận ra lỗi 401 để `main.tsx` xoá phiên đăng nhập.
+
+`facilityBooking` — `BOOKING_STATES`, `bookingTone`, `bookingLocalTime` (ISO → giá trị ô ngày giờ theo giờ Việt Nam),
+`slotNumber`/`slotInterval` (đổi qua lại giữa khoảng thời gian và số ca) cho `BookingWorkspace` và các form con của nó.

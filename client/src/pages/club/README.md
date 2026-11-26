@@ -67,6 +67,11 @@ hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộ
 Các trang khác (đối chiếu 17/10/2026), chủ yếu dành cho Club Leader:
 `ClubEventsPage` (UC25, UC27, UC28, UC30; cùng component với `mode="attendance"` cho UC32 tại
 `/club/:clubId/event-attendance` — thành viên `Active` có `club.attendance.manage` xem được danh sách tham dự/mã check-in và điểm danh hộ trong khung giờ check-in, còn đổi sức chứa, đẩy waitlist, sửa/chốt điểm danh và check-in ngoài giờ chỉ Club Leader mới thực hiện được — và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
+trang được chia thành các component chỉ trang này dùng: `ClubEventDetail` (khung chi tiết đề xuất, kèm
+`ClubEventVersions` cho các phiên bản đã nộp và `ClubEventDefenseCard` cho buổi bảo vệ + hộp thoại xin dời lịch),
+`ClubEventAttendance` (bảng điểm danh), `ClubEventFeedback` (so sánh phản hồi), `ClubEventOperationDialog` (hộp thoại
+thao tác tự giữ state form, mount lại mỗi lần mở), cùng `ClubEventField` và `ClubEventTablePager`; nhãn/tông màu dùng chung
+nằm trong `clubEventFormat.ts`.
 `ClubEventProposalPage` (UC25: trang riêng cho tạo và chỉnh sửa đề xuất sự kiện tại `/club/:clubId/events/new`
 và `/club/:clubId/events/:eventId/edit`, dùng chung `ClubEventErrorMessage` và `clubEventFormat.ts` với `ClubEventsPage`),
 Tạo/sửa đề xuất qua import DOCX (tối đa 10 MB). `EventProposalDocument` hiển thị toàn bộ tài liệu

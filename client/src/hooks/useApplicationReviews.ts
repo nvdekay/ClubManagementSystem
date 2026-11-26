@@ -16,7 +16,6 @@ export function useApplicationReviewQueue(enabled: boolean) {
     queryKey: [...reviewKey, 'queue'],
     queryFn: ({ signal }) => fetchReviewQueue(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -34,7 +33,6 @@ export function useApplicationReview(id: string | undefined, enabled: boolean) {
     queryKey: [...reviewKey, 'detail', id],
     queryFn: ({ signal }) => fetchReview(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 

@@ -10,7 +10,6 @@ export function usePolicies(enabled: boolean) {
     queryKey: [...policyKeyRoot, 'recent'],
     queryFn: ({ signal }) => fetchPolicies(signal),
     enabled,
-    retry: false,
   })
 }
 

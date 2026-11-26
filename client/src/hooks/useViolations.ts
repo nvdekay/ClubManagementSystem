@@ -17,7 +17,6 @@ export function useViolations(enabled: boolean) {
     queryKey: [...violationKey, 'list'],
     queryFn: ({ signal }) => fetchViolations(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -27,7 +26,6 @@ export function useViolation(id: string | undefined, enabled: boolean) {
     queryKey: [...violationKey, 'detail', id],
     queryFn: ({ signal }) => fetchViolation(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 
@@ -37,7 +35,6 @@ export function useViolationSources(clubId: string) {
     queryKey: [...violationKey, 'sources', clubId],
     queryFn: ({ signal }) => fetchViolationSources(clubId, signal),
     enabled: Boolean(clubId),
-    retry: false,
   })
 }
 

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 
 import { UniversityLogo } from '@/components/custom/UniversityLogo'
+import { RouteFallback } from '@/components/layout/RouteFallback'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { useAuth } from '@/hooks/useAuth'
@@ -156,7 +157,9 @@ export function PublicLayout() {
           'max-w-none p-0 sm:p-0': onHome,
         })}
       >
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       <footer className="bg-hero-app text-on-hero-app">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 text-sm sm:grid-cols-2 sm:px-8 lg:grid-cols-[1.5fr_1fr_1fr]">

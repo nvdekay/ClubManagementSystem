@@ -1,5 +1,6 @@
 import { proposalDocumentMaxBytes } from '@/utils/proposalFile'
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export interface EventBudgetLine {
   category: string
   amount: number
@@ -152,7 +153,7 @@ export class ClubEventError extends ApiError {
     readonly details: ClubEventErrorDetails,
     readonly statusCode?: number,
   ) {
-    super(message)
+    super(message, statusCode)
   }
 }
 // Chuẩn hoá giá trị không rõ kiểu thành mảng chuỗi
@@ -161,32 +162,29 @@ function strings(value: unknown): string[] | undefined {
     ? value.filter((item): item is string => typeof item === 'string')
     : undefined
 }
-// Gọi API /clubs/:clubId/events hoặc internal-events, ném lỗi chi tiết nếu thất bại
-async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/events${path}`, {
-    credentials: 'same-origin',
-    ...init,
+// Calls /clubs/:clubId/events through the shared helper, failing with ClubEventError
+function request<T>(clubId: string, path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/clubs/${encodeURIComponent(clubId)}/events${path}`, {
+    ...options,
+    toError: toClubEventError,
   })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      message?: string
-      details?: Record<string, unknown>
-    } | null
-    const d = body?.details
-    throw new ClubEventError(
-      body?.message ?? `HTTP ${res.status}`,
-      {
-        obligations: strings(d?.obligations),
-        registrationIds: strings(d?.registrationIds),
-        conflicts: strings(d?.conflicts),
-        bookingId: typeof d?.bookingId === 'string' ? d.bookingId : undefined,
-        bookingError: typeof d?.bookingError === 'string' ? d.bookingError : undefined,
-        noticeHours: typeof d?.noticeHours === 'number' ? d.noticeHours : undefined,
-      },
-      res.status,
-    )
-  }
-  return ((await res.json()) as { data: T }).data
+}
+
+// Keeps the structured details (obligations, conflicts, booking errors) of a failed event request
+function toClubEventError(failure: ApiFailure): Error {
+  const d = failure.details as Record<string, unknown> | undefined
+  return new ClubEventError(
+    failure.message,
+    {
+      obligations: strings(d?.obligations),
+      registrationIds: strings(d?.registrationIds),
+      conflicts: strings(d?.conflicts),
+      bookingId: typeof d?.bookingId === 'string' ? d.bookingId : undefined,
+      bookingError: typeof d?.bookingError === 'string' ? d.bookingError : undefined,
+      noticeHours: typeof d?.noticeHours === 'number' ? d.noticeHours : undefined,
+    },
+    failure.status,
+  )
 }
 // GET danh sách sự kiện của CLB
 export function fetchClubEvents(clubId: string, signal: AbortSignal): Promise<ClubEvent[]> {
@@ -226,8 +224,8 @@ export function createClubEvent(
 ): Promise<ClubEventDetail> {
   return request(clubId, '', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(input),
+    csrfToken,
+    body: input,
   })
 }
 // POST thao tác (nộp, huỷ...) lên một sự kiện của CLB
@@ -240,8 +238,8 @@ export function actOnClubEvent(
 ): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/${action}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
+    csrfToken,
+    body,
   })
 }
 
@@ -290,15 +288,7 @@ export const EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL = '/api/v1/events/proposal-tem
 export async function fetchEventProposalTemplate(
   signal: AbortSignal,
 ): Promise<EventProposalTemplateInfo> {
-  const res = await apiFetch('/api/v1/events/proposal-template', {
-    credentials: 'same-origin',
-    signal,
-  })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
-  }
-  return ((await res.json()) as { data: EventProposalTemplateInfo }).data
+  return apiRequest<EventProposalTemplateInfo>('/api/v1/events/proposal-template', { signal })
 }
 // POST /proposal-document: tải file đề xuất sự kiện lên
 /** Upload thô; `event.version` trong response là phiên bản dùng khi nộp. */
@@ -312,11 +302,8 @@ export function uploadEventProposalDocument(
   return request(clubId, `/${encodeURIComponent(id)}/proposal-document`, {
     method: 'POST',
     body: file,
-    headers: {
-      'Content-Type': mimeType,
-      'X-CSRF-Token': csrfToken,
-      'X-Filename': encodeURIComponent(file.name),
-    },
+    csrfToken,
+    headers: { 'Content-Type': mimeType, 'X-Filename': encodeURIComponent(file.name) },
   })
 }
 // GET /proposal-document/access: lấy link xem file đề xuất
@@ -343,14 +330,14 @@ export async function fetchEventProposalPreviewFile(
   const access = await accessEventProposalDocument(clubId, id)
   const response = await fetch(access.url, { signal, credentials: 'omit' })
   if (!response.ok) {
-    throw new ApiError(`HTTP ${response.status}`)
+    throw new ApiError(`HTTP ${response.status}`, response.status)
   }
   if (Number(response.headers.get('content-length')) > proposalDocumentMaxBytes) {
-    throw new ApiError('Document too large')
+    throw new ApiError('Document too large', 413)
   }
   const blob = await response.blob()
   if (blob.size > proposalDocumentMaxBytes) {
-    throw new ApiError('Document too large')
+    throw new ApiError('Document too large', 413)
   }
   return new File([blob], access.fileName, { type: access.mimeType })
 }

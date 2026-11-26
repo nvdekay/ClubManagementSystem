@@ -15,6 +15,7 @@ import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppTable, appTableFeatures, type AppTableFeatures } from '@/components/ui/table/AppTable'
 import { appToast } from '@/components/ui/toast/AppToast'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { useRecruitmentCampaigns } from '@/hooks/useRecruitmentCampaigns'
 import {
@@ -56,10 +57,7 @@ export function RecruitmentReviewPage() {
   const { clubId, campaignId } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const workspace = auth.data?.workspaces.find(
-    (item) => item.kind === 'club' && item.clubId === clubId,
-  )
-  const canReview = Boolean(workspace?.permissions.includes('club.application.review'))
+  const canReview = useWorkspacePermission(clubId, 'club.application.review')
   const query = useApplicationsForReview(clubId, campaignId)
   // Dùng cùng danh sách cache với trang chiến dịch; để hiện nhãn câu hỏi thay vì key của trường.
   const campaigns = useRecruitmentCampaigns(clubId, Boolean(auth.data))

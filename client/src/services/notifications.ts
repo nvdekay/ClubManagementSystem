@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface AppNotification {
   id: string
   eventCode: string
@@ -20,17 +20,9 @@ export interface NotificationPage {
   nextBefore?: string
 }
 
-// Gọi API /notifications và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await apiFetch(`/api/v1/notifications${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  return ((await response.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/notifications${path}`, options)
 }
 
 // Đổi workspace thông báo thành tham số query
@@ -66,7 +58,7 @@ export function fetchUnreadNotificationCount(
 export function markNotificationRead(id: string, csrfToken: string): Promise<{ unread: number }> {
   return request(`/${encodeURIComponent(id)}/read`, {
     method: 'POST',
-    headers: { 'X-CSRF-Token': csrfToken },
+    csrfToken,
   })
 }
 
@@ -78,6 +70,6 @@ export function markAllNotificationsRead(
 ): Promise<{ marked: number; unread: number }> {
   return request(`/mine/read-all?${new URLSearchParams(scopeParams(scope)).toString()}`, {
     method: 'POST',
-    headers: { 'X-CSRF-Token': csrfToken },
+    csrfToken,
   })
 }

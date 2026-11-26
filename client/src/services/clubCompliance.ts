@@ -1,17 +1,9 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type { ViolationDetail } from './violations'
 import type { EvaluationDetail } from './evaluations'
-// Gọi API /clubs/:clubId và trả về data, ném ApiError nếu lỗi
-async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const r = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!r.ok) {
-    const b = (await r.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(b?.message ?? `HTTP ${r.status}`)
-  }
-  return ((await r.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(clubId: string, path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/clubs/${encodeURIComponent(clubId)}${path}`, options)
 }
 // GET vi phạm của CLB
 export function fetchClubViolations(
@@ -40,7 +32,7 @@ export function submitComplianceResponse(
     'text' in action ? { text: action.text } : { note: action.note, evidence: action.evidence }
   return request(clubId, path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
+    csrfToken,
+    body,
   })
 }

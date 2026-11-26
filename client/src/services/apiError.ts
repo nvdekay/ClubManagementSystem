@@ -4,10 +4,13 @@ import { apiErrorKeys, apiErrors, type ApiErrorKey } from '@/i18n/apiErrors'
 /** Giữ nguyên thông tin chẩn đoán và chọn nội dung hiển thị theo ngôn ngữ hiện tại. */
 export class ApiError extends Error {
   readonly rawMessage: string
+  /** HTTP status of the failed response; undefined for network failures and client-side checks. */
+  readonly status?: number
 
-  constructor(message: string) {
+  constructor(message: string, status?: number) {
     super(message)
     this.rawMessage = message
+    this.status = status
     Object.defineProperty(this, 'message', {
       configurable: true,
       get: () => localizedApiMessage(this.rawMessage),

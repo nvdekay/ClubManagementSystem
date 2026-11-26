@@ -20,7 +20,6 @@ export function useReportObligations(context: AccountabilityContext, enabled: bo
     queryKey: [...accountabilityKeyRoot, 'reports', context],
     queryFn: ({ signal }) => fetchReportObligations(context, signal),
     enabled,
-    retry: false,
   })
 }
 // Query chi tiết một báo cáo sau sự kiện
@@ -29,7 +28,6 @@ export function useReportDetail(context: AccountabilityContext, id: string, enab
     queryKey: [...accountabilityKeyRoot, 'report', context, id],
     queryFn: ({ signal }) => fetchReportDetail(context, id, signal),
     enabled: enabled && !!id,
-    retry: false,
   })
 }
 // Query ngân sách của CLB
@@ -38,7 +36,6 @@ export function useClubFinances(clubId: string, enabled: boolean) {
     queryKey: [...accountabilityKeyRoot, 'finances', clubId],
     queryFn: ({ signal }) => fetchClubFinances(clubId, signal),
     enabled,
-    retry: false,
   })
 }
 // Query chi tiết ngân sách hoặc đối soát
@@ -47,7 +44,6 @@ export function useFinanceDetail(context: AccountabilityContext, id: string, ena
     queryKey: [...accountabilityKeyRoot, 'finance', context, id],
     queryFn: ({ signal }) => fetchFinanceDetail(context, id, signal),
     enabled: enabled && !!id,
-    retry: false,
   })
 }
 // Mutation thao tác trên báo cáo hoặc tài chính, rồi làm mới cache

@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest } from '@/services/apiRequest'
 import type { AuthUser } from '@/services/auth'
 
 export type SystemRoleCode = 'ICPDP_OFFICER'
@@ -27,23 +27,14 @@ export type AccountAction =
   | { kind: 'lock'; userId: string; reason: string; violationId?: string }
   | { kind: 'unlock'; userId: string; reason: string }
 
-// Gửi POST/DELETE có CSRF tới endpoint quản trị tài khoản, ném ApiError nếu lỗi
+// Sends a CSRF-protected POST/DELETE to an account administration endpoint
 async function accountRequest(
   path: string,
   method: 'POST' | 'DELETE',
   csrfToken: string,
   body: object,
 ): Promise<void> {
-  const response = await apiFetch(path, {
-    method,
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
-  })
-  if (!response.ok) {
-    const result = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(result?.message ?? `HTTP ${response.status}`)
-  }
+  await apiRequest<unknown>(path, { method, csrfToken, body })
 }
 
 // GET /admin/users: tìm và phân trang người dùng cho ICPDP quản trị tài khoản
@@ -54,16 +45,7 @@ export async function fetchAdminUsers(
   signal: AbortSignal,
 ): Promise<AdminUserPage> {
   const params = new URLSearchParams({ search, page: String(page), pageSize: String(pageSize) })
-  const response = await apiFetch(`/api/v1/admin/users?${params}`, {
-    signal,
-    credentials: 'same-origin',
-  })
-  if (!response.ok) {
-    const result = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(result?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: AdminUserPage } = await response.json()
-  return body.data
+  return apiRequest<AdminUserPage>(`/api/v1/admin/users?${params}`, { signal })
 }
 
 // Gọi /admin/users/:id để cấp/thu hồi role hệ thống hoặc khoá/mở khoá tài khoản

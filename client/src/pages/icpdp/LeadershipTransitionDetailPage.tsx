@@ -18,6 +18,7 @@ import {
 } from '@/hooks/useLeadershipTransitions'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { formatDate } from '@/utils/formatDate'
 
 // Trang ICPDP xem chi tiết bàn giao lãnh đạo CLB và ra quyết định
 export function LeadershipTransitionDetailPage() {
@@ -38,10 +39,7 @@ export function LeadershipTransitionDetailPage() {
     reason: returning && !reason.trim() ? t('leadershipTransitions.returnReason') : null,
   })
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   const back = {
     to: '/workspace/leadership-transitions',

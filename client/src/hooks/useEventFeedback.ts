@@ -14,7 +14,6 @@ export function useEventFeedbackContext(eventId: string, enabled: boolean) {
     queryKey: [...key, 'context', eventId],
     queryFn: ({ signal }) => fetchEventFeedbackContext(eventId, signal),
     enabled: enabled && Boolean(eventId),
-    retry: false,
   })
 }
 
@@ -24,7 +23,6 @@ export function useMyEventFeedback(enabled: boolean) {
     queryKey: [...key, 'mine'],
     queryFn: ({ signal }) => fetchMyEventFeedback(signal),
     enabled,
-    retry: false,
   })
 }
 

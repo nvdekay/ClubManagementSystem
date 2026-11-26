@@ -17,8 +17,8 @@ import {
   type PolicyVersion,
 } from '@/services/policy'
 import { cn } from '@/utils/cn'
+import { PolicyEditor } from '@/pages/icpdp/PolicyEditor'
 import {
-  PolicyEditor,
   deadlineLabelKey,
   foundingFieldKey,
   profileFieldKey,
@@ -26,7 +26,8 @@ import {
   sectionIcon,
   sectionTitleKey,
   type PolicySection,
-} from './PolicyEditor'
+} from '@/pages/icpdp/policyEditorForm'
+import { formatDate } from '@/utils/formatDate'
 
 const deadlineFields = [
   'dueDaysAfterPeriodEnd',
@@ -36,14 +37,6 @@ const deadlineFields = [
 ] as const
 
 type PolicyView = 'current' | 'edit' | 'history'
-
-// Định dạng ngày giờ theo ngôn ngữ hiện tại
-function formatDate(value: string, language: string): string {
-  return new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
 
 // Thẻ một nhóm chính sách: icon, tiêu đề, phạm vi áp dụng và nội dung
 function OverviewCard({ section, children }: { section: PolicySection; children: ReactNode }) {

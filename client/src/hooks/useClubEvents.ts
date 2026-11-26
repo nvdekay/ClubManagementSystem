@@ -20,7 +20,6 @@ export function useClubEvents(clubId: string, enabled: boolean) {
     queryKey: [...clubEventsKeyRoot, clubId, 'list'],
     queryFn: ({ signal }) => fetchClubEvents(clubId, signal),
     enabled,
-    retry: false,
   })
 }
 // Query chi tiết một sự kiện của CLB
@@ -29,7 +28,6 @@ export function useClubEvent(clubId: string, id: string, enabled: boolean) {
     queryKey: [...clubEventsKeyRoot, clubId, 'detail', id],
     queryFn: ({ signal }) => fetchClubEvent(clubId, id, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 // Query người tham gia của một sự kiện
@@ -38,7 +36,6 @@ export function useEventParticipants(clubId: string, id: string, enabled: boolea
     queryKey: [...clubEventsKeyRoot, clubId, 'participants', id],
     queryFn: ({ signal }) => fetchEventParticipants(clubId, id, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 // Query phản hồi của các sự kiện theo danh sách id
@@ -47,7 +44,6 @@ export function useClubEventFeedback(clubId: string, ids: string[], enabled: boo
     queryKey: [...clubEventsKeyRoot, clubId, 'feedback', ids],
     queryFn: ({ signal }) => fetchClubEventFeedback(clubId, ids, signal),
     enabled: enabled && ids.length > 0,
-    retry: false,
   })
 }
 // Mutation thao tác với sự kiện của CLB, rồi làm mới cache
@@ -88,7 +84,6 @@ export function useClubEventOptions(clubId: string, enabled: boolean) {
     queryKey: [...clubEventsKeyRoot, clubId, 'options'],
     queryFn: ({ signal }) => fetchClubEventOptions(clubId, signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -100,7 +95,6 @@ export function useEventProposalTemplate(enabled: boolean) {
     queryKey: eventProposalTemplateKey,
     queryFn: ({ signal }) => fetchEventProposalTemplate(signal),
     enabled,
-    retry: false,
   })
 }
 // Mutation lấy link xem file đề xuất sự kiện
@@ -121,7 +115,6 @@ export function useEventProposalPreview(
     queryKey: [...clubEventsKeyRoot, clubId, 'document-preview', id, documentId],
     queryFn: ({ signal }) => fetchEventProposalPreviewFile(clubId, id, signal),
     enabled,
-    retry: false,
     staleTime: 5 * 60_000,
   })
 }

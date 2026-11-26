@@ -19,7 +19,6 @@ export function useSponsoredItems(id: string, clubId?: string) {
   return useQuery({
     queryKey: [...sponsoredKey, id, clubId],
     queryFn: ({ signal }) => fetchSponsoredBudget(id, clubId, signal),
-    retry: false,
   })
 }
 
@@ -35,7 +34,6 @@ export function useInvoiceImage(
     queryFn: ({ signal }) => fetchInvoiceImageUrl(id, clubId, itemId, imageId, signal, false),
     staleTime: 30_000,
     refetchInterval: 45_000,
-    retry: false,
   })
 }
 
@@ -58,7 +56,6 @@ export function useRefundAccount(
     queryKey: [...sponsoredKey, id, clubId, itemId, 'refund-account'],
     queryFn: ({ signal }) => fetchRefundAccount(id, clubId!, itemId, signal),
     enabled: Boolean(clubId && enabled),
-    retry: false,
   })
 }
 
