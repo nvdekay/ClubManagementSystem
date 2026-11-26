@@ -180,6 +180,8 @@ export function buildApp(deps: {
   rateLimits?: { auth: RateLimitRule; api: RateLimitRule }
   /** Express `trust proxy` setting, so req.ip is the real client behind a reverse proxy. */
   trustProxy?: boolean | number
+  /** Serve the Swagger UI and openapi.json (default true; main.ts turns it off in production). */
+  apiDocs?: boolean
 }) {
   const app = express()
   app.disable('x-powered-by')
@@ -900,15 +902,17 @@ export function buildApp(deps: {
       return true
     }),
   )
-  const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths })
-  // Phục vụ tài liệu OpenAPI JSON của các route đang mount
-  app.get('/docs/openapi.json', (_req, res) => {
-    res.type('json').send(availableDocumentJson)
-  })
-  // Phục vụ trang tài liệu API /docs
-  app.get('/docs', (_req, res) => {
-    res.type('html').send(docsHtml)
-  })
+  if (deps.apiDocs ?? true) {
+    const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths })
+    // Phục vụ tài liệu OpenAPI JSON của các route đang mount
+    app.get('/docs/openapi.json', (_req, res) => {
+      res.type('json').send(availableDocumentJson)
+    })
+    // Phục vụ trang tài liệu API /docs
+    app.get('/docs', (_req, res) => {
+      res.type('html').send(docsHtml)
+    })
+  }
   app.use((req, res) => {
     fail(res, req, 404, 'not_found', 'not found') // giữ đúng hợp đồng error envelope cho đường dẫn không tồn tại
   })

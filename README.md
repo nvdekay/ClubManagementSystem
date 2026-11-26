@@ -43,6 +43,7 @@ cp .env.example .env
 | `APP_BASE_URL` | `http://localhost:3000` |
 | `CLIENT_BASE_URL` | `http://localhost:5173` |
 | `CLOUDINARY_*` | Chỉ cần khi thử tải tài liệu hồ sơ UC07; để trống cũng chạy được |
+| `API_DOCS` | Để trống. `/docs` luôn bật khi phát triển; khi `NODE_ENV=production` thì tắt, trừ khi đặt `true` |
 | `TRUST_PROXY` | Để trống ở máy local (= `false`). Khi chạy sau reverse proxy, đặt số hop proxy (thường `1`) để giới hạn tần suất request (20/phút/IP cho `/api/v1/auth/*`, 300/phút/IP cho `/api/v1`) thấy đúng IP client |
 
 Trong Google Cloud Console, thêm **Authorized redirect URI** `http://localhost:3000/api/v1/auth/callback`.

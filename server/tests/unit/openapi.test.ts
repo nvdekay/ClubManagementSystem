@@ -867,4 +867,13 @@ describe('openapi document', () => {
     expect(document.paths).not.toHaveProperty('/auth/login')
     expect(document.paths).not.toHaveProperty('/admin/users')
   })
+
+  it('does not serve the API docs when they are turned off (production default)', () => {
+    const app = buildApp({ publicRepo: stubPublic, dbReady: () => true, apiDocs: false })
+    const stack = (app as unknown as { router: { stack: Array<{ route?: { path: string } }> } })
+      .router.stack
+    const paths = stack.flatMap((layer) => (layer.route ? [layer.route.path] : []))
+    expect(paths).not.toContain('/docs')
+    expect(paths).not.toContain('/docs/openapi.json')
+  })
 })

@@ -11,6 +11,7 @@ const base: Config = {
   PORT: 3000,
   MONGO_URI: 'mongodb://x',
   TRUST_PROXY: false,
+  API_DOCS: false,
 }
 const smtp = {
   SMTP_HOST: 'smtp.gmail.com',
