@@ -2729,6 +2729,12 @@ export const ucmsTables = {
           "startAt"
         ],
         "name": "ix_booking_schedule"
+      },
+      {
+        "fields": [
+          "eventId"
+        ],
+        "name": "ix_booking_event"
       }
     ]
   },

@@ -1141,6 +1141,7 @@ Table propertyBookings {
     (propertyId, startAt, endAt) [name: 'ix_booking_slot', note: 'Phía đọc xung đột của BR15 và chốt chặn lúc phê duyệt của BR33.']
     (clubId, state) [name: 'ix_booking_club_state']
     (state, startAt) [name: 'ix_booking_schedule', note: 'Scheduler chuyển Approved → In Use → Completed (SCH-02).']
+    eventId [name: 'ix_booking_event', note: 'Booking đính kèm một đề xuất sự kiện (UC25, UC26, phiên bảo vệ).']
   }
 }
 
