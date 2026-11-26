@@ -51,6 +51,7 @@ export function ApplicationEditorPage() {
   const askConfirm = useConfirm()
   const navigate = useNavigate()
   const { id } = useParams()
+  const [founderEmail, setFounderEmail] = useState('')
   const auth = useAuth()
   const config = useApplicationConfig(Boolean(auth.data))
   const detail = useApplication(id, Boolean(auth.data))
@@ -529,6 +530,8 @@ export function ApplicationEditorPage() {
               missingFounders={missingFounders}
               rolesValid={rolesValid}
               meId={me?.id}
+              founderEmail={founderEmail}
+              onFounderEmailChange={setFounderEmail}
               profileOf={founderProfile}
               onAdd={addFounder}
               onRoleChange={setRole}

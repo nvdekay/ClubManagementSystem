@@ -19,6 +19,9 @@ interface ApplicationFoundersStepProps {
   missingFounders: number
   rolesValid: boolean
   meId: string | undefined
+  /** Kept by the page so a typed email survives switching wizard steps. */
+  founderEmail: string
+  onFounderEmailChange: (email: string) => void
   profileOf: (userId: string) => FounderProfile | undefined
   onAdd: (profile: FounderProfile) => void
   onRoleChange: (userId: string, role: FounderRole) => void
@@ -33,6 +36,8 @@ export function ApplicationFoundersStep({
   missingFounders,
   rolesValid,
   meId,
+  founderEmail,
+  onFounderEmailChange: setFounderEmail,
   profileOf,
   onAdd,
   onRoleChange,
@@ -40,7 +45,6 @@ export function ApplicationFoundersStep({
 }: ApplicationFoundersStepProps) {
   const { t } = useTranslation()
   const founderLookup = useFounderLookup()
-  const [founderEmail, setFounderEmail] = useState('')
   const [founderError, setFounderError] = useState<string | null>(null)
 
   // Thêm sáng lập viên theo email
