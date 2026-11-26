@@ -65,3 +65,28 @@ jobs:
           tags: ucms:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Playwright UI tests against the real server and a seeded e2e database (client/e2e/README.md).
+  # Kept out of `npm run check` so the main gate stays fast.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --wait mongo
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        working-directory: client
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            client/e2e/playwright-report/
+            client/e2e/test-results/
+          retention-days: 7

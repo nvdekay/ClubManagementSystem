@@ -111,6 +111,18 @@ Mở http://localhost:5173, đăng nhập bằng email đã đặt ở `BOOTSTRA
 npm run check            # constitution + lint + format + typecheck + test — Definition of Done
 ```
 
+### Kiểm thử giao diện end-to-end (Playwright)
+
+```bash
+npx playwright install chromium   # một lần: tải trình duyệt cho Playwright
+npm run test:e2e                  # cần Mongo đang chạy (docker compose up -d --wait)
+```
+
+Mở trang thật trong Chromium trên server thật và một database riêng `ucms-e2e` (seed lại mỗi lần
+chạy, xoá khi xong; không đụng DB `ucms` và không đọc `.env`). Không nằm trong `npm run check`;
+CI chạy nó ở job `e2e` riêng. Cách hoạt động, vai đăng nhập và cách viết test:
+[`client/e2e/README.md`](client/e2e/README.md).
+
 ### Lint và format
 
 Chạy tại thư mục gốc:

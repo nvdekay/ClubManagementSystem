@@ -16,3 +16,8 @@ seed-data/
 .sdd/
 .claude/
 .env*
+
+# Playwright e2e output
+client/e2e/.auth/
+client/e2e/test-results/
+client/e2e/playwright-report/
