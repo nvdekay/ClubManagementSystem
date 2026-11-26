@@ -113,7 +113,8 @@ suy ra từ payload hoặc thực thể để client dựng link) và outbox cho
 `dueAt`, mỗi lần thử ghi `emailDeliveryLogs`. Kênh email do `notificationChannels()` của domain quyết định, được
 `queueNotifications` (`club-board.ts`) và các repository hồ sơ thành lập, đề xuất sự kiện, booking dùng. Lọc theo
 workspace (01/11/2026): `scope` sinh viên/ICPDP/CLB lọc ở DB theo danh sách `eventCode` của domain; `scope=club` kèm
-`clubId` thì đọc các dòng CLB của người dùng, suy `clubId` từng dòng rồi lọc, nên số chưa đọc luôn khớp danh sách. Mã
+`clubId` thì trước hết suy CLB cho các dòng CLB chưa có trường `clubId` của người dùng và lưu lại (null = không thuộc
+CLB nào), rồi lọc và phân trang ngay ở DB (index `ix_notification_club`), nên số chưa đọc luôn khớp danh sách. Mã
 mới gửi đi phải được thêm vào một danh sách audience (test `notification-audience` quét mọi chỗ enqueue).
 
 `seed-dashboard.ts` (`npm run seed:dashboard`, 17/10/2026) — chạy sau `seed` + `seed:demo`, chỉ ghi vào DB

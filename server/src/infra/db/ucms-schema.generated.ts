@@ -3230,6 +3230,9 @@ export const ucmsTables = {
       "readAt": {
         "type": "datetime"
       },
+      "clubId": {
+        "type": "objectId"
+      },
       "createdAt": {
         "type": "datetime",
         "required": true
@@ -3249,6 +3252,21 @@ export const ucmsTables = {
           "readAt"
         ],
         "name": "ix_notification_inbox"
+      },
+      {
+        "fields": [
+          "recipientUserId",
+          "createdAt"
+        ],
+        "name": "ix_notification_recent"
+      },
+      {
+        "fields": [
+          "recipientUserId",
+          "clubId",
+          "createdAt"
+        ],
+        "name": "ix_notification_club"
       }
     ]
   },
