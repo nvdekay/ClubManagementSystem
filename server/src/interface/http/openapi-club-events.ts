@@ -180,7 +180,7 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
             respondents: z.number(),
             visible: z.boolean(),
             averageRating: z.number().optional(),
-            distribution: z.record(z.number()).optional(),
+            distribution: z.record(z.string(), z.number()).optional(),
             comments: z.array(z.string()).optional(),
           }),
         ),
