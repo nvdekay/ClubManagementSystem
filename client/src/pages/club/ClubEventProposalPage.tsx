@@ -45,6 +45,8 @@ import {
 } from '@/services/clubEvents'
 import { formatBytes, proposalFileType } from '@/utils/proposalFile'
 import { importEventProposal, type ProposalImport } from '@/utils/eventProposalImport'
+import { openInNewTab } from '@/utils/openInNewTab'
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard'
 
 const sectionCardClass =
   'space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6'
@@ -126,6 +128,11 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
   const [reading, setReading] = useState(false)
   const [imported, setImported] = useState<ProposalImport | null>(null)
   const importSequence = useRef(0)
+  // Snapshot of the draft as last loaded or saved, to warn before leaving with unsaved edits.
+  const [savedDraft, setSavedDraft] = useState(() => JSON.stringify(draft))
+  const { allowNavigation } = useUnsavedChangesGuard(
+    pendingFile !== null || JSON.stringify(draft) !== savedDraft,
+  )
   const fileInput = useRef<HTMLInputElement>(null)
   const template = useEventProposalTemplate(true)
   const documentAccess = useEventProposalDocumentAccess(clubId)
@@ -276,9 +283,10 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
       return
     }
     try {
-      const access = await documentAccess.mutateAsync({ id: activeId, inline })
       // Giữ nguyên bản nháp khi trình duyệt hiển thị hoặc tải tài liệu xuống.
-      window.open(access.url, '_blank', 'noopener,noreferrer')
+      await openInNewTab(
+        async () => (await documentAccess.mutateAsync({ id: activeId, inline })).url,
+      )
     } catch {
       // Lỗi thao tác được hiển thị tại khu vực tài liệu.
     }
@@ -312,6 +320,7 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
           })
       savedEvent = result.event
       setCreatedDraft(savedEvent)
+      setSavedDraft(JSON.stringify(draft))
     } catch (error) {
       setFormError(error)
       return
@@ -340,6 +349,7 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
 
     if (!shouldSubmit) {
       appToast.success(t('clubEvents.success'))
+      allowNavigation()
       navigate(`${eventsListUrl}?event=${encodeURIComponent(savedEvent.id)}`)
       return
     }
@@ -353,6 +363,7 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
         csrfToken,
       })
       appToast.success(t('clubEvents.submittedSuccess'))
+      allowNavigation()
       navigate(`${eventsListUrl}?event=${encodeURIComponent(submitted.event.id)}`)
     } catch (error) {
       setFormError(error)

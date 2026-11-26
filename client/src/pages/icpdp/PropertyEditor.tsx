@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useId, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/components/ui/button/AppButton'
@@ -70,6 +70,7 @@ export function PropertyEditor({
   const [capacity, setCapacity] = useState(property?.capacity ? String(property.capacity) : '')
   const [equipment, setEquipment] = useState<string[]>(property?.equipment ?? [])
   const [tag, setTag] = useState('')
+  const equipmentLabelId = useId()
   const [custom, setCustom] = useState(!sameHours(initialHours))
   const [hours, setHours] = useState<Record<number, { open: string; close: string } | null>>(
     Object.fromEntries(
@@ -249,7 +250,7 @@ export function PropertyEditor({
       </div>
 
       <div className="block text-sm font-medium text-text-app">
-        {t('properties.equipment')}
+        <span id={equipmentLabelId}>{t('properties.equipment')}</span>
         {/* Hộp tag có kích thước như AppInput; ô nhập bên trong không viền vì chính hộp là phần điều khiển nhìn thấy. */}
         <div className="mt-1.5 flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border border-border-app bg-bg-app px-2 py-0.5 shadow-xs transition-colors focus-within:border-ring-app focus-within:ring-3 focus-within:ring-ring-app/20 sm:min-h-9">
           {equipment.map((item) => (
@@ -270,6 +271,7 @@ export function PropertyEditor({
           <input
             className="h-7 min-w-40 flex-1 bg-transparent px-1 text-sm font-normal text-text-app outline-none placeholder:text-muted-app"
             value={tag}
+            aria-labelledby={equipmentLabelId}
             placeholder={t('properties.equipmentPlaceholder')}
             maxLength={60}
             onChange={(event) => setTag(event.target.value)}

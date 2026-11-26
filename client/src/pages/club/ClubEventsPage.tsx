@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useParams, useSearchParams } from 'react-router'
@@ -43,6 +43,8 @@ import {
   stateTones,
   type DecisionComments,
 } from '@/pages/club/clubEventFormat'
+import { openInNewTab } from '@/utils/openInNewTab'
+import { useNow } from '@/hooks/useNow'
 
 const eventsEmpty: ClubEvent[] = []
 const tabClass =
@@ -177,15 +179,9 @@ export function ClubEventsPage({
   const [formError, setFormError] = useState<unknown>(null)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleReason, setRescheduleReason] = useState('')
-  const [renderedAt] = useState(() => Date.now())
-  const [clockMs, setClockMs] = useState(() => Date.now())
-  useEffect(() => {
-    if (mode !== 'attendance' || canManageEvents) {
-      return
-    }
-    const timer = window.setInterval(() => setClockMs(Date.now()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [mode, canManageEvents])
+  // Notice-window checks (24h/72h) refresh every minute instead of freezing at first render.
+  const renderedAt = useNow()
+  const clockMs = useNow(30_000, mode === 'attendance' && !canManageEvents)
   const detail = useClubEvent(clubId, selected, allowed && mode === 'events')
   const defense = useClubEventDefense(
     clubId,
@@ -336,10 +332,8 @@ export function ClubEventsPage({
   // Mở tài liệu đề xuất sự kiện (tải về hoặc xem) qua URL có chữ ký
   async function downloadDocument(id: string, revisionNo?: number, inline = false) {
     try {
-      window.open(
-        (await documentAccess.mutateAsync({ id, revisionNo, inline })).url,
-        '_blank',
-        'noopener,noreferrer',
+      await openInNewTab(
+        async () => (await documentAccess.mutateAsync({ id, revisionNo, inline })).url,
       )
     } catch {
       /* Lỗi của mutation được hiển thị cạnh tệp. */

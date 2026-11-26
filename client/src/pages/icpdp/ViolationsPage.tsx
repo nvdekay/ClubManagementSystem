@@ -36,6 +36,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { documentHref } from '@/utils/documentLinks'
 
 const filters = ['active', 'awaiting', 'actions', 'closed', 'all'] as const
 type Filter = (typeof filters)[number]
@@ -614,7 +615,7 @@ function EvidenceList({
         <li key={index} className="rounded-xl border border-border-app px-3 py-2">
           {item.url ? (
             <a
-              href={item.url}
+              href={documentHref(item.url) ?? undefined}
               target="_blank"
               rel="noreferrer noopener"
               className="font-medium break-all text-primary-app hover:underline"
@@ -973,7 +974,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
                                 {e.note !== e.url && e.note}{' '}
                                 {e.url && (
                                   <a
-                                    href={e.url}
+                                    href={documentHref(e.url) ?? undefined}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-primary-app hover:underline"

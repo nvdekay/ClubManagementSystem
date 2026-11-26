@@ -9,6 +9,7 @@ import type {
   ComplaintState,
 } from '@/services/complaints'
 import { formatDate } from '@/utils/formatDate'
+import { documentHref } from '@/utils/documentLinks'
 
 const stateTone: Record<ComplaintState, AppBadgeTone> = {
   Submitted: 'info',
@@ -103,7 +104,7 @@ export function ComplaintCard(props: ComplaintCardProps) {
             <li key={item.url}>
               <a
                 className="break-all text-primary-app hover:underline"
-                href={item.url}
+                href={documentHref(item.url) ?? undefined}
                 target="_blank"
                 rel="noreferrer noopener"
               >
@@ -143,7 +144,7 @@ export function ComplaintCard(props: ComplaintCardProps) {
                 <li key={item.url}>
                   <a
                     className="break-all text-primary-app hover:underline"
-                    href={item.url}
+                    href={documentHref(item.url) ?? undefined}
                     target="_blank"
                     rel="noreferrer noopener"
                   >

@@ -28,3 +28,6 @@ cell và các field Overview, kể cả ô gộp/nhãn trùng khác đích. Khô
 `docx-preview`, phân trang với `pagedjs`. `proposalDocumentFrame.css` chỉ áp dụng bên trong frame tài liệu,
 không phải styling của ứng dụng: giữ font/bảng/ảnh nguồn, trang giấy cố định sáng, canvas theo theme.
 `pagedjs.d.ts` khai báo phần API thư viện thực sự được dùng. Không import entry frame vào app React.
+
+`openInNewTab(resolveUrl)` mở tab mới ngay trong lúc người dùng bấm (để trình duyệt không chặn popup), rồi chuyển tab đó tới
+URL khi lời gọi API trả về; nếu lời gọi lỗi thì đóng tab trống và ném lại lỗi. Dùng cho link truy cập tài liệu có thời hạn.

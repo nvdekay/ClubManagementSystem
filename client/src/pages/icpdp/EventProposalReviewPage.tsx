@@ -37,6 +37,8 @@ import { diffFields, type DiffField } from '@/utils/revisionDiff'
 import { useConfirm } from '@/hooks/useConfirm'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
+import { openInNewTab } from '@/utils/openInNewTab'
+import { useNow } from '@/hooks/useNow'
 
 // Đọc an toàn trường văn bản không bắt buộc trong dữ liệu phiên bản đã lưu.
 function text(value: unknown): string | undefined {
@@ -86,7 +88,8 @@ export function EventProposalReviewPage() {
   const [cancelApprove, setCancelApprove] = useState(true)
   const [cancelReviewReason, setCancelReviewReason] = useState('')
   const [cancelReviewError, setCancelReviewError] = useState<string | null>(null)
-  const [renderedAt] = useState(() => Date.now())
+  // The 24h defense window check refreshes every minute instead of freezing at first render.
+  const renderedAt = useNow()
   // Dùng dữ liệu đã chốt khi nộp cho tài liệu và ngân sách, có phương án dự phòng cho hồ sơ cũ.
   const current =
     review.data?.versions.find(
@@ -448,8 +451,9 @@ export function EventProposalReviewPage() {
       return
     }
     try {
-      const access = await documentAccess.mutateAsync({ id, revisionNo, inline })
-      window.open(access.url, '_blank', 'noopener,noreferrer')
+      await openInNewTab(
+        async () => (await documentAccess.mutateAsync({ id, revisionNo, inline })).url,
+      )
     } catch {
       // Lỗi thao tác được hiển thị tại khu vực tài liệu đề xuất.
     }

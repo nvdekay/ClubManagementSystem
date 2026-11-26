@@ -25,6 +25,7 @@ import {
   type PolicyVersion,
 } from '@/services/policy'
 import { cn } from '@/utils/cn'
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard'
 
 interface PolicyEditorProps {
   latest?: PolicyVersion
@@ -541,6 +542,9 @@ export function PolicyEditor({ latest, csrfToken, onSaved }: PolicyEditorProps) 
   const [section, setSection] = useState<PolicySection>('founding')
   const [localError, setLocalError] = useState<string | null>(null)
   const create = useCreatePolicy()
+  // Snapshot of the form as opened, to warn before leaving the page with unsaved edits.
+  const [initialSnapshot] = useState(() => JSON.stringify(form))
+  const { allowNavigation } = useUnsavedChangesGuard(JSON.stringify(form) !== initialSnapshot)
   const errors = formErrors(t, form)
   const field = useFieldValidation(errors)
   // Nhóm có trường sai, chỉ đánh dấu sau lần bấm lưu đầu tiên
@@ -620,6 +624,7 @@ export function PolicyEditor({ latest, csrfToken, onSaved }: PolicyEditorProps) 
     try {
       await create.mutateAsync({ input, csrfToken })
       appToast.success(t('policy.saveSuccess'))
+      allowNavigation()
       onSaved?.()
     } catch {
       /* Lỗi của mutation được hiển thị bên dưới. */
