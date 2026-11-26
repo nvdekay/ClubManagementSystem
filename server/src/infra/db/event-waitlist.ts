@@ -18,7 +18,7 @@ export async function promoteEventWaitlist(
     const event = await m
       .events!.findOne({
         _id: eventId,
-        state: { $in: ['Upcoming', 'PUBLIC'] },
+        state: 'Upcoming',
         startAt: { $gt: now },
         registrationOpenAt: { $lte: now },
         registrationCloseAt: { $gt: now },
@@ -73,7 +73,7 @@ export async function promoteEventWaitlist(
     const changed = await m.events!.updateOne(
       {
         _id: eventId,
-        state: { $in: ['Upcoming', 'PUBLIC'] },
+        state: 'Upcoming',
         $expr: { $lt: ['$confirmedRegistrationCount', '$capacity'] },
       },
       { $inc: { confirmedRegistrationCount: 1 } },

@@ -111,12 +111,7 @@ export async function applyEventAttendanceAction(
     .session(session)
     .lean()
   if (action.kind === 'check-in') {
-    if (
-      !event.publishedAt ||
-      !['Upcoming', 'Ongoing', 'Completed', 'PUBLIC', 'ONGOING', 'FINISH'].includes(
-        String(event.state),
-      )
-    ) {
+    if (!event.publishedAt || !['Upcoming', 'Ongoing', 'Completed'].includes(String(event.state))) {
       conflict('event is not open for check-in')
     }
     const outside =
