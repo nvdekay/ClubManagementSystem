@@ -1,12 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { decideSuspension, fetchSuspensions, submitSuspension } from '@/services/suspensionRequests'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  decideSuspension,
+  fetchAdminSuspensions,
+  fetchSuspensions,
+  submitSuspension,
+} from '@/services/suspensionRequests'
 const key = ['suspension-requests'] as const
-// Query yêu cầu tạm ngưng CLB
+// Query yêu cầu tạm ngưng và tác động của một CLB
 export function useSuspensionRequests(clubId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: [...key, clubId],
-    queryFn: ({ signal }) => fetchSuspensions(clubId, signal),
+    queryFn: ({ signal }) => fetchSuspensions(clubId!, signal),
+    enabled: enabled && Boolean(clubId),
+  })
+}
+// Query một trang hàng đợi yêu cầu tạm ngưng cho ICPDP (trang bắt đầu từ 1)
+/** Trang trước vẫn hiển thị trong khi trang mới đang tải. */
+export function useAdminSuspensionRequests(page: number, pageSize: number, enabled: boolean) {
+  return useQuery({
+    queryKey: [...key, 'admin', page, pageSize],
+    queryFn: ({ signal }) => fetchAdminSuspensions(page, pageSize, signal),
     enabled,
+    placeholderData: keepPreviousData,
   })
 }
 // Mutation gửi hoặc quyết định yêu cầu tạm ngưng, rồi làm mới cache

@@ -6,12 +6,14 @@ import type {
   ComplaintEvidence,
   ComplaintForClub,
   ComplaintForIcpdp,
+  ComplaintQueueItem,
   ComplaintRepository,
   ComplaintState,
   ComplaintTriage,
 } from '../../domain/complaint.js'
 import { UNDECIDED_COMPLAINT_STATES } from '../../domain/complaint.js'
 import { DomainError } from '../../domain/errors.js'
+import { pageSkip } from '../../domain/paging.js'
 import { queueNotifications } from './club-board.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels as m } from './ucms-models.js'
@@ -480,14 +482,53 @@ export function mongoComplaintRepository(): ComplaintRepository {
     },
 
     // UC51: hàng đợi khiếu nại cho ICPDP, gom khiếu nại trùng vào bản gốc
-    async queue(filter) {
+    async queue(query) {
       // Khiếu nại trùng đã liên kết hiển thị bên trong khiếu nại gốc (linkedComplaintIds), không bao giờ là việc riêng.
-      const docs = await complaints
-        .find({ linkedComplaintId: null, ...(filter.state ? { state: filter.state } : {}) })
-        .sort({ submittedAt: -1, _id: -1 })
-        .limit(300)
-        .lean()
-      return forIcpdp(docs)
+      const match = { linkedComplaintId: null, ...(query.state ? { state: query.state } : {}) }
+      const [docs, total] = await Promise.all([
+        complaints
+          .find(match)
+          .sort({ submittedAt: -1, _id: -1 })
+          .skip(pageSkip(query))
+          .limit(query.pageSize)
+          .lean(),
+        complaints.countDocuments(match),
+      ])
+      const items = await forIcpdp(docs)
+      // UC50 E1: ứng viên liên kết lấy trên toàn bộ hàng đợi, không chỉ trang hiện tại.
+      const undecided = docs.filter((doc) =>
+        UNDECIDED_COMPLAINT_STATES.includes(String(doc.state) as ComplaintState),
+      )
+      const candidates = undecided.length
+        ? await complaints
+            .find({
+              linkedComplaintId: null,
+              state: { $in: [...UNDECIDED_COMPLAINT_STATES] },
+              complainantId: { $in: undecided.map((doc) => doc.complainantId) },
+            })
+            .sort({ submittedAt: -1, _id: -1 })
+            .select({ complainantId: 1, clubId: 1, description: 1 })
+            .lean()
+        : []
+      const undecidedIds = new Set(undecided.map((doc) => String(doc._id)))
+      return {
+        items: items.map((item, index): ComplaintQueueItem => ({
+          ...item,
+          linkCandidates: undecidedIds.has(item.id)
+            ? candidates
+                .filter(
+                  (other) =>
+                    String(other._id) !== item.id &&
+                    String(other.complainantId) === String(docs[index]!.complainantId) &&
+                    String(other.clubId) === String(docs[index]!.clubId),
+                )
+                .map((other) => ({ id: String(other._id), description: String(other.description) }))
+            : [],
+        })),
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+      }
     },
     // UC51: ICPDP xem chi tiết một khiếu nại
     async findForIcpdp(complaintId) {

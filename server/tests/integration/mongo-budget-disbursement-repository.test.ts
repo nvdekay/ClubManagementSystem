@@ -157,7 +157,9 @@ describe.skipIf(!uri)('Mongo budget disbursement repository', () => {
   it('records advances, sets the settlement deadline and notifies the board and submitter', async () => {
     const repo = mongoBudgetDisbursementRepository()
     const id = await budget('Approved')
-    expect((await repo.list()).map((item) => item.id)).toContain(id)
+    expect(
+      (await repo.list({ filter: 'all', page: 1, pageSize: 100 })).items.map((item) => item.id),
+    ).toContain(id)
     expect((await repo.find(id))?.allowed).toEqual({ kind: 'Advance', max: 4_000_000 })
 
     const first = await repo.record(
@@ -263,5 +265,98 @@ describe.skipIf(!uri)('Mongo budget disbursement repository', () => {
         now,
       ),
     ).toMatchObject({ state: 'Closed', refundedTotal: 800_000 })
+  })
+
+  it('pages budgets server-side with tab and club filters and per-tab counts', async () => {
+    const repo = mongoBudgetDisbursementRepository()
+    await ucmsModels.eventBudgets!.deleteMany({})
+    const anh = new Types.ObjectId()
+    const bong = new Types.ObjectId()
+    await ucmsModels.clubs!.insertMany([
+      { _id: anh, code: 'CLB-AD', name: 'Ánh Dương', field: 'x', state: 'Active', createdAt: now },
+      { _id: bong, code: 'CLB-BR', name: 'Bóng rổ', field: 'x', state: 'Active', createdAt: now },
+    ])
+    let minute = 0
+    async function insert(club: Types.ObjectId, state: string, sponsoredItems?: unknown[]) {
+      minute += 1
+      const doc = await ucmsModels.eventBudgets!.create({
+        eventId: new Types.ObjectId(),
+        clubId: club,
+        state,
+        lines: [],
+        requestedTotal: decimal(1),
+        approvedTotal: decimal(1),
+        approvedByDecisionId: new Types.ObjectId(),
+        disbursedTotal: decimal(0),
+        refundedTotal: decimal(0),
+        isSettlementLate: false,
+        createdAt: new Date(now.getTime() + minute * 60_000),
+        ...(sponsoredItems ? { sponsoredItems } : {}),
+      })
+      return String(doc._id)
+    }
+    function item(fundingDecision: string, status: string, approvedAmount = 1_000_000, extra = {}) {
+      return { id: `i${minute}`, fundingDecision, status, approvedAmount, ...extra }
+    }
+    // 22 legacy budgets of HEBE without sponsored items.
+    const legacy: string[] = []
+    for (let index = 0; index < 22; index += 1) {
+      legacy.push(await insert(clubId, 'Approved'))
+    }
+    await insert(anh, 'Approved', [item('BEFORE_EVENT', 'AwaitingAdvance')])
+    await insert(anh, 'Approved', [item('NOT_SPONSORED', 'AwaitingAdvance')])
+    await insert(anh, 'Approved', [item('AFTER_EVENT', 'Submitted')])
+    await insert(anh, 'Approved', [item('AFTER_EVENT', 'Accepted', 6_000_000)])
+    await insert(anh, 'Approved', [item('AFTER_EVENT', 'Accepted')])
+    await insert(bong, 'Approved', [
+      item('AFTER_EVENT', 'Accepted', 1_000_000, { paymentChannel: 'DIRECT_VENDOR' }),
+      item('BEFORE_EVENT', 'RefundSubmitted'),
+    ])
+    await insert(bong, 'Closed', [item('AFTER_EVENT', 'Paid')])
+    await insert(bong, 'Cancelled')
+
+    const first = await repo.list({ filter: 'all', page: 1, pageSize: 20 })
+    expect(first).toMatchObject({
+      total: 30,
+      page: 1,
+      pageSize: 20,
+      counts: {
+        all: 30,
+        awaitingAdvance: 1,
+        awaitingReview: 1,
+        awaitingVendorPay: 2,
+        awaitingRefundConfirm: 1,
+        inProgress: 28,
+        closed: 2,
+      },
+    })
+    expect(first.items).toHaveLength(20)
+    // Vietnamese collation: "Ánh Dương" sorts before "Bóng rổ" and "HEBE".
+    expect(first.clubs.map((club) => club.name)).toEqual(['Ánh Dương', 'Bóng rổ', 'HEBE'])
+    const second = await repo.list({ filter: 'all', page: 2, pageSize: 20 })
+    expect(second.items.map((budget) => budget.id)).toEqual(legacy.slice(0, 10).reverse())
+
+    // The tab counts agree with the per-budget item counts the client shows as badges.
+    const all = (await repo.list({ filter: 'all', page: 1, pageSize: 100 })).items
+    expect(all.filter((budget) => (budget.itemCounts?.awaitingVendorPay ?? 0) > 0)).toHaveLength(2)
+    expect(all.filter((budget) => (budget.itemCounts?.awaitingAdvance ?? 0) > 0)).toHaveLength(1)
+
+    const vendor = await repo.list({ filter: 'awaitingVendorPay', page: 1, pageSize: 1 })
+    expect(vendor.total).toBe(2)
+    expect(vendor.items[0]?.clubName).toBe('Bóng rổ')
+    const anhOnly = await repo.list({
+      filter: 'inProgress',
+      clubId: String(anh),
+      page: 1,
+      pageSize: 20,
+    })
+    expect(anhOnly.total).toBe(5)
+    expect(anhOnly.counts).toMatchObject({ all: 5, awaitingVendorPay: 1, closed: 0 })
+    expect(anhOnly.items.every((budget) => budget.clubId === String(anh))).toBe(true)
+    expect(
+      (
+        await repo.list({ filter: 'closed', clubId: String(bong), page: 1, pageSize: 20 })
+      ).items.map((budget) => budget.state),
+    ).toEqual(['Cancelled', 'Closed'])
   })
 })

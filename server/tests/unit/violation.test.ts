@@ -3,6 +3,8 @@ import {
   applyViolationStep,
   normalizedEvidence,
   normalizedOpenInput,
+  violationFilterCounts,
+  violationFilterStates,
   type ViolationCase,
 } from '../../src/domain/violation.js'
 import { openViolation } from '../../src/usecase/violation.js'
@@ -10,6 +12,7 @@ import { openViolation } from '../../src/usecase/violation.js'
 const now = new Date('2026-10-10T08:00:00Z')
 const later = new Date('2026-10-20T08:00:00Z')
 const officer = '000000000000000000000001'
+const emptyCounts = { all: 0, active: 0, awaiting: 0, actions: 0, closed: 0, open: 0 }
 
 function base(change: Partial<ViolationCase> = {}): ViolationCase {
   return {
@@ -238,7 +241,7 @@ describe('violation case steps', () => {
 
   it('only lets an ICPDP officer open a case', async () => {
     const repo = {
-      list: async () => [],
+      list: async () => ({ items: [], total: 0, page: 1, pageSize: 20, counts: emptyCounts }),
       find: async () => null,
       sources: async () => null,
       open: async () => {
@@ -257,5 +260,23 @@ describe('violation case steps', () => {
         now,
       ),
     ).rejects.toMatchObject({ kind: 'forbidden' })
+  })
+
+  it('maps tab filters to states and folds per-state counts into per-tab counts', () => {
+    expect(violationFilterStates('all')).toBeUndefined()
+    expect(violationFilterStates('closed')).toEqual(['Resolved', 'Closed'])
+    expect(violationFilterStates('open')).not.toContain('Resolved')
+    expect(
+      violationFilterCounts(
+        new Map([
+          ['Open', 3],
+          ['Under Investigation', 1],
+          ['Awaiting Club Response', 2],
+          ['Corrective Action', 1],
+          ['Closed', 4],
+        ]),
+      ),
+    ).toEqual({ all: 11, active: 4, awaiting: 2, actions: 1, closed: 4, open: 7 })
+    expect(violationFilterCounts(new Map())).toEqual(emptyCounts)
   })
 })

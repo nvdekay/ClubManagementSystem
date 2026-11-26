@@ -251,7 +251,6 @@ export interface EventPublishInput {
   checkInCloseAt: string
   allowWalkIn: boolean
   waitlistEnabled: boolean
-  notifyMembers?: boolean
 }
 // Dựng RequestInit JSON có CSRF cho phương thức và body cho trước
 

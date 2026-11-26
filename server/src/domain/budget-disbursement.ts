@@ -1,4 +1,5 @@
 import { DomainError } from './errors.js'
+import type { Page, PageRequest } from './paging.js'
 
 /** BR57: hằng số của tài liệu chính sách, không phải giá trị chính sách có thể chỉnh sửa (BR42). */
 export const SETTLEMENT_DUE_DAYS = 14
@@ -82,8 +83,37 @@ export interface NormalizedBudgetFlow {
   note?: string
 }
 
+/**
+ * Tabs of the ICPDP budget queue. The `awaiting*` tabs hold budgets with at least one sponsored
+ * item waiting on the officer in that step; the counting rules match `BudgetItemCounts`.
+ */
+export const BUDGET_FILTERS = [
+  'all',
+  'awaitingAdvance',
+  'awaitingReview',
+  'awaitingVendorPay',
+  'awaitingRefundConfirm',
+  'inProgress',
+  'closed',
+] as const
+export type BudgetFilter = (typeof BUDGET_FILTERS)[number]
+
+export interface BudgetListQuery extends PageRequest {
+  filter: BudgetFilter
+  /** Only budgets of this club; the counts follow the same scope. */
+  clubId?: string
+}
+
+export interface BudgetPage extends Page<BudgetSummary> {
+  /** Budgets per tab across every page, within the club scope. */
+  counts: Record<BudgetFilter, number>
+  /** Every club that has a budget, sorted by name, for the club picker. */
+  clubs: { id: string; name: string }[]
+}
+
 export interface BudgetDisbursementRepository {
-  list(): Promise<BudgetSummary[]>
+  /** One page of budgets matching the tab and club, newest first, with per-tab counts. */
+  list(query: BudgetListQuery): Promise<BudgetPage>
   find(id: string): Promise<BudgetDetail | null>
   /** Kiểm tra lại `allowedFlow` trong transaction, rồi ghi dòng tiền, audit và thông báo. */
   record(

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
@@ -15,7 +15,6 @@ import { ViolationOpenCaseForm } from '@/pages/icpdp/ViolationOpenCaseForm'
 import {
   filterLabel,
   filters,
-  matches,
   originLabel,
   severityLabel,
   severityTone,
@@ -32,28 +31,17 @@ const emptyViolations: ViolationSummary[] = []
 // Danh sách ca vi phạm kèm bộ lọc và nút mở ca mới
 export function ViolationList({ csrfToken }: { csrfToken: string }) {
   const { t, i18n } = useTranslation()
-  const list = useViolations(true)
   const [filter, setFilter] = useState<Filter>('active')
   const [opening, setOpening] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
-  const items = list.data ?? emptyViolations
-  // Counts for every tab are computed in one pass instead of re-filtering per tab on each render.
-  const counts = useMemo(() => {
-    const result = Object.fromEntries(filters.map((value) => [value, 0])) as Record<Filter, number>
-    for (const item of items) {
-      for (const value of filters) {
-        if (matches(value, item)) {
-          result[value] += 1
-        }
-      }
-    }
-    return result
-  }, [items])
-  const visible = useMemo(() => items.filter((item) => matches(filter, item)), [items, filter])
-  const pageCount = Math.ceil(visible.length / PAGE_SIZE)
-  // Clamp after the list shrinks (e.g. a case leaves the current tab) so the page never goes blank.
-  const page = Math.min(pageIndex, Math.max(pageCount - 1, 0))
-  const pageItems = visible.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  // The server filters and pages; the tab badges come from its per-filter counts.
+  const list = useViolations(filter, pageIndex + 1, PAGE_SIZE, true)
+  const pageItems = list.data?.items ?? emptyViolations
+  const pageCount = Math.ceil((list.data?.total ?? 0) / PAGE_SIZE)
+  // Step back after the list shrinks (e.g. the last case of the last page left this tab).
+  if (list.data && !list.isPlaceholderData && pageIndex > 0 && pageIndex >= pageCount) {
+    setPageIndex(Math.max(pageCount - 1, 0))
+  }
   function day(value: string) {
     return formatDay(value, i18n.language)
   }
@@ -107,11 +95,11 @@ export function ViolationList({ csrfToken }: { csrfToken: string }) {
                   },
                 )}
               >
-                {filterLabel(t, value)} · {counts[value]}
+                {filterLabel(t, value)} · {list.data.counts[value]}
               </button>
             ))}
           </div>
-          {visible.length ? (
+          {pageItems.length ? (
             <>
               <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
                 {pageItems.map((item) => (
@@ -167,7 +155,7 @@ export function ViolationList({ csrfToken }: { csrfToken: string }) {
               </ul>
               <AppPagination
                 className="mt-4"
-                pageIndex={page}
+                pageIndex={pageIndex}
                 pageCount={pageCount}
                 onPageChange={setPageIndex}
                 prevLabel={t('violations.previousPage')}

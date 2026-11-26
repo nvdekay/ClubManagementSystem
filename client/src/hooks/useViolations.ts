@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   applyViolationStep,
   fetchViolation,
@@ -6,17 +6,25 @@ import {
   fetchViolationSources,
   openViolation,
   type OpenViolationInput,
+  type ViolationFilter,
   type ViolationStep,
 } from '@/services/violations'
 
 const violationKey = ['violations'] as const
 
-// Query danh sách vi phạm của các CLB
-export function useViolations(enabled: boolean) {
+// Query một trang vi phạm của các CLB theo bộ lọc (trang bắt đầu từ 1)
+/** Trang trước vẫn hiển thị trong khi trang hoặc bộ lọc mới đang tải. */
+export function useViolations(
+  filter: ViolationFilter,
+  page: number,
+  pageSize: number,
+  enabled: boolean,
+) {
   return useQuery({
-    queryKey: [...violationKey, 'list'],
-    queryFn: ({ signal }) => fetchViolations(signal),
+    queryKey: [...violationKey, 'list', filter, page, pageSize],
+    queryFn: ({ signal }) => fetchViolations(filter, page, pageSize, signal),
     enabled,
+    placeholderData: keepPreviousData,
   })
 }
 

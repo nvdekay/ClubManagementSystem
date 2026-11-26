@@ -1,4 +1,5 @@
 import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import type { Page } from '@/services/discovery'
 export const VIOLATION_ORIGINS = [
   'COMPLAINT',
   'REPORT_FINDING',
@@ -31,6 +32,14 @@ export interface ViolationSummary {
   responseDueAt?: string
   responseOverdue: boolean
   pendingActions: number
+}
+
+/** Server-side queue filters; `open` (not Resolved/Closed) is not a tab, it feeds pickers. */
+export type ViolationFilter = 'all' | 'active' | 'awaiting' | 'actions' | 'closed' | 'open'
+
+export interface ViolationPage extends Page<ViolationSummary> {
+  /** Cases per filter across every page, for the tab badges. */
+  counts: Record<ViolationFilter, number>
 }
 
 export interface CorrectiveAction {
@@ -130,9 +139,15 @@ function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
   return apiRequest<T>(`/api/v1/admin/violations${path}`, options)
 }
 
-// GET danh sách vi phạm của các CLB
-export function fetchViolations(signal: AbortSignal): Promise<ViolationSummary[]> {
-  return request('', { signal })
+// GET một trang vi phạm của các CLB theo bộ lọc
+export function fetchViolations(
+  filter: ViolationFilter,
+  page: number,
+  pageSize: number,
+  signal: AbortSignal,
+): Promise<ViolationPage> {
+  const params = new URLSearchParams({ filter, page: String(page), pageSize: String(pageSize) })
+  return request(`?${params}`, { signal })
 }
 
 // GET chi tiết một vi phạm

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
+import { pageSkip } from '../../domain/paging.js'
 import {
   normalizedSuspensionRequest,
   type SuspensionImpact,
@@ -15,13 +16,17 @@ import { ucmsModels as m } from './ucms-models.js'
 type Doc = Record<string, unknown>
 // Repository yêu cầu đình chỉ CLB và duyệt của ICPDP
 export function mongoSuspensionRequestRepository(): SuspensionRequestRepository {
-  // Ánh xạ document yêu cầu sang SuspensionRequest kèm tên CLB
-  async function mapped(d: Doc): Promise<SuspensionRequest> {
-    const club = await m.clubs!.findById(d.clubId).select({ name: 1 }).lean()
-    return {
+  // Ánh xạ các document yêu cầu sang SuspensionRequest, tên CLB lấy bằng một truy vấn
+  async function mapped(docs: Doc[]): Promise<SuspensionRequest[]> {
+    const clubs = await m
+      .clubs!.find({ _id: { $in: docs.map((d) => d.clubId) } })
+      .select({ name: 1 })
+      .lean()
+    const clubName = new Map(clubs.map((club) => [String(club._id), String(club.name)]))
+    return docs.map((d) => ({
       id: String(d._id),
       clubId: String(d.clubId),
-      clubName: String(club?.name ?? ''),
+      clubName: clubName.get(String(d.clubId)) ?? '',
       reason: String(d.reason),
       until: d.until as Date,
       obligationsPlan: String(d.obligationsPlan),
@@ -32,7 +37,7 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
       submittedBy: String(d.submittedBy),
       ...(d.decisionReason ? { decisionReason: String(d.decisionReason) } : {}),
       ...(d.decidedAt ? { decidedAt: d.decidedAt as Date } : {}),
-    }
+    }))
   }
   // Liệt kê sự kiện và booking sắp tới bị ảnh hưởng khi CLB bị đình chỉ
   async function impacts(
@@ -78,14 +83,21 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
         .lean()
       return {
         impacts: await impacts(new Types.ObjectId(clubId), now),
-        requests: await Promise.all(docs.map(mapped)),
+        requests: await mapped(docs),
       }
     },
-    // Liệt kê mọi yêu cầu đình chỉ, mới nhất trước
-    async list() {
-      return Promise.all(
-        (await m.suspensionRequests!.find().sort({ submittedAt: -1 }).lean()).map(mapped),
-      )
+    // Một trang yêu cầu đình chỉ của mọi CLB, mới nhất trước
+    async list(page) {
+      const [docs, total] = await Promise.all([
+        m
+          .suspensionRequests!.find()
+          .sort({ submittedAt: -1, _id: -1 })
+          .skip(pageSkip(page))
+          .limit(page.pageSize)
+          .lean(),
+        m.suspensionRequests!.countDocuments(),
+      ])
+      return { items: await mapped(docs), total, page: page.page, pageSize: page.pageSize }
     },
     // Club Leader gửi yêu cầu đình chỉ CLB
     async submit(clubId, raw, userId, now) {
@@ -169,7 +181,8 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
           now,
         )
       })
-      return mapped((await m.suspensionRequests!.findById(id).lean())!)
+      const [created] = await mapped([(await m.suspensionRequests!.findById(id).lean())!])
+      return created!
     },
     // ICPDP duyệt (đình chỉ CLB) hoặc từ chối yêu cầu đình chỉ
     async decide(id, outcome, reason, officerId, now) {

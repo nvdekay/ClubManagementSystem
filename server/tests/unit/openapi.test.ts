@@ -330,14 +330,35 @@ const stubPostReports: PostEventReportRepository = {
   },
 }
 const stubBudgets: BudgetDisbursementRepository = {
-  list: async () => [],
+  list: async () => ({
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    counts: {
+      all: 0,
+      awaitingAdvance: 0,
+      awaitingReview: 0,
+      awaitingVendorPay: 0,
+      awaitingRefundConfirm: 0,
+      inProgress: 0,
+      closed: 0,
+    },
+    clubs: [],
+  }),
   find: async () => null,
   record: async () => {
     throw new Error('unused')
   },
 }
 const stubViolations: ViolationRepository = {
-  list: async () => [],
+  list: async () => ({
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    counts: { all: 0, active: 0, awaiting: 0, actions: 0, closed: 0, open: 0 },
+  }),
   find: async () => null,
   sources: async () => null,
   open: async () => {
@@ -567,7 +588,7 @@ const stubComplaints: ComplaintRepository = {
   eventBelongsToClub: async () => false,
   listMine: async () => [],
   withdraw: async () => null,
-  queue: async () => [],
+  queue: async () => ({ items: [], total: 0, page: 1, pageSize: 20 }),
   findForIcpdp: async () => null,
   clubInbox: async () => [],
   flagOverdueResponses: async () => 0,
@@ -650,7 +671,7 @@ describe('openapi document', () => {
       },
       suspensionRequestRepo: {
         context: async () => ({ requests: [], impacts: [] }),
-        list: async () => [],
+        list: async () => ({ items: [], total: 0, page: 1, pageSize: 20 }),
         submit: async () => {
           throw new Error('unused')
         },

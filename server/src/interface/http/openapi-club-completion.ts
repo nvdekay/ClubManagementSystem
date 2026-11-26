@@ -6,7 +6,11 @@ import {
   transitionPlanSaveBody,
   transitionRevisionBody,
 } from './club-transition-plan-routes.js'
-import { suspensionRequestBody, suspensionDecisionBody } from './suspension-request-routes.js'
+import {
+  suspensionDecisionBody,
+  suspensionListQuery,
+  suspensionRequestBody,
+} from './suspension-request-routes.js'
 const clubPath = z.object({ clubId: z.string() })
 const planPath = clubPath.extend({ id: z.string() })
 const itemPath = z.object({ id: z.string() })
@@ -94,11 +98,17 @@ export const clubCompletionOpenApiPaths = {
     },
   },
   '/admin/suspension-requests': {
-    get: { summary: 'UC15 ICPDP suspension request queue and history', responses },
+    get: {
+      summary:
+        'UC15 ICPDP suspension request queue and history, one page ({ items, total, page, pageSize }) newest first',
+      requestParams: { query: suspensionListQuery },
+      responses,
+    },
   },
   '/admin/suspension-requests/{id}/decision': {
     post: {
-      summary: 'UC15 decide request and cascade suspension atomically (CSRF required)',
+      summary:
+        'UC15 decide request and cascade suspension atomically, returns the first queue page (CSRF required)',
       requestParams: { path: itemPath },
       requestBody: body(suspensionDecisionBody),
       responses,

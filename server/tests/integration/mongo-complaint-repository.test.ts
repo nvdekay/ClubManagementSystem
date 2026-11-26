@@ -361,7 +361,9 @@ describe.skipIf(!uri)('Mongo complaint repository (UC50–UC52)', () => {
     const root = await submitted()
     const follower = await submitted()
     await link(follower.id, root.id)
-    expect((await repo.queue({})).map((item) => item.id)).toEqual([root.id])
+    expect((await repo.queue({ page: 1, pageSize: 20 })).items.map((item) => item.id)).toEqual([
+      root.id,
+    ])
     expect((await repo.findForIcpdp(root.id))?.linkedComplaintIds).toEqual([follower.id])
     for (const decision of [
       { kind: 'open' as const },
@@ -410,7 +412,11 @@ describe.skipIf(!uri)('Mongo complaint repository (UC50–UC52)', () => {
         state: 'Open',
       }),
     ).toBe(1)
-    expect((await repo.queue({ state: 'Submitted' })).map((item) => item.id)).toEqual([first.id])
+    expect(
+      (await repo.queue({ state: 'Submitted', page: 1, pageSize: 20 })).items.map(
+        (item) => item.id,
+      ),
+    ).toEqual([first.id])
   })
 
   it('withdraws only an undecided own complaint, and two concurrent openings let exactly one win', async () => {
@@ -455,5 +461,80 @@ describe.skipIf(!uri)('Mongo complaint repository (UC50–UC52)', () => {
     expect(await m.notifications!.countDocuments({ eventCode: 'COMPLAINT_RESPONSE_OVERDUE' })).toBe(
       1,
     )
+  })
+
+  it('pages the ICPDP queue with the state filter and offers link candidates across pages', async () => {
+    const repo = mongoComplaintRepository()
+    const other = new Types.ObjectId()
+    // Complaint n is submitted n minutes after `now`; even ones are still undecided.
+    const roots = await m.complaints!.insertMany(
+      Array.from({ length: 25 }, (_, index) => ({
+        complainantId: ids.student,
+        clubId: ids.clubA,
+        type: 'CONDUCT',
+        description: `Complaint ${index}`,
+        state: index % 2 ? 'Closed' : 'Submitted',
+        submittedAt: new Date(now.getTime() + index * 60_000),
+      })),
+    )
+    await m.complaints!.insertMany([
+      // A linked duplicate never shows in the queue nor as a candidate.
+      {
+        complainantId: ids.student,
+        clubId: ids.clubA,
+        type: 'CONDUCT',
+        description: 'Duplicate',
+        state: 'Submitted',
+        linkedComplaintId: roots[0]!._id,
+        submittedAt: new Date(now.getTime() + 100 * 60_000),
+      },
+      // Same student, other club: queued, but not a candidate for club A complaints.
+      {
+        complainantId: ids.student,
+        clubId: ids.clubB,
+        type: 'CONDUCT',
+        description: 'Other club',
+        state: 'Submitted',
+        submittedAt: new Date(now.getTime() - 60_000),
+      },
+      // Other student, same club: queued, but not a candidate either.
+      {
+        complainantId: other,
+        clubId: ids.clubA,
+        type: 'CONDUCT',
+        description: 'Other student',
+        state: 'Under Triage',
+        submittedAt: new Date(now.getTime() - 120_000),
+      },
+    ])
+
+    const first = await repo.queue({ page: 1, pageSize: 20 })
+    expect(first).toMatchObject({ total: 27, page: 1, pageSize: 20 })
+    expect(first.items[0]?.description).toBe('Complaint 24')
+    expect(first.items.map((item) => item.description)).not.toContain('Duplicate')
+    const last = await repo.queue({ page: 2, pageSize: 20 })
+    expect(last.items.map((item) => item.description)).toEqual([
+      ...Array.from({ length: 5 }, (_, index) => `Complaint ${4 - index}`),
+      'Other club',
+      'Other student',
+    ])
+
+    const submitted = await repo.queue({ state: 'Submitted', page: 2, pageSize: 10 })
+    expect(submitted.total).toBe(14)
+    expect(submitted.items.map((item) => item.description)).toEqual([
+      'Complaint 4',
+      'Complaint 2',
+      'Complaint 0',
+      'Other club',
+    ])
+    // Complaint 0 sits on page 2 but can still be linked to the 12 other undecided club A roots.
+    const oldest = submitted.items[2]!
+    expect(oldest.linkCandidates).toHaveLength(12)
+    expect(oldest.linkCandidates[0]?.description).toBe('Complaint 24')
+    expect(oldest.linkCandidates.map((item) => item.id)).not.toContain(oldest.id)
+    expect(submitted.items[3]?.linkCandidates).toEqual([])
+    const closed = await repo.queue({ state: 'Closed', page: 1, pageSize: 5 })
+    expect(closed.total).toBe(12)
+    expect(closed.items.every((item) => item.linkCandidates.length === 0)).toBe(true)
   })
 })

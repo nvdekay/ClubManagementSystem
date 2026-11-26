@@ -1,6 +1,7 @@
 import type { ClubAccessRepository } from '../domain/access.js'
 import type { AuthRepository } from '../domain/auth.js'
 import { DomainError } from '../domain/errors.js'
+import { DEFAULT_PAGE_SIZE, type PageRequest } from '../domain/paging.js'
 import {
   normalizedSuspensionRequest,
   type SuspensionRequestInput,
@@ -31,12 +32,14 @@ export async function submitSuspension(
   return repo.submit(clubId, normalizedSuspensionRequest(input, now), actor!.id, now)
 }
 // ICPDP xem và duyệt hoặc từ chối các yêu cầu tạm ngừng
+/** Trả về một trang hàng đợi; sau một quyết định là trang đầu tiên. */
 export async function reviewSuspensions(
   repo: SuspensionRequestRepository,
   auth: AuthRepository,
   actor: AccessActor | null,
   action?: { id: string; outcome: 'Approve' | 'Reject'; reason: string },
   now = new Date(),
+  page: PageRequest = { page: 1, pageSize: DEFAULT_PAGE_SIZE },
 ) {
   if (!actor) {
     throw new DomainError('authentication required', 'unauthorized')
@@ -57,5 +60,5 @@ export async function reviewSuspensions(
     }
     await repo.decide(action.id, action.outcome, action.reason.trim(), actor.id, now)
   }
-  return repo.list()
+  return repo.list(page)
 }

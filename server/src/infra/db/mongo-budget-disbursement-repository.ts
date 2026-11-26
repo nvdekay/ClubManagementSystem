@@ -2,19 +2,26 @@ import { assertAccountabilityOfficer } from './accountability-workflow.js'
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import {
+  BUDGET_FILTERS,
   allowedFlow,
   checkFlow,
   settlementDueAt,
   stateAfterFlow,
   type BudgetDetail,
   type BudgetDisbursementRepository,
+  type BudgetFilter,
   type BudgetFlow,
   type BudgetFlowKind,
   type BudgetItemCounts,
   type BudgetSummary,
 } from '../../domain/budget-disbursement.js'
 import { DomainError } from '../../domain/errors.js'
-import { resolvePaymentChannel, type SponsoredItem } from '../../domain/sponsored-item.js'
+import { pageSkip } from '../../domain/paging.js'
+import {
+  DIRECT_VENDOR_THRESHOLD_VND,
+  resolvePaymentChannel,
+  type SponsoredItem,
+} from '../../domain/sponsored-item.js'
 import { clubBoardUserIds, queueNotifications } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
@@ -120,6 +127,55 @@ function summaryFrom(
   }
 }
 
+const finishedStates = ['Closed', 'Cancelled']
+
+/**
+ * Mongo filter of one queue tab. The sponsored-item tabs mirror `summarizeItems`: a budget is in
+ * the tab when at least one sponsored item is waiting on the officer in that step.
+ */
+function budgetFilterQuery(filter: BudgetFilter): Doc {
+  switch (filter) {
+    case 'awaitingAdvance':
+      return {
+        sponsoredItems: {
+          $elemMatch: { fundingDecision: { $ne: 'NOT_SPONSORED' }, status: 'AwaitingAdvance' },
+        },
+      }
+    case 'awaitingReview':
+      return {
+        sponsoredItems: {
+          $elemMatch: { fundingDecision: { $ne: 'NOT_SPONSORED' }, status: 'Submitted' },
+        },
+      }
+    case 'awaitingVendorPay':
+      // resolvePaymentChannel: DIRECT_VENDOR unless advanced before the event or not sponsored.
+      return {
+        sponsoredItems: {
+          $elemMatch: {
+            fundingDecision: { $nin: ['NOT_SPONSORED', 'BEFORE_EVENT'] },
+            status: 'Accepted',
+            $or: [
+              { approvedAmount: { $gte: DIRECT_VENDOR_THRESHOLD_VND } },
+              { paymentChannel: 'DIRECT_VENDOR' },
+            ],
+          },
+        },
+      }
+    case 'awaitingRefundConfirm':
+      return {
+        sponsoredItems: {
+          $elemMatch: { fundingDecision: { $ne: 'NOT_SPONSORED' }, status: 'RefundSubmitted' },
+        },
+      }
+    case 'inProgress':
+      return { state: { $nin: finishedStates } }
+    case 'closed':
+      return { state: { $in: finishedStates } }
+    default:
+      return {}
+  }
+}
+
 // Repository giải ngân ngân sách sự kiện do ICPDP ghi nhận
 export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepository {
   const m = ucmsModels
@@ -183,9 +239,47 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
   }
 
   return {
-    // Liệt kê ngân sách sự kiện mới nhất trước
-    async list() {
-      return summaries(await budgets.find().sort({ createdAt: -1, _id: -1 }).lean())
+    // Một trang ngân sách sự kiện theo bộ lọc và CLB, mới nhất trước, kèm số lượng từng bộ lọc
+    async list(query) {
+      const scope = query.clubId ? { clubId: new Types.ObjectId(query.clubId) } : {}
+      const [docs, [facets], clubIds] = await Promise.all([
+        budgets
+          .find({ ...scope, ...budgetFilterQuery(query.filter) })
+          .sort({ createdAt: -1, _id: -1 })
+          .skip(pageSkip(query))
+          .limit(query.pageSize)
+          .lean(),
+        // One aggregation counts every tab within the club scope.
+        budgets.aggregate<Record<BudgetFilter, { n: number }[]>>([
+          { $match: scope },
+          {
+            $facet: Object.fromEntries(
+              BUDGET_FILTERS.map((filter) => [
+                filter,
+                [{ $match: budgetFilterQuery(filter) }, { $count: 'n' }],
+              ]),
+            ),
+          },
+        ]),
+        budgets.distinct('clubId'),
+      ])
+      const counts = Object.fromEntries(
+        BUDGET_FILTERS.map((filter) => [filter, facets?.[filter]?.[0]?.n ?? 0]),
+      ) as Record<BudgetFilter, number>
+      const clubDocs = await m
+        .clubs!.find({ _id: { $in: clubIds } })
+        .collation({ locale: 'vi' })
+        .sort({ name: 1, _id: 1 })
+        .select({ name: 1 })
+        .lean()
+      return {
+        items: await summaries(docs),
+        total: counts[query.filter],
+        page: query.page,
+        pageSize: query.pageSize,
+        counts,
+        clubs: clubDocs.map((club) => ({ id: String(club._id), name: String(club.name) })),
+      }
     },
 
     // Tìm chi tiết ngân sách theo id

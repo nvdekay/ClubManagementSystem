@@ -17,6 +17,7 @@ import {
 const now = new Date('2026-10-10T08:00:00Z')
 const officer = { id: '000000000000000000000001', accountState: 'Active' as const }
 const budgetId = '000000000000000000000002'
+const page = { filter: 'all' as const, page: 1, pageSize: 20 }
 
 function budget(change: Partial<BudgetDetail> = {}): BudgetDetail {
   return {
@@ -46,7 +47,22 @@ function auth(roles: string[]): Pick<AuthRepository, 'systemRoleCodes'> {
 
 function repo(found: BudgetDetail): BudgetDisbursementRepository {
   return {
-    list: vi.fn(async () => []),
+    list: vi.fn(async () => ({
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize: 20,
+      counts: {
+        all: 0,
+        awaitingAdvance: 0,
+        awaitingReview: 0,
+        awaitingVendorPay: 0,
+        awaitingRefundConfirm: 0,
+        inProgress: 0,
+        closed: 0,
+      },
+      clubs: [],
+    })),
     find: vi.fn(async () => found),
     record: vi.fn(async () => found),
   }
@@ -141,10 +157,10 @@ describe('budget disbursement rules', () => {
 
 describe('budget disbursement use cases', () => {
   it('requires an ICPDP officer', async () => {
-    await expect(listBudgets(repo(budget()), auth([]), officer)).rejects.toMatchObject({
+    await expect(listBudgets(repo(budget()), auth([]), officer, page)).rejects.toMatchObject({
       kind: 'forbidden',
     })
-    await expect(listBudgets(repo(budget()), auth([]), null)).rejects.toMatchObject({
+    await expect(listBudgets(repo(budget()), auth([]), null, page)).rejects.toMatchObject({
       kind: 'unauthorized',
     })
   })

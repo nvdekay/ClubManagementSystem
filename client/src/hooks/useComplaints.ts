@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   decideComplaint,
   fetchClubComplaints,
@@ -16,7 +16,8 @@ import {
 const complaintsKeyRoot = ['complaints'] as const
 const complaintsKey = {
   mine: () => [...complaintsKeyRoot, 'mine'] as const,
-  queue: (state: ComplaintState | '') => [...complaintsKeyRoot, 'queue', state] as const,
+  queue: (state: ComplaintState | '', page: number, pageSize: number) =>
+    [...complaintsKeyRoot, 'queue', state, page, pageSize] as const,
   club: (clubId: string) => [...complaintsKeyRoot, 'club', clubId] as const,
 }
 
@@ -28,12 +29,19 @@ export function useMyComplaints(enabled: boolean) {
     enabled,
   })
 }
-// Query hàng đợi khiếu nại của ICPDP theo trạng thái
-export function useComplaintQueue(state: ComplaintState | '', enabled: boolean) {
+// Query một trang hàng đợi khiếu nại của ICPDP theo trạng thái (trang bắt đầu từ 1)
+/** Trang trước vẫn hiển thị trong khi trang hoặc bộ lọc mới đang tải. */
+export function useComplaintQueue(
+  state: ComplaintState | '',
+  page: number,
+  pageSize: number,
+  enabled: boolean,
+) {
   return useQuery({
-    queryKey: complaintsKey.queue(state),
-    queryFn: ({ signal }) => fetchComplaintQueue(state, signal),
+    queryKey: complaintsKey.queue(state, page, pageSize),
+    queryFn: ({ signal }) => fetchComplaintQueue(state, page, pageSize, signal),
     enabled,
+    placeholderData: keepPreviousData,
   })
 }
 // Query khiếu nại liên quan tới CLB

@@ -33,14 +33,14 @@ import {
   eventReviewDecisionBody,
 } from './event-proposal-review-routes.js'
 import { sponsoredItemOpenApiPaths } from './openapi-sponsored-items.js'
-import { budgetFlowBody } from './budget-disbursement-routes.js'
+import { budgetFlowBody, budgetListQuery } from './budget-disbursement-routes.js'
 import {
   periodicCampaignBody,
   periodicDecisionBody,
   periodicMissingBody,
   periodicOverviewQuery,
 } from './periodic-report-routes.js'
-import { violationOpenBody, violationStepBody } from './violation-routes.js'
+import { violationListQuery, violationOpenBody, violationStepBody } from './violation-routes.js'
 import {
   schoolEventBody,
   schoolEventConflictQuery,
@@ -85,6 +85,8 @@ import {
   complaintTriageBody,
 } from './complaint-routes.js'
 import { COMPLAINT_STATES } from '../../domain/complaint.js'
+import { VIOLATION_FILTERS } from '../../domain/violation.js'
+import { BUDGET_FILTERS } from '../../domain/budget-disbursement.js'
 import { routingRulesBody, routingSimulationQuery } from './approval-routing-routes.js'
 import { recruitmentCampaignBody } from './recruitment-campaign-routes.js'
 import {
@@ -598,6 +600,22 @@ const ViolationSummary = z.object({
   responseDueAt: z.string().optional(),
   responseOverdue: z.boolean(),
   pendingActions: z.number(),
+})
+// Hình dạng một trang của danh sách phân trang phía server (items, total, page, pageSize)
+function pageOf<T extends z.ZodTypeAny>(item: T) {
+  return z.object({
+    items: z.array(item),
+    total: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+  })
+}
+const BudgetPage = pageOf(BudgetSummary).extend({
+  counts: z.record(z.enum(BUDGET_FILTERS), z.number().int()),
+  clubs: z.array(z.object({ id: z.string(), name: z.string() })),
+})
+const ViolationPage = pageOf(ViolationSummary).extend({
+  counts: z.record(z.enum(VIOLATION_FILTERS), z.number().int()),
 })
 const ViolationDetail = z.object({
   id: z.string(),
@@ -1363,6 +1381,11 @@ const ComplaintForIcpdp = Complaint.extend({
   complainant: z.object({ id: z.string(), displayName: z.string(), email: z.string() }),
   linkedComplaintIds: z.array(z.string()),
 })
+const ComplaintQueuePage = pageOf(
+  ComplaintForIcpdp.extend({
+    linkCandidates: z.array(z.object({ id: z.string(), description: z.string() })),
+  }),
+)
 // D5: những gì CLB nhận được không có trường người khiếu nại.
 const ComplaintForClub = z.object({
   id: z.string(),
@@ -3672,11 +3695,12 @@ export const openApiDocument = createDocument({
     '/admin/budgets': {
       get: {
         summary:
-          'List approved event budgets with what has been disbursed (UC35, ICPDP Officer only)',
+          'One page of approved event budgets matching a tab and club, newest first, with per-tab counts and the clubs that have budgets (UC35, ICPDP Officer only)',
+        requestParams: { query: budgetListQuery },
         responses: {
           '200': {
             description: 'Budgets',
-            content: { 'application/json': { schema: envelope(z.array(BudgetSummary)) } },
+            content: { 'application/json': { schema: envelope(BudgetPage) } },
           },
           '403': {
             description: 'ICPDP Officer role required',
@@ -3815,11 +3839,13 @@ export const openApiDocument = createDocument({
     },
     '/admin/violations': {
       get: {
-        summary: 'List compliance cases, newest first (UC40, ICPDP Officer only)',
+        summary:
+          'One page of compliance cases matching a tab filter, newest first, with per-tab counts (UC40, ICPDP Officer only)',
+        requestParams: { query: violationListQuery },
         responses: {
           '200': {
             description: 'Cases',
-            content: { 'application/json': { schema: envelope(z.array(ViolationSummary)) } },
+            content: { 'application/json': { schema: envelope(ViolationPage) } },
           },
           '403': {
             description: 'ICPDP Officer role required',
@@ -4507,13 +4533,14 @@ export const openApiDocument = createDocument({
     },
     '/admin/complaints': {
       get: {
-        summary: 'UC51: ICPDP complaint queue (ICPDP officer only)',
+        summary:
+          'UC51: one page of the ICPDP complaint queue, newest first, optionally by state (ICPDP officer only)',
         requestParams: { query: complaintQuery },
         responses: {
           '200': {
-            description: 'Complaints with complainant',
+            description: 'Complaints with complainant and the complaints each can be linked to',
             content: {
-              'application/json': { schema: envelope(z.array(ComplaintForIcpdp)) },
+              'application/json': { schema: envelope(ComplaintQueuePage) },
             },
           },
           '403': {

@@ -10,11 +10,17 @@ import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
-import { useSuspensionRequests, useSuspensionRequestAction } from '@/hooks/useSuspensionRequests'
+import {
+  useAdminSuspensionRequests,
+  useSuspensionRequests,
+  useSuspensionRequestAction,
+} from '@/hooks/useSuspensionRequests'
+const PAGE_SIZE = 20
 interface Props {
   clubId?: string
 }
@@ -24,7 +30,17 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
   const auth = useAuth()
   const canRequest = useWorkspacePermission(clubId, 'club.suspension.request')
   const allowed = clubId ? canRequest : Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
+  // A club reads its own requests with the impact preview; ICPDP pages every club's queue.
   const query = useSuspensionRequests(clubId, allowed)
+  const [pageIndex, setPageIndex] = useState(0)
+  const queue = useAdminSuspensionRequests(pageIndex + 1, PAGE_SIZE, allowed && !clubId)
+  const list = clubId ? query : queue
+  const requests = clubId ? query.data?.requests : queue.data?.items
+  const pageCount = Math.ceil((queue.data?.total ?? 0) / PAGE_SIZE)
+  // Step back after the queue shrinks so the page never goes blank.
+  if (queue.data && !queue.isPlaceholderData && pageIndex > 0 && pageIndex >= pageCount) {
+    setPageIndex(Math.max(pageCount - 1, 0))
+  }
   const action = useSuspensionRequestAction(clubId)
   const [reason, setReason] = useState('')
   const [until, setUntil] = useState('')
@@ -46,7 +62,7 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
   })
   const decision = useFieldValidation(
     Object.fromEntries(
-      (query.data?.requests ?? [])
+      (requests ?? [])
         .filter((r) => r.state === 'Pending')
         .map((r) => [r.id, decisions[r.id]?.trim() ? null : t('common.fieldRequired')]),
     ),
@@ -107,13 +123,11 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
           clubId ? 'suspensionRequests.description' : 'suspensionRequests.reviewDescription',
         )}
       />
-      {query.isPending && <AppSkeleton className="h-64 w-full" />}
-      {query.isError && (
+      {list.isPending && <AppSkeleton className="h-64 w-full" />}
+      {list.isError && (
         <AppNotice tone="danger" role="alert">
-          {query.error.message}
-          <AppButton onClick={() => void query.refetch()}>
-            {t('suspensionRequests.retry')}
-          </AppButton>
+          {list.error.message}
+          <AppButton onClick={() => void list.refetch()}>{t('suspensionRequests.retry')}</AppButton>
         </AppNotice>
       )}
       {action.isError && (
@@ -211,11 +225,11 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
           </AppButton>
         </section>
       )}
-      {query.data?.requests.length === 0 && (
+      {requests?.length === 0 && (
         <AppEmptyState variant="boxed" message={t('suspensionRequests.empty')} />
       )}
       <div className="space-y-6">
-        {query.data?.requests.map((r) => (
+        {requests?.map((r) => (
           <section
             key={r.id}
             className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs"
@@ -273,6 +287,18 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
           </section>
         ))}
       </div>
+      {!clubId && (
+        <AppPagination
+          className="mt-4"
+          pageIndex={pageIndex}
+          pageCount={pageCount}
+          onPageChange={setPageIndex}
+          prevLabel={t('suspensionRequests.previousPage')}
+          nextLabel={t('suspensionRequests.nextPage')}
+          pageLabel={(value) => t('suspensionRequests.pageNumber', { page: value })}
+          navLabel={t('suspensionRequests.pagination')}
+        />
+      )}
     </>
   )
 }

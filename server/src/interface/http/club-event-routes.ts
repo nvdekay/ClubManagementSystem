@@ -97,7 +97,6 @@ const publishSettings = z
     checkInCloseAt: date,
     allowWalkIn: z.boolean(),
     waitlistEnabled: z.boolean(),
-    notifyMembers: z.boolean().optional(),
   })
   .strict()
 export const clubEventPublishBody = publishSettings.extend({ expectedVersion }).strict()

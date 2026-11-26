@@ -1,4 +1,5 @@
 import { DomainError } from './errors.js'
+import type { Page, PageRequest } from './paging.js'
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from './violation.js'
 
 /**
@@ -95,6 +96,20 @@ export interface ComplaintForIcpdp extends Complaint {
   linkedComplaintIds: string[]
 }
 
+/** Một dòng trong hàng đợi ICPDP. */
+export interface ComplaintQueueItem extends ComplaintForIcpdp {
+  /**
+   * UC50 E1: the other undecided root complaints of the same student about the same club, i.e.
+   * what this complaint can be linked to; empty unless this complaint is undecided too. Computed
+   * on the server so a candidate on another page is still offered.
+   */
+  linkCandidates: { id: string; description: string }[]
+}
+
+export interface ComplaintQueueQuery extends PageRequest {
+  state?: ComplaintState
+}
+
 /** D5: CLB thấy nội dung được chuyển và ghi chú của ICPDP, không bao giờ thấy người khiếu nại. */
 export interface ComplaintForClub {
   id: string
@@ -133,7 +148,8 @@ export interface ComplaintRepository {
   listMine(studentId: string): Promise<Complaint[]>
   /** Chỉ khi khiếu nại thuộc về sinh viên và còn Submitted / Under Triage; ngược lại trả null. */
   withdraw(studentId: string, complaintId: string, now: Date): Promise<Complaint | null>
-  queue(filter: { state?: ComplaintState }): Promise<ComplaintForIcpdp[]>
+  /** One page of root complaints (linked duplicates excluded), newest first. */
+  queue(query: ComplaintQueueQuery): Promise<Page<ComplaintQueueItem>>
   findForIcpdp(complaintId: string): Promise<ComplaintForIcpdp | null>
   /** Áp dụng một bước của ICPDP với điều kiện trạng thái; báo conflict nếu khiếu nại đã đổi trạng thái trong lúc đó. */
   decide(

@@ -49,7 +49,12 @@ function repo(club: { state: string } | null = { state: 'Active' }, eventOk = tr
     submit: vi.fn(async (_input: Parameters<ComplaintRepository['submit']>[0]) => complaint()),
     listMine: vi.fn(async () => [complaint()]),
     withdraw: vi.fn(async () => complaint('Withdrawn')),
-    queue: vi.fn(async () => [icpdp]),
+    queue: vi.fn(async () => ({
+      items: [{ ...icpdp, linkCandidates: [] }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    })),
     findForIcpdp: vi.fn(async () => icpdp),
     decide: vi.fn(async () => icpdp),
     clubInbox: vi.fn(async () => []),
@@ -230,9 +235,23 @@ describe('UC51 triage rules', () => {
 
   it('lets only ICPDP officers read the queue or decide (FR-UC51-05)', async () => {
     const r = repo()
-    await expect(listComplaintQueue(r, auth([]), actor)).rejects.toMatchObject({
-      kind: 'forbidden',
+    await expect(
+      listComplaintQueue(r, auth([]), actor, { page: 1, pageSize: 20 }),
+    ).rejects.toMatchObject({ kind: 'forbidden' })
+    expect(r.queue).not.toHaveBeenCalled()
+    await listComplaintQueue(r, auth(['ICPDP_OFFICER']), actor, {
+      state: 'Submitted',
+      page: 2,
+      pageSize: 50,
     })
+    expect(r.queue).toHaveBeenCalledWith({ state: 'Submitted', page: 2, pageSize: 50 })
+    await expect(
+      listComplaintQueue(r, auth(['ICPDP_OFFICER']), actor, {
+        state: 'Bogus',
+        page: 1,
+        pageSize: 20,
+      }),
+    ).rejects.toMatchObject({ kind: 'validation' })
     await expect(
       decideComplaint(r, auth([]), actor, complaintId, { kind: 'open' }, now),
     ).rejects.toMatchObject({ kind: 'forbidden' })
