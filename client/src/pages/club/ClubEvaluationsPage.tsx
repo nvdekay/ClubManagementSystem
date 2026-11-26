@@ -8,7 +8,7 @@ import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubEvaluations } from '@/hooks/useClubCompliance'
-import { evaluations } from '@/i18n/evaluations'
+import type { evaluations } from '@/i18n/locales/en/evaluations'
 import { formatDate } from '@/utils/formatDate'
 // Trang xem kết quả đánh giá hoạt động của CLB
 export function ClubEvaluationsPage() {
@@ -20,7 +20,9 @@ export function ClubEvaluationsPage() {
   // Nhãn đã dịch của chỉ số đánh giá, giữ mã gốc nếu chưa có bản dịch
   function metric(code: string) {
     const key = `metric_${code}`
-    return key in evaluations.en ? t(`evaluations.${key as keyof typeof evaluations.en}`) : code
+    return i18n.exists(`evaluations.${key}`)
+      ? t(`evaluations.${key as keyof typeof evaluations}`)
+      : code
   }
   if (auth.isPending) {
     return <AppSkeleton className="h-64 w-full" />

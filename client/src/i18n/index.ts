@@ -1,164 +1,45 @@
-import { apiErrors } from './apiErrors'
-import { proposalComments } from './proposalComments'
-import { clubCompliance } from './clubCompliance'
-import { membershipReconfirmations } from './membershipReconfirmations'
-import { suspensionRequests } from './suspensionRequests'
-import { clubTransitionPlans } from './clubTransitionPlans'
-import { clubPeriodicReports } from './clubPeriodicReports'
-import { clubInvitations } from './clubInvitations'
-import { accountability } from './accountability'
-import { clubEvents } from './clubEvents'
-import { facilityBookings } from './facilityBookings'
-import i18next from 'i18next'
+import i18next, { type BackendModule, type ResourceKey } from 'i18next'
 import { initReactI18next } from 'react-i18next'
-
-import { common } from './common'
-import { auth } from './auth'
-import { discovery } from './discovery'
-import { policy } from './policy'
-import { applications } from './applications'
-import { reviews } from './reviews'
-import { clubSettings } from './clubSettings'
-import { boardNominations } from './boardNominations'
-import { recruitmentCampaigns } from './recruitmentCampaigns'
-import { recruitmentApplications } from './recruitmentApplications'
-import { users } from './users'
-import { dashboard } from './dashboard'
-import { leadershipTransitions } from './leadershipTransitions'
-import { eventRegistrations } from './eventRegistrations'
-import { eventFeedback } from './eventFeedback'
-import { complaints } from './complaints'
-import { routing } from './routing'
-import { memberSpace } from './memberSpace'
-import { clubFields } from './clubFields'
-import { properties } from './properties'
-import { evaluationSchemes } from './evaluationSchemes'
-import { exports } from './exports'
-import { clubLifecycle } from './clubLifecycle'
-import { eventReviews } from './eventReviews'
-import { eventDefense } from './eventDefense'
-import { budgets } from './budgets'
-import { periodicReports } from './periodicReports'
-import { roomAllocations } from './roomAllocations'
-import { violations } from './violations'
-import { schoolEvents } from './schoolEvents'
-import { evaluations } from './evaluations'
-import { clubOversight } from './clubOversight'
-import { notifications } from './notifications'
-import { sponsoredItems } from './sponsoredItems'
 
 export type Locale = 'en' | 'vi'
 
-// New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
-export const resources = {
-  en: {
-    translation: {
-      sponsoredItems: sponsoredItems.en,
-      apiErrors: apiErrors.en,
-      clubCompliance: clubCompliance.en,
-      membershipReconfirmations: membershipReconfirmations.en,
-      suspensionRequests: suspensionRequests.en,
-      clubTransitionPlans: clubTransitionPlans.en,
-      clubPeriodicReports: clubPeriodicReports.en,
-      clubInvitations: clubInvitations.en,
-      facilityBookings: facilityBookings.en,
-      common: common.en,
-      auth: auth.en,
-      discovery: discovery.en,
-      policy: policy.en,
-      applications: applications.en,
-      reviews: reviews.en,
-      clubSettings: clubSettings.en,
-      boardNominations: boardNominations.en,
-      recruitmentCampaigns: recruitmentCampaigns.en,
-      recruitmentApplications: recruitmentApplications.en,
-      users: users.en,
-      dashboard: dashboard.en,
-      leadershipTransitions: leadershipTransitions.en,
-      eventRegistrations: eventRegistrations.en,
-      eventFeedback: eventFeedback.en,
-      accountability: accountability.en,
-      complaints: complaints.en,
-      routing: routing.en,
-      memberSpace: memberSpace.en,
-      clubFields: clubFields.en,
-      properties: properties.en,
-      evaluationSchemes: evaluationSchemes.en,
-      exports: exports.en,
-      clubLifecycle: clubLifecycle.en,
-      eventReviews: eventReviews.en,
-      eventDefense: eventDefense.en,
-      budgets: budgets.en,
-      periodicReports: periodicReports.en,
-      roomAllocations: roomAllocations.en,
-      violations: violations.en,
-      schoolEvents: schoolEvents.en,
-      evaluations: evaluations.en,
-      proposalComments: proposalComments.en,
-      clubEvents: clubEvents.en,
-      clubOversight: clubOversight.en,
-      notifications: notifications.en,
-    },
-  },
-  vi: {
-    translation: {
-      sponsoredItems: sponsoredItems.vi,
-      apiErrors: apiErrors.vi,
-      clubCompliance: clubCompliance.vi,
-      membershipReconfirmations: membershipReconfirmations.vi,
-      suspensionRequests: suspensionRequests.vi,
-      clubTransitionPlans: clubTransitionPlans.vi,
-      clubPeriodicReports: clubPeriodicReports.vi,
-      clubInvitations: clubInvitations.vi,
-      facilityBookings: facilityBookings.vi,
-      common: common.vi,
-      auth: auth.vi,
-      discovery: discovery.vi,
-      policy: policy.vi,
-      applications: applications.vi,
-      reviews: reviews.vi,
-      clubSettings: clubSettings.vi,
-      boardNominations: boardNominations.vi,
-      recruitmentCampaigns: recruitmentCampaigns.vi,
-      recruitmentApplications: recruitmentApplications.vi,
-      users: users.vi,
-      dashboard: dashboard.vi,
-      leadershipTransitions: leadershipTransitions.vi,
-      eventRegistrations: eventRegistrations.vi,
-      eventFeedback: eventFeedback.vi,
-      accountability: accountability.vi,
-      complaints: complaints.vi,
-      routing: routing.vi,
-      memberSpace: memberSpace.vi,
-      clubFields: clubFields.vi,
-      properties: properties.vi,
-      evaluationSchemes: evaluationSchemes.vi,
-      exports: exports.vi,
-      clubLifecycle: clubLifecycle.vi,
-      eventReviews: eventReviews.vi,
-      eventDefense: eventDefense.vi,
-      budgets: budgets.vi,
-      periodicReports: periodicReports.vi,
-      roomAllocations: roomAllocations.vi,
-      violations: violations.vi,
-      schoolEvents: schoolEvents.vi,
-      evaluations: evaluations.vi,
-      proposalComments: proposalComments.vi,
-      clubEvents: clubEvents.vi,
-      clubOversight: clubOversight.vi,
-      notifications: notifications.vi,
-    },
+// Each locale is its own chunk: the first load fetches only the active one, the other is fetched
+// on the first switch. New module: add locales/en/<module>.ts and locales/vi/<module>.ts, then
+// register it in both locales/<locale>/index.ts.
+function loadLocale(locale: Locale): Promise<ResourceKey> {
+  return locale === 'vi'
+    ? import('./locales/vi/index').then((module) => module.vi.translation)
+    : import('./locales/en/index').then((module) => module.en.translation)
+}
+
+const localeBackend: BackendModule = {
+  type: 'backend',
+  init() {},
+  read(language, _namespace, callback) {
+    loadLocale(language === 'vi' ? 'vi' : 'en').then(
+      (translation) => callback(null, translation),
+      (error: unknown) => callback(error instanceof Error ? error : String(error), null),
+    )
   },
 }
 
 const stored = localStorage.getItem('locale')
 
-void i18next.use(initReactI18next).init({
-  resources,
-  lng: stored === 'vi' ? 'vi' : 'en',
-  fallbackLng: 'en',
-  interpolation: { escapeValue: false }, // React already escapes rendered strings
-})
+/**
+ * Resolves once the active locale is loaded; render after it so no raw key is ever shown.
+ * `changeLanguage` loads the other locale before switching, so the UI never flashes raw keys.
+ * There is no fallback language: `satisfies Messages<…>` already makes every locale complete,
+ * and a fallback would download both locales on every visit.
+ */
+export const i18nReady = i18next
+  .use(localeBackend)
+  .use(initReactI18next)
+  .init({
+    lng: stored === 'vi' ? 'vi' : 'en',
+    supportedLngs: ['en', 'vi'],
+    fallbackLng: false,
+    interpolation: { escapeValue: false }, // React already escapes rendered strings
+  })
 
 i18next.on('languageChanged', (lng) => localStorage.setItem('locale', lng))
 

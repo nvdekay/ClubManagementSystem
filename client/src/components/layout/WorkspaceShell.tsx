@@ -8,7 +8,7 @@ import { RouteFallback } from '@/components/layout/RouteFallback'
 import { SidebarAccountMenu } from '@/components/layout/SidebarAccountMenu'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppIcon, type AppIconName } from '@/components/ui/icon/AppIcon'
-import { common } from '@/i18n/common'
+import type { common } from '@/i18n/locales/en/common'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth, useLogout } from '@/hooks/useAuth'
 import { usePageTransition } from '@/hooks/usePageTransition'
@@ -689,7 +689,7 @@ function breadcrumb(
 function navigation(
   context: Context,
   workspace: Workspace | undefined,
-  t: (key: `common.${keyof typeof common.en}`) => string,
+  t: (key: `common.${keyof typeof common}`) => string,
 ): Array<{ title: string; items: NavEntry[] }> {
   const explore = {
     title: t('common.sectionExplore'),

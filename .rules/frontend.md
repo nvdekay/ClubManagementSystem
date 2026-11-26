@@ -8,7 +8,7 @@
 - Không thư viện HTTP client — dùng `fetch` gốc, gọi tới `/api/v1/...` (Vite proxy `/api` sang server ở môi trường dev). **TanStack React Query** (`@tanstack/react-query`) quản lý server state: `useQuery`/`useMutation` bọc quanh các hàm fetch đó, `QueryClientProvider` đặt trong `main.tsx`. Truyền `signal` của queryFn vào `fetch`; sau một mutation, cập nhật cache theo quy tắc 4 của mục Fetch/Service (`setQueryData` khi response đã quyết định được giá trị mới, `invalidateQueries` khi danh sách được lọc ở phía server). Truy vấn có phân trang/tìm kiếm dùng `placeholderData: keepPreviousData` để khi key đổi (trang mới, từ khoá mới) các dòng cũ vẫn nằm trên màn hình thay vì chớp trắng (xem `useAccounts`).
 - **Tailwind v4**, CSS-first (plugin `@tailwindcss/vite`, không có `tailwind.config.*`). Token màu khai báo trong `client/src/index.css` bên trong `@theme` dưới dạng `--color-<name>-app`, sinh ra các utility `<name>-app` (`bg-danger-app`, `text-danger-app`, …).
 - Dark mode là thủ công (không chỉ dựa vào `prefers-color-scheme`): một class `.dark` bật/tắt trên `<html>` (xem state `theme` trong `App.tsx`) ghi đè chính các token đó dưới `:root.dark` trong `index.css`. Không dùng variant `dark:` của Tailwind — chỉ riêng lớp gián tiếp token đã đủ để mọi utility `*-app` đổi màu.
-- Ngôn ngữ: **i18next** + `react-i18next`, khởi tạo ở `client/src/i18n/index.ts` (`en`/`vi`, `fallbackLng: "en"`, ngôn ngữ được lưu vào `localStorage`). Chuỗi được tách mỗi miền nghiệp vụ một file (`i18n/common.ts`, `i18n/users.ts`, `i18n/clubEvents.ts`, …), mỗi file export `{ en, vi }`, rồi ghép thành `resources` trong `index.ts`. Component đọc chuỗi bằng `const { t } = useTranslation()` và key có namespace (`t("users.title")`); đổi ngôn ngữ bằng `i18n.changeLanguage("vi")`. Tính năng mới → thêm `i18n/<module>.ts`, rồi đăng ký nó ở cả hai ngôn ngữ trong `index.ts`.
+- Ngôn ngữ: **i18next** + `react-i18next`, khởi tạo ở `client/src/i18n/index.ts` (`en`/`vi`, ngôn ngữ được lưu vào `localStorage`, mặc định `en`). Chuỗi tách theo ngôn ngữ rồi theo miền nghiệp vụ: `i18n/locales/en/<module>.ts` là nguồn kiểu, `i18n/locales/vi/<module>.ts` phải `satisfies Messages<typeof en>` nên thiếu hay thừa key đều làm `tsc` fail; `locales/<locale>/index.ts` ghép các module của một ngôn ngữ. Mỗi ngôn ngữ là một chunk nạp lười: `main.tsx` chờ `i18nReady` (chỉ tải ngôn ngữ đang chọn) rồi mới render, `i18n.changeLanguage("vi")` tải chunk còn lại xong mới đổi nên không lộ key thô. Không có `fallbackLng`, nên mọi key phải có ở cả hai ngôn ngữ (kể cả dạng số nhiều `_one`/`_other`). Code ngoài `i18n/` chỉ được `import type` từ `locales/` (lấy kiểu key); import giá trị sẽ kéo chuỗi vào chunk chính. Component đọc chuỗi bằng `const { t } = useTranslation()` và key có namespace (`t("users.title")`). Tính năng mới → thêm `locales/en/<module>.ts` và `locales/vi/<module>.ts`, rồi đăng ký ở cả hai `locales/<locale>/index.ts`.
 - `cn()` ở `client/src/utils/cn.ts` — `twMerge(clsx(inputs))` — dùng cho mọi class có điều kiện.
 - **TanStack Table v9** (`@tanstack/react-table`) cho bảng — headless: người gọi sở hữu instance `useTable` và truyền nó vào bộ kit `ui/table/` (`AppTable`, `AppTableLimitSelect`). Bộ điều khiển phân trang không phụ thuộc bảng — `ui/pagination/AppPagination` nhận props thuần `pageIndex`/`pageCount`/`onPageChange`, không cần instance bảng. v9 ≠ v8: `useTable({ features, columns, data })` với `tableFeatures({...})` (không còn `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` thay cho `table.getState()`. Tập feature dùng chung nằm trong `AppTable.tsx` (`appTableFeatures`); mở rộng ở đó khi một bảng cần sắp xếp/chọn dòng/…. Tài liệu dành cho agent nằm trong `node_modules/@tanstack/react-table/skills/`. Giữ `data`/`columns` ổn định về tham chiếu (mảng rỗng khai báo ở phạm vi module, `useMemo` cho columns).
 - Alias `@/` đã cấu hình (`client/tsconfig.json` mục `paths`, `client/vite.config.ts` mục `resolve.alias`) → `client/src/*`.
@@ -25,9 +25,11 @@ client/src/
   App.tsx      # màn Auth và workspace hiện hành
   index.css    # import Tailwind + token màu @theme (nơi duy nhất được phép có mã màu) + ghi đè :root.dark
   i18n/
-    index.ts   # khởi tạo i18next + kiểu Locale + resources (đăng ký mọi module ở en/vi)
-    common.ts  # mỗi miền nghiệp vụ một file, mỗi file export { en, vi }
-    users.ts
+    index.ts   # khởi tạo i18next + kiểu Locale + i18nReady; nạp lười từng ngôn ngữ
+    messages.ts # kiểu Messages<T>: bản vi phải khớp đúng bộ key của bản en
+    locales/
+      en/      # nguồn kiểu: mỗi miền nghiệp vụ một file (common.ts, users.ts, …) + index.ts ghép lại
+      vi/      # cùng bộ file, mỗi file `satisfies Messages<typeof en>`
   services/
     accounts.ts # tầng HTTP: mỗi endpoint một hàm async có kiểu. Biết endpoint, không bao giờ import React.
   hooks/
@@ -129,7 +131,7 @@ Cả `theme` lẫn `locale` đều là công tắc người dùng bật được
    - Không đặt `whitespace-nowrap` lên phần tử đang hiển thị một giá trị `t()`.
    - Không đặt chiều rộng cố định theo pixel bao quanh một nhãn dịch được — hãy để nó tự co theo nội dung, hoặc cho xuống dòng.
    - Mọi hàng flex chứa nút/pill/nhãn có chuỗi dịch được đều cần `flex-wrap` (xem các nút điều khiển ở header và các hàng demo `AppButton`/`AppInput` trong `App.tsx`), để nó xếp chồng thay vì tràn ra ngoài cột hẹp `max-w-[480px]` của ứng dụng.
-   - Khi thêm một key mới vào `i18n/<module>.ts`, hãy thử bố cục với ngôn ngữ dài hơn trong hai ngôn ngữ, không chỉ `en`.
+   - Khi thêm một key mới vào `i18n/locales/<locale>/<module>.ts`, hãy thử bố cục với ngôn ngữ dài hơn trong hai ngôn ngữ, không chỉ `en`.
 3. Ưu tiên để Flexbox/Grid tự sắp lại hơn là dùng `truncate` cho chữ dịch được — ứng dụng chưa có primitive tooltip, nên một nhãn bị cắt mà không có cách nào đọc đủ chuỗi là kết cục tệ hơn một hàng cao thêm một chút.
 
 ## Quy ước import

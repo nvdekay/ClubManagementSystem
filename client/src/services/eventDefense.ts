@@ -1,5 +1,5 @@
 import i18next from 'i18next'
-import { eventDefense } from '@/i18n/eventDefense'
+import type { eventDefense } from '@/i18n/locales/en/eventDefense'
 import { ApiError } from '@/services/apiError'
 import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type { EventProposalDetail, EventReviewDecisionInput } from '@/services/eventProposalReviews'
@@ -83,7 +83,7 @@ export interface RespondRescheduleInput {
   reason?: string
 }
 
-export type DefenseErrorKey = keyof typeof eventDefense.en.errors
+export type DefenseErrorKey = keyof typeof eventDefense.errors
 
 const DEFENSE_ERROR_KEYS: Readonly<Record<string, DefenseErrorKey>> = {
   'valid defense start time is required': 'startAtRequired',
@@ -235,16 +235,6 @@ function resolveDefenseErrorDescriptor(
   }
 }
 
-// Thay các placeholder {{name}} trong mẫu bằng tham số
-function interpolateTemplate(template: string, params?: Record<string, string | number>): string {
-  if (!params) {
-    return template
-  }
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
-    Object.hasOwn(params, name) ? String(params[name]) : '',
-  )
-}
-
 /** Response không phải 2xx từ API bảo vệ; chỉ hiển thị thông báo i18n và vẫn ghi log chẩn đoán thô. */
 export class EventDefenseError extends ApiError {
   readonly errorKey: DefenseErrorKey
@@ -260,20 +250,8 @@ export class EventDefenseError extends ApiError {
     this.errorParams = descriptor.params
     Object.defineProperty(this, 'message', {
       configurable: true,
-      get: () => {
-        const lang =
-          (i18next.resolvedLanguage ?? i18next.language)?.split('-')[0] === 'vi' ? 'vi' : 'en'
-        const fallback = interpolateTemplate(
-          eventDefense[lang].errors[this.errorKey],
-          this.errorParams,
-        )
-        return String(
-          i18next.t(`eventDefense.errors.${this.errorKey}`, {
-            ...this.errorParams,
-            defaultValue: fallback,
-          }),
-        )
-      },
+      get: () =>
+        String(i18next.t(`eventDefense.errors.${this.errorKey}`, { replace: this.errorParams })),
     })
   }
 }
