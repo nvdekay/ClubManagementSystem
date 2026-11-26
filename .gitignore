@@ -3,6 +3,8 @@ docs-qa/
 dist/
 *.tsbuildinfo
 .env
+.env.*
+!.env.example
 *.log
 .claude/settings.local.json
 
