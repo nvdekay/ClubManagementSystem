@@ -12,7 +12,7 @@ import { appToast } from '@/components/ui/toast/AppToast'
 import { useEventDefenseActions } from '@/hooks/useEventDefense'
 import { useEventProposalAction } from '@/hooks/useEventProposalReviews'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
-import { apiErrors } from '@/i18n/apiErrors'
+import { isUnknownApiError } from '@/services/apiError'
 import { type EventProposalDetail, type EventReviewOutcome } from '@/services/eventProposalReviews'
 import { cn } from '@/utils/cn'
 import { DIRECT_VENDOR_THRESHOLD_VND, type FundingDecision } from '@/services/sponsoredItems'
@@ -22,7 +22,7 @@ function resolveDecisionError(error: Error | null | undefined, fallback: string)
   if (!error) {
     return fallback
   }
-  if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
+  if (isUnknownApiError(error)) {
     return fallback
   }
   return error.message || fallback

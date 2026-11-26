@@ -304,223 +304,292 @@ export function applyViolationStep(
     actions: current.actions.map((item) => ({ ...item })),
   }
   switch (step.type) {
-    case 'investigate': {
-      if (current.state !== 'Open') {
-        conflict('only an open case can move to investigation')
-      }
-      return {
-        next: { ...next, state: 'Under Investigation' },
-        action: 'VIOLATION_INVESTIGATING',
-        notifyClub: false,
-      }
+    case 'investigate':
+      return investigate(current, next)
+    case 'addEvidence':
+      return addEvidence(next, step, actorId, now)
+    case 'requestResponse':
+      return requestResponse(current, next, step, actorId, now)
+    case 'recordResponse':
+      return recordResponse(current, next, step, actorId, now)
+    case 'decide':
+      return decide(current, next, step, actorId, now)
+    case 'addActions':
+      return addActions(current, next, step, now)
+    case 'verifyAction':
+      return verifyAction(current, next, step, actorId, now)
+    case 'resolve':
+      return resolve(current, next, step, now)
+  }
+}
+
+type StepOf<T extends ViolationStep['type']> = Extract<ViolationStep, { type: T }>
+
+// Chuyển vụ việc đang mở sang điều tra
+function investigate(current: ViolationCase, next: ViolationCase): StepResult {
+  if (current.state !== 'Open') {
+    conflict('only an open case can move to investigation')
+  }
+  return {
+    next: { ...next, state: 'Under Investigation' },
+    action: 'VIOLATION_INVESTIGATING',
+    notifyClub: false,
+  }
+}
+
+// Bổ sung một minh chứng vào vụ việc
+function addEvidence(
+  next: ViolationCase,
+  step: StepOf<'addEvidence'>,
+  actorId: string,
+  now: Date,
+): StepResult {
+  const [item] = normalizedEvidence([step.evidence], actorId, now)
+  if (!item) {
+    invalid('evidence needs a note or a link', 'evidence')
+  }
+  next.evidence.push(item)
+  return { next, action: 'VIOLATION_EVIDENCE_ADDED', notifyClub: false }
+}
+
+// Yêu cầu CLB giải trình trước khi ra quyết định
+function requestResponse(
+  current: ViolationCase,
+  next: ViolationCase,
+  step: StepOf<'requestResponse'>,
+  actorId: string,
+  now: Date,
+): StepResult {
+  if (current.state !== 'Open' && current.state !== 'Under Investigation') {
+    conflict('the club can only be asked to respond before a decision')
+  }
+  const message = text(step.message, 2_000, 'message')
+  if (!message) {
+    invalid('tell the club what to explain', 'message')
+  }
+  const dueAt = step.dueAt ?? new Date(now.getTime() + RESPONSE_DUE_DAYS * DAY_MS)
+  if (dueAt <= now) {
+    invalid('the response deadline must be in the future', 'dueAt')
+  }
+  return {
+    next: {
+      ...next,
+      state: 'Awaiting Club Response',
+      responseDueAt: dueAt,
+      clubResponse: { requestMessage: message, requestedBy: actorId, requestedAt: now, dueAt },
+    },
+    action: 'VIOLATION_RESPONSE_REQUESTED',
+    reason: message,
+    notifyClub: true,
+  }
+}
+
+// Ghi nhận giải trình của CLB, hoặc việc CLB không giải trình khi đã quá hạn
+function recordResponse(
+  current: ViolationCase,
+  next: ViolationCase,
+  step: StepOf<'recordResponse'>,
+  actorId: string,
+  now: Date,
+): StepResult {
+  if (current.state !== 'Awaiting Club Response' || !current.clubResponse) {
+    conflict('no club response is awaited')
+  }
+  if (current.clubResponse.source) {
+    conflict('the club response is already recorded')
+  }
+  if (step.noResponse) {
+    if (now <= current.clubResponse.dueAt) {
+      conflict('the response deadline has not passed yet')
     }
-    case 'addEvidence': {
-      const [item] = normalizedEvidence([step.evidence], actorId, now)
-      if (!item) {
-        invalid('evidence needs a note or a link', 'evidence')
-      }
-      next.evidence.push(item)
-      return { next, action: 'VIOLATION_EVIDENCE_ADDED', notifyClub: false }
-    }
-    case 'requestResponse': {
-      if (current.state !== 'Open' && current.state !== 'Under Investigation') {
-        conflict('the club can only be asked to respond before a decision')
-      }
-      const message = text(step.message, 2_000, 'message')
-      if (!message) {
-        invalid('tell the club what to explain', 'message')
-      }
-      const dueAt = step.dueAt ?? new Date(now.getTime() + RESPONSE_DUE_DAYS * DAY_MS)
-      if (dueAt <= now) {
-        invalid('the response deadline must be in the future', 'dueAt')
-      }
-      return {
-        next: {
-          ...next,
-          state: 'Awaiting Club Response',
-          responseDueAt: dueAt,
-          clubResponse: { requestMessage: message, requestedBy: actorId, requestedAt: now, dueAt },
+    return {
+      next: {
+        ...next,
+        clubResponse: {
+          ...current.clubResponse,
+          source: 'NO_RESPONSE',
+          recordedBy: actorId,
+          respondedAt: now,
         },
-        action: 'VIOLATION_RESPONSE_REQUESTED',
-        reason: message,
-        notifyClub: true,
-      }
+      },
+      action: 'VIOLATION_NO_RESPONSE_RECORDED',
+      notifyClub: false,
     }
-    case 'recordResponse': {
-      if (current.state !== 'Awaiting Club Response' || !current.clubResponse) {
-        conflict('no club response is awaited')
-      }
-      if (current.clubResponse.source) {
-        conflict('the club response is already recorded')
-      }
-      if (step.noResponse) {
-        if (now <= current.clubResponse.dueAt) {
-          conflict('the response deadline has not passed yet')
-        }
-        return {
-          next: {
-            ...next,
-            clubResponse: {
-              ...current.clubResponse,
-              source: 'NO_RESPONSE',
-              recordedBy: actorId,
-              respondedAt: now,
-            },
-          },
-          action: 'VIOLATION_NO_RESPONSE_RECORDED',
-          notifyClub: false,
-        }
-      }
-      const answer = text(step.text, 5_000, 'text')
-      if (!answer) {
-        invalid('enter what the club answered', 'text')
-      }
-      return {
-        next: {
-          ...next,
-          clubResponse: {
-            ...current.clubResponse,
-            source: 'RECORDED_BY_ICPDP',
-            text: answer,
-            recordedBy: actorId,
-            respondedAt: now,
-          },
-        },
-        action: 'VIOLATION_RESPONSE_RECORDED',
-        notifyClub: false,
-      }
+  }
+  const answer = text(step.text, 5_000, 'text')
+  if (!answer) {
+    invalid('enter what the club answered', 'text')
+  }
+  return {
+    next: {
+      ...next,
+      clubResponse: {
+        ...current.clubResponse,
+        source: 'RECORDED_BY_ICPDP',
+        text: answer,
+        recordedBy: actorId,
+        respondedAt: now,
+      },
+    },
+    action: 'VIOLATION_RESPONSE_RECORDED',
+    notifyClub: false,
+  }
+}
+
+// Ra quyết định: đóng vụ việc nếu không vi phạm, hoặc kết luận vi phạm kèm minh chứng (BR28)
+function decide(
+  current: ViolationCase,
+  next: ViolationCase,
+  step: StepOf<'decide'>,
+  actorId: string,
+  now: Date,
+): StepResult {
+  const reason = text(step.reason, 5_000, 'reason')
+  if (!reason) {
+    invalid('a decision needs a reason (BR28)', 'reason')
+  }
+  const evidence = normalizedEvidence(step.evidence, actorId, now)
+  if (step.finding === 'NO_VIOLATION') {
+    if (current.state === 'Decision Issued' || current.state === 'Corrective Action') {
+      conflict('a decision has already been issued')
     }
-    case 'decide': {
-      const reason = text(step.reason, 5_000, 'reason')
-      if (!reason) {
-        invalid('a decision needs a reason (BR28)', 'reason')
-      }
-      const evidence = normalizedEvidence(step.evidence, actorId, now)
-      if (step.finding === 'NO_VIOLATION') {
-        if (current.state === 'Decision Issued' || current.state === 'Corrective Action') {
-          conflict('a decision has already been issued')
-        }
-        return {
-          next: {
-            ...next,
-            state: 'Closed',
-            decisionReason: reason,
-            decisionEvidence: evidence,
-            decidedBy: actorId,
-            decidedAt: now,
-            resolvedAt: now,
-          },
-          action: 'VIOLATION_CLOSED_NO_VIOLATION',
-          reason,
-          notifyClub: true,
-        }
-      }
-      if (current.state !== 'Awaiting Club Response' || !current.clubResponse?.source) {
-        conflict(
-          "record the club's response (or that it did not respond) before finding a violation",
-        )
-      }
-      if (!evidence.length) {
-        invalid('a violation finding needs evidence (BR28)', 'evidence')
-      }
-      return {
-        next: {
-          ...next,
-          state: 'Decision Issued',
-          decisionReason: reason,
-          decisionEvidence: evidence,
-          decidedBy: actorId,
-          decidedAt: now,
-        },
-        action: 'VIOLATION_DECIDED',
-        reason,
-        notifyClub: true,
-      }
+    return {
+      next: {
+        ...next,
+        state: 'Closed',
+        decisionReason: reason,
+        decisionEvidence: evidence,
+        decidedBy: actorId,
+        decidedAt: now,
+        resolvedAt: now,
+      },
+      action: 'VIOLATION_CLOSED_NO_VIOLATION',
+      reason,
+      notifyClub: true,
     }
-    case 'addActions': {
-      if (current.state !== 'Decision Issued' && current.state !== 'Corrective Action') {
-        conflict('corrective actions follow a violation decision')
-      }
-      if (
-        !step.actions.length ||
-        current.actions.length + step.actions.length > MAX_CORRECTIVE_ACTIONS
-      ) {
-        invalid('add between 1 and 10 corrective actions', 'actions')
-      }
-      for (const item of step.actions) {
-        if (!text(item.description, 1_000, 'actions')) {
-          invalid('each corrective action needs a description', 'actions')
-        }
-        if (Number.isNaN(item.dueAt.getTime()) || item.dueAt <= now) {
-          invalid('each corrective action needs a future deadline', 'actions')
-        }
-        if (item.linkedLifecycleAction && !LIFECYCLE_LINKS.includes(item.linkedLifecycleAction)) {
-          invalid('invalid lifecycle link', 'actions')
-        }
-      }
-      next.actions.push(
-        ...step.actions.map((item, index) => ({
-          id: `new-${index}`,
-          description: item.description.trim(),
-          dueAt: item.dueAt,
-          state: 'Pending' as const,
-          ...(item.linkedLifecycleAction
-            ? { linkedLifecycleAction: item.linkedLifecycleAction }
-            : {}),
-        })),
-      )
-      return {
-        next: { ...next, state: 'Corrective Action' },
-        action: 'VIOLATION_ACTIONS_ASSIGNED',
-        notifyClub: true,
-      }
+  }
+  if (current.state !== 'Awaiting Club Response' || !current.clubResponse?.source) {
+    conflict("record the club's response (or that it did not respond) before finding a violation")
+  }
+  if (!evidence.length) {
+    invalid('a violation finding needs evidence (BR28)', 'evidence')
+  }
+  return {
+    next: {
+      ...next,
+      state: 'Decision Issued',
+      decisionReason: reason,
+      decisionEvidence: evidence,
+      decidedBy: actorId,
+      decidedAt: now,
+    },
+    action: 'VIOLATION_DECIDED',
+    reason,
+    notifyClub: true,
+  }
+}
+
+// Giao biện pháp khắc phục sau quyết định vi phạm
+function addActions(
+  current: ViolationCase,
+  next: ViolationCase,
+  step: StepOf<'addActions'>,
+  now: Date,
+): StepResult {
+  if (current.state !== 'Decision Issued' && current.state !== 'Corrective Action') {
+    conflict('corrective actions follow a violation decision')
+  }
+  if (
+    !step.actions.length ||
+    current.actions.length + step.actions.length > MAX_CORRECTIVE_ACTIONS
+  ) {
+    invalid('add between 1 and 10 corrective actions', 'actions')
+  }
+  for (const item of step.actions) {
+    if (!text(item.description, 1_000, 'actions')) {
+      invalid('each corrective action needs a description', 'actions')
     }
-    case 'verifyAction': {
-      if (current.state !== 'Corrective Action') {
-        conflict('there is no corrective action to verify')
-      }
-      const item = next.actions.find((action) => action.id === step.actionId)
-      if (!item) {
-        throw new DomainError('corrective action not found', 'not_found')
-      }
-      if (item.state !== 'Pending') {
-        conflict('this corrective action is already checked')
-      }
-      // "Đã khắc phục" cần minh chứng của CLB; "chưa khắc phục" cần minh chứng đó hoặc đã quá hạn.
-      if (step.outcome === 'Verified' && !item.submission) {
-        conflict('the club has not submitted evidence for this action yet')
-      }
-      if (step.outcome === 'Failed' && !item.submission && item.dueAt > now) {
-        conflict("wait for the club's evidence or the action deadline before marking it not done")
-      }
-      item.state = step.outcome
-      item.verifiedBy = actorId
-      item.verifiedAt = now
-      const done = next.actions.every((action) => action.state === 'Verified')
-      return {
-        next: { ...next, ...(done ? { state: 'Resolved' as const, resolvedAt: now } : {}) },
-        action: done
-          ? 'VIOLATION_RESOLVED'
-          : step.outcome === 'Verified'
-            ? 'VIOLATION_ACTION_VERIFIED'
-            : 'VIOLATION_ACTION_FAILED',
-        reason: text(step.note, 1_000, 'note'),
-        notifyClub: true,
-      }
+    if (Number.isNaN(item.dueAt.getTime()) || item.dueAt <= now) {
+      invalid('each corrective action needs a future deadline', 'actions')
     }
-    case 'resolve': {
-      if (current.state !== 'Decision Issued' && current.state !== 'Corrective Action') {
-        conflict('only a decided case can be resolved')
-      }
-      if (current.actions.some((action) => action.state === 'Pending')) {
-        conflict('some corrective actions are not checked yet')
-      }
-      return {
-        next: { ...next, state: 'Resolved', resolvedAt: now },
-        action: 'VIOLATION_RESOLVED',
-        reason: text(step.note, 1_000, 'note'),
-        notifyClub: true,
-      }
+    if (item.linkedLifecycleAction && !LIFECYCLE_LINKS.includes(item.linkedLifecycleAction)) {
+      invalid('invalid lifecycle link', 'actions')
     }
+  }
+  next.actions.push(
+    ...step.actions.map((item, index) => ({
+      id: `new-${index}`,
+      description: item.description.trim(),
+      dueAt: item.dueAt,
+      state: 'Pending' as const,
+      ...(item.linkedLifecycleAction ? { linkedLifecycleAction: item.linkedLifecycleAction } : {}),
+    })),
+  )
+  return {
+    next: { ...next, state: 'Corrective Action' },
+    action: 'VIOLATION_ACTIONS_ASSIGNED',
+    notifyClub: true,
+  }
+}
+
+// Kiểm tra một biện pháp khắc phục; đạt hết thì vụ việc được giải quyết
+function verifyAction(
+  current: ViolationCase,
+  next: ViolationCase,
+  step: StepOf<'verifyAction'>,
+  actorId: string,
+  now: Date,
+): StepResult {
+  if (current.state !== 'Corrective Action') {
+    conflict('there is no corrective action to verify')
+  }
+  const item = next.actions.find((action) => action.id === step.actionId)
+  if (!item) {
+    throw new DomainError('corrective action not found', 'not_found')
+  }
+  if (item.state !== 'Pending') {
+    conflict('this corrective action is already checked')
+  }
+  // "Đã khắc phục" cần minh chứng của CLB; "chưa khắc phục" cần minh chứng đó hoặc đã quá hạn.
+  if (step.outcome === 'Verified' && !item.submission) {
+    conflict('the club has not submitted evidence for this action yet')
+  }
+  if (step.outcome === 'Failed' && !item.submission && item.dueAt > now) {
+    conflict("wait for the club's evidence or the action deadline before marking it not done")
+  }
+  item.state = step.outcome
+  item.verifiedBy = actorId
+  item.verifiedAt = now
+  const done = next.actions.every((action) => action.state === 'Verified')
+  return {
+    next: { ...next, ...(done ? { state: 'Resolved' as const, resolvedAt: now } : {}) },
+    action: done
+      ? 'VIOLATION_RESOLVED'
+      : step.outcome === 'Verified'
+        ? 'VIOLATION_ACTION_VERIFIED'
+        : 'VIOLATION_ACTION_FAILED',
+    reason: text(step.note, 1_000, 'note'),
+    notifyClub: true,
+  }
+}
+
+// Kết thúc vụ việc đã quyết định khi không còn biện pháp nào chờ kiểm tra
+function resolve(
+  current: ViolationCase,
+  next: ViolationCase,
+  step: StepOf<'resolve'>,
+  now: Date,
+): StepResult {
+  if (current.state !== 'Decision Issued' && current.state !== 'Corrective Action') {
+    conflict('only a decided case can be resolved')
+  }
+  if (current.actions.some((action) => action.state === 'Pending')) {
+    conflict('some corrective actions are not checked yet')
+  }
+  return {
+    next: { ...next, state: 'Resolved', resolvedAt: now },
+    action: 'VIOLATION_RESOLVED',
+    reason: text(step.note, 1_000, 'note'),
+    notifyClub: true,
   }
 }

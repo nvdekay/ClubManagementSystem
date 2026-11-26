@@ -25,7 +25,7 @@ npm test -w server -- tests/unit/openapi.test.ts -t "routes" # lọc theo tên t
 python3 server/src/infra/db/generate-ucms-schema.py          # sinh lại schema từ DBML
 ```
 
-- `server/` có unit + integration test; `client/` chỉ có unit test thuần logic (`*.test.ts`, `npm test -w client`), phần còn lại kiểm tra bằng lint + typecheck. Coverage server: `npm run test:coverage -w server`.
+- `server/` có unit + integration test; `client/` có unit test thuần logic (`*.test.ts`, `npm test -w client`) và test giao diện Playwright (`npm run test:e2e`, cần Mongo; không nằm trong `check`, xem `client/e2e/README.md`). Coverage server: `npm run test:coverage -w server`.
 - `npm test` nạp `MONGO_URI` từ `.env`, nên chạy cả integration và cần Mongo đang bật. Không có
   `MONGO_URI` (job `check` trên CI) thì integration bị bỏ qua.
 - Đừng chạy một file integration bằng `npm run test:integration -w server -- <file>`: script đã có

@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 
-import type { clubEvents } from '@/i18n/clubEvents'
+import type { clubEvents } from '@/i18n/locales/en/clubEvents'
 import { ApiError } from '@/services/apiError'
 import { ClubEventError, type ClubEventErrorDetails } from '@/services/clubEvents'
 
@@ -9,7 +9,7 @@ interface ClubEventErrorMessageProps {
   error: unknown
 }
 
-export type ClubEventErrorKey = keyof typeof clubEvents.en.errors
+export type ClubEventErrorKey = keyof typeof clubEvents.errors
 
 interface ClubEventErrorDescriptor {
   key: ClubEventErrorKey

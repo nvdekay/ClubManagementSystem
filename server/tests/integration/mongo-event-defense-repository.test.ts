@@ -317,4 +317,78 @@ describe.skipIf(!uri)('Mongo event defense repository', () => {
       }),
     ).toBe(1)
   })
+
+  it('confirms the session when ICPDP accepts a club reschedule, so no overdue alert follows (BR63)', async () => {
+    const reviewRepo = mongoEventProposalReviewRepository()
+    const defenseRepo = mongoEventDefenseRepository(reviewRepo)
+    const rescheduleRoom = new Types.ObjectId()
+    await ucmsModels.properties!.create({
+      _id: rescheduleRoom,
+      code: 'BE-203',
+      name: 'Defense Room 203',
+      type: 'ROOM',
+      location: 'Beta',
+      capacity: 30,
+      bookableHours: Array.from({ length: 7 }, (_, day) => ({
+        day: day + 1,
+        open: '07:00',
+        close: '21:00',
+      })),
+      isActive: true,
+      createdAt: now,
+    })
+    const eventId = await seedEvent('Rescheduled Defense Event')
+    await reviewRepo.claim(eventId, String(officer), now)
+    await defenseRepo.schedule(
+      eventId,
+      String(officer),
+      {
+        title: 'Defense To Move',
+        startAt: new Date(now.getTime() + 72 * HOUR),
+        durationMinutes: 60,
+        propertyId: String(rescheduleRoom),
+      },
+      now,
+    )
+    const requested = await defenseRepo.requestRescheduleByClub(
+      String(clubId),
+      eventId,
+      String(member),
+      'Exam week',
+      now,
+    )
+    expect(requested.state).toBe('RESCHEDULE_REQUESTED')
+
+    // The club asked for a slot under 24h away; it can no longer confirm itself, so accepting confirms.
+    const acceptAt = new Date(now.getTime() + HOUR)
+    const newStart = new Date(now.getTime() + 10 * HOUR)
+    const accepted = await defenseRepo.respondReschedule(
+      eventId,
+      String(officer),
+      { accept: true, startAt: newStart, durationMinutes: 60, propertyId: String(rescheduleRoom) },
+      acceptAt,
+    )
+    expect(accepted).toMatchObject({
+      state: 'CONFIRMED',
+      startAt: newStart,
+      confirmedAt: acceptAt,
+      confirmedBy: String(member),
+    })
+    expect(accepted.rescheduleReason).toBeUndefined()
+
+    await defenseRepo.alertOverdueConfirmations(acceptAt)
+    expect(
+      await ucmsModels.notifications!.countDocuments({
+        entityId: new Types.ObjectId(eventId),
+        eventCode: 'EVENT_DEFENSE_CONFIRM_OVERDUE',
+      }),
+    ).toBe(0)
+    expect(
+      await ucmsModels.notifications!.countDocuments({
+        entityId: new Types.ObjectId(eventId),
+        eventCode: 'EVENT_DEFENSE_RESCHEDULE_DECIDED',
+        recipientUserId: member,
+      }),
+    ).toBe(1)
+  })
 })

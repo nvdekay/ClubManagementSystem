@@ -1,0 +1,50 @@
+# One-container deployment: the app image (API + built client) and a single-node Mongo replica set.
+#   cp .env.example .env.production   # fill Auth, SMTP, Cloudinary; NODE_ENV/MONGO_URI are set below
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build --wait
+# Put a TLS-terminating reverse proxy in front and set TRUST_PROXY (see README.md, Triển khai).
+name: ucms-prod
+
+services:
+  app:
+    build: .
+    image: ucms:latest
+    env_file: ${APP_ENV_FILE:-.env.production}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CLIENT_DIST_DIR: /app/client/dist
+      # replicaSet is required: the repositories use multi-document transactions.
+      MONGO_URI: mongodb://mongo:27017/ucms?replicaSet=rs0
+    ports:
+      # Loopback only: the reverse proxy on this host forwards to it. Override APP_PORT to change.
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    # The image HEALTHCHECK polls /api/v1/health (503 while Mongo is unreachable).
+
+  mongo:
+    image: mongo:7
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    # No published port: only the app reaches Mongo, over the compose network.
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    ulimits:
+      nofile: { soft: 64000, hard: 64000 }
+    healthcheck:
+      # Initiates the replica set on first boot with the service name the app connects to.
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }) }; quit(db.hello().isWritablePrimary ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  mongo-data:

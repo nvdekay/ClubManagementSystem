@@ -472,7 +472,8 @@ try {
           { key: 'skill', label: 'Kỹ năng', maxScore: 10 },
         ],
       },
-      now,
+      // Drafted before its window opened: a draft may not start in the past.
+      at(-3 * DAY),
     )
     await publishRecruitmentCampaign(
       campaigns,

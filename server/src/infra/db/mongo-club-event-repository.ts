@@ -26,7 +26,6 @@ import {
 import type { AcademicSemester } from '../../domain/policy.js'
 import { checkInCode } from '../../domain/school-event.js'
 import { openViolationCount, routedTaskFields } from './approval-routing.js'
-import { queueNotifications } from './club-board.js'
 import { assertEventWriteAccess } from './club-event-access.js'
 import {
   clubEventFrom,
@@ -45,7 +44,7 @@ import { promoteEventWaitlist } from './event-waitlist.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { oid, policyAt } from './repo-helpers.js'
+import { oid, policyAt, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 /** Entity audit cố định cho mẫu đề xuất sự kiện của ICPDP: chỉ có một mẫu và chỉ được thay thế. */
@@ -998,15 +997,18 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
               .userRoleAssignments!.find({ roleId: { $in: officerRoles }, revokedAt: null })
               .session(session)
               .distinct('userId')
-            await queueNotifications(
-              session,
-              officers,
-              'EVENT_CANCELLATION_REQUESTED',
-              'Event',
-              event._id as Types.ObjectId,
-              { title: event.title, clubId, clubName: event.clubName, reason: action.reason },
+            await queueNotifications(session, officers, {
+              eventCode: 'EVENT_CANCELLATION_REQUESTED',
+              entityType: 'Event',
+              entityId: event._id as Types.ObjectId,
+              payload: {
+                title: event.title,
+                clubId,
+                clubName: event.clubName,
+                reason: action.reason,
+              },
               now,
-            )
+            })
           } else if (['DRAFT', 'CREATED', 'PUBLIC', 'ONGOING'].includes(String(event.state))) {
             await cancelEventInSession(
               session,
@@ -1096,28 +1098,22 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
             })
             .session(session)
             .lean()
-          if (registrations.length) {
-            await m.notifications!.create(
-              registrations.map((r) => ({
-                recipientUserId: r.studentId,
-                eventCode: 'EVENT_RESCHEDULED',
-                entityType: 'Event',
-                entityId: event._id,
-                channels: ['IN_APP'],
-                payload: {
-                  title: event.title,
-                  startAt: action.startAt,
-                  endAt: action.endAt,
-                  reason: action.reason,
-                },
-                state: 'Queued',
-                dueAt: now,
-                attempts: 0,
-                createdAt: now,
-              })),
-              { session, ordered: true },
-            )
-          }
+          await queueNotifications(
+            session,
+            registrations.map((r) => r.studentId),
+            {
+              eventCode: 'EVENT_RESCHEDULED',
+              entityType: 'Event',
+              entityId: event._id,
+              payload: {
+                title: event.title,
+                startAt: action.startAt,
+                endAt: action.endAt,
+                reason: action.reason,
+              },
+              now,
+            },
+          )
         } else if (action.kind === 'capacity' || action.kind === 'promote') {
           if (
             event.state !== 'Upcoming' ||

@@ -12,7 +12,8 @@ import {
 import { assertEventWriteAccess } from './club-event-access.js'
 import { assertAccountabilityOfficer } from './accountability-workflow.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 
 const NOTIFY_ACTIONS = new Set([
   'submit',
@@ -238,13 +239,11 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
                 ...(await clubBoardUserIds(budget.clubId as Types.ObjectId, session)),
                 version?.submittedBy,
               ]
-          await queueNotifications(
-            session,
-            recipients,
-            toOfficer ? 'SPONSORED_ITEM_SUBMITTED' : 'SPONSORED_ITEM_UPDATED',
-            'Event',
-            budget.eventId as Types.ObjectId,
-            {
+          await queueNotifications(session, recipients, {
+            eventCode: toOfficer ? 'SPONSORED_ITEM_SUBMITTED' : 'SPONSORED_ITEM_UPDATED',
+            entityType: 'Event',
+            entityId: budget.eventId as Types.ObjectId,
+            payload: {
               title: event.title,
               category: updated.category,
               status: updated.status,
@@ -256,7 +255,7 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
               budgetId: id,
             },
             now,
-          )
+          })
         }
       })
       const result = await find(id, clubId)

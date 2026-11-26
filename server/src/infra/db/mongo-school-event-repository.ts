@@ -14,7 +14,8 @@ import {
   type SchoolEventRepository,
   type SchoolEventSummary,
 } from '../../domain/school-event.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -300,11 +301,18 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
       await queueNotifications(
         session,
         await clubBoardUserIds(club._id as Types.ObjectId, session),
-        'SCHOOL_EVENT_INVITATION',
-        'Event',
-        event._id as Types.ObjectId,
-        { title: event.title, startAt: event.startAt, deadline: invitation.deadline, clubId },
-        now,
+        {
+          eventCode: 'SCHOOL_EVENT_INVITATION',
+          entityType: 'Event',
+          entityId: event._id as Types.ObjectId,
+          payload: {
+            title: event.title,
+            startAt: event.startAt,
+            deadline: invitation.deadline,
+            clubId,
+          },
+          now,
+        },
       )
     }
     if (outcome.invited.length) {
@@ -485,11 +493,13 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
         await queueNotifications(
           session,
           await clubBoardUserIds(invitation.clubId as Types.ObjectId, session),
-          'SCHOOL_EVENT_INVITATION_WITHDRAWN',
-          'Event',
-          eventId,
-          { title: event?.title, clubId: String(invitation.clubId) },
-          now,
+          {
+            eventCode: 'SCHOOL_EVENT_INVITATION_WITHDRAWN',
+            entityType: 'Event',
+            entityId: eventId,
+            payload: { title: event?.title, clubId: String(invitation.clubId) },
+            now,
+          },
         )
       })
       return (await detail(eventId))!

@@ -16,6 +16,7 @@ import {
 } from '../../domain/club-lifecycle.js'
 import { DomainError } from '../../domain/errors.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -229,36 +230,6 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
     )
   }
 
-  async function notify(
-    session: ClientSession,
-    recipients: unknown[],
-    eventCode: string,
-    entityType: string,
-    entityId: Types.ObjectId,
-    payload: Doc,
-    now: Date,
-  ): Promise<void> {
-    const unique = [...new Set(recipients.map(String))]
-    if (!unique.length) {
-      return
-    }
-    await m.notifications!.insertMany(
-      unique.map((userId) => ({
-        recipientUserId: new Types.ObjectId(userId),
-        eventCode,
-        entityType,
-        entityId,
-        channels: ['IN_APP'],
-        payload,
-        state: 'Queued',
-        dueAt: now,
-        attempts: 0,
-        createdAt: now,
-      })),
-      { session },
-    )
-  }
-
   async function officerIds(): Promise<string[]> {
     const role = await m
       .roles!.findOne({ code: 'ICPDP_OFFICER', scope: 'system' })
@@ -451,15 +422,13 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           correlationId,
           decisionId,
         )
-        await notify(
-          session,
-          await memberIds(id, session),
-          'CLUB_SUSPENDED',
-          'Club',
-          id,
-          { reason: input.reason, until: input.until },
+        await queueNotifications(session, await memberIds(id, session), {
+          eventCode: 'CLUB_SUSPENDED',
+          entityType: 'Club',
+          entityId: id,
+          payload: { reason: input.reason, until: input.until },
           now,
-        )
+        })
         if (input.requestId) {
           const requestId = new Types.ObjectId(input.requestId)
           await m.suspensionRequests!.updateOne(
@@ -545,15 +514,13 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           now,
           randomUUID(),
         )
-        await notify(
-          session,
-          await memberIds(id, session),
-          'CLUB_REACTIVATED',
-          'Club',
-          id,
-          { reason, automatic: actorId === null },
+        await queueNotifications(session, await memberIds(id, session), {
+          eventCode: 'CLUB_REACTIVATED',
+          entityType: 'Club',
+          entityId: id,
+          payload: { reason, automatic: actorId === null },
           now,
-        )
+        })
       })
     },
     // ICPDP quyết định giải thể CLB và lưu học kỳ có hiệu lực
@@ -605,15 +572,13 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           randomUUID(),
           decisionId,
         )
-        await notify(
-          session,
-          await memberIds(id, session),
-          'CLUB_DISSOLUTION_DECIDED',
-          'Club',
-          id,
-          { reason: decision.reason, effectiveSemester: decision.effectiveSemester },
+        await queueNotifications(session, await memberIds(id, session), {
+          eventCode: 'CLUB_DISSOLUTION_DECIDED',
+          entityType: 'Club',
+          entityId: id,
+          payload: { reason: decision.reason, effectiveSemester: decision.effectiveSemester },
           now,
-        )
+        })
         return result
       })
     },
@@ -643,15 +608,13 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         if (!club) {
           return
         } // một lần chạy khác đã nhắc rồi
-        await notify(
-          session,
-          officerIds,
-          'CLUB_SUSPENSION_ENDING',
-          'Club',
-          id,
-          { clubName: club.name, until: (club.suspension as Doc | undefined)?.until },
+        await queueNotifications(session, officerIds, {
+          eventCode: 'CLUB_SUSPENSION_ENDING',
+          entityType: 'Club',
+          entityId: id,
+          payload: { clubName: club.name, until: (club.suspension as Doc | undefined)?.until },
           now,
-        )
+        })
       })
     },
     // Lấy CLB Suspended đã quá hạn đình chỉ
@@ -690,14 +653,16 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
               now,
               randomUUID(),
             )
-            await notify(
+            await queueNotifications(
               session,
               await memberIds(club._id as Types.ObjectId, session),
-              'CLUB_DISSOLVING',
-              'Club',
-              club._id as Types.ObjectId,
-              {},
-              now,
+              {
+                eventCode: 'CLUB_DISSOLVING',
+                entityType: 'Club',
+                entityId: club._id as Types.ObjectId,
+                payload: {},
+                now,
+              },
             )
             result.done.push(String(club._id))
           })
@@ -805,21 +770,25 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
               randomUUID(),
               decisionId,
             )
-            await notify(session, members, 'CLUB_DISSOLVED', 'Club', id, {}, now)
-            await notify(
-              session,
-              officers,
-              'CLUB_DISSOLUTION_COMPLETED',
-              'Club',
-              id,
-              {
+            await queueNotifications(session, members, {
+              eventCode: 'CLUB_DISSOLVED',
+              entityType: 'Club',
+              entityId: id,
+              payload: {},
+              now,
+            })
+            await queueNotifications(session, officers, {
+              eventCode: 'CLUB_DISSOLUTION_COMPLETED',
+              entityType: 'Club',
+              entityId: id,
+              payload: {
                 clubName: club.name,
                 outstandingPeriodicReports: outstanding.periodicReports.length,
                 outstandingPostEventReports: outstanding.postEventReports.length,
                 outstandingBudgets: outstanding.budgets.length,
               },
               now,
-            )
+            })
             result.done.push(String(id))
           })
         } catch (error) {
@@ -875,26 +844,21 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
             now,
             randomUUID(),
           )
-          await notify(session, officers, 'CLUB_LIFECYCLE_FAILED', 'Club', clubId, payload, now)
+          await queueNotifications(session, officers, {
+            eventCode: 'CLUB_LIFECYCLE_FAILED',
+            entityType: 'Club',
+            entityId: clubId,
+            payload,
+            now,
+          })
           return
         }
-        const unique = [...new Set(officers)]
-        if (unique.length) {
-          await m.notifications!.insertMany(
-            unique.map((userId) => ({
-              recipientUserId: new Types.ObjectId(userId),
-              eventCode: 'CLUB_LIFECYCLE_FAILED',
-              entityType: 'ClubLifecycleJob',
-              channels: ['IN_APP'],
-              payload,
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            })),
-            { session },
-          )
-        }
+        await queueNotifications(session, officers, {
+          eventCode: 'CLUB_LIFECYCLE_FAILED',
+          entityType: 'ClubLifecycleJob',
+          payload,
+          now,
+        })
       })
       return true
     },

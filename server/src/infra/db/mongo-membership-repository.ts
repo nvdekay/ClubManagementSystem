@@ -13,7 +13,7 @@ import { isBeforeToday } from '../../domain/membership.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { isDuplicateKey, queueNotifications } from './repo-helpers.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function objectArray(value: unknown): Record<string, unknown>[] {
@@ -106,7 +106,6 @@ export function mongoMembershipRepository(): MembershipRepository {
   const positions = ucmsModels.clubPositions!
   const assignments = ucmsModels.clubPositionAssignments!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
 
   // Kiểm tra thành viên đang giữ ghế ban đã được xác nhận tại thời điểm cho trước
   async function hasConfirmedBoardSeat(
@@ -200,7 +199,7 @@ export function mongoMembershipRepository(): MembershipRepository {
 
   // Tạo thông báo liên quan đến thành viên
   async function notify(input: {
-    recipient: Types.ObjectId
+    recipients: readonly Types.ObjectId[]
     entityId: Types.ObjectId
     eventCode: string
     clubId: Types.ObjectId
@@ -209,23 +208,13 @@ export function mongoMembershipRepository(): MembershipRepository {
     entityType?: string
     session: mongoose.ClientSession
   }) {
-    await notifications.create(
-      [
-        {
-          recipientUserId: input.recipient,
-          eventCode: input.eventCode,
-          entityType: input.entityType ?? 'ClubMembership',
-          entityId: input.entityId,
-          channels: ['IN_APP'],
-          payload: { clubId: String(input.clubId), ...input.payload },
-          state: 'Queued',
-          dueAt: input.now,
-          attempts: 0,
-          createdAt: input.now,
-        },
-      ],
-      { session: input.session },
-    )
+    await queueNotifications(input.session, input.recipients, {
+      eventCode: input.eventCode,
+      entityType: input.entityType ?? 'ClubMembership',
+      entityId: input.entityId,
+      payload: { clubId: String(input.clubId), ...input.payload },
+      now: input.now,
+    })
   }
 
   return {
@@ -390,7 +379,7 @@ export function mongoMembershipRepository(): MembershipRepository {
             { session },
           )
           await notify({
-            recipient: userId,
+            recipients: [userId],
             entityId: membershipId,
             eventCode: 'CLUB_MEMBERSHIP_ONBOARDED',
             clubId,
@@ -499,7 +488,7 @@ export function mongoMembershipRepository(): MembershipRepository {
             { session },
           )
           await notify({
-            recipient: new Types.ObjectId(String(current.userId)),
+            recipients: [new Types.ObjectId(String(current.userId))],
             entityId: membershipId,
             eventCode: `CLUB_MEMBERSHIP_${input.state.toUpperCase()}`,
             clubId,
@@ -587,22 +576,20 @@ export function mongoMembershipRepository(): MembershipRepository {
           input.now,
           session,
         )
-        for (const recipient of recipients) {
-          await notify({
-            recipient,
-            entityId: requestId,
-            eventCode: 'MEMBERSHIP_WITHDRAWAL_REQUESTED',
-            clubId: new Types.ObjectId(String(membership.clubId)),
-            now: input.now,
-            entityType: 'MembershipWithdrawalRequest',
-            payload: {
-              requestId: String(requestId),
-              membershipId: String(membershipId),
-              state: held ? 'Held' : 'Pending',
-            },
-            session,
-          })
-        }
+        await notify({
+          recipients,
+          entityId: requestId,
+          eventCode: 'MEMBERSHIP_WITHDRAWAL_REQUESTED',
+          clubId: new Types.ObjectId(String(membership.clubId)),
+          now: input.now,
+          entityType: 'MembershipWithdrawalRequest',
+          payload: {
+            requestId: String(requestId),
+            membershipId: String(membershipId),
+            state: held ? 'Held' : 'Pending',
+          },
+          session,
+        })
       })
       const created = await requests.findById(requestId).lean()
       if (!created) {
@@ -736,7 +723,7 @@ export function mongoMembershipRepository(): MembershipRepository {
           { session, ordered: true },
         )
         await notify({
-          recipient: new Types.ObjectId(String(member.userId)),
+          recipients: [new Types.ObjectId(String(member.userId))],
           entityId: membershipId,
           eventCode: 'CLUB_MEMBERSHIP_LEFT',
           clubId,

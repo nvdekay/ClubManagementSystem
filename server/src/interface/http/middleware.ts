@@ -16,23 +16,53 @@ const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
   unavailable: 503,
 }
 
+// A client- or proxy-supplied id is kept only if it is a short token that is safe to log and echo.
+const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{1,64}$/
+
+type LogLevel = 'info' | 'warn' | 'error'
+
+// Ghi một dòng log JSON
+function log(level: LogLevel, fields: Record<string, unknown>) {
+  const line = JSON.stringify({ ts: new Date().toISOString(), level, ...fields })
+  if (level === 'error') {
+    console.error(line)
+  } else if (level === 'warn') {
+    console.warn(line)
+  } else {
+    console.log(line)
+  }
+}
+
+// Lấy request id mà requestLogger đã gắn vào response
+function requestIdOf(res: Response): string | undefined {
+  const id: unknown = res.locals.requestId
+  return typeof id === 'string' ? id : undefined
+}
+
 // Ghi log JSON mỗi request kèm thời gian xử lý
-// Log hiệu năng/truy cập: một dòng JSON cho mỗi request kèm thời lượng.
+/**
+ * Log hiệu năng/truy cập: một dòng JSON cho mỗi request kèm thời lượng. Gắn request id (nhận
+ * `X-Request-Id` từ proxy nếu an toàn, nếu không thì tự sinh), trả lại ở header `X-Request-Id`
+ * để đối chiếu log của server với báo lỗi từ người dùng.
+ */
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = performance.now()
+  const incoming = req.get('x-request-id')
+  const requestId = incoming && SAFE_REQUEST_ID.test(incoming) ? incoming : randomUUID()
+  res.locals.requestId = requestId
+  res.setHeader('X-Request-Id', requestId)
   const { method, originalUrl } = req // lấy ngay bây giờ — express ghi đè req.path theo từng router
   // Never log the query string: it can carry secrets such as the OAuth authorization code.
   const path = originalUrl.split('?', 1)[0]
   res.on('finish', () => {
-    console.log(
-      JSON.stringify({
-        ts: new Date().toISOString(),
-        method,
-        path,
-        status: res.statusCode,
-        duration_ms: Math.round(performance.now() - start),
-      }),
-    )
+    const status = res.statusCode
+    log(status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info', {
+      requestId,
+      method,
+      path,
+      status,
+      duration_ms: Math.round(performance.now() - start),
+    })
   })
   next()
 }
@@ -119,18 +149,26 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
   // cụm lý do chung — err.message có thể phản chiếu byte thô của request (LOG-01). Log nguyên nhân thật.
   const status = clientErrorStatus(err)
   if (status !== undefined) {
-    console.warn(`client error ${status}: ${err instanceof Error ? err.message : String(err)}`)
+    log('warn', {
+      requestId: requestIdOf(res),
+      msg: `client error ${status}: ${err instanceof Error ? err.message : String(err)}`,
+    })
     const reason = (STATUS_CODES[status] ?? 'bad request').toLowerCase()
     fail(res, req, status, reason, reason)
     return
   }
   if (isDuplicateKeyError(err)) {
     // A unique index caught a race the usecase check missed: a conflict, not a server fault.
-    console.warn(`duplicate key on ${req.method} ${req.path}`)
+    log('warn', { requestId: requestIdOf(res), msg: `duplicate key on ${req.method} ${req.path}` })
     fail(res, req, 409, 'conflict', 'resource already exists')
     return
   }
-  console.error(describeError(err))
+  log('error', {
+    requestId: requestIdOf(res),
+    method: req.method,
+    path: req.originalUrl.split('?', 1)[0],
+    error: describeError(err),
+  })
   fail(res, req, 500, 'internal server error', 'internal server error')
 }
 

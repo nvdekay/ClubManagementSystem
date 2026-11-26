@@ -22,7 +22,8 @@ import {
   resolvePaymentChannel,
   type SponsoredItem,
 } from '../../domain/sponsored-item.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -374,13 +375,11 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
           ...(await clubBoardUserIds(doc.clubId as Types.ObjectId, session)),
           version?.submittedBy,
         ]
-        await queueNotifications(
-          session,
-          recipients,
-          action,
-          'EventBudget',
-          budgetObjectId,
-          {
+        await queueNotifications(session, recipients, {
+          eventCode: action,
+          entityType: 'EventBudget',
+          entityId: budgetObjectId,
+          payload: {
             eventTitle: event?.title,
             kind: flow.kind,
             amount: flow.amount,
@@ -389,7 +388,7 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
             state: nextState,
           },
           now,
-        )
+        })
       })
       return (await detail(budgetObjectId))!
     },

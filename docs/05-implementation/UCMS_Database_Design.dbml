@@ -1354,6 +1354,22 @@ Table emailDeliveryLogs {
   Note: 'Collection được tạo bởi db:init nhưng code chưa có repository ghi/đọc nó (chưa có mail worker).'
 }
 
+Table uploadedAssets {
+  id objectId [pk]
+  assetId string [not null, note: 'Asset id của Cloudinary.']
+  kind string [not null, note: 'PERIODIC_EVIDENCE — ảnh minh chứng báo cáo định kỳ (UC38).']
+  clubId objectId [not null, note: 'CLB sở hữu ảnh; tham chiếu chỉ được tìm trong báo cáo của CLB này.']
+  uploadedAt datetime [not null]
+  referencedAt datetime [note: 'Lúc job dọn dẹp thấy asset đã được một báo cáo tham chiếu; từ đó không xét lại.']
+
+  indexes {
+    assetId [unique, name: 'uq_uploaded_asset']
+    (kind, referencedAt, uploadedAt) [name: 'ix_uploaded_asset_cleanup']
+  }
+
+  Note: 'Theo dõi tệp đã upload để job hằng ngày xoá asset không được tham chiếu sau 24 giờ (feat-upload-orphan-cleanup, 26/11/2026). Asset bị xoá thì dòng theo dõi cũng bị xoá.'
+}
+
 Table auditLogs {
   id objectId [pk]
   entityType string [not null]

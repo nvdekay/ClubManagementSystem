@@ -5,6 +5,7 @@ import { DomainError } from '../../domain/errors.js'
 import { isInternalClubEventState } from '../../domain/club-event.js'
 import { eventCancellationIsLate } from '../../domain/club-event-rules.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -127,22 +128,16 @@ export async function cancelEventInSession(
     ],
     { session },
   )
-  if (registrations.length) {
-    await m.notifications!.create(
-      registrations.map((r) => ({
-        recipientUserId: r.studentId,
-        eventCode: 'EVENT_CANCELLED',
-        entityType: 'Event',
-        entityId: id,
-        channels: ['IN_APP'],
-        payload: { title: event.title, reason, source },
-        state: 'Queued',
-        dueAt: now,
-        attempts: 0,
-        createdAt: now,
-      })),
-      { session, ordered: true },
-    )
-  }
+  await queueNotifications(
+    session,
+    registrations.map((r) => r.studentId),
+    {
+      eventCode: 'EVENT_CANCELLED',
+      entityType: 'Event',
+      entityId: id,
+      payload: { title: event.title, reason, source },
+      now,
+    },
+  )
   return registrations.length
 }

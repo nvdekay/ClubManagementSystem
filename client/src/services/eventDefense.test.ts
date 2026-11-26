@@ -1,7 +1,9 @@
 import i18next from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiErrors } from '@/i18n/apiErrors'
-import { eventDefense } from '@/i18n/eventDefense'
+import { apiErrors as enApiErrors } from '@/i18n/locales/en/apiErrors'
+import { apiErrors as viApiErrors } from '@/i18n/locales/vi/apiErrors'
+import { eventDefense as enEventDefense } from '@/i18n/locales/en/eventDefense'
+import { eventDefense as viEventDefense } from '@/i18n/locales/vi/eventDefense'
 import { ApiError } from '@/services/apiError'
 import { EventDefenseError, startEventDefense } from '@/services/eventDefense'
 
@@ -10,8 +12,8 @@ beforeEach(async () => {
     lng: 'vi',
     fallbackLng: 'en',
     resources: {
-      en: { translation: { apiErrors: apiErrors.en, eventDefense: eventDefense.en } },
-      vi: { translation: { apiErrors: apiErrors.vi, eventDefense: eventDefense.vi } },
+      en: { translation: { apiErrors: enApiErrors, eventDefense: enEventDefense } },
+      vi: { translation: { apiErrors: viApiErrors, eventDefense: viEventDefense } },
     },
   })
 })
@@ -66,13 +68,13 @@ describe('EventDefenseError i18n localization', () => {
     ],
     [
       'Room is booked for another event defense session',
-      eventDefense.vi.errors.roomDefense,
-      eventDefense.en.errors.roomDefense,
+      viEventDefense.errors.roomDefense,
+      enEventDefense.errors.roomDefense,
     ],
     [
       'invalid event defense request',
-      eventDefense.vi.errors.invalidRequest,
-      eventDefense.en.errors.invalidRequest,
+      viEventDefense.errors.invalidRequest,
+      enEventDefense.errors.invalidRequest,
     ],
   ])('translates %s into vi and en', async (raw, expectedVi, expectedEn) => {
     const error = new EventDefenseError(raw, 400)
@@ -85,10 +87,10 @@ describe('EventDefenseError i18n localization', () => {
   it('maps unmapped backend diagnostics to HTTP status i18n keys instead of leaking raw response text', async () => {
     const raw = 'unexpected internal defense diagnostic'
     const conflictError = new EventDefenseError(raw, 409)
-    expect(conflictError.message).toBe(eventDefense.vi.errors.conflict)
+    expect(conflictError.message).toBe(viEventDefense.errors.conflict)
 
     await i18next.changeLanguage('en')
-    expect(conflictError.message).toBe(eventDefense.en.errors.conflict)
+    expect(conflictError.message).toBe(enEventDefense.errors.conflict)
     expect(conflictError.message).not.toBe(raw)
 
     const customStatusError = new EventDefenseError(raw, 418)
@@ -129,10 +131,10 @@ describe('EventDefenseError i18n localization', () => {
 
     const failure = await startEventDefense('event-1', 'csrf-token').catch((err: unknown) => err)
     expect(failure).toBeInstanceOf(EventDefenseError)
-    expect((failure as EventDefenseError).message).toBe(eventDefense.vi.errors.network)
+    expect((failure as EventDefenseError).message).toBe(viEventDefense.errors.network)
 
     await i18next.changeLanguage('en')
-    expect((failure as EventDefenseError).message).toBe(eventDefense.en.errors.network)
+    expect((failure as EventDefenseError).message).toBe(enEventDefense.errors.network)
     expect(errorSpy).toHaveBeenCalledTimes(1)
   })
 })

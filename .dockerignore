@@ -1,0 +1,31 @@
+# Only package manifests, server/, client/ and the proposal template reach the build context.
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/*.log
+**/.DS_Store
+.git
+.github
+.claude
+.vscode
+.rules
+.sdd
+**/.env
+**/.env.*
+docs/*
+!docs/Template Đề án sự kiện.docx
+docs-qa
+outputs
+seed-data
+scripts
+server/tests
+client/test-results
+client/playwright-report
+e2e
+Dockerfile
+.dockerignore
+docker-compose*.yml
+*.md
+*.mp4
+*.archive.gz

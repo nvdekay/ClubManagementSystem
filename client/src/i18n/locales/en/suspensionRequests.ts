@@ -1,0 +1,28 @@
+export const suspensionRequests = {
+  title: 'Suspension requests',
+  description:
+    'Request a temporary suspension with a recovery plan. Suspension begins only after ICPDP approves.',
+  reviewDescription:
+    'Review club suspension requests and their schedule impact, then approve or reject with a reason.',
+  denied: 'Club Leader or ICPDP Officer access is required.',
+  reason: 'Reason',
+  until: 'Expected end date',
+  obligations: 'How outstanding obligations will be handled',
+  recovery: 'Recovery plan',
+  impact: 'These future events and bookings will be cancelled if approved',
+  acknowledge: 'I acknowledge the cancellations listed above',
+  submit: 'Submit request',
+  approve: 'Approve and suspend',
+  reject: 'Reject',
+  decision: 'Decision reason',
+  retry: 'Retry',
+  empty: 'No suspension requests.',
+  previousPage: 'Previous page',
+  nextPage: 'Next page',
+  pageNumber: 'Page {{page}}',
+  pagination: 'Suspension request pages',
+  Pending: 'Pending',
+  Approved: 'Approved',
+  Rejected: 'Rejected',
+  acknowledgeRequired: 'Please acknowledge the cancellations before submitting.',
+}

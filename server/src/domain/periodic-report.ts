@@ -252,6 +252,27 @@ export interface PeriodicEvidenceStorage {
     bytes: Buffer
   }): Promise<{ assetId: string }>
   accessUrl(assetId: string): Promise<string>
+  remove(assetId: string): Promise<void>
+}
+
+/** Ảnh minh chứng chưa được báo cáo nào tham chiếu sau ngần này giờ thì bị job dọn dẹp xoá. */
+export const EVIDENCE_ORPHAN_GRACE_HOURS = 24
+
+export interface UploadedEvidence {
+  assetId: string
+  /** Lower-case hex id of the owning club, as in `evidenceReference`. */
+  clubId: string
+}
+
+/** Sổ theo dõi ảnh minh chứng đã upload, để dọn ảnh không được tham chiếu (feat-upload-orphan-cleanup). */
+export interface UploadedEvidenceRepository {
+  record(input: UploadedEvidence & { uploadedAt: Date }): Promise<void>
+  /** Ảnh upload trước `before` mà chưa từng thấy được tham chiếu, cũ nhất trước. */
+  unconfirmed(before: Date, limit: number): Promise<UploadedEvidence[]>
+  /** Asset id trong `assets` được một báo cáo của CLB sở hữu tham chiếu (bản nháp hoặc phiên bản đã nộp). */
+  referenced(assets: readonly UploadedEvidence[]): Promise<Set<string>>
+  markReferenced(assetIds: readonly string[], now: Date): Promise<void>
+  forget(assetId: string): Promise<void>
 }
 
 // Dựng tham chiếu ảnh minh chứng gắn với CLB sở hữu

@@ -8,7 +8,7 @@ import type {
 } from '../../domain/club-application-review.js'
 import { FOUNDING_POSITIONS } from '../../domain/club-application.js'
 import { DomainError } from '../../domain/errors.js'
-import { notificationChannels } from '../../domain/notification.js'
+import { queueNotifications } from './repo-helpers.js'
 import {
   applicationDraftFrom,
   mapApplicationRecord,
@@ -64,7 +64,6 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
   const structures = ucmsModels.clubRoleStructureVersions!
   const assignments = ucmsModels.clubPositionAssignments!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
   const users = ucmsModels.users!
 
   async function detail(
@@ -533,26 +532,18 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
             ? [...founderIds].map((userId) => new Types.ObjectId(userId))
             : [application.founderUserId]
         const eventCode = `CLUB_APPLICATION_${nextState.toUpperCase().replace(' ', '_')}`
-        await notifications.insertMany(
-          recipients.map((recipientUserId) => ({
-            recipientUserId,
-            eventCode,
-            entityType: 'ClubApplication',
-            entityId: id,
-            channels: notificationChannels(eventCode),
-            payload: {
-              outcome: input.outcome,
-              reason: input.reason,
-              revisionDeadlineAt: input.revisionDeadlineAt,
-              createdClubId,
-            },
-            state: 'Queued',
-            dueAt: now,
-            attempts: 0,
-            createdAt: now,
-          })),
-          { session },
-        )
+        await queueNotifications(session, recipients, {
+          eventCode,
+          entityType: 'ClubApplication',
+          entityId: id,
+          payload: {
+            outcome: input.outcome,
+            reason: input.reason,
+            revisionDeadlineAt: input.revisionDeadlineAt,
+            createdClubId,
+          },
+          now,
+        })
       })
       const decided = await detail(id)
       if (!decided) {

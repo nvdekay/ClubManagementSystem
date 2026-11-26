@@ -1,0 +1,17 @@
+export const users = {
+  title: 'Users',
+  namePlaceholder: 'Name',
+  emailPlaceholder: 'Email',
+  createdAtHeader: 'Created',
+  add: 'Add',
+  searchPlaceholder: 'Search by name or email',
+  limitLabel: 'Per page',
+  columnsLabel: 'Columns',
+  noUsers: 'No users yet.',
+  noResults: 'No matching users.',
+  previousPage: 'Previous page',
+  nextPage: 'Next page',
+  paginationLabel: 'Pagination',
+  gotoPage: 'Page {{page}}',
+  loadError: 'failed to load users',
+}

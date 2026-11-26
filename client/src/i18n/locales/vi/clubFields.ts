@@ -1,0 +1,43 @@
+import type { Messages } from '../../messages'
+import type { clubFields as en } from '../en/clubFields'
+
+export const clubFields = {
+  title: 'Lĩnh vực CLB',
+  description: 'Danh sách sinh viên chọn khi lập hồ sơ thành lập CLB.',
+  homeDescription: 'Thêm, đổi tên hoặc xoá các lĩnh vực sinh viên chọn khi lập CLB.',
+  signIn: 'Đăng nhập để quản lý lĩnh vực CLB.',
+  signInLink: 'Đăng nhập',
+  forbidden: 'Tài khoản của bạn không có quyền quản lý lĩnh vực CLB.',
+  loadError: 'Không tải được danh sách lĩnh vực.',
+  retry: 'Thử lại',
+  empty: 'Chưa có lĩnh vực nào. Hãy thêm lĩnh vực đầu tiên bên dưới.',
+  name: 'Tên lĩnh vực',
+  order: 'Thứ tự',
+  orderHint: 'Số nhỏ hơn hiện trước trong danh sách chọn.',
+  usage: '{{clubs}} CLB · {{applications}} hồ sơ',
+  hidden: 'Đã ẩn',
+  hiddenHint:
+    'Đã ẩn khỏi danh sách chọn; các CLB vẫn giữ lĩnh vực này. Thêm lại đúng tên này để khôi phục.',
+  add: 'Thêm lĩnh vực',
+  adding: 'Đang thêm…',
+  addTitle: 'Lĩnh vực mới',
+  edit: 'Sửa',
+  save: 'Lưu',
+  saving: 'Đang lưu…',
+  cancel: 'Huỷ',
+  delete: 'Xoá',
+  deleting: 'Đang xoá…',
+  confirmDelete: 'Xoá “{{name}}”?',
+  confirmUnused: 'Chưa CLB hay hồ sơ nào dùng lĩnh vực này nên nó sẽ bị xoá hẳn.',
+  confirmInUse:
+    '{{clubs}} CLB và {{applications}} hồ sơ đang dùng lĩnh vực này. Lĩnh vực sẽ bị ẩn khỏi danh sách chọn, còn các CLB/hồ sơ đó vẫn giữ nguyên.',
+  confirm: 'Xoá',
+  renameHint: 'Đổi tên sẽ cập nhật mọi CLB và hồ sơ đang soạn dùng lĩnh vực này.',
+  duplicate: 'Đã có lĩnh vực trùng tên.',
+  invalid: 'Hãy nhập tên (tối đa 100 ký tự) và thứ tự từ 0 đến 10000.',
+  created: 'Đã thêm lĩnh vực.',
+  updated: 'Đã cập nhật lĩnh vực.',
+  deleted: 'Đã xoá lĩnh vực.',
+  deactivated: 'Đã ẩn lĩnh vực khỏi danh sách chọn.',
+  failed: 'Không lưu được thay đổi.',
+} satisfies Messages<typeof en>

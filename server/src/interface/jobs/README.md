@@ -28,5 +28,8 @@ bước trong try/catch riêng, nên một bước lỗi không làm bỏ qua c�
   thông báo chỉ in-app đến hạn → `Sent`; thông báo có kênh `EMAIL` được claim nguyên tử với lease 5 phút (không gửi trùng
   giữa nhiều instance), gửi qua `MailTransport`, ghi `emailDeliveryLogs` mỗi lần thử, retry backoff tới 5 lần rồi `Failed`.
   Transport là SMTP thật khi đủ cấu hình (bắt buộc ở production), log transport khi phát triển (xem `infra/mail/README.md`).
+- `evidence-cleanup-job.ts` — feat-upload-orphan-cleanup (26/11/2026): chạy lúc khởi động và mỗi 24 giờ, gọi
+  `cleanupOrphanedEvidence`: ảnh minh chứng báo cáo định kỳ upload quá 24 giờ mà không báo cáo nào (bản nháp, phiên bản
+  đã nộp, `systemData`) tham chiếu thì bị xoá khỏi Cloudinary; không cấu hình Cloudinary thì không làm gì.
 - `complaint-response-job.ts` — UC52 E1: chạy lúc khởi động và mỗi giờ: khiếu nại `Forwarded` quá `responseDueAt`
   được ghi một tín hiệu tuân thủ (audit `COMPLAINT_RESPONSE_OVERDUE` + thông báo ICPDP), đúng một lần.

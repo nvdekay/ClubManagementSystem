@@ -13,6 +13,7 @@ import type {
   TransitionTerm,
 } from '../../domain/leadership-transition.js'
 import { LEADER_SEAT_FILTER, otherClubLeaderUserIds } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -142,7 +143,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
   const tasks = ucmsModels.approvalTasks!
   const decisions = ucmsModels.approvalDecisions!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
 
   // Dựng chi tiết kế hoạch chuyển giao kèm approval task
   async function detail(
@@ -460,23 +460,13 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
             ],
             { session },
           )
-          if (notifyUsers.length) {
-            await notifications.insertMany(
-              notifyUsers.map((recipientUserId) => ({
-                recipientUserId,
-                eventCode: 'TRANSITION_PLAN_RETURNED',
-                entityType: 'TransitionPlan',
-                entityId: id,
-                channels: ['IN_APP'],
-                payload: { reason: input.reason },
-                state: 'Queued',
-                dueAt: now,
-                attempts: 0,
-                createdAt: now,
-              })),
-              { session },
-            )
-          }
+          await queueNotifications(session, notifyUsers, {
+            eventCode: 'TRANSITION_PLAN_RETURNED',
+            entityType: 'TransitionPlan',
+            entityId: id,
+            payload: { reason: input.reason },
+            now,
+          })
           return
         }
 
@@ -760,23 +750,13 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
           ],
           { session },
         )
-        if (notifyUsers.length) {
-          await notifications.insertMany(
-            notifyUsers.map((recipientUserId) => ({
-              recipientUserId,
-              eventCode: 'LEADERSHIP_TRANSITION_CONFIRMED',
-              entityType: 'TransitionPlan',
-              entityId: id,
-              channels: ['IN_APP'],
-              payload: { followUpCount: followUps.length },
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            })),
-            { session },
-          )
-        }
+        await queueNotifications(session, notifyUsers, {
+          eventCode: 'LEADERSHIP_TRANSITION_CONFIRMED',
+          entityType: 'TransitionPlan',
+          entityId: id,
+          payload: { followUpCount: followUps.length },
+          now,
+        })
       })
       const result = await detail(id)
       if (!result) {

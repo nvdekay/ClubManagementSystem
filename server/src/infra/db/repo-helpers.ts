@@ -63,3 +63,37 @@ export async function queueNotification(
     { session: session ?? null },
   )
 }
+
+// Xếp hàng cùng một thông báo cho nhiều người nhận (bỏ trùng, bỏ rỗng) bằng một lần insertMany;
+// kênh luôn do notificationChannels() của domain quyết định
+export async function queueNotifications(
+  session: ClientSession | null | undefined,
+  recipients: readonly unknown[],
+  input: {
+    eventCode: string
+    entityType?: string
+    entityId?: unknown
+    payload: Record<string, unknown>
+    now: Date
+  },
+): Promise<void> {
+  const unique = [...new Set(recipients.filter(Boolean).map(String))]
+  if (!unique.length) {
+    return
+  }
+  await m.notifications!.insertMany(
+    unique.map((userId) => ({
+      recipientUserId: new Types.ObjectId(userId),
+      eventCode: input.eventCode,
+      ...(input.entityType ? { entityType: input.entityType } : {}),
+      ...(input.entityId ? { entityId: input.entityId } : {}),
+      channels: notificationChannels(input.eventCode),
+      payload: input.payload,
+      state: 'Queued',
+      dueAt: input.now,
+      attempts: 0,
+      createdAt: input.now,
+    })),
+    { session: session ?? null },
+  )
+}

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { SponsoredItems } from './SponsoredItems'
-import type { accountability } from '@/i18n/accountability'
+import type { accountability } from '@/i18n/locales/en/accountability'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
@@ -14,14 +14,14 @@ import { useClubFinances } from '@/hooks/useAccountability'
 import type { AccountabilityContext } from '@/services/accountability'
 
 // Ánh xạ trạng thái ngân sách sang key i18n
-function stateKey(state: string): keyof typeof accountability.en {
+function stateKey(state: string): keyof typeof accountability {
   return (
     (
       {
         Approved: 'approved',
         Closed: 'closed',
         Cancelled: 'cancelled',
-      } as Record<string, keyof typeof accountability.en>
+      } as Record<string, keyof typeof accountability>
     )[state] ?? 'approved'
   )
 }

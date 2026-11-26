@@ -111,6 +111,18 @@ Mở http://localhost:5173, đăng nhập bằng email đã đặt ở `BOOTSTRA
 npm run check            # constitution + lint + format + typecheck + test — Definition of Done
 ```
 
+### Kiểm thử giao diện end-to-end (Playwright)
+
+```bash
+npx playwright install chromium   # một lần: tải trình duyệt cho Playwright
+npm run test:e2e                  # cần Mongo đang chạy (docker compose up -d --wait)
+```
+
+Mở trang thật trong Chromium trên server thật và một database riêng `ucms-e2e` (seed lại mỗi lần
+chạy, xoá khi xong; không đụng DB `ucms` và không đọc `.env`). Không nằm trong `npm run check`;
+CI chạy nó ở job `e2e` riêng. Cách hoạt động, vai đăng nhập và cách viết test:
+[`client/e2e/README.md`](client/e2e/README.md).
+
 ### Lint và format
 
 Chạy tại thư mục gốc:
@@ -136,6 +148,73 @@ Hai lệnh format áp dụng cho code, test và cấu hình trong `server/`, `cl
 Trong VS Code, cài hai extension được repo đề xuất: **ESLint** và **Prettier - Code formatter**.
 Workspace đã bật format khi lưu và tự sửa ESLint khi lưu file JavaScript/TypeScript.
 CI gọi `npm run check`, nên code chưa đúng format sẽ làm bước kiểm tra thất bại.
+
+## Triển khai (một container)
+
+Bản production là **một image Docker**: Express phục vụ cả API (`/api/v1`) lẫn bản build của
+client (`client/dist`) trên cùng một cổng. [`Dockerfile`](Dockerfile) build cả hai workspace,
+chỉ giữ thư viện production của server, chạy `node dist/main.js` bằng user `node` (không phải
+root) với `NODE_ENV=production` và `CLIENT_DIST_DIR=/app/client/dist`, kèm `HEALTHCHECK` gọi
+`/api/v1/health`. [`docker-compose.prod.yml`](docker-compose.prod.yml) chạy image đó cùng
+MongoDB.
+
+```bash
+cp .env.example .env.production      # điền theo bảng dưới; file này không được commit
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build --wait
+docker compose -f docker-compose.prod.yml logs -f app    # mỗi request một dòng JSON có requestId
+```
+
+Chỉ build image (CI cũng chạy bước này): `docker build -t ucms .`
+
+### Biến môi trường bắt buộc ở production
+
+Server **dừng ngay lúc khởi động** nếu thiếu hoặc sai các biến sau (chỉ in tên biến, không in giá trị):
+
+| Biến | Ghi chú |
+|---|---|
+| `MONGO_URI` | Compose đã đặt sẵn `mongodb://mongo:27017/ucms?replicaSet=rs0`. Dùng Mongo khác thì Mongo đó **phải là replica set** (repository dùng transaction nhiều document), ví dụ MongoDB Atlas |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL` | Như bước 3; production luôn yêu cầu đăng nhập nên thiếu bộ Auth là lỗi |
+| `APP_BASE_URL`, `CLIENT_BASE_URL` | Cùng một địa chỉ công khai, ví dụ `https://clubs.example.edu.vn`, vì client và API chung origin. Redirect URI trên Google Cloud: `<APP_BASE_URL>/api/v1/auth/callback` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | Production bắt buộc gửi email qua SMTP (`MAIL_TRANSPORT=log` bị từ chối). Google: `smtp.gmail.com`, `587`, `SMTP_SECURE=false`, App Password |
+
+Biến tuỳ chọn:
+
+| Biến | Ghi chú |
+|---|---|
+| `CLOUDINARY_*` | Cần cho tải tệp (hồ sơ, minh chứng, đề án sự kiện); để trống thì các chức năng tải tệp tắt |
+| `TRUST_PROXY` | **Đặt khi chạy sau reverse proxy** (nginx, Caddy, router của PaaS): số hop proxy, thường `1`. Nhờ đó giới hạn tần suất request thấy đúng IP client và server nhận ra request HTTPS (header `Strict-Transport-Security` chỉ gửi khi request đến qua HTTPS). Không có proxy thì để trống, vì tin một proxy không tồn tại cho phép client giả `X-Forwarded-For` |
+| `API_DOCS` | `/docs` (Swagger UI) tắt ở production; đặt `true` để bật |
+| `CLIENT_DIST_DIR` | Thư mục bản build của client; image đã đặt sẵn. Để trống thì server chỉ phục vụ API (khi phát triển, Vite phục vụ client) |
+| `PORT` | Cổng trong container, mặc định `3000`. Compose publish ra `127.0.0.1:${APP_PORT:-3000}` |
+
+### HTTPS và reverse proxy
+
+Ở production cookie phiên có cờ `Secure`, nên ứng dụng phải được truy cập qua **HTTPS**. Đặt một
+reverse proxy kết thúc TLS trước container (compose chỉ mở cổng trên `127.0.0.1`), chuyển tiếp
+`X-Forwarded-For` và `X-Forwarded-Proto`, rồi đặt `TRUST_PROXY=1`. Proxy có thể gửi sẵn header
+`X-Request-Id`; server giữ lại nếu là token ngắn an toàn (chữ, số, `.`, `_`, `:`, `-`, tối đa 64
+ký tự), nếu không thì tự sinh, và luôn trả lại trong header `X-Request-Id` để đối chiếu log.
+
+Server tự đặt các header bảo mật: `Content-Security-Policy` (chỉ cho script của chính ứng dụng;
+style, font Google Fonts; ảnh `https:`; kết nối tới API và Cloudinary), `Permissions-Policy`,
+`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`; `/docs` có CSP riêng cho Swagger UI.
+Định nghĩa ở `server/src/interface/http/security-headers.ts` — thêm nguồn ngoài mới cho client
+(CDN, dịch vụ ảnh) thì phải sửa ở đó.
+
+### MongoDB và sao lưu
+
+Mongo trong compose là replica set một node (`rs0`), tự khởi tạo ở lần chạy đầu, không publish
+cổng ra ngoài và lưu dữ liệu ở volume `mongo-data`. Sao lưu định kỳ bằng `mongodump`, cất file
+ngoài máy chủ (file dump có thể chứa dữ liệu cá nhân — không commit, `*.archive.gz` đã bị Git bỏ qua):
+
+```bash
+# Sao lưu
+docker compose -f docker-compose.prod.yml exec -T mongo \
+  mongodump --db ucms --archive --gzip > ucms-$(date +%F).archive.gz
+# Khôi phục (ghi đè dữ liệu hiện có)
+docker compose -f docker-compose.prod.yml exec -T mongo \
+  mongorestore --drop --archive --gzip < ucms-2026-11-26.archive.gz
+```
 
 ## Bố cục
 

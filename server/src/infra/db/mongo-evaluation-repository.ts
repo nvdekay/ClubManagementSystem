@@ -16,7 +16,8 @@ import {
   type MetricValue,
 } from '../../domain/evaluation.js'
 import type { DimensionCode, SchemeThresholds } from '../../domain/evaluation-scheme.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
 import { evaluationReportPenalty } from './evaluation-report-penalty.js'
 import { ucmsModels } from './ucms-models.js'
@@ -817,20 +818,18 @@ export function mongoEvaluationRepository(): EvaluationRepository {
             { state: 'Published', periodCode },
             now,
           )
-          await queueNotifications(
-            session,
-            await clubBoardUserIds(item._id, session),
-            'EVALUATION_PUBLISHED',
-            'Evaluation',
-            item.id,
-            {
+          await queueNotifications(session, await clubBoardUserIds(item._id, session), {
+            eventCode: 'EVALUATION_PUBLISHED',
+            entityType: 'Evaluation',
+            entityId: item.id,
+            payload: {
               periodCode,
               totalScore: optionalNumber(doc.totalScore),
               classification: doc.classification,
               revisionNo: doc.revisionNo,
             },
             now,
-          )
+          })
         }
         return published
       })

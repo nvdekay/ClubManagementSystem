@@ -33,6 +33,10 @@ giữ mã PDP làm tên; PDP không công bố sức chứa nên `capacity` là 
 `authSessions` là collection vận hành cho phiên UC01, nằm ngoài các collection nghiệp vụ DBML;
 index TTL chỉ dọn rác, việc kiểm tra hết hạn diễn ra ở mỗi request. Xem ADR-003.
 
+`mongo-uploaded-evidence-repository.ts` (26/11/2026, feat-upload-orphan-cleanup): sổ `uploadedAssets` ghi mỗi ảnh
+minh chứng báo cáo định kỳ đã upload; job dọn dẹp coi một ảnh là được tham chiếu khi chuỗi `ucms-evidence:{clubId}:{assetId}`
+xuất hiện trong một `periodicReports` của chính CLB đó hoặc trong snapshot `PERIODIC_REPORT_SUBMITTED` của báo cáo ấy.
+
 `seed-demo.ts` (`npm run seed:demo -- --owner=<email Google> [--owner-name="Tên"]`, chạy sau
 `npm run seed`) dựng bộ dữ liệu demo sạch để thử mọi luồng đã có: policy hiệu lực; 16 sinh viên demo
 email dạng sinh viên FPT (`seed-email.ts`, ví dụ `anhtmhe170001@fpt.edu.vn`); cơ cấu và thành viên cho HEBE, Mây Mưa, EHC, FDS (người dùng `--owner` là Chủ
@@ -115,7 +119,7 @@ xác nhận, kế hoạch UC13 đã xác nhận, hoặc nhiệm kỳ khởi lậ
 `mongo-notification-repository.ts` (19/10/2026, NTF-04/SCH-10): hộp thông báo in-app của người dùng (kèm `clubId`
 suy ra từ payload hoặc thực thể để client dựng link) và outbox cho worker gửi email — claim nguyên tử bằng lease trên
 `dueAt`, mỗi lần thử ghi `emailDeliveryLogs`. Kênh email do `notificationChannels()` của domain quyết định, được
-`queueNotifications` (`club-board.ts`) và các repository hồ sơ thành lập, đề xuất sự kiện, booking dùng. Lọc theo
+`queueNotification`/`queueNotifications` (`repo-helpers.ts`, 26/11/2026 — mọi nơi xếp hàng thông báo đều đi qua hai hàm này) dùng. Lọc theo
 workspace (01/11/2026): `scope` sinh viên/ICPDP/CLB lọc ở DB theo danh sách `eventCode` của domain; `scope=club` kèm
 `clubId` thì trước hết suy CLB cho các dòng CLB chưa có trường `clubId` của người dùng và lưu lại (null = không thuộc
 CLB nào), rồi lọc và phân trang ngay ở DB (index `ix_notification_club`), nên số chưa đọc luôn khớp danh sách. Mã
