@@ -56,6 +56,10 @@ liệt kê sự kiện `MEMBERS_ONLY` CLB đã ghi nhận, lọc theo CLB/học 
 tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính
 kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
 duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
+Trang chi tiết ghép các khối chỉ trang này dùng: `ProposalDocumentsSection`, `ProposalOverviewSection`,
+`ProposalBudgetSection`, `ProposalClubBookingsSection`, `ProposalSubmissionHistory` (cột nội dung) và
+`ProposalDefensePanel` (buổi bảo vệ + hộp thoại đặt lịch/lý do), `ProposalCancellationPanel`, `ProposalDecisionHistory`
+(cột thao tác); nhãn, màu và các trường so sánh phiên bản nằm trong `eventProposalReviewFormat.ts`.
 
 Trang chi tiết dùng cùng trình xem toàn văn và hồ sơ trích xuất với CLB, tải tài liệu của phiên bản đã nộp
 qua API ICPDP; có trạng thái tải, lỗi và thử lại, vẫn giữ tải file và lịch sử các lần nộp.
