@@ -116,6 +116,17 @@ describe('deliverNotifications (SCH-10)', () => {
     expect(failed[1]).toEqual({ id: 'n2', retryAt: null, error: 'SMTP 421' })
   })
 
+  it('does not record a delivered email as failed when recording the send fails', async () => {
+    const { repo, failed } = outbox([claim('n1', 1)])
+    repo.recordSent = async () => {
+      throw new Error('db down')
+    }
+    const send = vi.fn(async () => ({ providerResponse: '250 OK' }))
+    await expect(deliverNotifications(repo, { name: 'test', send }, now)).rejects.toThrow('db down')
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(failed).toEqual([])
+  })
+
   it('fails a recipient without an email address without calling the transport', async () => {
     const { repo, failed } = outbox([claim('n1', 1, null)])
     const send = vi.fn()

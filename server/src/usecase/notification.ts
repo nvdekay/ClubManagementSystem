@@ -166,12 +166,11 @@ export async function deliverNotifications(
       result.failed += 1
       continue
     }
+    let providerResponse: string | undefined
     try {
-      const response = await transport.send(
-        renderNotificationEmail(claim, claim.toEmail, options.appUrl),
-      )
-      await repo.recordSent(claim, claim.toEmail, response.providerResponse, now)
-      result.sent += 1
+      providerResponse = (
+        await transport.send(renderNotificationEmail(claim, claim.toEmail, options.appUrl))
+      ).providerResponse
     } catch (error) {
       const retryAt =
         claim.attempt < MAIL_MAX_ATTEMPTS
@@ -183,7 +182,12 @@ export async function deliverNotifications(
       } else {
         result.failed += 1
       }
+      continue
     }
+    // Ngoài try của transport: lỗi DB sau khi email đã gửi không được ghi thành lần gửi lỗi
+    // (sẽ gửi lại email); lỗi được ném lên job để log.
+    await repo.recordSent(claim, claim.toEmail, providerResponse, now)
+    result.sent += 1
   }
   return result
 }
