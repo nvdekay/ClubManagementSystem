@@ -40,7 +40,7 @@ import {
   periodicMissingBody,
   periodicOverviewQuery,
 } from './periodic-report-routes.js'
-import { violationOpenBody, violationStepBody } from './violation-routes.js'
+import { violationListQuery, violationOpenBody, violationStepBody } from './violation-routes.js'
 import {
   schoolEventBody,
   schoolEventConflictQuery,
@@ -85,6 +85,7 @@ import {
   complaintTriageBody,
 } from './complaint-routes.js'
 import { COMPLAINT_STATES } from '../../domain/complaint.js'
+import { VIOLATION_FILTERS } from '../../domain/violation.js'
 import { routingRulesBody, routingSimulationQuery } from './approval-routing-routes.js'
 import { recruitmentCampaignBody } from './recruitment-campaign-routes.js'
 import {
@@ -598,6 +599,18 @@ const ViolationSummary = z.object({
   responseDueAt: z.string().optional(),
   responseOverdue: z.boolean(),
   pendingActions: z.number(),
+})
+// Hình dạng một trang của danh sách phân trang phía server (items, total, page, pageSize)
+function pageOf<T extends z.ZodTypeAny>(item: T) {
+  return z.object({
+    items: z.array(item),
+    total: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+  })
+}
+const ViolationPage = pageOf(ViolationSummary).extend({
+  counts: z.record(z.enum(VIOLATION_FILTERS), z.number().int()),
 })
 const ViolationDetail = z.object({
   id: z.string(),
@@ -3815,11 +3828,13 @@ export const openApiDocument = createDocument({
     },
     '/admin/violations': {
       get: {
-        summary: 'List compliance cases, newest first (UC40, ICPDP Officer only)',
+        summary:
+          'One page of compliance cases matching a tab filter, newest first, with per-tab counts (UC40, ICPDP Officer only)',
+        requestParams: { query: violationListQuery },
         responses: {
           '200': {
             description: 'Cases',
-            content: { 'application/json': { schema: envelope(z.array(ViolationSummary)) } },
+            content: { 'application/json': { schema: envelope(ViolationPage) } },
           },
           '403': {
             description: 'ICPDP Officer role required',

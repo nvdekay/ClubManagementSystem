@@ -5,6 +5,7 @@ import type { SessionService } from '../../domain/session.js'
 import {
   LIFECYCLE_LINKS,
   MAX_CORRECTIVE_ACTIONS,
+  VIOLATION_FILTERS,
   VIOLATION_ORIGINS,
   VIOLATION_SEVERITIES,
   type ViolationRepository,
@@ -19,7 +20,7 @@ import {
 } from '../../usecase/violation.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, pageQuery, parse } from './request.js'
 
 export interface ViolationRouteDeps {
   repo: ViolationRepository
@@ -32,6 +33,10 @@ const evidence = z
   .object({ note: z.string().max(1_000), url: z.string().max(500).optional() })
   .strict()
 const future = z.string().datetime()
+
+export const violationListQuery = pageQuery
+  .extend({ filter: z.enum(VIOLATION_FILTERS).default('all') })
+  .strict()
 
 export const violationOpenBody = z
   .object({
@@ -119,8 +124,9 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
   const guard = { repo: deps.authRepo, sessions: deps.sessions }
 
   // ICPDP liệt kê các vi phạm
-  router.get('/admin/violations', authGuard(guard, false), async (_req, res) => {
-    ok(res, await listViolations(deps.repo, deps.authRepo, actor(res)))
+  router.get('/admin/violations', authGuard(guard, false), async (req, res) => {
+    const query = parse(violationListQuery, req.query, 'violation list query')
+    ok(res, await listViolations(deps.repo, deps.authRepo, actor(res), query))
   })
   // Lấy các nguồn dữ liệu có thể dẫn tới vi phạm của CLB
   router.get('/admin/violations/sources/:clubId', authGuard(guard, false), async (req, res) => {

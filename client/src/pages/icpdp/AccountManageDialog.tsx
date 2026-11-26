@@ -44,12 +44,19 @@ export function AccountManageDialog({
   })
   const [done, setDone] = useState<string | null>(null)
   // UC03 A1: khoá khẩn cấp có thể được ghi nhận dưới một vụ việc UC40 đang mở.
-  const violations = useViolations(Boolean(account) && account?.user.accountState === 'Active')
+  // The newest open cases (one maximum-size page) are offered as the case to link.
+  const violations = useViolations(
+    'open',
+    1,
+    100,
+    Boolean(account) && account?.user.accountState === 'Active',
+  )
   const caseOptions = [
     { value: '', label: t('auth.noLinkedCase') },
-    ...(violations.data ?? [])
-      .filter((item) => !['Resolved', 'Closed'].includes(item.state))
-      .map((item) => ({ value: item.id, label: `${item.title} · ${item.clubName}` })),
+    ...(violations.data?.items ?? []).map((item) => ({
+      value: item.id,
+      label: `${item.title} · ${item.clubName}`,
+    })),
   ]
 
   // Tên hiển thị của vai trò hệ thống

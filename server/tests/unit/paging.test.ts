@@ -1,0 +1,35 @@
+import { describe, expect, it } from 'vitest'
+import { pageSkip } from '../../src/domain/paging.js'
+import { pageQuery } from '../../src/interface/http/request.js'
+import { violationListQuery } from '../../src/interface/http/violation-routes.js'
+
+describe('server-side paging query', () => {
+  it('defaults to the first page of 20 and coerces query strings', () => {
+    expect(pageQuery.parse({})).toEqual({ page: 1, pageSize: 20 })
+    expect(pageQuery.parse({ page: '3', pageSize: '50' })).toEqual({ page: 3, pageSize: 50 })
+  })
+
+  it('rejects pages below 1, page sizes above 100 and non-integers', () => {
+    expect(pageQuery.safeParse({ page: '0' }).success).toBe(false)
+    expect(pageQuery.safeParse({ pageSize: '0' }).success).toBe(false)
+    expect(pageQuery.safeParse({ pageSize: '101' }).success).toBe(false)
+    expect(pageQuery.safeParse({ pageSize: '100' }).success).toBe(true)
+    expect(pageQuery.safeParse({ page: '1.5' }).success).toBe(false)
+    expect(pageQuery.safeParse({ page: 'abc' }).success).toBe(false)
+  })
+
+  it('skips whole pages', () => {
+    expect(pageSkip({ page: 1, pageSize: 20 })).toBe(0)
+    expect(pageSkip({ page: 3, pageSize: 20 })).toBe(40)
+  })
+
+  it('validates the violation queue filter and refuses unknown or operator keys', () => {
+    expect(violationListQuery.parse({})).toEqual({ filter: 'all', page: 1, pageSize: 20 })
+    expect(violationListQuery.parse({ filter: 'awaiting', page: '2' })).toMatchObject({
+      filter: 'awaiting',
+      page: 2,
+    })
+    expect(violationListQuery.safeParse({ filter: 'bogus' }).success).toBe(false)
+    expect(violationListQuery.safeParse({ state: { $ne: 'x' } }).success).toBe(false)
+  })
+})

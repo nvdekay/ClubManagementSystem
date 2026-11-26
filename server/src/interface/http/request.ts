@@ -1,5 +1,7 @@
 import type { Response } from 'express'
+import { z } from 'zod'
 import { DomainError } from '../../domain/errors.js'
+import { DEFAULT_PAGE_SIZE, MAX_PAGE, MAX_PAGE_SIZE } from '../../domain/paging.js'
 import type { AccessActor } from '../../usecase/access.js'
 
 /** The signed-in caller that authGuard stored; a route reached without it is a 401. */
@@ -31,3 +33,12 @@ export function parse<T>(
   }
   return result.data
 }
+
+/**
+ * The shared `page` / `pageSize` query of server-side paged lists. Extend it with the list's own
+ * filters and keep the result `.strict()`, so an unknown query key is a validation error.
+ */
+export const pageQuery = z.object({
+  page: z.coerce.number().int().min(1).max(MAX_PAGE).default(1),
+  pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
+})

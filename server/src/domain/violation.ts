@@ -1,4 +1,5 @@
 import { DomainError } from './errors.js'
+import type { Page, PageRequest } from './paging.js'
 
 /** Nguồn gốc của vụ việc (UC40 FR-01). `OTHER` là các trường hợp cán bộ tự phát hiện. */
 export const VIOLATION_ORIGINS = [
@@ -162,8 +163,65 @@ export interface StepResult {
   notifyClub: boolean
 }
 
+/**
+ * Tabs of the ICPDP case queue. `open` (every state but Resolved/Closed) is not a tab; it feeds
+ * the "link an open case" picker of the emergency account lock (UC03 A1).
+ */
+export const VIOLATION_FILTERS = ['all', 'active', 'awaiting', 'actions', 'closed', 'open'] as const
+export type ViolationFilter = (typeof VIOLATION_FILTERS)[number]
+
+const filterStates: Record<Exclude<ViolationFilter, 'all'>, readonly ViolationState[]> = {
+  active: ['Open', 'Under Investigation', 'Decision Issued'],
+  awaiting: ['Awaiting Club Response'],
+  actions: ['Corrective Action'],
+  closed: ['Resolved', 'Closed'],
+  open: [
+    'Open',
+    'Under Investigation',
+    'Awaiting Club Response',
+    'Decision Issued',
+    'Corrective Action',
+  ],
+}
+
+// Các trạng thái thuộc một bộ lọc; undefined nghĩa là không lọc (all)
+export function violationFilterStates(
+  filter: ViolationFilter,
+): readonly ViolationState[] | undefined {
+  return filter === 'all' ? undefined : filterStates[filter]
+}
+
+// Gộp số vụ việc theo trạng thái thành số vụ việc của từng bộ lọc
+export function violationFilterCounts(
+  byState: ReadonlyMap<string, number>,
+): Record<ViolationFilter, number> {
+  const counts = Object.fromEntries(VIOLATION_FILTERS.map((filter) => [filter, 0])) as Record<
+    ViolationFilter,
+    number
+  >
+  for (const [state, count] of byState) {
+    counts.all += count
+    for (const filter of VIOLATION_FILTERS) {
+      if (filter !== 'all' && filterStates[filter].includes(state as ViolationState)) {
+        counts[filter] += count
+      }
+    }
+  }
+  return counts
+}
+
+export interface ViolationListQuery extends PageRequest {
+  filter: ViolationFilter
+}
+
+export interface ViolationPage extends Page<ViolationSummary> {
+  /** Cases per filter across every page, for the tab badges. */
+  counts: Record<ViolationFilter, number>
+}
+
 export interface ViolationRepository {
-  list(): Promise<ViolationSummary[]>
+  /** One page of cases matching the filter, newest first, with the per-filter counts. */
+  list(query: ViolationListQuery): Promise<ViolationPage>
   find(id: string, now: Date): Promise<ViolationDetail | null>
   sources(clubId: string): Promise<ViolationSources | null>
   open(input: OpenViolationInput, officerId: string, now: Date): Promise<ViolationDetail>

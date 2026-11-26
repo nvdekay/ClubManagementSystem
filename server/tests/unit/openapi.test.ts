@@ -337,7 +337,13 @@ const stubBudgets: BudgetDisbursementRepository = {
   },
 }
 const stubViolations: ViolationRepository = {
-  list: async () => [],
+  list: async () => ({
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    counts: { all: 0, active: 0, awaiting: 0, actions: 0, closed: 0, open: 0 },
+  }),
   find: async () => null,
   sources: async () => null,
   open: async () => {

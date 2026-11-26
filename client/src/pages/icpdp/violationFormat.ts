@@ -1,31 +1,10 @@
 import type { TFunction } from 'i18next'
 
 import type { AppBadgeTone } from '@/components/ui/badge/AppBadge'
-import type {
-  EvidenceInput,
-  ViolationOrigin,
-  ViolationSeverity,
-  ViolationSummary,
-} from '@/services/violations'
+import type { EvidenceInput, ViolationOrigin, ViolationSeverity } from '@/services/violations'
 
 export const filters = ['active', 'awaiting', 'actions', 'closed', 'all'] as const
 export type Filter = (typeof filters)[number]
-
-// Kiểm tra ca vi phạm có thuộc bộ lọc đang chọn không
-export function matches(filter: Filter, item: ViolationSummary): boolean {
-  switch (filter) {
-    case 'active':
-      return ['Open', 'Under Investigation', 'Decision Issued'].includes(item.state)
-    case 'awaiting':
-      return item.state === 'Awaiting Club Response'
-    case 'actions':
-      return item.state === 'Corrective Action'
-    case 'closed':
-      return ['Resolved', 'Closed'].includes(item.state)
-    default:
-      return true
-  }
-}
 
 // Dịch bộ lọc vi phạm sang nhãn hiển thị
 export function filterLabel(t: TFunction, filter: Filter): string {

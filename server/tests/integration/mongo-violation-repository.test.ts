@@ -155,7 +155,7 @@ describe.skipIf(!uri)('Mongo violation repository', () => {
       state: 'Awaiting Club Response',
       responseDueAt: new Date(now.getTime() + 7 * DAY),
     })
-    const [summary] = await repo.list()
+    const [summary] = (await repo.list({ filter: 'all', page: 1, pageSize: 20 })).items
     expect(summary).toMatchObject({ id: opened.id, state: 'Awaiting Club Response' })
 
     await repo.apply(
@@ -200,7 +200,9 @@ describe.skipIf(!uri)('Mongo violation repository', () => {
       now,
     )
     expect(assigned.actions.map((item) => item.state)).toEqual(['Pending', 'Pending'])
-    expect((await repo.list())[0]?.pendingActions).toBe(2)
+    expect(
+      (await repo.list({ filter: 'all', page: 1, pageSize: 20 })).items[0]?.pendingActions,
+    ).toBe(2)
 
     await expect(
       repo.apply(
@@ -254,5 +256,53 @@ describe.skipIf(!uri)('Mongo violation repository', () => {
       new Set([String(leader)]),
     )
     expect(notified.map((item) => item.eventCode)).toContain('VIOLATION_RESPONSE_REQUESTED')
+  })
+
+  it('pages cases server-side with the tab filter applied before skip/limit', async () => {
+    const repo = mongoViolationRepository()
+    await ucmsModels.violations!.deleteMany({})
+    const states = [
+      ...Array.from({ length: 23 }, () => 'Open'),
+      ...Array.from({ length: 4 }, () => 'Awaiting Club Response'),
+      'Corrective Action',
+      'Resolved',
+      'Closed',
+    ]
+    await ucmsModels.violations!.insertMany(
+      states.map((state, index) => ({
+        clubId,
+        originType: 'OTHER',
+        severity: 'MINOR',
+        title: `Case ${index}`,
+        state,
+        openedBy: officer,
+        // Newer index first: case 0 is the oldest.
+        openedAt: new Date(now.getTime() + index * 60_000),
+      })),
+    )
+    const counts = { all: 30, active: 23, awaiting: 4, actions: 1, closed: 2, open: 28 }
+
+    const first = await repo.list({ filter: 'all', page: 1, pageSize: 20 })
+    expect(first).toMatchObject({ total: 30, page: 1, pageSize: 20, counts })
+    expect(first.items).toHaveLength(20)
+    expect(first.items[0]?.title).toBe('Case 29')
+    const second = await repo.list({ filter: 'all', page: 2, pageSize: 20 })
+    expect(second.items.map((item) => item.title)).toEqual(
+      Array.from({ length: 10 }, (_, index) => `Case ${9 - index}`),
+    )
+    expect(await repo.list({ filter: 'all', page: 3, pageSize: 20 })).toMatchObject({
+      items: [],
+      total: 30,
+    })
+
+    const active = await repo.list({ filter: 'active', page: 2, pageSize: 20 })
+    expect(active).toMatchObject({ total: 23, counts })
+    expect(active.items.map((item) => item.state)).toEqual(['Open', 'Open', 'Open'])
+    const awaiting = await repo.list({ filter: 'awaiting', page: 1, pageSize: 3 })
+    expect(awaiting.total).toBe(4)
+    expect(awaiting.items.map((item) => item.title)).toEqual(['Case 26', 'Case 25', 'Case 24'])
+    const closed = await repo.list({ filter: 'closed', page: 1, pageSize: 20 })
+    expect(closed.items.map((item) => item.state)).toEqual(['Closed', 'Resolved'])
+    expect(closed.items[0]?.clubName).toBe('HEBE')
   })
 })

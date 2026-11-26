@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
+import { pageSkip } from '../../domain/paging.js'
 import {
   applyViolationStep,
   normalizedEvidence,
+  violationFilterCounts,
+  violationFilterStates,
   type ClubResponse,
   type CorrectiveAction,
   type ViolationCase,
@@ -259,9 +262,22 @@ export function mongoViolationRepository(): ViolationRepository {
   }
 
   return {
-    // Liệt kê các vụ vi phạm, mới nhất trước
-    async list() {
-      const docs = await violations.find().sort({ openedAt: -1, _id: -1 }).lean()
+    // Một trang vụ vi phạm theo bộ lọc, mới nhất trước, kèm số vụ việc của từng bộ lọc
+    async list(query) {
+      const states = violationFilterStates(query.filter)
+      const match = states ? { state: { $in: [...states] } } : {}
+      const [docs, byState] = await Promise.all([
+        violations
+          .find(match)
+          .sort({ openedAt: -1, _id: -1 })
+          .skip(pageSkip(query))
+          .limit(query.pageSize)
+          .lean(),
+        violations.aggregate<{ _id: string; count: number }>([
+          { $group: { _id: '$state', count: { $sum: 1 } } },
+        ]),
+      ])
+      const counts = violationFilterCounts(new Map(byState.map((row) => [row._id, row.count])))
       const [clubs, pending] = await Promise.all([
         m
           .clubs!.find({ _id: { $in: docs.map((doc) => doc.clubId) } })
@@ -275,7 +291,7 @@ export function mongoViolationRepository(): ViolationRepository {
       const clubName = new Map(clubs.map((club) => [String(club._id), String(club.name)]))
       const pendingById = new Map(pending.map((item) => [String(item._id), item.count]))
       const now = new Date()
-      return docs.map((doc): ViolationSummary => {
+      const items = docs.map((doc): ViolationSummary => {
         const response = responseFrom(doc.clubResponse)
         return {
           id: String(doc._id),
@@ -295,6 +311,13 @@ export function mongoViolationRepository(): ViolationRepository {
           pendingActions: pendingById.get(String(doc._id)) ?? 0,
         }
       })
+      return {
+        items,
+        total: counts[query.filter],
+        page: query.page,
+        pageSize: query.pageSize,
+        counts,
+      }
     },
 
     // Lấy chi tiết một vụ vi phạm

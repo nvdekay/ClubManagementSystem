@@ -3,19 +3,21 @@ import { DomainError } from '../domain/errors.js'
 import {
   normalizedOpenInput,
   type OpenViolationInput,
+  type ViolationListQuery,
   type ViolationRepository,
   type ViolationStep,
 } from '../domain/violation.js'
 import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
-// ICPDP xem danh sách các vụ vi phạm
+// ICPDP xem một trang các vụ vi phạm theo bộ lọc
 export async function listViolations(
   repo: ViolationRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
+  query: ViolationListQuery,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  return repo.list()
+  return repo.list(query)
 }
 
 // ICPDP xem chi tiết một vụ vi phạm
