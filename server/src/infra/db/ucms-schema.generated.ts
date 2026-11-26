@@ -2,3109 +2,3523 @@
 // Run python3 server/src/infra/db/generate-ucms-schema.py after DBML changes.
 // Do not edit by hand.
 export const ucmsEnums = {
-  accountState: ['Active', 'Locked'],
-  roleScope: ['system', 'club'],
-  clubState: ['Pending Setup', 'Active', 'Suspended', 'Dissolving', 'Dissolved'],
-  clubApplicationState: [
-    'Draft',
-    'Submitted',
-    'Under Review',
-    'Revision Requested',
-    'Approved',
-    'Rejected',
-    'Withdrawn',
-    'Expired',
+  "accountState": [
+    "Active",
+    "Locked"
   ],
-  campaignState: [
-    'Draft',
-    'Published',
-    'Accepting Applications',
-    'Screening',
-    'Completed',
-    'Cancelled',
+  "roleScope": [
+    "system",
+    "club"
   ],
-  recruitmentApplicationState: [
-    'Draft',
-    'Submitted',
-    'Screening',
-    'Shortlisted',
-    'Accepted',
-    'Rejected',
-    'Waitlisted',
-    'Onboarded',
-    'Withdrawn',
-    'Declined',
+  "clubState": [
+    "Pending Setup",
+    "Active",
+    "Suspended",
+    "Dissolving",
+    "Dissolved"
   ],
-  membershipState: ['Active', 'Inactive', 'Left', 'Banned'],
-  eventState: [
-    'Draft',
-    'Pending Approval',
-    'Under Review',
-    'Revision Requested',
-    'Re-defense Pending',
-    'Approved',
-    'Upcoming',
-    'Ongoing',
-    'Completed',
-    'Report Submitted',
-    'Closed',
-    'Cancelled',
-    'Rejected',
-    'Expired',
-    'DRAFT',
-    'CREATED',
-    'PUBLIC',
-    'ONGOING',
-    'FINISH',
-    'CANCELLED',
+  "clubApplicationState": [
+    "Draft",
+    "Submitted",
+    "Under Review",
+    "Revision Requested",
+    "Approved",
+    "Rejected",
+    "Withdrawn",
+    "Expired"
   ],
-  eventDefenseState: [
-    'SCHEDULED',
-    'CONFIRMED',
-    'RESCHEDULE_REQUESTED',
-    'IN_PROGRESS',
-    'DEFENDED',
-    'CANCELLED',
-    'NO_SHOW',
+  "campaignState": [
+    "Draft",
+    "Published",
+    "Accepting Applications",
+    "Screening",
+    "Completed",
+    "Cancelled"
   ],
-  eventOrganizerType: ['CLUB', 'ICPDP'],
-  eventInvitationStatus: ['Pending', 'Accepted', 'Declined', 'Expired', 'Withdrawn'],
-  registrationState: ['Confirmed', 'Waitlisted', 'Cancelled'],
-  attendanceMethod: ['self', 'manual', 'walk-in'],
-  eventBudgetState: [
-    'Approved',
-    'Cancelled',
-    'Disbursed',
-    'Settlement Submitted',
-    'Reconciliation Pending',
-    'Reconciled',
-    'Recovery Pending',
-    'Closed',
+  "recruitmentApplicationState": [
+    "Draft",
+    "Submitted",
+    "Screening",
+    "Shortlisted",
+    "Accepted",
+    "Rejected",
+    "Waitlisted",
+    "Onboarded",
+    "Withdrawn",
+    "Declined"
   ],
-  budgetFlowKind: ['Advance', 'TopUp', 'Refund'],
-  expenseReviewOutcome: ['Accepted', 'Rejected'],
-  bookingState: [
-    'Draft',
-    'Requested',
-    'Under Review',
-    'Revision Requested',
-    'Approved',
-    'Rejected',
-    'In Use',
-    'Completed',
-    'Cancelled',
-    'Released',
+  "membershipState": [
+    "Active",
+    "Inactive",
+    "Left",
+    "Banned"
   ],
-  violationState: [
-    'Open',
-    'Under Investigation',
-    'Awaiting Club Response',
-    'Decision Issued',
-    'Corrective Action',
-    'Resolved',
-    'Closed',
+  "eventState": [
+    "Draft",
+    "Pending Approval",
+    "Under Review",
+    "Revision Requested",
+    "Re-defense Pending",
+    "Approved",
+    "Upcoming",
+    "Ongoing",
+    "Completed",
+    "Report Submitted",
+    "Closed",
+    "Cancelled",
+    "Rejected",
+    "Expired",
+    "DRAFT",
+    "CREATED",
+    "PUBLIC",
+    "ONGOING",
+    "FINISH",
+    "CANCELLED"
   ],
-  complaintState: [
-    'Submitted',
-    'Under Triage',
-    'Dismissed',
-    'Forwarded',
-    'Club Responded',
-    'Escalated',
-    'Closed',
-    'Withdrawn',
+  "eventDefenseState": [
+    "SCHEDULED",
+    "CONFIRMED",
+    "RESCHEDULE_REQUESTED",
+    "IN_PROGRESS",
+    "DEFENDED",
+    "CANCELLED",
+    "NO_SHOW"
   ],
-  evaluationState: ['Draft', 'Data Ready', 'Under Review', 'Finalized', 'Published'],
-  reportState: ['Draft', 'Submitted', 'Accepted', 'Returned for correction'],
-  reviewOutcome: ['Request revision', 'Approve', 'Reject', 'Re-defense'],
-  approvalTaskState: ['Open', 'Escalated', 'Decided', 'Closed'],
-  transitionPlanState: ['Draft', 'Pending Confirmation', 'Confirmed', 'Returned'],
-  nominationState: ['Pending Confirmation', 'Confirmed', 'Returned'],
-  termState: ['Planned', 'Active', 'Closed'],
-  notificationState: ['Queued', 'Sent', 'Failed', 'Read'],
-  conflictResult: ['No Conflict', 'Warning', 'Blocking Conflict'],
-} as const
+  "eventOrganizerType": [
+    "CLUB",
+    "ICPDP"
+  ],
+  "eventInvitationStatus": [
+    "Pending",
+    "Accepted",
+    "Declined",
+    "Expired",
+    "Withdrawn"
+  ],
+  "registrationState": [
+    "Confirmed",
+    "Waitlisted",
+    "Cancelled"
+  ],
+  "attendanceMethod": [
+    "self",
+    "manual",
+    "walk-in"
+  ],
+  "eventBudgetState": [
+    "Approved",
+    "Cancelled",
+    "Disbursed",
+    "Settlement Submitted",
+    "Reconciliation Pending",
+    "Reconciled",
+    "Recovery Pending",
+    "Closed"
+  ],
+  "budgetFlowKind": [
+    "Advance",
+    "TopUp",
+    "Refund"
+  ],
+  "expenseReviewOutcome": [
+    "Accepted",
+    "Rejected"
+  ],
+  "bookingState": [
+    "Draft",
+    "Requested",
+    "Under Review",
+    "Revision Requested",
+    "Approved",
+    "Rejected",
+    "In Use",
+    "Completed",
+    "Cancelled",
+    "Released"
+  ],
+  "violationState": [
+    "Open",
+    "Under Investigation",
+    "Awaiting Club Response",
+    "Decision Issued",
+    "Corrective Action",
+    "Resolved",
+    "Closed"
+  ],
+  "complaintState": [
+    "Submitted",
+    "Under Triage",
+    "Dismissed",
+    "Forwarded",
+    "Club Responded",
+    "Escalated",
+    "Closed",
+    "Withdrawn"
+  ],
+  "evaluationState": [
+    "Draft",
+    "Data Ready",
+    "Under Review",
+    "Finalized",
+    "Published"
+  ],
+  "reportState": [
+    "Draft",
+    "Submitted",
+    "Accepted",
+    "Returned for correction"
+  ],
+  "reviewOutcome": [
+    "Request revision",
+    "Approve",
+    "Reject",
+    "Re-defense"
+  ],
+  "approvalTaskState": [
+    "Open",
+    "Escalated",
+    "Decided",
+    "Closed"
+  ],
+  "transitionPlanState": [
+    "Draft",
+    "Pending Confirmation",
+    "Confirmed",
+    "Returned"
+  ],
+  "nominationState": [
+    "Pending Confirmation",
+    "Confirmed",
+    "Returned"
+  ],
+  "termState": [
+    "Planned",
+    "Active",
+    "Closed"
+  ],
+  "notificationState": [
+    "Queued",
+    "Sent",
+    "Failed",
+    "Read"
+  ],
+  "conflictResult": [
+    "No Conflict",
+    "Warning",
+    "Blocking Conflict"
+  ]
+} as const;
 
 export const ucmsTables = {
-  users: {
-    fields: {
-      email: {
-        type: 'string',
-        unique: true,
-        required: true,
+  "users": {
+    "fields": {
+      "email": {
+        "type": "string",
+        "unique": true,
+        "required": true
       },
-      googleSubject: {
-        type: 'string',
-        unique: true,
+      "googleSubject": {
+        "type": "string",
+        "unique": true
       },
-      displayName: {
-        type: 'string',
-        required: true,
+      "displayName": {
+        "type": "string",
+        "required": true
       },
-      avatarUrl: {
-        type: 'string',
+      "avatarUrl": {
+        "type": "string"
       },
-      accountState: {
-        type: 'accountState',
-        required: true,
-        default: 'Active',
+      "accountState": {
+        "type": "accountState",
+        "required": true,
+        "default": "Active"
       },
-      lockReason: {
-        type: 'string',
+      "lockReason": {
+        "type": "string"
       },
-      lockedBy: {
-        type: 'objectId',
+      "lockedBy": {
+        "type": "objectId"
       },
-      lockedAt: {
-        type: 'datetime',
+      "lockedAt": {
+        "type": "datetime"
       },
-      lastLoginAt: {
-        type: 'datetime',
+      "lastLoginAt": {
+        "type": "datetime"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
-      },
+      "updatedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['email'],
-        unique: true,
-        name: 'uq_users_email',
+        "fields": [
+          "email"
+        ],
+        "unique": true,
+        "name": "uq_users_email"
       },
       {
-        fields: ['accountState'],
-        name: 'ix_users_state',
-      },
-    ],
+        "fields": [
+          "accountState"
+        ],
+        "name": "ix_users_state"
+      }
+    ]
   },
-  studentProfiles: {
-    fields: {
-      userId: {
-        type: 'objectId',
-        unique: true,
-        required: true,
+  "studentProfiles": {
+    "fields": {
+      "userId": {
+        "type": "objectId",
+        "unique": true,
+        "required": true
       },
-      studentCode: {
-        type: 'string',
-        unique: true,
+      "studentCode": {
+        "type": "string",
+        "unique": true
       },
-      fullName: {
-        type: 'string',
-        required: true,
+      "fullName": {
+        "type": "string",
+        "required": true
       },
-      faculty: {
-        type: 'string',
+      "faculty": {
+        "type": "string"
       },
-      major: {
-        type: 'string',
+      "major": {
+        "type": "string"
       },
-      cohort: {
-        type: 'string',
+      "cohort": {
+        "type": "string"
       },
-      syncedAt: {
-        type: 'datetime',
-      },
+      "syncedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [],
+    "indexes": []
   },
-  permissions: {
-    fields: {
-      code: {
-        type: 'string',
-        unique: true,
-        required: true,
+  "permissions": {
+    "fields": {
+      "code": {
+        "type": "string",
+        "unique": true,
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      module: {
-        type: 'string',
-        required: true,
+      "module": {
+        "type": "string",
+        "required": true
       },
-      scope: {
-        type: 'roleScope',
-        required: true,
+      "scope": {
+        "type": "roleScope",
+        "required": true
       },
-      isLeaderReserved: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isLeaderReserved": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      description: {
-        type: 'string',
-      },
+      "description": {
+        "type": "string"
+      }
     },
-    indexes: [],
+    "indexes": []
   },
-  roles: {
-    fields: {
-      code: {
-        type: 'string',
-        unique: true,
-        required: true,
+  "roles": {
+    "fields": {
+      "code": {
+        "type": "string",
+        "unique": true,
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      scope: {
-        type: 'roleScope',
-        required: true,
+      "scope": {
+        "type": "roleScope",
+        "required": true
       },
-      permissionCodes: {
-        type: 'string[]',
-        required: true,
+      "permissionCodes": {
+        "type": "string[]",
+        "required": true
       },
-      isSystem: {
-        type: 'bool',
-        default: false,
-      },
+      "isSystem": {
+        "type": "bool",
+        "default": false
+      }
     },
-    indexes: [],
+    "indexes": []
   },
-  userRoleAssignments: {
-    fields: {
-      userId: {
-        type: 'objectId',
-        required: true,
+  "userRoleAssignments": {
+    "fields": {
+      "userId": {
+        "type": "objectId",
+        "required": true
       },
-      roleId: {
-        type: 'objectId',
-        required: true,
+      "roleId": {
+        "type": "objectId",
+        "required": true
       },
-      grantedBy: {
-        type: 'objectId',
-        required: true,
+      "grantedBy": {
+        "type": "objectId",
+        "required": true
       },
-      grantedAt: {
-        type: 'datetime',
-        required: true,
+      "grantedAt": {
+        "type": "datetime",
+        "required": true
       },
-      revokedBy: {
-        type: 'objectId',
+      "revokedBy": {
+        "type": "objectId"
       },
-      revokedAt: {
-        type: 'datetime',
+      "revokedAt": {
+        "type": "datetime"
       },
-      reason: {
-        type: 'string',
-      },
+      "reason": {
+        "type": "string"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['userId', 'revokedAt'],
-        name: 'ix_ura_user_active',
-      },
-    ],
+        "fields": [
+          "userId",
+          "revokedAt"
+        ],
+        "name": "ix_ura_user_active"
+      }
+    ]
   },
-  policyVersions: {
-    fields: {
-      minFoundingMembers: {
-        type: 'int',
-        required: true,
+  "policyVersions": {
+    "fields": {
+      "minFoundingMembers": {
+        "type": "int",
+        "required": true
       },
-      formRequirements: {
-        type: 'json',
-        required: true,
+      "formRequirements": {
+        "type": "json",
+        "required": true
       },
-      reportDeadlines: {
-        type: 'json',
-        required: true,
+      "reportDeadlines": {
+        "type": "json",
+        "required": true
       },
-      conflictThresholdMinutes: {
-        type: 'int',
-        required: true,
+      "conflictThresholdMinutes": {
+        "type": "int",
+        "required": true
       },
-      feedbackWindowHours: {
-        type: 'int',
-        required: true,
+      "feedbackWindowHours": {
+        "type": "int",
+        "required": true
       },
-      feedbackMinRespondents: {
-        type: 'int',
-        required: true,
+      "feedbackMinRespondents": {
+        "type": "int",
+        "required": true
       },
-      allowOverbooking: {
-        type: 'bool',
-        required: true,
+      "allowOverbooking": {
+        "type": "bool",
+        "required": true
       },
-      enforceOverdueReportBlock: {
-        type: 'bool',
-        required: true,
+      "enforceOverdueReportBlock": {
+        "type": "bool",
+        "required": true
       },
-      academicCalendar: {
-        type: 'json',
-        required: true,
+      "academicCalendar": {
+        "type": "json",
+        "required": true
       },
-      schoolRefundAccount: {
-        type: 'json',
+      "schoolRefundAccount": {
+        "type": "json"
       },
-      effectiveFrom: {
-        type: 'datetime',
-        required: true,
+      "effectiveFrom": {
+        "type": "datetime",
+        "required": true
       },
-      createdBy: {
-        type: 'objectId',
-        required: true,
+      "createdBy": {
+        "type": "objectId",
+        "required": true
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['effectiveFrom'],
-        name: 'ix_policy_effective',
-      },
-    ],
+        "fields": [
+          "effectiveFrom"
+        ],
+        "name": "ix_policy_effective"
+      }
+    ]
   },
-  routingRuleSets: {
-    fields: {
-      versionNo: {
-        type: 'int',
-        required: true,
+  "routingRuleSets": {
+    "fields": {
+      "versionNo": {
+        "type": "int",
+        "required": true
       },
-      state: {
-        type: 'string',
-        required: true,
+      "state": {
+        "type": "string",
+        "required": true
       },
-      rules: {
-        type: 'json',
-        required: true,
+      "rules": {
+        "type": "json",
+        "required": true
       },
-      createdBy: {
-        type: 'objectId',
-        required: true,
+      "createdBy": {
+        "type": "objectId",
+        "required": true
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
+      "updatedAt": {
+        "type": "datetime"
       },
-      activatedBy: {
-        type: 'objectId',
+      "activatedBy": {
+        "type": "objectId"
       },
-      activatedAt: {
-        type: 'datetime',
+      "activatedAt": {
+        "type": "datetime"
       },
-      supersededAt: {
-        type: 'datetime',
-      },
+      "supersededAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['versionNo'],
-        unique: true,
-        name: 'uq_routing_version',
+        "fields": [
+          "versionNo"
+        ],
+        "unique": true,
+        "name": "uq_routing_version"
       },
       {
-        fields: ['state'],
-        unique: true,
-        name: 'uq_routing_active',
-        partialFilterExpression: {
-          state: 'Active',
-        },
-      },
-    ],
+        "fields": [
+          "state"
+        ],
+        "unique": true,
+        "name": "uq_routing_active",
+        "partialFilterExpression": {
+          "state": "Active"
+        }
+      }
+    ]
   },
-  clubs: {
-    fields: {
-      code: {
-        type: 'string',
-        unique: true,
-        required: true,
+  "clubs": {
+    "fields": {
+      "code": {
+        "type": "string",
+        "unique": true,
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      field: {
-        type: 'string',
-        required: true,
+      "field": {
+        "type": "string",
+        "required": true
       },
-      state: {
-        type: 'clubState',
-        required: true,
-        default: 'Pending Setup',
+      "state": {
+        "type": "clubState",
+        "required": true,
+        "default": "Pending Setup"
       },
-      description: {
-        type: 'text',
+      "description": {
+        "type": "text"
       },
-      contactEmail: {
-        type: 'string',
+      "contactEmail": {
+        "type": "string"
       },
-      contactPhone: {
-        type: 'string',
+      "contactPhone": {
+        "type": "string"
       },
-      charterUrl: {
-        type: 'string',
+      "charterUrl": {
+        "type": "string"
       },
-      logoUrl: {
-        type: 'string',
+      "logoUrl": {
+        "type": "string"
       },
-      channels: {
-        type: 'json',
+      "channels": {
+        "type": "json"
       },
-      operatingScope: {
-        type: 'string',
+      "operatingScope": {
+        "type": "string"
       },
-      institutionalFields: {
-        type: 'json',
+      "institutionalFields": {
+        "type": "json"
       },
-      dissolution: {
-        type: 'json',
+      "dissolution": {
+        "type": "json"
       },
-      suspension: {
-        type: 'json',
+      "suspension": {
+        "type": "json"
       },
-      sourceApplicationId: {
-        type: 'objectId',
+      "sourceApplicationId": {
+        "type": "objectId"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
-      },
+      "updatedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['state', 'field'],
-        name: 'ix_clubs_state_field',
+        "fields": [
+          "state",
+          "field"
+        ],
+        "name": "ix_clubs_state_field"
       },
       {
-        fields: ['name'],
-        name: 'ix_clubs_name',
-      },
-    ],
+        "fields": [
+          "name"
+        ],
+        "name": "ix_clubs_name"
+      }
+    ]
   },
-  clubFields: {
-    fields: {
-      name: {
-        type: 'string',
-        required: true,
+  "clubFields": {
+    "fields": {
+      "name": {
+        "type": "string",
+        "required": true
       },
-      normalizedName: {
-        type: 'string',
-        required: true,
+      "normalizedName": {
+        "type": "string",
+        "required": true
       },
-      sortOrder: {
-        type: 'int',
-        required: true,
-        default: 0,
+      "sortOrder": {
+        "type": "int",
+        "required": true,
+        "default": 0
       },
-      isActive: {
-        type: 'bool',
-        required: true,
-        default: true,
+      "isActive": {
+        "type": "bool",
+        "required": true,
+        "default": true
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
-      },
+      "updatedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['normalizedName'],
-        unique: true,
-        name: 'uq_club_field_name',
+        "fields": [
+          "normalizedName"
+        ],
+        "unique": true,
+        "name": "uq_club_field_name"
       },
       {
-        fields: ['isActive', 'sortOrder'],
-        name: 'ix_club_field_active',
-      },
-    ],
+        "fields": [
+          "isActive",
+          "sortOrder"
+        ],
+        "name": "ix_club_field_active"
+      }
+    ]
   },
-  clubApplications: {
-    fields: {
-      clubName: {
-        type: 'string',
-        required: true,
+  "clubApplications": {
+    "fields": {
+      "clubName": {
+        "type": "string",
+        "required": true
       },
-      field: {
-        type: 'string',
-        required: true,
+      "field": {
+        "type": "string",
+        "required": true
       },
-      objectives: {
-        type: 'text',
+      "objectives": {
+        "type": "text"
       },
-      founderUserId: {
-        type: 'objectId',
-        required: true,
+      "founderUserId": {
+        "type": "objectId",
+        "required": true
       },
-      draftPayload: {
-        type: 'json',
+      "draftPayload": {
+        "type": "json"
       },
-      state: {
-        type: 'clubApplicationState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "clubApplicationState",
+        "required": true,
+        "default": "Draft"
       },
-      currentVersionNo: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "currentVersionNo": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      revisionDeadlineAt: {
-        type: 'datetime',
+      "revisionDeadlineAt": {
+        "type": "datetime"
       },
-      createdClubId: {
-        type: 'objectId',
+      "createdClubId": {
+        "type": "objectId"
       },
-      submittedAt: {
-        type: 'datetime',
+      "submittedAt": {
+        "type": "datetime"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['state', 'submittedAt'],
-        name: 'ix_clubapp_queue',
+        "fields": [
+          "state",
+          "submittedAt"
+        ],
+        "name": "ix_clubapp_queue"
       },
       {
-        fields: ['founderUserId'],
-        name: 'ix_clubapp_founder',
+        "fields": [
+          "founderUserId"
+        ],
+        "name": "ix_clubapp_founder"
       },
       {
-        fields: ['state', 'revisionDeadlineAt'],
-        name: 'ix_clubapp_expiry',
-      },
-    ],
+        "fields": [
+          "state",
+          "revisionDeadlineAt"
+        ],
+        "name": "ix_clubapp_expiry"
+      }
+    ]
   },
-  clubApplicationVersions: {
-    fields: {
-      applicationId: {
-        type: 'objectId',
-        required: true,
+  "clubApplicationVersions": {
+    "fields": {
+      "applicationId": {
+        "type": "objectId",
+        "required": true
       },
-      versionNo: {
-        type: 'int',
-        required: true,
+      "versionNo": {
+        "type": "int",
+        "required": true
       },
-      payload: {
-        type: 'json',
-        required: true,
+      "payload": {
+        "type": "json",
+        "required": true
       },
-      foundingMembers: {
-        type: 'json',
-        required: true,
+      "foundingMembers": {
+        "type": "json",
+        "required": true
       },
-      documents: {
-        type: 'json',
-        required: true,
+      "documents": {
+        "type": "json",
+        "required": true
       },
-      proposedRoleStructure: {
-        type: 'json',
-        required: true,
+      "proposedRoleStructure": {
+        "type": "json",
+        "required": true
       },
-      submittedBy: {
-        type: 'objectId',
-        required: true,
+      "submittedBy": {
+        "type": "objectId",
+        "required": true
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['applicationId', 'versionNo'],
-        unique: true,
-        name: 'uq_clubappver',
-      },
-    ],
+        "fields": [
+          "applicationId",
+          "versionNo"
+        ],
+        "unique": true,
+        "name": "uq_clubappver"
+      }
+    ]
   },
-  clubTerms: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "clubTerms": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      startAt: {
-        type: 'datetime',
-        required: true,
+      "startAt": {
+        "type": "datetime",
+        "required": true
       },
-      endAt: {
-        type: 'datetime',
-        required: true,
+      "endAt": {
+        "type": "datetime",
+        "required": true
       },
-      state: {
-        type: 'termState',
-        required: true,
-        default: 'Planned',
+      "state": {
+        "type": "termState",
+        "required": true,
+        "default": "Planned"
       },
-      previousTermId: {
-        type: 'objectId',
+      "previousTermId": {
+        "type": "objectId"
       },
-      confirmedBy: {
-        type: 'objectId',
+      "confirmedBy": {
+        "type": "objectId"
       },
-      confirmedAt: {
-        type: 'datetime',
-      },
+      "confirmedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_terms_club_state',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_terms_club_state"
       },
       {
-        fields: ['clubId', 'endAt'],
-        name: 'ix_terms_expiry',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "endAt"
+        ],
+        "name": "ix_terms_expiry"
+      }
+    ]
   },
-  clubPositions: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "clubPositions": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      code: {
-        type: 'string',
-        required: true,
+      "code": {
+        "type": "string",
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      unit: {
-        type: 'string',
+      "unit": {
+        "type": "string"
       },
-      isBoardSeat: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isBoardSeat": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      isLeaderRole: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isLeaderRole": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      isDefaultMemberRole: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isDefaultMemberRole": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      isSingleHolder: {
-        type: 'bool',
-        required: true,
-        default: true,
+      "isSingleHolder": {
+        "type": "bool",
+        "required": true,
+        "default": true
       },
-      permissionCodes: {
-        type: 'string[]',
-        required: true,
+      "permissionCodes": {
+        "type": "string[]",
+        "required": true
       },
-      isActive: {
-        type: 'bool',
-        required: true,
-        default: true,
-      },
+      "isActive": {
+        "type": "bool",
+        "required": true,
+        "default": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'code'],
-        unique: true,
-        name: 'uq_position_club_code',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "code"
+        ],
+        "unique": true,
+        "name": "uq_position_club_code"
+      }
+    ]
   },
-  clubDepartments: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "clubDepartments": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      normalizedName: {
-        type: 'string',
-        required: true,
+      "normalizedName": {
+        "type": "string",
+        "required": true
       },
-      description: {
-        type: 'text',
+      "description": {
+        "type": "text"
       },
-      sortOrder: {
-        type: 'int',
-        required: true,
-        default: 0,
+      "sortOrder": {
+        "type": "int",
+        "required": true,
+        "default": 0
       },
-      isActive: {
-        type: 'bool',
-        required: true,
-        default: true,
+      "isActive": {
+        "type": "bool",
+        "required": true,
+        "default": true
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
-      },
+      "updatedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'normalizedName'],
-        unique: true,
-        name: 'uq_department_club_name',
+        "fields": [
+          "clubId",
+          "normalizedName"
+        ],
+        "unique": true,
+        "name": "uq_department_club_name"
       },
       {
-        fields: ['clubId', 'isActive', 'sortOrder'],
-        name: 'ix_department_structure',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "isActive",
+          "sortOrder"
+        ],
+        "name": "ix_department_structure"
+      }
+    ]
   },
-  clubPositionAssignments: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "clubPositionAssignments": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      termId: {
-        type: 'objectId',
-        required: true,
+      "termId": {
+        "type": "objectId",
+        "required": true
       },
-      positionId: {
-        type: 'objectId',
-        required: true,
+      "positionId": {
+        "type": "objectId",
+        "required": true
       },
-      membershipId: {
-        type: 'objectId',
-        required: true,
+      "membershipId": {
+        "type": "objectId",
+        "required": true
       },
-      effectiveFrom: {
-        type: 'datetime',
-        required: true,
+      "effectiveFrom": {
+        "type": "datetime",
+        "required": true
       },
-      effectiveTo: {
-        type: 'datetime',
+      "effectiveTo": {
+        "type": "datetime"
       },
-      assignedBy: {
-        type: 'objectId',
-        required: true,
+      "assignedBy": {
+        "type": "objectId",
+        "required": true
       },
-      confirmedBy: {
-        type: 'objectId',
-      },
+      "confirmedBy": {
+        "type": "objectId"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'termId', 'positionId'],
-        name: 'ix_assign_lookup',
+        "fields": [
+          "clubId",
+          "termId",
+          "positionId"
+        ],
+        "name": "ix_assign_lookup"
       },
       {
-        fields: ['membershipId', 'effectiveTo'],
-        name: 'ix_assign_member_active',
-      },
-    ],
+        "fields": [
+          "membershipId",
+          "effectiveTo"
+        ],
+        "name": "ix_assign_member_active"
+      }
+    ]
   },
-  clubRoleStructureVersions: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "clubRoleStructureVersions": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      versionNo: {
-        type: 'int',
-        required: true,
+      "versionNo": {
+        "type": "int",
+        "required": true
       },
-      effectiveFrom: {
-        type: 'datetime',
-        required: true,
+      "effectiveFrom": {
+        "type": "datetime",
+        "required": true
       },
-      source: {
-        type: 'string',
-        required: true,
+      "source": {
+        "type": "string",
+        "required": true
       },
-      sourceRefId: {
-        type: 'objectId',
+      "sourceRefId": {
+        "type": "objectId"
       },
-      roles: {
-        type: 'json',
-        required: true,
+      "roles": {
+        "type": "json",
+        "required": true
       },
-      createdBy: {
-        type: 'objectId',
-        required: true,
+      "createdBy": {
+        "type": "objectId",
+        "required": true
       },
-      reason: {
-        type: 'string',
+      "reason": {
+        "type": "string"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'versionNo'],
-        unique: true,
-        name: 'uq_role_structure_version',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "versionNo"
+        ],
+        "unique": true,
+        "name": "uq_role_structure_version"
+      }
+    ]
   },
-  boardNominations: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "boardNominations": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      termId: {
-        type: 'objectId',
-        required: true,
+      "termId": {
+        "type": "objectId",
+        "required": true
       },
-      state: {
-        type: 'nominationState',
-        required: true,
-        default: 'Pending Confirmation',
+      "state": {
+        "type": "nominationState",
+        "required": true,
+        "default": "Pending Confirmation"
       },
-      submittedBy: {
-        type: 'objectId',
-        required: true,
+      "submittedBy": {
+        "type": "objectId",
+        "required": true
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      reason: {
-        type: 'string',
-      },
+      "reason": {
+        "type": "string"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_nom_club_state',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_nom_club_state"
+      }
+    ]
   },
-  boardNominationSeats: {
-    fields: {
-      nominationId: {
-        type: 'objectId',
-        required: true,
+  "boardNominationSeats": {
+    "fields": {
+      "nominationId": {
+        "type": "objectId",
+        "required": true
       },
-      positionId: {
-        type: 'objectId',
-        required: true,
+      "positionId": {
+        "type": "objectId",
+        "required": true
       },
-      membershipId: {
-        type: 'objectId',
-        required: true,
+      "membershipId": {
+        "type": "objectId",
+        "required": true
       },
-      state: {
-        type: 'nominationState',
-        required: true,
-        default: 'Pending Confirmation',
+      "state": {
+        "type": "nominationState",
+        "required": true,
+        "default": "Pending Confirmation"
       },
-      reason: {
-        type: 'string',
-      },
+      "reason": {
+        "type": "string"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['nominationId', 'positionId'],
-        unique: true,
-        name: 'uq_nom_seat',
-      },
-    ],
+        "fields": [
+          "nominationId",
+          "positionId"
+        ],
+        "unique": true,
+        "name": "uq_nom_seat"
+      }
+    ]
   },
-  transitionPlans: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "transitionPlans": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      fromTermId: {
-        type: 'objectId',
-        required: true,
+      "fromTermId": {
+        "type": "objectId",
+        "required": true
       },
-      toTermId: {
-        type: 'objectId',
-        required: true,
+      "toTermId": {
+        "type": "objectId",
+        "required": true
       },
-      candidates: {
-        type: 'json',
-        required: true,
+      "candidates": {
+        "type": "json",
+        "required": true
       },
-      outstandingObligations: {
-        type: 'json',
-        required: true,
+      "outstandingObligations": {
+        "type": "json",
+        "required": true
       },
-      handoverItems: {
-        type: 'json',
+      "handoverItems": {
+        "type": "json"
       },
-      state: {
-        type: 'transitionPlanState',
-        required: true,
-        default: 'Pending Confirmation',
+      "state": {
+        "type": "transitionPlanState",
+        "required": true,
+        "default": "Pending Confirmation"
       },
-      submittedBy: {
-        type: 'objectId',
-        required: true,
+      "submittedBy": {
+        "type": "objectId",
+        "required": true
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      followUpConditions: {
-        type: 'json',
-      },
+      "followUpConditions": {
+        "type": "json"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_transition_club_state',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_transition_club_state"
+      }
+    ]
   },
-  recruitmentCampaigns: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "recruitmentCampaigns": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      title: {
-        type: 'string',
-        required: true,
+      "title": {
+        "type": "string",
+        "required": true
       },
-      positions: {
-        type: 'json',
-        required: true,
+      "positions": {
+        "type": "json",
+        "required": true
       },
-      criteria: {
-        type: 'text',
+      "criteria": {
+        "type": "text"
       },
-      windowStart: {
-        type: 'datetime',
-        required: true,
+      "windowStart": {
+        "type": "datetime",
+        "required": true
       },
-      windowEnd: {
-        type: 'datetime',
-        required: true,
+      "windowEnd": {
+        "type": "datetime",
+        "required": true
       },
-      capacity: {
-        type: 'int',
-        required: true,
+      "capacity": {
+        "type": "int",
+        "required": true
       },
-      selectionSteps: {
-        type: 'json',
+      "selectionSteps": {
+        "type": "json"
       },
-      formSchema: {
-        type: 'json',
-        required: true,
+      "formSchema": {
+        "type": "json",
+        "required": true
       },
-      rubric: {
-        type: 'json',
+      "rubric": {
+        "type": "json"
       },
-      state: {
-        type: 'campaignState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "campaignState",
+        "required": true,
+        "default": "Draft"
       },
-      publishedBy: {
-        type: 'objectId',
+      "publishedBy": {
+        "type": "objectId"
       },
-      publishedAt: {
-        type: 'datetime',
+      "publishedAt": {
+        "type": "datetime"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_campaign_club_state',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_campaign_club_state"
       },
       {
-        fields: ['state', 'windowStart', 'windowEnd'],
-        name: 'ix_campaign_window',
-      },
-    ],
+        "fields": [
+          "state",
+          "windowStart",
+          "windowEnd"
+        ],
+        "name": "ix_campaign_window"
+      }
+    ]
   },
-  recruitmentApplications: {
-    fields: {
-      campaignId: {
-        type: 'objectId',
-        required: true,
+  "recruitmentApplications": {
+    "fields": {
+      "campaignId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      userId: {
-        type: 'objectId',
-        required: true,
+      "userId": {
+        "type": "objectId",
+        "required": true
       },
-      position: {
-        type: 'string',
+      "position": {
+        "type": "string"
       },
-      answers: {
-        type: 'json',
-        required: true,
+      "answers": {
+        "type": "json",
+        "required": true
       },
-      attachments: {
-        type: 'json',
+      "attachments": {
+        "type": "json"
       },
-      state: {
-        type: 'recruitmentApplicationState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "recruitmentApplicationState",
+        "required": true,
+        "default": "Draft"
       },
-      decisionOutcome: {
-        type: 'string',
+      "decisionOutcome": {
+        "type": "string"
       },
-      decisionReason: {
-        type: 'string',
+      "decisionReason": {
+        "type": "string"
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      submittedAt: {
-        type: 'datetime',
+      "submittedAt": {
+        "type": "datetime"
       },
-      withdrawnAt: {
-        type: 'datetime',
-      },
+      "withdrawnAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['campaignId', 'userId'],
-        unique: true,
-        name: 'uq_recruitapp_campaign_user',
+        "fields": [
+          "campaignId",
+          "userId"
+        ],
+        "unique": true,
+        "name": "uq_recruitapp_campaign_user"
       },
       {
-        fields: ['campaignId', 'state'],
-        name: 'ix_recruitapp_screening',
+        "fields": [
+          "campaignId",
+          "state"
+        ],
+        "name": "ix_recruitapp_screening"
       },
       {
-        fields: ['userId', 'state'],
-        name: 'ix_recruitapp_mine',
-      },
-    ],
+        "fields": [
+          "userId",
+          "state"
+        ],
+        "name": "ix_recruitapp_mine"
+      }
+    ]
   },
-  candidateEvaluations: {
-    fields: {
-      applicationId: {
-        type: 'objectId',
-        required: true,
+  "candidateEvaluations": {
+    "fields": {
+      "applicationId": {
+        "type": "objectId",
+        "required": true
       },
-      reviewerId: {
-        type: 'objectId',
-        required: true,
+      "reviewerId": {
+        "type": "objectId",
+        "required": true
       },
-      scores: {
-        type: 'json',
-        required: true,
+      "scores": {
+        "type": "json",
+        "required": true
       },
-      totalScore: {
-        type: 'decimal',
+      "totalScore": {
+        "type": "decimal"
       },
-      comment: {
-        type: 'text',
+      "comment": {
+        "type": "text"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['applicationId', 'reviewerId'],
-        unique: true,
-        name: 'uq_candeval',
-      },
-    ],
+        "fields": [
+          "applicationId",
+          "reviewerId"
+        ],
+        "unique": true,
+        "name": "uq_candeval"
+      }
+    ]
   },
-  clubMemberships: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "clubMemberships": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      userId: {
-        type: 'objectId',
-        required: true,
+      "userId": {
+        "type": "objectId",
+        "required": true
       },
-      state: {
-        type: 'membershipState',
-        required: true,
-        default: 'Active',
+      "state": {
+        "type": "membershipState",
+        "required": true,
+        "default": "Active"
       },
-      joinedAt: {
-        type: 'datetime',
-        required: true,
+      "joinedAt": {
+        "type": "datetime",
+        "required": true
       },
-      leftAt: {
-        type: 'datetime',
+      "leftAt": {
+        "type": "datetime"
       },
-      departmentId: {
-        type: 'objectId',
+      "departmentId": {
+        "type": "objectId"
       },
-      defaultRole: {
-        type: 'string',
+      "defaultRole": {
+        "type": "string"
       },
-      sourceApplicationId: {
-        type: 'objectId',
+      "sourceApplicationId": {
+        "type": "objectId"
       },
-      banReason: {
-        type: 'string',
+      "banReason": {
+        "type": "string"
       },
-      statusHistory: {
-        type: 'json',
-        required: true,
+      "statusHistory": {
+        "type": "json",
+        "required": true
       },
-      lastReRegisteredSemester: {
-        type: 'string',
-      },
+      "lastReRegisteredSemester": {
+        "type": "string"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'userId'],
-        unique: true,
-        name: 'uq_membership_active',
-        partialFilterExpression: {
-          state: {
-            $in: ['Active', 'Inactive'],
-          },
-        },
+        "fields": [
+          "clubId",
+          "userId"
+        ],
+        "unique": true,
+        "name": "uq_membership_active",
+        "partialFilterExpression": {
+          "state": {
+            "$in": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        }
       },
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_membership_roster',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_membership_roster"
       },
       {
-        fields: ['userId', 'state'],
-        name: 'ix_membership_mine',
-      },
-    ],
+        "fields": [
+          "userId",
+          "state"
+        ],
+        "name": "ix_membership_mine"
+      }
+    ]
   },
-  membershipWithdrawalRequests: {
-    fields: {
-      membershipId: {
-        type: 'objectId',
-        required: true,
+  "membershipWithdrawalRequests": {
+    "fields": {
+      "membershipId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      userId: {
-        type: 'objectId',
-        required: true,
+      "userId": {
+        "type": "objectId",
+        "required": true
       },
-      reason: {
-        type: 'text',
-        required: true,
+      "reason": {
+        "type": "text",
+        "required": true
       },
-      requestedEffectiveDate: {
-        type: 'datetime',
-        required: true,
+      "requestedEffectiveDate": {
+        "type": "datetime",
+        "required": true
       },
-      state: {
-        type: 'string',
-        required: true,
+      "state": {
+        "type": "string",
+        "required": true
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      executedBy: {
-        type: 'objectId',
+      "executedBy": {
+        "type": "objectId"
       },
-      executedAt: {
-        type: 'datetime',
-      },
+      "executedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_withdrawal_club_state',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_withdrawal_club_state"
+      }
+    ]
   },
-  events: {
-    fields: {
-      organizerType: {
-        type: 'eventOrganizerType',
-        required: true,
-        default: 'CLUB',
+  "events": {
+    "fields": {
+      "organizerType": {
+        "type": "eventOrganizerType",
+        "required": true,
+        "default": "CLUB"
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      clubName: {
-        type: 'string',
+      "clubName": {
+        "type": "string"
       },
-      title: {
-        type: 'string',
-        required: true,
+      "title": {
+        "type": "string",
+        "required": true
       },
-      coverImageUrl: {
-        type: 'string',
+      "coverImageUrl": {
+        "type": "string"
       },
-      objective: {
-        type: 'text',
+      "objective": {
+        "type": "text"
       },
-      startAt: {
-        type: 'datetime',
-        required: true,
+      "startAt": {
+        "type": "datetime",
+        "required": true
       },
-      endAt: {
-        type: 'datetime',
-        required: true,
+      "endAt": {
+        "type": "datetime",
+        "required": true
       },
-      semesterCode: {
-        type: 'string',
-        required: true,
+      "semesterCode": {
+        "type": "string",
+        "required": true
       },
-      venueText: {
-        type: 'string',
+      "venueText": {
+        "type": "string"
       },
-      propertyId: {
-        type: 'objectId',
+      "propertyId": {
+        "type": "objectId"
       },
-      audienceScope: {
-        type: 'string',
-        required: true,
+      "audienceScope": {
+        "type": "string",
+        "required": true
       },
-      capacity: {
-        type: 'int',
-        required: true,
+      "capacity": {
+        "type": "int",
+        "required": true
       },
-      confirmedRegistrationCount: {
-        type: 'int',
-        required: true,
-        default: 0,
+      "confirmedRegistrationCount": {
+        "type": "int",
+        "required": true,
+        "default": 0
       },
-      nextWaitlistPosition: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "nextWaitlistPosition": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      waitlistEnabled: {
-        type: 'bool',
-        required: true,
-        default: true,
+      "waitlistEnabled": {
+        "type": "bool",
+        "required": true,
+        "default": true
       },
-      riskCategory: {
-        type: 'string',
+      "riskCategory": {
+        "type": "string"
       },
-      state: {
-        type: 'eventState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "eventState",
+        "required": true,
+        "default": "Draft"
       },
-      conflictResult: {
-        type: 'conflictResult',
+      "conflictResult": {
+        "type": "conflictResult"
       },
-      conflictDetail: {
-        type: 'json',
+      "conflictDetail": {
+        "type": "json"
       },
-      approvalConditions: {
-        type: 'json',
+      "approvalConditions": {
+        "type": "json"
       },
-      registrationOpenAt: {
-        type: 'datetime',
+      "registrationOpenAt": {
+        "type": "datetime"
       },
-      registrationCloseAt: {
-        type: 'datetime',
+      "registrationCloseAt": {
+        "type": "datetime"
       },
-      checkInCode: {
-        type: 'string',
+      "checkInCode": {
+        "type": "string"
       },
-      checkInOpenAt: {
-        type: 'datetime',
+      "checkInOpenAt": {
+        "type": "datetime"
       },
-      checkInCloseAt: {
-        type: 'datetime',
+      "checkInCloseAt": {
+        "type": "datetime"
       },
-      allowWalkIn: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "allowWalkIn": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      currentRevisionNo: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "currentRevisionNo": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      revisionDeadlineAt: {
-        type: 'datetime',
+      "revisionDeadlineAt": {
+        "type": "datetime"
       },
-      publishedAt: {
-        type: 'datetime',
+      "publishedAt": {
+        "type": "datetime"
       },
-      cancelReason: {
-        type: 'string',
+      "cancelReason": {
+        "type": "string"
       },
-      cancelledBy: {
-        type: 'objectId',
+      "cancelledBy": {
+        "type": "objectId"
       },
-      cancelSourceType: {
-        type: 'string',
+      "cancelSourceType": {
+        "type": "string"
       },
-      isLateCancellation: {
-        type: 'bool',
-        default: false,
+      "isLateCancellation": {
+        "type": "bool",
+        "default": false
       },
-      attendanceFinalized: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "attendanceFinalized": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_events_club_state',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_events_club_state"
       },
       {
-        fields: ['state', 'startAt'],
-        name: 'ix_events_schedule',
+        "fields": [
+          "state",
+          "startAt"
+        ],
+        "name": "ix_events_schedule"
       },
       {
-        fields: ['propertyId', 'startAt', 'endAt'],
-        name: 'ix_events_conflict',
+        "fields": [
+          "propertyId",
+          "startAt",
+          "endAt"
+        ],
+        "name": "ix_events_conflict"
       },
       {
-        fields: ['state', 'revisionDeadlineAt'],
-        name: 'ix_events_expiry',
+        "fields": [
+          "state",
+          "revisionDeadlineAt"
+        ],
+        "name": "ix_events_expiry"
       },
       {
-        fields: ['audienceScope', 'semesterCode', 'clubId'],
-        name: 'ix_events_scope',
+        "fields": [
+          "audienceScope",
+          "semesterCode",
+          "clubId"
+        ],
+        "name": "ix_events_scope"
       },
       {
-        fields: ['organizerType', 'state'],
-        name: 'ix_events_organizer_state',
-      },
-    ],
+        "fields": [
+          "organizerType",
+          "state"
+        ],
+        "name": "ix_events_organizer_state"
+      }
+    ]
   },
-  eventProposalVersions: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "eventProposalVersions": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      revisionNo: {
-        type: 'int',
-        required: true,
+      "revisionNo": {
+        "type": "int",
+        "required": true
       },
-      payload: {
-        type: 'json',
-        required: true,
+      "payload": {
+        "type": "json",
+        "required": true
       },
-      budgetLines: {
-        type: 'json',
+      "budgetLines": {
+        "type": "json"
       },
-      requestedBudgetTotal: {
-        type: 'decimal',
+      "requestedBudgetTotal": {
+        "type": "decimal"
       },
-      conflictResult: {
-        type: 'conflictResult',
+      "conflictResult": {
+        "type": "conflictResult"
       },
-      submittedBy: {
-        type: 'objectId',
-        required: true,
+      "submittedBy": {
+        "type": "objectId",
+        "required": true
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'revisionNo'],
-        unique: true,
-        name: 'uq_eventrev',
-      },
-    ],
+        "fields": [
+          "eventId",
+          "revisionNo"
+        ],
+        "unique": true,
+        "name": "uq_eventrev"
+      }
+    ]
   },
-  eventDefenseSessions: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "eventDefenseSessions": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      revisionNo: {
-        type: 'int',
-        required: true,
+      "revisionNo": {
+        "type": "int",
+        "required": true
       },
-      title: {
-        type: 'string',
-        required: true,
+      "title": {
+        "type": "string",
+        "required": true
       },
-      startAt: {
-        type: 'datetime',
-        required: true,
+      "startAt": {
+        "type": "datetime",
+        "required": true
       },
-      endAt: {
-        type: 'datetime',
-        required: true,
+      "endAt": {
+        "type": "datetime",
+        "required": true
       },
-      durationMinutes: {
-        type: 'int',
-        required: true,
+      "durationMinutes": {
+        "type": "int",
+        "required": true
       },
-      propertyId: {
-        type: 'objectId',
-        required: true,
+      "propertyId": {
+        "type": "objectId",
+        "required": true
       },
-      propertyName: {
-        type: 'string',
-        required: true,
+      "propertyName": {
+        "type": "string",
+        "required": true
       },
-      note: {
-        type: 'string',
+      "note": {
+        "type": "string"
       },
-      state: {
-        type: 'eventDefenseState',
-        required: true,
-        default: 'SCHEDULED',
+      "state": {
+        "type": "eventDefenseState",
+        "required": true,
+        "default": "SCHEDULED"
       },
-      rescheduleReason: {
-        type: 'string',
+      "rescheduleReason": {
+        "type": "string"
       },
-      confirmedAt: {
-        type: 'datetime',
+      "confirmedAt": {
+        "type": "datetime"
       },
-      confirmedBy: {
-        type: 'objectId',
+      "confirmedBy": {
+        "type": "objectId"
       },
-      startedAt: {
-        type: 'datetime',
+      "startedAt": {
+        "type": "datetime"
       },
-      endedAt: {
-        type: 'datetime',
+      "endedAt": {
+        "type": "datetime"
       },
-      leadOfficerId: {
-        type: 'objectId',
-        required: true,
+      "leadOfficerId": {
+        "type": "objectId",
+        "required": true
       },
-      notes: {
-        type: 'json',
+      "notes": {
+        "type": "json"
       },
-      outcome: {
-        type: 'string',
+      "outcome": {
+        "type": "string"
       },
-      outcomeReason: {
-        type: 'string',
+      "outcomeReason": {
+        "type": "string"
       },
-      cancelReason: {
-        type: 'string',
+      "cancelReason": {
+        "type": "string"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "updatedAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'revisionNo'],
-        name: 'ix_defense_event',
+        "fields": [
+          "eventId",
+          "revisionNo"
+        ],
+        "name": "ix_defense_event"
       },
       {
-        fields: ['propertyId', 'startAt', 'endAt'],
-        name: 'ix_defense_room_schedule',
-      },
-    ],
+        "fields": [
+          "propertyId",
+          "startAt",
+          "endAt"
+        ],
+        "name": "ix_defense_room_schedule"
+      }
+    ]
   },
-  eventInvitations: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "eventInvitations": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      clubName: {
-        type: 'string',
-        required: true,
+      "clubName": {
+        "type": "string",
+        "required": true
       },
-      status: {
-        type: 'eventInvitationStatus',
-        required: true,
-        default: 'Pending',
+      "status": {
+        "type": "eventInvitationStatus",
+        "required": true,
+        "default": "Pending"
       },
-      deadline: {
-        type: 'datetime',
-        required: true,
+      "deadline": {
+        "type": "datetime",
+        "required": true
       },
-      invitedAt: {
-        type: 'datetime',
-        required: true,
+      "invitedAt": {
+        "type": "datetime",
+        "required": true
       },
-      invitedBy: {
-        type: 'objectId',
-        required: true,
+      "invitedBy": {
+        "type": "objectId",
+        "required": true
       },
-      respondedAt: {
-        type: 'datetime',
+      "respondedAt": {
+        "type": "datetime"
       },
-      respondedBy: {
-        type: 'objectId',
+      "respondedBy": {
+        "type": "objectId"
       },
-      responseNote: {
-        type: 'text',
+      "responseNote": {
+        "type": "text"
       },
-      responseDetails: {
-        type: 'json',
+      "responseDetails": {
+        "type": "json"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      updatedAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "updatedAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'clubId'],
-        unique: true,
-        name: 'ix_event_invitations_unique',
+        "fields": [
+          "eventId",
+          "clubId"
+        ],
+        "unique": true,
+        "name": "ix_event_invitations_unique"
       },
       {
-        fields: ['clubId', 'status'],
-        name: 'ix_event_invitations_club_status',
+        "fields": [
+          "clubId",
+          "status"
+        ],
+        "name": "ix_event_invitations_club_status"
       },
       {
-        fields: ['status', 'deadline'],
-        name: 'ix_event_invitations_expiry',
-      },
-    ],
+        "fields": [
+          "status",
+          "deadline"
+        ],
+        "name": "ix_event_invitations_expiry"
+      }
+    ]
   },
-  eventRegistrations: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "eventRegistrations": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      studentId: {
-        type: 'objectId',
-        required: true,
+      "studentId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      state: {
-        type: 'registrationState',
-        required: true,
-        default: 'Confirmed',
+      "state": {
+        "type": "registrationState",
+        "required": true,
+        "default": "Confirmed"
       },
-      waitlistPosition: {
-        type: 'int',
+      "waitlistPosition": {
+        "type": "int"
       },
-      answers: {
-        type: 'json',
+      "answers": {
+        "type": "json"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
+      "createdAt": {
+        "type": "datetime",
+        "required": true
       },
-      cancelledAt: {
-        type: 'datetime',
+      "cancelledAt": {
+        "type": "datetime"
       },
-      promotedAt: {
-        type: 'datetime',
-      },
+      "promotedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'studentId'],
-        unique: true,
-        name: 'uq_registration',
+        "fields": [
+          "eventId",
+          "studentId"
+        ],
+        "unique": true,
+        "name": "uq_registration"
       },
       {
-        fields: ['eventId', 'state', 'waitlistPosition'],
-        name: 'ix_registration_waitlist',
+        "fields": [
+          "eventId",
+          "state",
+          "waitlistPosition"
+        ],
+        "name": "ix_registration_waitlist"
       },
       {
-        fields: ['studentId', 'state'],
-        name: 'ix_registration_mine',
-      },
-    ],
+        "fields": [
+          "studentId",
+          "state"
+        ],
+        "name": "ix_registration_mine"
+      }
+    ]
   },
-  attendances: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "attendances": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      studentId: {
-        type: 'objectId',
-        required: true,
+      "studentId": {
+        "type": "objectId",
+        "required": true
       },
-      registrationId: {
-        type: 'objectId',
+      "registrationId": {
+        "type": "objectId"
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      checkedInAt: {
-        type: 'datetime',
-        required: true,
+      "checkedInAt": {
+        "type": "datetime",
+        "required": true
       },
-      method: {
-        type: 'attendanceMethod',
-        required: true,
+      "method": {
+        "type": "attendanceMethod",
+        "required": true
       },
-      performedBy: {
-        type: 'objectId',
+      "performedBy": {
+        "type": "objectId"
       },
-      abnormalFlags: {
-        type: 'string[]',
+      "abnormalFlags": {
+        "type": "string[]"
       },
-      correctionReason: {
-        type: 'string',
+      "correctionReason": {
+        "type": "string"
       },
-      finalized: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "finalized": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      finalizedBy: {
-        type: 'objectId',
+      "finalizedBy": {
+        "type": "objectId"
       },
-      finalizedAt: {
-        type: 'datetime',
+      "finalizedAt": {
+        "type": "datetime"
       },
-      unlockedBy: {
-        type: 'objectId',
+      "unlockedBy": {
+        "type": "objectId"
       },
-      unlockReason: {
-        type: 'string',
-      },
+      "unlockReason": {
+        "type": "string"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'studentId'],
-        unique: true,
-        name: 'uq_attendance',
+        "fields": [
+          "eventId",
+          "studentId"
+        ],
+        "unique": true,
+        "name": "uq_attendance"
       },
       {
-        fields: ['eventId', 'finalized'],
-        name: 'ix_attendance_finalize',
+        "fields": [
+          "eventId",
+          "finalized"
+        ],
+        "name": "ix_attendance_finalize"
       },
       {
-        fields: ['studentId', 'checkedInAt'],
-        name: 'ix_attendance_history',
-      },
-    ],
+        "fields": [
+          "studentId",
+          "checkedInAt"
+        ],
+        "name": "ix_attendance_history"
+      }
+    ]
   },
-  postEventReports: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "postEventReports": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      preloadedFigures: {
-        type: 'json',
-        required: true,
+      "preloadedFigures": {
+        "type": "json",
+        "required": true
       },
-      actualResult: {
-        type: 'text',
-        required: true,
+      "actualResult": {
+        "type": "text",
+        "required": true
       },
-      incidents: {
-        type: 'text',
+      "incidents": {
+        "type": "text"
       },
-      lessonsLearned: {
-        type: 'text',
+      "lessonsLearned": {
+        "type": "text"
       },
-      evidence: {
-        type: 'json',
+      "evidence": {
+        "type": "json"
       },
-      state: {
-        type: 'reportState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "reportState",
+        "required": true,
+        "default": "Draft"
       },
-      versionNo: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "versionNo": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      lateFlag: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "lateFlag": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      submittedBy: {
-        type: 'objectId',
+      "submittedBy": {
+        "type": "objectId"
       },
-      submittedAt: {
-        type: 'datetime',
+      "submittedAt": {
+        "type": "datetime"
       },
-      decisionOutcome: {
-        type: 'string',
+      "decisionOutcome": {
+        "type": "string"
       },
-      decisionReason: {
-        type: 'string',
+      "decisionReason": {
+        "type": "string"
       },
-      findingViolationId: {
-        type: 'objectId',
+      "findingViolationId": {
+        "type": "objectId"
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
-      },
+      "decidedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'versionNo'],
-        unique: true,
-        name: 'uq_post_event_report_version',
+        "fields": [
+          "eventId",
+          "versionNo"
+        ],
+        "unique": true,
+        "name": "uq_post_event_report_version"
       },
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_pereport_club_state',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_pereport_club_state"
       },
       {
-        fields: ['state', 'submittedAt'],
-        name: 'ix_pereport_queue',
-      },
-    ],
+        "fields": [
+          "state",
+          "submittedAt"
+        ],
+        "name": "ix_pereport_queue"
+      }
+    ]
   },
-  periodicReports: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "periodicReports": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      periodCode: {
-        type: 'string',
-        required: true,
+      "periodCode": {
+        "type": "string",
+        "required": true
       },
-      periodType: {
-        type: 'string',
-        required: true,
+      "periodType": {
+        "type": "string",
+        "required": true
       },
-      preloadedFigures: {
-        type: 'json',
-        required: true,
+      "preloadedFigures": {
+        "type": "json",
+        "required": true
       },
-      narrative: {
-        type: 'text',
+      "narrative": {
+        "type": "text"
       },
-      nextPlan: {
-        type: 'text',
+      "nextPlan": {
+        "type": "text"
       },
-      evidence: {
-        type: 'json',
+      "evidence": {
+        "type": "json"
       },
-      state: {
-        type: 'reportState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "reportState",
+        "required": true,
+        "default": "Draft"
       },
-      versionNo: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "versionNo": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      lateFlag: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "lateFlag": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      submittedBy: {
-        type: 'objectId',
+      "submittedBy": {
+        "type": "objectId"
       },
-      submittedAt: {
-        type: 'datetime',
+      "submittedAt": {
+        "type": "datetime"
       },
-      decisionOutcome: {
-        type: 'string',
+      "decisionOutcome": {
+        "type": "string"
       },
-      observation: {
-        type: 'string',
+      "observation": {
+        "type": "string"
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      dueAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "dueAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'periodCode'],
-        unique: true,
-        name: 'uq_periodicreport',
+        "fields": [
+          "clubId",
+          "periodCode"
+        ],
+        "unique": true,
+        "name": "uq_periodicreport"
       },
       {
-        fields: ['state', 'dueAt'],
-        name: 'ix_periodicreport_due',
-      },
-    ],
+        "fields": [
+          "state",
+          "dueAt"
+        ],
+        "name": "ix_periodicreport_due"
+      }
+    ]
   },
-  violations: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "violations": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      originType: {
-        type: 'string',
-        required: true,
+      "originType": {
+        "type": "string",
+        "required": true
       },
-      originRefId: {
-        type: 'objectId',
+      "originRefId": {
+        "type": "objectId"
       },
-      severity: {
-        type: 'string',
-        required: true,
+      "severity": {
+        "type": "string",
+        "required": true
       },
-      title: {
-        type: 'string',
-        required: true,
+      "title": {
+        "type": "string",
+        "required": true
       },
-      description: {
-        type: 'text',
+      "description": {
+        "type": "text"
       },
-      evidence: {
-        type: 'json',
+      "evidence": {
+        "type": "json"
       },
-      state: {
-        type: 'violationState',
-        required: true,
-        default: 'Open',
+      "state": {
+        "type": "violationState",
+        "required": true,
+        "default": "Open"
       },
-      clubResponse: {
-        type: 'json',
+      "clubResponse": {
+        "type": "json"
       },
-      decisionReason: {
-        type: 'text',
+      "decisionReason": {
+        "type": "text"
       },
-      decisionEvidence: {
-        type: 'json',
+      "decisionEvidence": {
+        "type": "json"
       },
-      openedBy: {
-        type: 'objectId',
-        required: true,
+      "openedBy": {
+        "type": "objectId",
+        "required": true
       },
-      openedAt: {
-        type: 'datetime',
-        required: true,
+      "openedAt": {
+        "type": "datetime",
+        "required": true
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      responseDueAt: {
-        type: 'datetime',
+      "responseDueAt": {
+        "type": "datetime"
       },
-      resolvedAt: {
-        type: 'datetime',
-      },
+      "resolvedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_violation_club_state',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_violation_club_state"
       },
       {
-        fields: ['state', 'openedAt'],
-        name: 'ix_violation_queue',
-      },
-    ],
+        "fields": [
+          "state",
+          "openedAt"
+        ],
+        "name": "ix_violation_queue"
+      }
+    ]
   },
-  correctiveActions: {
-    fields: {
-      violationId: {
-        type: 'objectId',
-        required: true,
+  "correctiveActions": {
+    "fields": {
+      "violationId": {
+        "type": "objectId",
+        "required": true
       },
-      description: {
-        type: 'text',
-        required: true,
+      "description": {
+        "type": "text",
+        "required": true
       },
-      dueAt: {
-        type: 'datetime',
-        required: true,
+      "dueAt": {
+        "type": "datetime",
+        "required": true
       },
-      state: {
-        type: 'string',
-        required: true,
+      "state": {
+        "type": "string",
+        "required": true
       },
-      linkedLifecycleAction: {
-        type: 'string',
+      "linkedLifecycleAction": {
+        "type": "string"
       },
-      submission: {
-        type: 'json',
+      "submission": {
+        "type": "json"
       },
-      verifiedBy: {
-        type: 'objectId',
+      "verifiedBy": {
+        "type": "objectId"
       },
-      verifiedAt: {
-        type: 'datetime',
-      },
+      "verifiedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['violationId', 'state'],
-        name: 'ix_caction_case',
-      },
-    ],
+        "fields": [
+          "violationId",
+          "state"
+        ],
+        "name": "ix_caction_case"
+      }
+    ]
   },
-  eventBudgets: {
-    fields: {
-      sponsoredItems: {
-        type: 'json',
+  "eventBudgets": {
+    "fields": {
+      "sponsoredItems": {
+        "type": "json"
       },
-      eventId: {
-        type: 'objectId',
-        unique: true,
-        required: true,
+      "eventId": {
+        "type": "objectId",
+        "unique": true,
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      lines: {
-        type: 'json',
-        required: true,
+      "lines": {
+        "type": "json",
+        "required": true
       },
-      requestedTotal: {
-        type: 'decimal',
-        required: true,
+      "requestedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      approvedTotal: {
-        type: 'decimal',
-        required: true,
+      "approvedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      approvedByDecisionId: {
-        type: 'objectId',
-        required: true,
+      "approvedByDecisionId": {
+        "type": "objectId",
+        "required": true
       },
-      disbursedTotal: {
-        type: 'decimal',
-        required: true,
-        default: 0,
+      "disbursedTotal": {
+        "type": "decimal",
+        "required": true,
+        "default": 0
       },
-      settlementDueAt: {
-        type: 'datetime',
+      "settlementDueAt": {
+        "type": "datetime"
       },
-      settlementSubmittedAt: {
-        type: 'datetime',
+      "settlementSubmittedAt": {
+        "type": "datetime"
       },
-      isSettlementLate: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isSettlementLate": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      acceptedTotal: {
-        type: 'decimal',
+      "acceptedTotal": {
+        "type": "decimal"
       },
-      settlementBalance: {
-        type: 'decimal',
+      "settlementBalance": {
+        "type": "decimal"
       },
-      recoveryAmount: {
-        type: 'decimal',
+      "recoveryAmount": {
+        "type": "decimal"
       },
-      recoveryDueAt: {
-        type: 'datetime',
+      "recoveryDueAt": {
+        "type": "datetime"
       },
-      refundedTotal: {
-        type: 'decimal',
-        required: true,
-        default: 0,
+      "refundedTotal": {
+        "type": "decimal",
+        "required": true,
+        "default": 0
       },
-      state: {
-        type: 'eventBudgetState',
-        required: true,
-        default: 'Approved',
+      "state": {
+        "type": "eventBudgetState",
+        "required": true,
+        "default": "Approved"
       },
-      periodCode: {
-        type: 'string',
+      "periodCode": {
+        "type": "string"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_budget_club_state',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_budget_club_state"
+      }
+    ]
   },
-  budgetDisbursements: {
-    fields: {
-      eventBudgetId: {
-        type: 'objectId',
-        required: true,
+  "budgetDisbursements": {
+    "fields": {
+      "eventBudgetId": {
+        "type": "objectId",
+        "required": true
       },
-      kind: {
-        type: 'budgetFlowKind',
-        required: true,
-        default: 'Advance',
+      "kind": {
+        "type": "budgetFlowKind",
+        "required": true,
+        "default": "Advance"
       },
-      amount: {
-        type: 'decimal',
-        required: true,
+      "amount": {
+        "type": "decimal",
+        "required": true
       },
-      disbursedAt: {
-        type: 'datetime',
-        required: true,
+      "disbursedAt": {
+        "type": "datetime",
+        "required": true
       },
-      paymentReference: {
-        type: 'string',
+      "paymentReference": {
+        "type": "string"
       },
-      recordedBy: {
-        type: 'objectId',
-        required: true,
+      "recordedBy": {
+        "type": "objectId",
+        "required": true
       },
-      note: {
-        type: 'string',
-      },
+      "note": {
+        "type": "string"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventBudgetId'],
-        name: 'ix_disb_budget',
-      },
-    ],
+        "fields": [
+          "eventBudgetId"
+        ],
+        "name": "ix_disb_budget"
+      }
+    ]
   },
-  expenses: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "expenses": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      eventBudgetId: {
-        type: 'objectId',
-        required: true,
+      "eventBudgetId": {
+        "type": "objectId",
+        "required": true
       },
-      eventId: {
-        type: 'objectId',
-        required: true,
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      category: {
-        type: 'string',
-        required: true,
+      "category": {
+        "type": "string",
+        "required": true
       },
-      amount: {
-        type: 'decimal',
-        required: true,
+      "amount": {
+        "type": "decimal",
+        "required": true
       },
-      spentAt: {
-        type: 'datetime',
-        required: true,
+      "spentAt": {
+        "type": "datetime",
+        "required": true
       },
-      description: {
-        type: 'text',
+      "description": {
+        "type": "text"
       },
-      isOutOfCategory: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isOutOfCategory": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      isOverRemaining: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isOverRemaining": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      hasEvidence: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "hasEvidence": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      reviewOutcome: {
-        type: 'expenseReviewOutcome',
+      "reviewOutcome": {
+        "type": "expenseReviewOutcome"
       },
-      reviewReason: {
-        type: 'text',
+      "reviewReason": {
+        "type": "text"
       },
-      recordedBy: {
-        type: 'objectId',
-        required: true,
+      "recordedBy": {
+        "type": "objectId",
+        "required": true
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventBudgetId', 'category'],
-        name: 'ix_expense_budget',
+        "fields": [
+          "eventBudgetId",
+          "category"
+        ],
+        "name": "ix_expense_budget"
       },
       {
-        fields: ['clubId', 'spentAt'],
-        name: 'ix_expense_club_period',
+        "fields": [
+          "clubId",
+          "spentAt"
+        ],
+        "name": "ix_expense_club_period"
       },
       {
-        fields: ['eventBudgetId', 'hasEvidence'],
-        name: 'ix_expense_unsupported',
-      },
-    ],
+        "fields": [
+          "eventBudgetId",
+          "hasEvidence"
+        ],
+        "name": "ix_expense_unsupported"
+      }
+    ]
   },
-  financialEvidences: {
-    fields: {
-      expenseId: {
-        type: 'objectId',
-        required: true,
+  "financialEvidences": {
+    "fields": {
+      "expenseId": {
+        "type": "objectId",
+        "required": true
       },
-      type: {
-        type: 'string',
-        required: true,
+      "type": {
+        "type": "string",
+        "required": true
       },
-      externalLink: {
-        type: 'string',
-        required: true,
+      "externalLink": {
+        "type": "string",
+        "required": true
       },
-      uploadedBy: {
-        type: 'objectId',
-        required: true,
+      "uploadedBy": {
+        "type": "objectId",
+        "required": true
       },
-      uploadedAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "uploadedAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['expenseId'],
-        name: 'ix_evidence_expense',
-      },
-    ],
+        "fields": [
+          "expenseId"
+        ],
+        "name": "ix_evidence_expense"
+      }
+    ]
   },
-  financialReconciliations: {
-    fields: {
-      eventBudgetId: {
-        type: 'objectId',
-        unique: true,
-        required: true,
+  "financialReconciliations": {
+    "fields": {
+      "eventBudgetId": {
+        "type": "objectId",
+        "unique": true,
+        "required": true
       },
-      approvedTotal: {
-        type: 'decimal',
-        required: true,
+      "approvedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      disbursedTotal: {
-        type: 'decimal',
-        required: true,
+      "disbursedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      recordedTotal: {
-        type: 'decimal',
-        required: true,
+      "recordedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      supportedTotal: {
-        type: 'decimal',
-        required: true,
+      "supportedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      unsupportedTotal: {
-        type: 'decimal',
-        required: true,
+      "unsupportedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      remaining: {
-        type: 'decimal',
-        required: true,
+      "remaining": {
+        "type": "decimal",
+        "required": true
       },
-      acceptedTotal: {
-        type: 'decimal',
-        required: true,
+      "acceptedTotal": {
+        "type": "decimal",
+        "required": true
       },
-      settlementBalance: {
-        type: 'decimal',
-        required: true,
+      "settlementBalance": {
+        "type": "decimal",
+        "required": true
       },
-      outcome: {
-        type: 'string',
-        required: true,
+      "outcome": {
+        "type": "string",
+        "required": true
       },
-      isOverdueSettlement: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isOverdueSettlement": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      computedAt: {
-        type: 'datetime',
-        required: true,
+      "computedAt": {
+        "type": "datetime",
+        "required": true
       },
-      closedBy: {
-        type: 'objectId',
+      "closedBy": {
+        "type": "objectId"
       },
-      closedAt: {
-        type: 'datetime',
-      },
+      "closedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [],
+    "indexes": []
   },
-  properties: {
-    fields: {
-      code: {
-        type: 'string',
-        unique: true,
-        required: true,
+  "properties": {
+    "fields": {
+      "code": {
+        "type": "string",
+        "unique": true,
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      type: {
-        type: 'string',
-        required: true,
+      "type": {
+        "type": "string",
+        "required": true
       },
-      capacity: {
-        type: 'int',
+      "capacity": {
+        "type": "int"
       },
-      location: {
-        type: 'string',
+      "location": {
+        "type": "string"
       },
-      equipment: {
-        type: 'string[]',
+      "equipment": {
+        "type": "string[]"
       },
-      bookableHours: {
-        type: 'json',
-        required: true,
+      "bookableHours": {
+        "type": "json",
+        "required": true
       },
-      blackouts: {
-        type: 'json',
+      "blackouts": {
+        "type": "json"
       },
-      propertyClass: {
-        type: 'string',
+      "propertyClass": {
+        "type": "string"
       },
-      isActive: {
-        type: 'bool',
-        required: true,
-        default: true,
-      },
+      "isActive": {
+        "type": "bool",
+        "required": true,
+        "default": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['isActive', 'type'],
-        name: 'ix_property_catalogue',
-      },
-    ],
+        "fields": [
+          "isActive",
+          "type"
+        ],
+        "name": "ix_property_catalogue"
+      }
+    ]
   },
-  propertyBookings: {
-    fields: {
-      propertyId: {
-        type: 'objectId',
-        required: true,
+  "propertyBookings": {
+    "fields": {
+      "propertyId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      clubName: {
-        type: 'string',
-        required: true,
+      "clubName": {
+        "type": "string",
+        "required": true
       },
-      eventId: {
-        type: 'objectId',
+      "eventId": {
+        "type": "objectId"
       },
-      purpose: {
-        type: 'text',
-        required: true,
+      "purpose": {
+        "type": "text",
+        "required": true
       },
-      startAt: {
-        type: 'datetime',
-        required: true,
+      "startAt": {
+        "type": "datetime",
+        "required": true
       },
-      endAt: {
-        type: 'datetime',
-        required: true,
+      "endAt": {
+        "type": "datetime",
+        "required": true
       },
-      semesterCode: {
-        type: 'string',
-        required: true,
+      "semesterCode": {
+        "type": "string",
+        "required": true
       },
-      headcount: {
-        type: 'int',
+      "headcount": {
+        "type": "int"
       },
-      state: {
-        type: 'bookingState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "bookingState",
+        "required": true,
+        "default": "Draft"
       },
-      currentVersionNo: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "currentVersionNo": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      conflictResult: {
-        type: 'conflictResult',
+      "conflictResult": {
+        "type": "conflictResult"
       },
-      decisionReason: {
-        type: 'string',
+      "decisionReason": {
+        "type": "string"
       },
-      decidedBy: {
-        type: 'objectId',
+      "decidedBy": {
+        "type": "objectId"
       },
-      decidedAt: {
-        type: 'datetime',
+      "decidedAt": {
+        "type": "datetime"
       },
-      cancelReason: {
-        type: 'string',
+      "cancelReason": {
+        "type": "string"
       },
-      cancelledAt: {
-        type: 'datetime',
+      "cancelledAt": {
+        "type": "datetime"
       },
-      releasedBy: {
-        type: 'string',
+      "releasedBy": {
+        "type": "string"
       },
-      isLateCancellation: {
-        type: 'bool',
-        default: false,
+      "isLateCancellation": {
+        "type": "bool",
+        "default": false
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['propertyId', 'startAt', 'endAt'],
-        name: 'ix_booking_slot',
+        "fields": [
+          "propertyId",
+          "startAt",
+          "endAt"
+        ],
+        "name": "ix_booking_slot"
       },
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_booking_club_state',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_booking_club_state"
       },
       {
-        fields: ['state', 'startAt'],
-        name: 'ix_booking_schedule',
+        "fields": [
+          "state",
+          "startAt"
+        ],
+        "name": "ix_booking_schedule"
       },
       {
-        fields: ['eventId'],
-        name: 'ix_booking_event',
-      },
-    ],
+        "fields": [
+          "eventId"
+        ],
+        "name": "ix_booking_event"
+      }
+    ]
   },
-  eventFeedbacks: {
-    fields: {
-      eventId: {
-        type: 'objectId',
-        required: true,
+  "eventFeedbacks": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
       },
-      attendanceId: {
-        type: 'objectId',
-        required: true,
+      "attendanceId": {
+        "type": "objectId",
+        "required": true
       },
-      studentId: {
-        type: 'objectId',
-        required: true,
+      "studentId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      scores: {
-        type: 'json',
-        required: true,
+      "scores": {
+        "type": "json",
+        "required": true
       },
-      comment: {
-        type: 'text',
+      "comment": {
+        "type": "text"
       },
-      isAnonymous: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isAnonymous": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['eventId', 'studentId'],
-        unique: true,
-        name: 'uq_feedback',
+        "fields": [
+          "eventId",
+          "studentId"
+        ],
+        "unique": true,
+        "name": "uq_feedback"
       },
       {
-        fields: ['clubId', 'submittedAt'],
-        name: 'ix_feedback_club',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "submittedAt"
+        ],
+        "name": "ix_feedback_club"
+      }
+    ]
   },
-  complaints: {
-    fields: {
-      complainantId: {
-        type: 'objectId',
-        required: true,
+  "complaints": {
+    "fields": {
+      "complainantId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      eventId: {
-        type: 'objectId',
+      "eventId": {
+        "type": "objectId"
       },
-      type: {
-        type: 'string',
-        required: true,
+      "type": {
+        "type": "string",
+        "required": true
       },
-      description: {
-        type: 'text',
-        required: true,
+      "description": {
+        "type": "text",
+        "required": true
       },
-      isAnonymous: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isAnonymous": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      evidence: {
-        type: 'json',
+      "evidence": {
+        "type": "json"
       },
-      state: {
-        type: 'complaintState',
-        required: true,
-        default: 'Submitted',
+      "state": {
+        "type": "complaintState",
+        "required": true,
+        "default": "Submitted"
       },
-      triage: {
-        type: 'json',
+      "triage": {
+        "type": "json"
       },
-      clubResponse: {
-        type: 'json',
+      "clubResponse": {
+        "type": "json"
       },
-      closure: {
-        type: 'json',
+      "closure": {
+        "type": "json"
       },
-      forwardedAt: {
-        type: 'datetime',
+      "forwardedAt": {
+        "type": "datetime"
       },
-      respondedAt: {
-        type: 'datetime',
+      "respondedAt": {
+        "type": "datetime"
       },
-      responseDueAt: {
-        type: 'datetime',
+      "responseDueAt": {
+        "type": "datetime"
       },
-      violationId: {
-        type: 'objectId',
+      "violationId": {
+        "type": "objectId"
       },
-      linkedComplaintId: {
-        type: 'objectId',
+      "linkedComplaintId": {
+        "type": "objectId"
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
       },
-      withdrawnAt: {
-        type: 'datetime',
+      "withdrawnAt": {
+        "type": "datetime"
       },
-      closedAt: {
-        type: 'datetime',
-      },
+      "closedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['state', 'submittedAt'],
-        name: 'ix_complaint_queue',
+        "fields": [
+          "state",
+          "submittedAt"
+        ],
+        "name": "ix_complaint_queue"
       },
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_complaint_club',
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_complaint_club"
       },
       {
-        fields: ['complainantId', 'state'],
-        name: 'ix_complaint_mine',
-      },
-    ],
+        "fields": [
+          "complainantId",
+          "state"
+        ],
+        "name": "ix_complaint_mine"
+      }
+    ]
   },
-  evaluationSchemes: {
-    fields: {
-      periodCode: {
-        type: 'string',
-        required: true,
+  "evaluationSchemes": {
+    "fields": {
+      "periodCode": {
+        "type": "string",
+        "required": true
       },
-      version: {
-        type: 'int',
-        required: true,
+      "version": {
+        "type": "int",
+        "required": true
       },
-      state: {
-        type: 'string',
-        required: true,
+      "state": {
+        "type": "string",
+        "required": true
       },
-      totalWeight: {
-        type: 'decimal',
-        required: true,
+      "totalWeight": {
+        "type": "decimal",
+        "required": true
       },
-      thresholds: {
-        type: 'json',
-        required: true,
+      "thresholds": {
+        "type": "json",
+        "required": true
       },
-      activatedBy: {
-        type: 'objectId',
+      "activatedBy": {
+        "type": "objectId"
       },
-      activatedAt: {
-        type: 'datetime',
+      "activatedAt": {
+        "type": "datetime"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['periodCode', 'version'],
-        unique: true,
-        name: 'uq_scheme',
-      },
-    ],
+        "fields": [
+          "periodCode",
+          "version"
+        ],
+        "unique": true,
+        "name": "uq_scheme"
+      }
+    ]
   },
-  evaluationDimensions: {
-    fields: {
-      schemeId: {
-        type: 'objectId',
-        required: true,
+  "evaluationDimensions": {
+    "fields": {
+      "schemeId": {
+        "type": "objectId",
+        "required": true
       },
-      code: {
-        type: 'string',
-        required: true,
+      "code": {
+        "type": "string",
+        "required": true
       },
-      name: {
-        type: 'string',
-        required: true,
+      "name": {
+        "type": "string",
+        "required": true
       },
-      weight: {
-        type: 'decimal',
-        required: true,
+      "weight": {
+        "type": "decimal",
+        "required": true
       },
-      scoringRule: {
-        type: 'json',
-        required: true,
+      "scoringRule": {
+        "type": "json",
+        "required": true
       },
-      allowsManual: {
-        type: 'bool',
-        required: true,
-        default: false,
-      },
+      "allowsManual": {
+        "type": "bool",
+        "required": true,
+        "default": false
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['schemeId', 'code'],
-        unique: true,
-        name: 'uq_dimension',
-      },
-    ],
+        "fields": [
+          "schemeId",
+          "code"
+        ],
+        "unique": true,
+        "name": "uq_dimension"
+      }
+    ]
   },
-  evaluations: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "evaluations": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      periodCode: {
-        type: 'string',
-        required: true,
+      "periodCode": {
+        "type": "string",
+        "required": true
       },
-      schemeId: {
-        type: 'objectId',
-        required: true,
+      "schemeId": {
+        "type": "objectId",
+        "required": true
       },
-      state: {
-        type: 'evaluationState',
-        required: true,
-        default: 'Draft',
+      "state": {
+        "type": "evaluationState",
+        "required": true,
+        "default": "Draft"
       },
-      totalScore: {
-        type: 'decimal',
+      "totalScore": {
+        "type": "decimal"
       },
-      classification: {
-        type: 'string',
+      "classification": {
+        "type": "string"
       },
-      revisionNo: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "revisionNo": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      generatedAt: {
-        type: 'datetime',
+      "generatedAt": {
+        "type": "datetime"
       },
-      finalizedBy: {
-        type: 'objectId',
+      "finalizedBy": {
+        "type": "objectId"
       },
-      finalizedAt: {
-        type: 'datetime',
+      "finalizedAt": {
+        "type": "datetime"
       },
-      publishedAt: {
-        type: 'datetime',
+      "publishedAt": {
+        "type": "datetime"
       },
-      contestViolationId: {
-        type: 'objectId',
-      },
+      "contestViolationId": {
+        "type": "objectId"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'periodCode', 'revisionNo'],
-        unique: true,
-        name: 'uq_evaluation',
+        "fields": [
+          "clubId",
+          "periodCode",
+          "revisionNo"
+        ],
+        "unique": true,
+        "name": "uq_evaluation"
       },
       {
-        fields: ['periodCode', 'state'],
-        name: 'ix_evaluation_period',
-      },
-    ],
+        "fields": [
+          "periodCode",
+          "state"
+        ],
+        "name": "ix_evaluation_period"
+      }
+    ]
   },
-  evaluationDimensionResults: {
-    fields: {
-      evaluationId: {
-        type: 'objectId',
-        required: true,
+  "evaluationDimensionResults": {
+    "fields": {
+      "evaluationId": {
+        "type": "objectId",
+        "required": true
       },
-      dimensionCode: {
-        type: 'string',
-        required: true,
+      "dimensionCode": {
+        "type": "string",
+        "required": true
       },
-      score: {
-        type: 'decimal',
+      "score": {
+        "type": "decimal"
       },
-      isInsufficientData: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isInsufficientData": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      isManual: {
-        type: 'bool',
-        required: true,
-        default: false,
+      "isManual": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
-      justification: {
-        type: 'text',
+      "justification": {
+        "type": "text"
       },
-      evidence: {
-        type: 'json',
-        required: true,
-      },
+      "evidence": {
+        "type": "json",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['evaluationId', 'dimensionCode'],
-        unique: true,
-        name: 'uq_dimresult',
-      },
-    ],
+        "fields": [
+          "evaluationId",
+          "dimensionCode"
+        ],
+        "unique": true,
+        "name": "uq_dimresult"
+      }
+    ]
   },
-  approvalTasks: {
-    fields: {
-      entityType: {
-        type: 'string',
-        required: true,
+  "approvalTasks": {
+    "fields": {
+      "entityType": {
+        "type": "string",
+        "required": true
       },
-      entityId: {
-        type: 'objectId',
-        required: true,
+      "entityId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      title: {
-        type: 'string',
-        required: true,
+      "title": {
+        "type": "string",
+        "required": true
       },
-      state: {
-        type: 'approvalTaskState',
-        required: true,
-        default: 'Open',
+      "state": {
+        "type": "approvalTaskState",
+        "required": true,
+        "default": "Open"
       },
-      assigneeId: {
-        type: 'objectId',
+      "assigneeId": {
+        "type": "objectId"
       },
-      slaDueAt: {
-        type: 'datetime',
+      "slaDueAt": {
+        "type": "datetime"
       },
-      routingRuleSetId: {
-        type: 'objectId',
+      "routingRuleSetId": {
+        "type": "objectId"
       },
-      routingRuleId: {
-        type: 'string',
+      "routingRuleId": {
+        "type": "string"
       },
-      requiredLevel: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "requiredLevel": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      currentLevel: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "currentLevel": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      openedAt: {
-        type: 'datetime',
-        required: true,
+      "openedAt": {
+        "type": "datetime",
+        "required": true
       },
-      closedAt: {
-        type: 'datetime',
-      },
+      "closedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['entityType', 'entityId'],
-        name: 'ix_task_entity',
+        "fields": [
+          "entityType",
+          "entityId"
+        ],
+        "name": "ix_task_entity"
       },
       {
-        fields: ['state', 'assigneeId', 'slaDueAt'],
-        name: 'ix_task_inbox',
-      },
-    ],
+        "fields": [
+          "state",
+          "assigneeId",
+          "slaDueAt"
+        ],
+        "name": "ix_task_inbox"
+      }
+    ]
   },
-  approvalDecisions: {
-    fields: {
-      approvalTaskId: {
-        type: 'objectId',
-        required: true,
+  "approvalDecisions": {
+    "fields": {
+      "approvalTaskId": {
+        "type": "objectId",
+        "required": true
       },
-      level: {
-        type: 'int',
-        required: true,
-        default: 1,
+      "level": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
-      outcome: {
-        type: 'reviewOutcome',
-        required: true,
+      "outcome": {
+        "type": "reviewOutcome",
+        "required": true
       },
-      reason: {
-        type: 'text',
+      "reason": {
+        "type": "text"
       },
-      comments: {
-        type: 'json',
+      "comments": {
+        "type": "json"
       },
-      reviewNote: {
-        type: 'text',
+      "reviewNote": {
+        "type": "text"
       },
-      actorId: {
-        type: 'objectId',
-        required: true,
+      "actorId": {
+        "type": "objectId",
+        "required": true
       },
-      at: {
-        type: 'datetime',
-        required: true,
-      },
+      "at": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['approvalTaskId', 'level'],
-        unique: true,
-        name: 'uq_decision_task_level',
-      },
-    ],
+        "fields": [
+          "approvalTaskId",
+          "level"
+        ],
+        "unique": true,
+        "name": "uq_decision_task_level"
+      }
+    ]
   },
-  notifications: {
-    fields: {
-      recipientUserId: {
-        type: 'objectId',
-        required: true,
+  "notifications": {
+    "fields": {
+      "recipientUserId": {
+        "type": "objectId",
+        "required": true
       },
-      eventCode: {
-        type: 'string',
-        required: true,
+      "eventCode": {
+        "type": "string",
+        "required": true
       },
-      entityType: {
-        type: 'string',
+      "entityType": {
+        "type": "string"
       },
-      entityId: {
-        type: 'objectId',
+      "entityId": {
+        "type": "objectId"
       },
-      channels: {
-        type: 'string[]',
-        required: true,
+      "channels": {
+        "type": "string[]",
+        "required": true
       },
-      payload: {
-        type: 'json',
-        required: true,
+      "payload": {
+        "type": "json",
+        "required": true
       },
-      state: {
-        type: 'notificationState',
-        required: true,
-        default: 'Queued',
+      "state": {
+        "type": "notificationState",
+        "required": true,
+        "default": "Queued"
       },
-      dueAt: {
-        type: 'datetime',
-        required: true,
+      "dueAt": {
+        "type": "datetime",
+        "required": true
       },
-      attempts: {
-        type: 'int',
-        required: true,
-        default: 0,
+      "attempts": {
+        "type": "int",
+        "required": true,
+        "default": 0
       },
-      lastError: {
-        type: 'string',
+      "lastError": {
+        "type": "string"
       },
-      readAt: {
-        type: 'datetime',
+      "readAt": {
+        "type": "datetime"
       },
-      clubId: {
-        type: 'objectId',
+      "clubId": {
+        "type": "objectId"
       },
-      createdAt: {
-        type: 'datetime',
-        required: true,
-      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['state', 'dueAt'],
-        name: 'ix_outbox_drain',
+        "fields": [
+          "state",
+          "dueAt"
+        ],
+        "name": "ix_outbox_drain"
       },
       {
-        fields: ['recipientUserId', 'readAt'],
-        name: 'ix_notification_inbox',
+        "fields": [
+          "recipientUserId",
+          "readAt"
+        ],
+        "name": "ix_notification_inbox"
       },
       {
-        fields: ['recipientUserId', 'createdAt'],
-        name: 'ix_notification_recent',
+        "fields": [
+          "recipientUserId",
+          "createdAt"
+        ],
+        "name": "ix_notification_recent"
       },
       {
-        fields: ['recipientUserId', 'clubId', 'createdAt'],
-        name: 'ix_notification_club',
-      },
-    ],
+        "fields": [
+          "recipientUserId",
+          "clubId",
+          "createdAt"
+        ],
+        "name": "ix_notification_club"
+      }
+    ]
   },
-  emailDeliveryLogs: {
-    fields: {
-      notificationId: {
-        type: 'objectId',
-        required: true,
+  "emailDeliveryLogs": {
+    "fields": {
+      "notificationId": {
+        "type": "objectId",
+        "required": true
       },
-      toEmail: {
-        type: 'string',
-        required: true,
+      "toEmail": {
+        "type": "string",
+        "required": true
       },
-      status: {
-        type: 'string',
-        required: true,
+      "status": {
+        "type": "string",
+        "required": true
       },
-      attempt: {
-        type: 'int',
-        required: true,
+      "attempt": {
+        "type": "int",
+        "required": true
       },
-      providerResponse: {
-        type: 'string',
+      "providerResponse": {
+        "type": "string"
       },
-      at: {
-        type: 'datetime',
-        required: true,
-      },
+      "at": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['notificationId'],
-        name: 'ix_maillog_notification',
-      },
-    ],
+        "fields": [
+          "notificationId"
+        ],
+        "name": "ix_maillog_notification"
+      }
+    ]
   },
-  auditLogs: {
-    fields: {
-      entityType: {
-        type: 'string',
-        required: true,
+  "uploadedAssets": {
+    "fields": {
+      "assetId": {
+        "type": "string",
+        "required": true
       },
-      entityId: {
-        type: 'objectId',
-        required: true,
+      "kind": {
+        "type": "string",
+        "required": true
       },
-      action: {
-        type: 'string',
-        required: true,
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      actorId: {
-        type: 'objectId',
+      "uploadedAt": {
+        "type": "datetime",
+        "required": true
       },
-      actorRole: {
-        type: 'string',
-      },
-      before: {
-        type: 'json',
-      },
-      after: {
-        type: 'json',
-      },
-      changeDiff: {
-        type: 'json',
-      },
-      reason: {
-        type: 'string',
-      },
-      correlationId: {
-        type: 'string',
-        required: true,
-      },
-      at: {
-        type: 'datetime',
-        required: true,
-      },
+      "referencedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['entityType', 'entityId', 'at'],
-        name: 'ix_audit_entity',
+        "fields": [
+          "assetId"
+        ],
+        "unique": true,
+        "name": "uq_uploaded_asset"
       },
       {
-        fields: ['correlationId'],
-        name: 'ix_audit_correlation',
-      },
-      {
-        fields: ['actorId', 'at'],
-        name: 'ix_audit_actor',
-      },
-    ],
+        "fields": [
+          "kind",
+          "referencedAt",
+          "uploadedAt"
+        ],
+        "name": "ix_uploaded_asset_cleanup"
+      }
+    ]
   },
-  suspensionRequests: {
-    fields: {
-      clubId: {
-        type: 'objectId',
-        required: true,
+  "auditLogs": {
+    "fields": {
+      "entityType": {
+        "type": "string",
+        "required": true
       },
-      reason: {
-        type: 'text',
-        required: true,
+      "entityId": {
+        "type": "objectId",
+        "required": true
       },
-      until: {
-        type: 'datetime',
-        required: true,
+      "action": {
+        "type": "string",
+        "required": true
       },
-      obligationsPlan: {
-        type: 'text',
-        required: true,
+      "actorId": {
+        "type": "objectId"
       },
-      recoveryPlan: {
-        type: 'text',
-        required: true,
+      "actorRole": {
+        "type": "string"
       },
-      acknowledgedImpactIds: {
-        type: 'json',
-        required: true,
+      "before": {
+        "type": "json"
       },
-      state: {
-        type: 'string',
-        required: true,
-        default: 'Pending',
+      "after": {
+        "type": "json"
       },
-      submittedBy: {
-        type: 'objectId',
-        required: true,
+      "changeDiff": {
+        "type": "json"
       },
-      submittedAt: {
-        type: 'datetime',
-        required: true,
+      "reason": {
+        "type": "string"
       },
-      decisionReason: {
-        type: 'text',
+      "correlationId": {
+        "type": "string",
+        "required": true
       },
-      decidedBy: {
-        type: 'objectId',
-      },
-      decidedAt: {
-        type: 'datetime',
-      },
+      "at": {
+        "type": "datetime",
+        "required": true
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['clubId', 'state'],
-        name: 'ix_suspension_request_club_state',
+        "fields": [
+          "entityType",
+          "entityId",
+          "at"
+        ],
+        "name": "ix_audit_entity"
       },
-    ],
+      {
+        "fields": [
+          "correlationId"
+        ],
+        "name": "ix_audit_correlation"
+      },
+      {
+        "fields": [
+          "actorId",
+          "at"
+        ],
+        "name": "ix_audit_actor"
+      }
+    ]
   },
-  membershipReconfirmations: {
-    fields: {
-      membershipId: {
-        type: 'objectId',
-        required: true,
+  "suspensionRequests": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
       },
-      clubId: {
-        type: 'objectId',
-        required: true,
+      "reason": {
+        "type": "text",
+        "required": true
       },
-      periodCode: {
-        type: 'string',
-        required: true,
+      "until": {
+        "type": "datetime",
+        "required": true
       },
-      openedAt: {
-        type: 'datetime',
-        required: true,
+      "obligationsPlan": {
+        "type": "text",
+        "required": true
       },
-      dueAt: {
-        type: 'datetime',
-        required: true,
+      "recoveryPlan": {
+        "type": "text",
+        "required": true
       },
-      state: {
-        type: 'string',
-        required: true,
-        default: 'Pending',
+      "acknowledgedImpactIds": {
+        "type": "json",
+        "required": true
       },
-      confirmedAt: {
-        type: 'datetime',
+      "state": {
+        "type": "string",
+        "required": true,
+        "default": "Pending"
       },
-      confirmedBy: {
-        type: 'objectId',
+      "submittedBy": {
+        "type": "objectId",
+        "required": true
       },
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "decisionReason": {
+        "type": "text"
+      },
+      "decidedBy": {
+        "type": "objectId"
+      },
+      "decidedAt": {
+        "type": "datetime"
+      }
     },
-    indexes: [
+    "indexes": [
       {
-        fields: ['membershipId', 'periodCode'],
-        unique: true,
-        name: 'uq_membership_reconfirmation_period',
-      },
-      {
-        fields: ['state', 'dueAt'],
-        name: 'ix_membership_reconfirmation_due',
-      },
-    ],
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_suspension_request_club_state"
+      }
+    ]
   },
-} as const
+  "membershipReconfirmations": {
+    "fields": {
+      "membershipId": {
+        "type": "objectId",
+        "required": true
+      },
+      "clubId": {
+        "type": "objectId",
+        "required": true
+      },
+      "periodCode": {
+        "type": "string",
+        "required": true
+      },
+      "openedAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "dueAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "state": {
+        "type": "string",
+        "required": true,
+        "default": "Pending"
+      },
+      "confirmedAt": {
+        "type": "datetime"
+      },
+      "confirmedBy": {
+        "type": "objectId"
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "membershipId",
+          "periodCode"
+        ],
+        "unique": true,
+        "name": "uq_membership_reconfirmation_period"
+      },
+      {
+        "fields": [
+          "state",
+          "dueAt"
+        ],
+        "name": "ix_membership_reconfirmation_due"
+      }
+    ]
+  }
+} as const;

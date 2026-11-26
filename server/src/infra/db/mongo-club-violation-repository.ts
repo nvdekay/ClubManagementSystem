@@ -3,7 +3,7 @@ import mongoose, { Types, type ClientSession } from 'mongoose'
 import type { ClubViolationRepository } from '../../domain/club-violation.js'
 import { DomainError } from '../../domain/errors.js'
 import { assertEventWriteAccess } from './club-event-access.js'
-import { queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
 import { mongoViolationRepository } from './mongo-violation-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
 const visible = [
@@ -98,11 +98,13 @@ export function mongoClubViolationRepository(): ClubViolationRepository {
         await queueNotifications(
           session,
           [(doc.clubResponse as { requestedBy: unknown }).requestedBy],
-          'VIOLATION_RESPONSE_SUBMITTED',
-          'Violation',
-          caseId,
-          { clubId },
-          now,
+          {
+            eventCode: 'VIOLATION_RESPONSE_SUBMITTED',
+            entityType: 'Violation',
+            entityId: caseId,
+            payload: { clubId },
+            now,
+          },
         )
       })
     },
@@ -151,15 +153,13 @@ export function mongoClubViolationRepository(): ClubViolationRepository {
           { actionId, ...input },
           now,
         )
-        await queueNotifications(
-          session,
-          [doc.decidedBy, doc.openedBy],
-          'CORRECTIVE_ACTION_SUBMITTED',
-          'Violation',
-          caseId,
-          { actionId },
+        await queueNotifications(session, [doc.decidedBy, doc.openedBy], {
+          eventCode: 'CORRECTIVE_ACTION_SUBMITTED',
+          entityType: 'Violation',
+          entityId: caseId,
+          payload: { actionId },
           now,
-        )
+        })
       })
     },
   }

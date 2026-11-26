@@ -107,7 +107,7 @@ của CLB cần `club.profile.manage`, tức chỉ Club Leader đọc và sửa.
 
 ## 6. MongoDB và tính nguyên tử
 
-DBML có 54 bảng (collection nghiệp vụ); `authSessions` là collection vận hành ngoài DBML, tổng cộng 55 collection. Repository
+DBML có 55 bảng (collection nghiệp vụ, gồm `uploadedAssets` thêm 26/11/2026); `authSessions` là collection vận hành ngoài DBML, tổng cộng 56 collection. Repository
 thực sự dùng multi-document transaction, vì vậy Mongo phải hỗ trợ replica set. Unique index,
 guarded update và khoá/version trong transaction bảo vệ race ở slot, capacity và quyết định.
 Không giữ tuyên bố cũ “không dùng transaction đa document”.

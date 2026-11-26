@@ -7,7 +7,7 @@ import {
 } from '../../domain/club-invitation.js'
 import { DomainError } from '../../domain/errors.js'
 import { assertEventWriteAccess } from './club-event-access.js'
-import { queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -122,15 +122,13 @@ export function mongoClubInvitationRepository(): ClubInvitationRepository {
           ],
           { session },
         )
-        await queueNotifications(
-          session,
-          [invitation.invitedBy],
-          action,
-          'EventInvitation',
-          id,
-          { eventId: String(event._id), clubId, title: event.title, ...input },
+        await queueNotifications(session, [invitation.invitedBy], {
+          eventCode: action,
+          entityType: 'EventInvitation',
+          entityId: id,
+          payload: { eventId: String(event._id), clubId, title: event.title, ...input },
           now,
-        )
+        })
       })
       return mapped((await m.eventInvitations!.findOne({ _id: id, clubId: club }).lean())!)
     },

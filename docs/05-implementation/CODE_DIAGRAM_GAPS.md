@@ -30,7 +30,7 @@ Ngày 07/11/2026 người dùng chọn để nguyên các diagram phụ còn v�
 | `UCMS_Organization_and_Flows.drawio` | Khớp: hai role cố định, UC23 rút, có `ICPDP Head` (system role `ICPDP_HEAD`, chỉ cấu hình rule UC05); duyệt một cấp |
 | `UCMS_UseCase_ByActor.drawio` | Khớp: nhóm `Manage club roles` / CRUD role của UC23 đã bỏ (13/11/2026) |
 | `UCMS_Screen_Flow.drawio` | Khớp: đã thay góp ý cũ bằng `Complaints` (sinh viên, CLB, ICPDP), có `Approval routing` và `Event defense room` |
-| `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Khớp DBML 54 bảng: có `routingRuleSets`, `eventDefenseSessions`, khiếu nại liên kết `Violation`. `requiredLevel`/`currentLevel`/`level` vẫn vẽ vì còn trong DBML cho dữ liệu cũ, không còn dùng từ 09/11/2026 |
+| `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Khớp DBML 54 bảng (chưa vẽ `uploadedAssets` — bảng vận hành thêm 26/11/2026 cho job dọn ảnh minh chứng): có `routingRuleSets`, `eventDefenseSessions`, khiếu nại liên kết `Violation`. `requiredLevel`/`currentLevel`/`level` vẫn vẽ vì còn trong DBML cho dữ liệu cũ, không còn dùng từ 09/11/2026 |
 | `UCMS_Sequence_Diagrams.drawio` | Khớp: duyệt một cấp; hình 06 thêm trang buổi bảo vệ (BR63) |
 | `UCMS_Security_Architecture.drawio` | Khớp: có audit `ACCESS_DENIED` (SEC-08) |
 | `../06-user-guide/` | Markdown đã cập nhật (07/11 và 14/11/2026); ảnh chụp từ 13/10/2026, trước đợt làm lại giao diện 11/2026; `GUIDE_BOOK.pdf`/`GUIDE_BOOK.html` chưa dựng lại sau các thay đổi đó |

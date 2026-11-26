@@ -14,7 +14,6 @@ import {
   type EventDefenseSession,
 } from '../../domain/event-defense.js'
 import type { EventProposalReviewRepository } from '../../domain/event-proposal-review.js'
-import { notificationChannels } from '../../domain/notification.js'
 import { cancelEventInSession } from './event-cancellation.js'
 import {
   applyProposalDecisionInSession,
@@ -24,7 +23,7 @@ import {
   oid,
 } from './event-defense-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { queueNotification } from './repo-helpers.js'
+import { queueNotification, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ACTIVE_STATES_ARRAY = [...ACTIVE_DEFENSE_STATES]
@@ -135,25 +134,13 @@ async function notifyRecipients(
   now: Date,
   session: ClientSession,
 ): Promise<void> {
-  if (!recipientIds.length) {
-    return
-  }
-  const unique = [...new Map(recipientIds.map((id) => [String(id), id])).values()]
-  await m.notifications!.create(
-    unique.map((recipientUserId) => ({
-      recipientUserId,
-      eventCode,
-      entityType: 'Event',
-      entityId: eventId,
-      channels: notificationChannels(eventCode),
-      payload,
-      state: 'Queued',
-      dueAt: now,
-      attempts: 0,
-      createdAt: now,
-    })),
-    { session, ordered: true },
-  )
+  await queueNotifications(session, recipientIds, {
+    eventCode,
+    entityType: 'Event',
+    entityId: eventId,
+    payload,
+    now,
+  })
 }
 
 // Repository phiên bảo vệ đề xuất sự kiện trước ICPDP
@@ -544,6 +531,18 @@ export function mongoEventDefenseRepository(
             /^ - | - $/g,
             '',
           )
+          // BR63 (26/11/2026): CLB tự đề xuất giờ mới nên chấp nhận dời lịch coi như CLB đã xác nhận;
+          // người xác nhận là người đã gửi yêu cầu dời lịch gần nhất.
+          const request = await audits
+            .findOne({
+              entityType: 'Event',
+              entityId: id,
+              action: 'EVENT_DEFENSE_RESCHEDULE_REQUESTED',
+            })
+            .sort({ at: -1 })
+            .select({ actorId: 1 })
+            .session(session)
+            .lean()
           await sessions.updateOne(
             { _id: updatedId, state: 'RESCHEDULE_REQUESTED' },
             {
@@ -553,11 +552,16 @@ export function mongoEventDefenseRepository(
                 durationMinutes,
                 propertyId: propId,
                 propertyName,
-                state: 'SCHEDULED',
+                state: 'CONFIRMED',
+                confirmedAt: now,
+                ...(request?.actorId ? { confirmedBy: request.actorId } : {}),
                 ...(input.note ? { note: input.note } : {}),
                 updatedAt: now,
               },
-              $unset: { rescheduleReason: '', confirmedAt: '', confirmedBy: '' },
+              $unset: {
+                rescheduleReason: '',
+                ...(request?.actorId ? {} : { confirmedBy: '' }),
+              },
             },
             { session },
           )
@@ -569,7 +573,13 @@ export function mongoEventDefenseRepository(
                 action: 'EVENT_DEFENSE_RESCHEDULE_ACCEPTED',
                 actorId,
                 actorRole: 'ICPDP_OFFICER',
-                after: { defenseId: updatedId, startAt: input.startAt, endAt, propertyName },
+                after: {
+                  defenseId: updatedId,
+                  state: 'CONFIRMED',
+                  startAt: input.startAt,
+                  endAt,
+                  propertyName,
+                },
                 correlationId: randomUUID(),
                 at: now,
               },

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import type { ApplicationExpiryRepository } from '../../domain/application-expiry.js'
-import { queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 // Repository hết hạn hồ sơ lập CLB quá hạn chỉnh sửa
 export function mongoApplicationExpiryRepository(): ApplicationExpiryRepository {
@@ -44,15 +44,13 @@ export function mongoApplicationExpiryRepository(): ApplicationExpiryRepository 
             ],
             { session },
           )
-          await queueNotifications(
-            session,
-            [doc.founderUserId],
-            'CLUB_APPLICATION_EXPIRED',
-            'ClubApplication',
-            id as Types.ObjectId,
-            { clubName: doc.clubName },
+          await queueNotifications(session, [doc.founderUserId], {
+            eventCode: 'CLUB_APPLICATION_EXPIRED',
+            entityType: 'ClubApplication',
+            entityId: id as Types.ObjectId,
+            payload: { clubName: doc.clubName },
             now,
-          )
+          })
           return true
         })
         if (changed) {

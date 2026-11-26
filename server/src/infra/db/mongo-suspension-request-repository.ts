@@ -10,7 +10,8 @@ import {
 } from '../../domain/suspension-request.js'
 import { assertAccountabilityOfficer, openAccountabilityTask } from './accountability-workflow.js'
 import { assertEventWriteAccess } from './club-event-access.js'
-import { queueNotifications, clubBoardUserIds } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { mongoClubLifecycleRepository } from './mongo-club-lifecycle-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
 type Doc = Record<string, unknown>
@@ -171,15 +172,13 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
           .userRoleAssignments!.find({ roleId: { $in: roleIds }, revokedAt: null })
           .session(session)
           .distinct('userId')
-        await queueNotifications(
-          session,
-          officerIds,
-          'SUSPENSION_REQUEST_SUBMITTED',
-          'SuspensionRequest',
-          id,
-          { clubId },
+        await queueNotifications(session, officerIds, {
+          eventCode: 'SUSPENSION_REQUEST_SUBMITTED',
+          entityType: 'SuspensionRequest',
+          entityId: id,
+          payload: { clubId },
           now,
-        )
+        })
       })
       const [created] = await mapped([(await m.suspensionRequests!.findById(id).lean())!])
       return created!
@@ -260,11 +259,13 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
             request.submittedBy,
             ...(await clubBoardUserIds(request.clubId as Types.ObjectId, session)),
           ],
-          'SUSPENSION_REQUEST_REJECTED',
-          'SuspensionRequest',
-          requestId,
-          { reason },
-          now,
+          {
+            eventCode: 'SUSPENSION_REQUEST_REJECTED',
+            entityType: 'SuspensionRequest',
+            entityId: requestId,
+            payload: { reason },
+            now,
+          },
         )
       })
     },

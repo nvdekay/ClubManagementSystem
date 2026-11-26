@@ -20,7 +20,8 @@ import {
   type PeriodFigures,
   type ReturnSection,
 } from '../../domain/periodic-report.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 import { insertViolationCase } from './violation-case.js'
 
@@ -614,20 +615,18 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
             const clubId = club._id as Types.ObjectId
             const recipients = await clubBoardUserIds(clubId, session)
             if (recipients.length) {
-              await queueNotifications(
-                session,
-                recipients,
-                'PERIODIC_REPORT_OPENED',
-                'Club',
-                clubId,
-                {
+              await queueNotifications(session, recipients, {
+                eventCode: 'PERIODIC_REPORT_OPENED',
+                entityType: 'Club',
+                entityId: clubId,
+                payload: {
                   clubId: String(clubId),
                   periodCode: input.periodCode,
                   dueAt: input.dueAt,
                   ...(input.announcement ? { announcement: input.announcement } : {}),
                 },
                 now,
-              )
+              })
             }
           }
         }
@@ -750,18 +749,20 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
             ...(await clubBoardUserIds(report.clubId as Types.ObjectId, session)),
             report.submittedBy,
           ],
-          action,
-          'PeriodicReport',
-          id,
           {
-            periodCode: report.periodCode,
-            outcome: input.outcome,
-            reason: input.reason,
-            sections: input.sections,
-            observation: input.observation,
-            ...(input.resubmitDueAt ? { resubmitDueAt: input.resubmitDueAt } : {}),
+            eventCode: action,
+            entityType: 'PeriodicReport',
+            entityId: id,
+            payload: {
+              periodCode: report.periodCode,
+              outcome: input.outcome,
+              reason: input.reason,
+              sections: input.sections,
+              observation: input.observation,
+              ...(input.resubmitDueAt ? { resubmitDueAt: input.resubmitDueAt } : {}),
+            },
+            now,
           },
-          now,
         )
       })
       return required(id)
@@ -825,15 +826,13 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
           ],
           { session },
         )
-        await queueNotifications(
-          session,
-          await clubBoardUserIds(club, session),
-          'PERIODIC_REPORT_MISSING',
-          'Club',
-          club,
-          { periodCode, violationId },
+        await queueNotifications(session, await clubBoardUserIds(club, session), {
+          eventCode: 'PERIODIC_REPORT_MISSING',
+          entityType: 'Club',
+          entityId: club,
+          payload: { periodCode, violationId },
           now,
-        )
+        })
       })
       return { violationId: String(violationId) }
     },

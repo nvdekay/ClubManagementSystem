@@ -10,9 +10,9 @@ import {
   type RoomAllocationConflict,
   type RoomAllocationRepository,
 } from '../../domain/room-allocation.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { oid } from './repo-helpers.js'
+import { oid, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ALLOCATED = 'ROOM_ALLOCATED'
@@ -351,20 +351,18 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
           bookingIds: docs.map((doc) => String(doc._id)),
         }
         await audit(id, ALLOCATED, officerId, { ...record, skipped: plan.skipped }, now, session)
-        await queueNotifications(
-          session,
-          await clubBoardUserIds(clubId, session),
-          ALLOCATED,
-          ROOM_ALLOCATION_ENTITY,
-          id,
-          {
+        await queueNotifications(session, await clubBoardUserIds(clubId, session), {
+          eventCode: ALLOCATED,
+          entityType: ROOM_ALLOCATION_ENTITY,
+          entityId: id,
+          payload: {
             semesterCode: input.semesterCode,
             propertyName: String(property.name),
             weekday: input.weekday,
             slot: input.slot,
           },
           now,
-        )
+        })
       })
       return (await find(String(id)))!
     },
@@ -418,15 +416,18 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
           session,
           reason,
         )
-        await queueNotifications(
-          session,
-          await clubBoardUserIds(oid(item.clubId), session),
-          REVOKED,
-          ROOM_ALLOCATION_ENTITY,
-          oid(id),
-          { semesterCode: item.semesterCode, weekday: item.weekday, slot: item.slot, reason },
+        await queueNotifications(session, await clubBoardUserIds(oid(item.clubId), session), {
+          eventCode: REVOKED,
+          entityType: ROOM_ALLOCATION_ENTITY,
+          entityId: oid(id),
+          payload: {
+            semesterCode: item.semesterCode,
+            weekday: item.weekday,
+            slot: item.slot,
+            reason,
+          },
           now,
-        )
+        })
       })
       return (await find(id))!
     },

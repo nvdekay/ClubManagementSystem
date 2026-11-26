@@ -280,246 +280,335 @@ export function changeSponsoredItem(
   }
   switch (action.kind) {
     case 'recordAdvance':
-      if (
-        item.fundingDecision !== 'BEFORE_EVENT' ||
-        item.status !== 'AwaitingAdvance' ||
-        item.advancedAt
-      ) {
-        throw new DomainError('this item is not awaiting a pre-event advance', 'conflict')
-      }
-      next.paymentChannel = 'VIA_OFFICER_ADVANCE'
-      next.status = 'AdvanceSent'
-      next.advanceAmount = item.approvedAmount
-      next.advancedAt = now.toISOString()
-      if (actorId) {
-        next.advancedBy = actorId
-      }
+      recordAdvance(item, next, now, actorId)
       break
     case 'confirmAdvanceReceived':
-      if (
-        item.fundingDecision !== 'BEFORE_EVENT' ||
-        item.status !== 'AdvanceSent' ||
-        item.advanceReceivedAt
-      ) {
-        throw new DomainError('this item is not awaiting advance receipt confirmation', 'conflict')
-      }
-      next.paymentChannel = 'VIA_OFFICER_ADVANCE'
-      next.status = 'Draft'
-      next.advanceReceivedAt = now.toISOString()
-      if (actorId) {
-        next.advanceReceivedBy = actorId
-      }
+      confirmAdvanceReceived(item, next, now, actorId)
       break
     case 'save':
-      if (
-        !Number.isSafeInteger(action.amount) ||
-        action.amount <= 0 ||
-        action.description.length > 2000
-      ) {
-        throw new DomainError('invalid expense fields', 'validation')
-      }
-      next.amount = action.amount
-      next.description = action.description.trim()
-      if (item.fundingDecision === 'AFTER_EVENT') {
-        if (item.approvedAmount >= DIRECT_VENDOR_THRESHOLD_VND) {
-          if (action.paymentChannel === 'VIA_OFFICER_REIMBURSE') {
-            throw new DomainError(
-              'items of 5,000,000 VND or more require a direct vendor contract',
-              'validation',
-            )
-          }
-          next.paymentChannel = 'DIRECT_VENDOR'
-        } else {
-          next.paymentChannel = action.paymentChannel ?? resolvePaymentChannel(item)
-        }
-        if (next.paymentChannel === 'DIRECT_VENDOR') {
-          if (action.vendorBankInfo !== undefined) {
-            next.vendorBankInfo = normalizeVendorBankInfo(action.vendorBankInfo)
-          }
-        } else {
-          delete next.vendorBankInfo
-        }
-      } else if (item.fundingDecision === 'BEFORE_EVENT') {
-        next.paymentChannel = 'VIA_OFFICER_ADVANCE'
-        delete next.vendorBankInfo
-      }
+      saveExpense(item, next, action)
       break
     case 'image':
-      if (item.images.length >= MAX_INVOICE_IMAGES) {
-        throw new DomainError('at most five attachments per item', 'conflict')
-      }
-      if (item.images.some((image) => image.digest === action.image.digest)) {
-        throw new DomainError('duplicate invoice attachment', 'conflict')
-      }
-      next.images.push(action.image)
+      addInvoiceImage(item, next, action.image)
       break
     case 'removeImage':
-      if (!item.images.some((image) => image.id === action.imageId)) {
-        throw new DomainError('invoice attachment not found', 'not_found')
-      }
-      next.images = item.images.filter((image) => image.id !== action.imageId)
+      removeInvoiceImage(item, next, action.imageId)
       break
     case 'submit':
-      assertInvoiceSubmission(item, now)
-      next.paymentChannel = resolvePaymentChannel(item)
-      next.status = 'Submitted'
-      next.submittedAt = now.toISOString()
+      submitInvoice(item, next, now)
       break
     case 'return':
-      if (item.status !== 'Submitted' || now >= invoiceDeadline(item)) {
-        throw new DomainError('invoice pack cannot be returned after its deadline', 'conflict')
-      }
-      if (!action.reason.trim() || action.reason.length > 2000) {
-        throw new DomainError('a correction reason is required', 'validation')
-      }
-      next.status = 'Returned'
-      next.reviewReason = action.reason.trim()
+      returnInvoice(item, next, action.reason, now)
       break
     case 'review':
-      if (!action.reason.trim() || action.reason.length > 2000) {
-        throw new DomainError('a review reason is required', 'validation')
-      }
-      next.payable = invoicePayable(item, action.validAmount)
-      next.validAmount = action.validAmount
-      next.reviewReason = action.reason.trim()
-      if (item.fundingDecision === 'BEFORE_EVENT') {
-        const advanced = item.advanceAmount ?? item.approvedAmount
-        next.reconciliationDelta = next.payable - advanced
-        if (next.reconciliationDelta < 0) {
-          next.refundAmount = advanced - next.payable
-          next.refundProofs = next.refundProofs ?? []
-          next.status = 'RefundPending'
-        } else {
-          delete next.refundAmount
-          next.status = 'Reconciled'
-        }
-      } else {
-        next.status = next.payable > 0 ? 'Accepted' : 'Rejected'
-      }
+      reviewInvoice(item, next, action)
       break
-    case 'refundImage': {
-      if (
-        item.fundingDecision !== 'BEFORE_EVENT' ||
-        item.status !== 'RefundPending' ||
-        !(item.refundAmount && item.refundAmount > 0)
-      ) {
-        throw new DomainError('this item is not awaiting a refund transfer', 'conflict')
-      }
-      const proofs = next.refundProofs ?? []
-      if (proofs.length >= MAX_INVOICE_IMAGES) {
-        throw new DomainError('at most five refund attachments per item', 'conflict')
-      }
-      if (
-        item.images.some((image) => image.digest === action.image.digest) ||
-        proofs.some((image) => image.digest === action.image.digest)
-      ) {
-        throw new DomainError('duplicate refund attachment', 'conflict')
-      }
-      next.refundProofs = [...proofs, action.image]
+    case 'refundImage':
+      addRefundImage(item, next, action.image)
       break
-    }
-    case 'removeRefundImage': {
-      if (item.fundingDecision !== 'BEFORE_EVENT' || item.status !== 'RefundPending') {
-        throw new DomainError(
-          'refund attachments cannot be modified in the current state',
-          'conflict',
-        )
-      }
-      const proofs = item.refundProofs ?? []
-      if (!proofs.some((image) => image.id === action.imageId)) {
-        throw new DomainError('refund attachment not found', 'not_found')
-      }
-      next.refundProofs = proofs.filter((image) => image.id !== action.imageId)
+    case 'removeRefundImage':
+      removeRefundImage(item, next, action.imageId)
       break
-    }
-    case 'submitRefund': {
-      if (
-        item.fundingDecision !== 'BEFORE_EVENT' ||
-        item.status !== 'RefundPending' ||
-        !(item.refundAmount && item.refundAmount > 0)
-      ) {
-        throw new DomainError('this item is not awaiting a refund submission', 'conflict')
-      }
-      const proofs = item.refundProofs ?? []
-      if (!proofs.length || proofs.length > MAX_INVOICE_IMAGES) {
-        throw new DomainError('one to five refund transfer receipts are required', 'validation')
-      }
-      if (action.note !== undefined && action.note.length > 2000) {
-        throw new DomainError('refund note must be at most 2000 characters', 'validation')
-      }
-      next.status = 'RefundSubmitted'
-      next.refundSubmittedAt = now.toISOString()
-      const trimmedNote = action.note?.trim()
-      if (trimmedNote) {
-        next.refundNote = trimmedNote
-      } else {
-        delete next.refundNote
-      }
-      delete next.refundReviewReason
+    case 'submitRefund':
+      submitRefund(item, next, action.note, now)
       break
-    }
     case 'returnRefund':
-      if (item.fundingDecision !== 'BEFORE_EVENT' || item.status !== 'RefundSubmitted') {
-        throw new DomainError('this item does not have a submitted refund to return', 'conflict')
-      }
-      if (!action.reason.trim() || action.reason.length > 2000) {
-        throw new DomainError('a refund return reason is required', 'validation')
-      }
-      next.status = 'RefundPending'
-      next.refundReviewReason = action.reason.trim()
+      returnRefund(item, next, action.reason)
       break
-    case 'confirmRefund': {
-      if (
-        item.fundingDecision !== 'BEFORE_EVENT' ||
-        item.status !== 'RefundSubmitted' ||
-        item.refundConfirmedAt
-      ) {
-        throw new DomainError('this item is not awaiting refund confirmation', 'conflict')
-      }
-      if (action.reason !== undefined && action.reason.length > 2000) {
-        throw new DomainError(
-          'refund confirmation note must be at most 2000 characters',
-          'validation',
-        )
-      }
-      next.status = 'Reconciled'
-      next.refundConfirmedAt = now.toISOString()
-      if (actorId) {
-        next.refundConfirmedBy = actorId
-      }
-      const trimmedReason = action.reason?.trim()
-      if (trimmedReason) {
-        next.refundReviewReason = trimmedReason
-      } else {
-        delete next.refundReviewReason
-      }
+    case 'confirmRefund':
+      confirmRefund(item, next, action.reason, now, actorId)
       break
-    }
     case 'pay':
-      if (resolvePaymentChannel(item) !== 'VIA_OFFICER_REIMBURSE') {
-        throw new DomainError('this item is not reimbursed through the ICPDP officer', 'conflict')
-      }
-      if (item.status !== 'Accepted' || !item.payable || item.paidAt) {
-        throw new DomainError('this item is not awaiting payment', 'conflict')
-      }
-      next.status = 'Paid'
-      next.paidAt = now.toISOString()
+      payReimbursement(item, next, now)
       break
     case 'confirmVendorPaid':
-      if (resolvePaymentChannel(item) !== 'DIRECT_VENDOR') {
-        throw new DomainError('this item is not paid directly to a vendor', 'conflict')
-      }
-      if (item.status !== 'Accepted' || !item.payable || item.paidAt) {
-        throw new DomainError('this item is not awaiting vendor payment confirmation', 'conflict')
-      }
-      next.status = 'Paid'
-      next.paidAt = now.toISOString()
-      if (actorId) {
-        next.paidBy = actorId
-      }
+      confirmVendorPaid(item, next, now, actorId)
       break
   }
   return next
+}
+
+// ICPDP ghi nhận đã chuyển tạm ứng trước sự kiện (BEFORE_EVENT)
+function recordAdvance(item: SponsoredItem, next: SponsoredItem, now: Date, actorId?: string) {
+  if (
+    item.fundingDecision !== 'BEFORE_EVENT' ||
+    item.status !== 'AwaitingAdvance' ||
+    item.advancedAt
+  ) {
+    throw new DomainError('this item is not awaiting a pre-event advance', 'conflict')
+  }
+  next.paymentChannel = 'VIA_OFFICER_ADVANCE'
+  next.status = 'AdvanceSent'
+  next.advanceAmount = item.approvedAmount
+  next.advancedAt = now.toISOString()
+  if (actorId) {
+    next.advancedBy = actorId
+  }
+}
+
+// CLB xác nhận đã nhận tiền tạm ứng
+function confirmAdvanceReceived(
+  item: SponsoredItem,
+  next: SponsoredItem,
+  now: Date,
+  actorId?: string,
+) {
+  if (
+    item.fundingDecision !== 'BEFORE_EVENT' ||
+    item.status !== 'AdvanceSent' ||
+    item.advanceReceivedAt
+  ) {
+    throw new DomainError('this item is not awaiting advance receipt confirmation', 'conflict')
+  }
+  next.paymentChannel = 'VIA_OFFICER_ADVANCE'
+  next.status = 'Draft'
+  next.advanceReceivedAt = now.toISOString()
+  if (actorId) {
+    next.advanceReceivedBy = actorId
+  }
+}
+
+// CLB lưu số tiền, mô tả, kênh giải ngân và thông tin chuyển khoản nhà cung cấp
+function saveExpense(
+  item: SponsoredItem,
+  next: SponsoredItem,
+  action: Extract<SponsoredItemAction, { kind: 'save' }>,
+) {
+  if (
+    !Number.isSafeInteger(action.amount) ||
+    action.amount <= 0 ||
+    action.description.length > 2000
+  ) {
+    throw new DomainError('invalid expense fields', 'validation')
+  }
+  next.amount = action.amount
+  next.description = action.description.trim()
+  if (item.fundingDecision === 'AFTER_EVENT') {
+    if (item.approvedAmount >= DIRECT_VENDOR_THRESHOLD_VND) {
+      if (action.paymentChannel === 'VIA_OFFICER_REIMBURSE') {
+        throw new DomainError(
+          'items of 5,000,000 VND or more require a direct vendor contract',
+          'validation',
+        )
+      }
+      next.paymentChannel = 'DIRECT_VENDOR'
+    } else {
+      next.paymentChannel = action.paymentChannel ?? resolvePaymentChannel(item)
+    }
+    if (next.paymentChannel === 'DIRECT_VENDOR') {
+      if (action.vendorBankInfo !== undefined) {
+        next.vendorBankInfo = normalizeVendorBankInfo(action.vendorBankInfo)
+      }
+    } else {
+      delete next.vendorBankInfo
+    }
+  } else if (item.fundingDecision === 'BEFORE_EVENT') {
+    next.paymentChannel = 'VIA_OFFICER_ADVANCE'
+    delete next.vendorBankInfo
+  }
+}
+
+// CLB đính kèm một tệp hoá đơn (tối đa 5, không trùng nội dung)
+function addInvoiceImage(item: SponsoredItem, next: SponsoredItem, image: InvoiceImage) {
+  if (item.images.length >= MAX_INVOICE_IMAGES) {
+    throw new DomainError('at most five attachments per item', 'conflict')
+  }
+  if (item.images.some((existing) => existing.digest === image.digest)) {
+    throw new DomainError('duplicate invoice attachment', 'conflict')
+  }
+  next.images.push(image)
+}
+
+// CLB gỡ một tệp hoá đơn
+function removeInvoiceImage(item: SponsoredItem, next: SponsoredItem, imageId: string) {
+  if (!item.images.some((image) => image.id === imageId)) {
+    throw new DomainError('invoice attachment not found', 'not_found')
+  }
+  next.images = item.images.filter((image) => image.id !== imageId)
+}
+
+// CLB nộp bộ hoá đơn
+function submitInvoice(item: SponsoredItem, next: SponsoredItem, now: Date) {
+  assertInvoiceSubmission(item, now)
+  next.paymentChannel = resolvePaymentChannel(item)
+  next.status = 'Submitted'
+  next.submittedAt = now.toISOString()
+}
+
+// ICPDP trả bộ hoá đơn về để CLB sửa
+function returnInvoice(item: SponsoredItem, next: SponsoredItem, reason: string, now: Date) {
+  if (item.status !== 'Submitted' || now >= invoiceDeadline(item)) {
+    throw new DomainError('invoice pack cannot be returned after its deadline', 'conflict')
+  }
+  if (!reason.trim() || reason.length > 2000) {
+    throw new DomainError('a correction reason is required', 'validation')
+  }
+  next.status = 'Returned'
+  next.reviewReason = reason.trim()
+}
+
+// ICPDP thẩm định giá trị hoá đơn hợp lệ và quyết toán với tạm ứng
+function reviewInvoice(
+  item: SponsoredItem,
+  next: SponsoredItem,
+  action: Extract<SponsoredItemAction, { kind: 'review' }>,
+) {
+  if (!action.reason.trim() || action.reason.length > 2000) {
+    throw new DomainError('a review reason is required', 'validation')
+  }
+  next.payable = invoicePayable(item, action.validAmount)
+  next.validAmount = action.validAmount
+  next.reviewReason = action.reason.trim()
+  if (item.fundingDecision === 'BEFORE_EVENT') {
+    const advanced = item.advanceAmount ?? item.approvedAmount
+    next.reconciliationDelta = next.payable - advanced
+    if (next.reconciliationDelta < 0) {
+      next.refundAmount = advanced - next.payable
+      next.refundProofs = next.refundProofs ?? []
+      next.status = 'RefundPending'
+    } else {
+      delete next.refundAmount
+      next.status = 'Reconciled'
+    }
+  } else {
+    next.status = next.payable > 0 ? 'Accepted' : 'Rejected'
+  }
+}
+
+// CLB đính kèm biên lai chuyển hoàn tiền tạm ứng dư
+function addRefundImage(item: SponsoredItem, next: SponsoredItem, image: InvoiceImage) {
+  if (
+    item.fundingDecision !== 'BEFORE_EVENT' ||
+    item.status !== 'RefundPending' ||
+    !(item.refundAmount && item.refundAmount > 0)
+  ) {
+    throw new DomainError('this item is not awaiting a refund transfer', 'conflict')
+  }
+  const proofs = next.refundProofs ?? []
+  if (proofs.length >= MAX_INVOICE_IMAGES) {
+    throw new DomainError('at most five refund attachments per item', 'conflict')
+  }
+  if (
+    item.images.some((existing) => existing.digest === image.digest) ||
+    proofs.some((existing) => existing.digest === image.digest)
+  ) {
+    throw new DomainError('duplicate refund attachment', 'conflict')
+  }
+  next.refundProofs = [...proofs, image]
+}
+
+// CLB gỡ biên lai hoàn tiền khi còn ở RefundPending
+function removeRefundImage(item: SponsoredItem, next: SponsoredItem, imageId: string) {
+  if (item.fundingDecision !== 'BEFORE_EVENT' || item.status !== 'RefundPending') {
+    throw new DomainError('refund attachments cannot be modified in the current state', 'conflict')
+  }
+  const proofs = item.refundProofs ?? []
+  if (!proofs.some((image) => image.id === imageId)) {
+    throw new DomainError('refund attachment not found', 'not_found')
+  }
+  next.refundProofs = proofs.filter((image) => image.id !== imageId)
+}
+
+// CLB gửi biên lai hoàn tiền để ICPDP đối soát
+function submitRefund(
+  item: SponsoredItem,
+  next: SponsoredItem,
+  note: string | undefined,
+  now: Date,
+) {
+  if (
+    item.fundingDecision !== 'BEFORE_EVENT' ||
+    item.status !== 'RefundPending' ||
+    !(item.refundAmount && item.refundAmount > 0)
+  ) {
+    throw new DomainError('this item is not awaiting a refund submission', 'conflict')
+  }
+  const proofs = item.refundProofs ?? []
+  if (!proofs.length || proofs.length > MAX_INVOICE_IMAGES) {
+    throw new DomainError('one to five refund transfer receipts are required', 'validation')
+  }
+  if (note !== undefined && note.length > 2000) {
+    throw new DomainError('refund note must be at most 2000 characters', 'validation')
+  }
+  next.status = 'RefundSubmitted'
+  next.refundSubmittedAt = now.toISOString()
+  const trimmedNote = note?.trim()
+  if (trimmedNote) {
+    next.refundNote = trimmedNote
+  } else {
+    delete next.refundNote
+  }
+  delete next.refundReviewReason
+}
+
+// ICPDP trả biên lai hoàn tiền về để CLB tải lại
+function returnRefund(item: SponsoredItem, next: SponsoredItem, reason: string) {
+  if (item.fundingDecision !== 'BEFORE_EVENT' || item.status !== 'RefundSubmitted') {
+    throw new DomainError('this item does not have a submitted refund to return', 'conflict')
+  }
+  if (!reason.trim() || reason.length > 2000) {
+    throw new DomainError('a refund return reason is required', 'validation')
+  }
+  next.status = 'RefundPending'
+  next.refundReviewReason = reason.trim()
+}
+
+// ICPDP xác nhận nhà trường đã nhận tiền hoàn
+function confirmRefund(
+  item: SponsoredItem,
+  next: SponsoredItem,
+  reason: string | undefined,
+  now: Date,
+  actorId?: string,
+) {
+  if (
+    item.fundingDecision !== 'BEFORE_EVENT' ||
+    item.status !== 'RefundSubmitted' ||
+    item.refundConfirmedAt
+  ) {
+    throw new DomainError('this item is not awaiting refund confirmation', 'conflict')
+  }
+  if (reason !== undefined && reason.length > 2000) {
+    throw new DomainError('refund confirmation note must be at most 2000 characters', 'validation')
+  }
+  next.status = 'Reconciled'
+  next.refundConfirmedAt = now.toISOString()
+  if (actorId) {
+    next.refundConfirmedBy = actorId
+  }
+  const trimmedReason = reason?.trim()
+  if (trimmedReason) {
+    next.refundReviewReason = trimmedReason
+  } else {
+    delete next.refundReviewReason
+  }
+}
+
+// CLB xác nhận đã nhận tiền hoàn ứng từ cán bộ ICPDP
+function payReimbursement(item: SponsoredItem, next: SponsoredItem, now: Date) {
+  if (resolvePaymentChannel(item) !== 'VIA_OFFICER_REIMBURSE') {
+    throw new DomainError('this item is not reimbursed through the ICPDP officer', 'conflict')
+  }
+  if (item.status !== 'Accepted' || !item.payable || item.paidAt) {
+    throw new DomainError('this item is not awaiting payment', 'conflict')
+  }
+  next.status = 'Paid'
+  next.paidAt = now.toISOString()
+}
+
+// ICPDP xác nhận nhà trường đã chuyển khoản thẳng cho nhà cung cấp
+function confirmVendorPaid(item: SponsoredItem, next: SponsoredItem, now: Date, actorId?: string) {
+  if (resolvePaymentChannel(item) !== 'DIRECT_VENDOR') {
+    throw new DomainError('this item is not paid directly to a vendor', 'conflict')
+  }
+  if (item.status !== 'Accepted' || !item.payable || item.paidAt) {
+    throw new DomainError('this item is not awaiting vendor payment confirmation', 'conflict')
+  }
+  next.status = 'Paid'
+  next.paidAt = now.toISOString()
+  if (actorId) {
+    next.paidBy = actorId
+  }
 }
 
 // Tính hạn nộp hoá đơn sau khi sự kiện kết thúc

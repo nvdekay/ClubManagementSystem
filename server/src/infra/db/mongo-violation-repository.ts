@@ -18,7 +18,8 @@ import {
   type ViolationState,
   type ViolationSummary,
 } from '../../domain/violation.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -496,18 +497,20 @@ export function mongoViolationRepository(): ViolationRepository {
           await queueNotifications(
             session,
             await clubBoardUserIds(new Types.ObjectId(current.clubId), session),
-            result.action,
-            'Violation',
-            caseId,
             {
-              title: current.title,
-              state: next.state,
-              reason: result.reason,
-              ...(next.responseDueAt && step.type === 'requestResponse'
-                ? { responseDueAt: next.responseDueAt }
-                : {}),
+              eventCode: result.action,
+              entityType: 'Violation',
+              entityId: caseId,
+              payload: {
+                title: current.title,
+                state: next.state,
+                reason: result.reason,
+                ...(next.responseDueAt && step.type === 'requestResponse'
+                  ? { responseDueAt: next.responseDueAt }
+                  : {}),
+              },
+              now,
             },
-            now,
           )
         }
       })

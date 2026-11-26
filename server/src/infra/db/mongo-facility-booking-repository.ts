@@ -2,7 +2,6 @@ import { overduePostEventReports } from './post-event-report-deadlines.js'
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
-import { notificationChannels } from '../../domain/notification.js'
 import {
   assertBookingNotice,
   assertRequestableProperty,
@@ -25,7 +24,7 @@ import type { Property } from '../../domain/property.js'
 import { openViolationCount, routedTaskFields } from './approval-routing.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { oid, policyAt } from './repo-helpers.js'
+import { oid, policyAt, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const taskType = 'PROPERTY_BOOKING'
@@ -164,23 +163,13 @@ export async function releaseFacilityBookingsInSession(
       ],
       { session },
     )
-    if (officers.length) {
-      await m.notifications!.create(
-        officers.map((userId) => ({
-          recipientUserId: userId,
-          eventCode: 'BOOKING_RELEASED',
-          entityType: 'PropertyBooking',
-          entityId: doc._id,
-          channels: ['IN_APP'],
-          payload: { reason, source },
-          state: 'Queued',
-          dueAt: now,
-          attempts: 0,
-          createdAt: now,
-        })),
-        { session, ordered: true },
-      )
-    }
+    await queueNotifications(session, officers, {
+      eventCode: 'BOOKING_RELEASED',
+      entityType: 'PropertyBooking',
+      entityId: doc._id,
+      payload: { reason, source },
+      now,
+    })
   }
   return docs.length
 }
@@ -394,28 +383,17 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     id: Types.ObjectId,
     eventCode: string,
     recipientIds: string[],
-    payload: unknown,
+    payload: Record<string, unknown>,
     now: Date,
     session: ClientSession,
   ) {
-    if (!recipientIds.length) {
-      return
-    }
-    await m.notifications!.create(
-      [...new Set(recipientIds)].map((recipient) => ({
-        recipientUserId: oid(recipient),
-        eventCode,
-        entityType: 'PropertyBooking',
-        entityId: id,
-        channels: notificationChannels(eventCode),
-        payload,
-        state: 'Queued',
-        dueAt: now,
-        attempts: 0,
-        createdAt: now,
-      })),
-      { session, ordered: true },
-    )
+    await queueNotifications(session, recipientIds, {
+      eventCode,
+      entityType: 'PropertyBooking',
+      entityId: id,
+      payload,
+      now,
+    })
   }
   // Lấy id các ICPDP officer
   async function officers(session: ClientSession): Promise<string[]> {

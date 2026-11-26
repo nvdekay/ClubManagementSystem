@@ -333,7 +333,13 @@ export async function uploadEventProposalTemplate(
     bytes,
     now,
   })
-  return deps.repo.saveProposalTemplate(document, officerId, now)
+  try {
+    return await deps.repo.saveProposalTemplate(document, officerId, now)
+  } catch (error) {
+    // The template was not saved: do not leave an orphaned asset behind.
+    await storage.remove(document.assetId).catch(() => undefined)
+    throw error
+  }
 }
 /** UC26: let an officer read evidence frozen into the latest or a specified revision. */
 export async function reviewEventProposalDocumentAccess(

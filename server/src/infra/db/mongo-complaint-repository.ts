@@ -14,10 +14,9 @@ import type {
 import { UNDECIDED_COMPLAINT_STATES } from '../../domain/complaint.js'
 import { DomainError } from '../../domain/errors.js'
 import { pageSkip } from '../../domain/paging.js'
-import { queueNotifications } from './club-board.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { oid } from './repo-helpers.js'
+import { oid, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK = 'COMPLAINT'
@@ -371,15 +370,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
           undefined,
           input.now,
         )
-        await queueNotifications(
-          session,
-          await officers(session),
-          'COMPLAINT_SUBMITTED',
-          ENTITY,
-          id,
-          { clubName: String(club?.name ?? ''), type: input.type },
-          input.now,
-        )
+        await queueNotifications(session, await officers(session), {
+          eventCode: 'COMPLAINT_SUBMITTED',
+          entityType: ENTITY,
+          entityId: id,
+          payload: { clubName: String(club?.name ?? ''), type: input.type },
+          now: input.now,
+        })
       })
       return (await base([(await complaints.findById(id).lean()) as Doc]))[0]!
     },
@@ -665,11 +662,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
                   now,
                   session,
                 ),
-                'COMPLAINT_FORWARDED',
-                ENTITY,
-                id,
-                { responseDueAt: decision.responseDueAt },
-                now,
+                {
+                  eventCode: 'COMPLAINT_FORWARDED',
+                  entityType: ENTITY,
+                  entityId: id,
+                  payload: { responseDueAt: decision.responseDueAt },
+                  now,
+                },
               )
             } else if (decision.outcome === 'Dismissed') {
               await move([id], ['Under Triage'], { state: 'Dismissed', triage, closedAt: now })
@@ -733,15 +732,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
             }
             const students = [...student, ...linked.map((row) => row.complainantId)]
             // Sinh viên nhận kết quả dưới mã riêng; COMPLAINT_FORWARDED thuộc inbox của CLB.
-            await queueNotifications(
-              session,
-              students,
-              'COMPLAINT_TRIAGED',
-              ENTITY,
-              id,
-              { outcome: decision.outcome },
+            await queueNotifications(session, students, {
+              eventCode: 'COMPLAINT_TRIAGED',
+              entityType: ENTITY,
+              entityId: id,
+              payload: { outcome: decision.outcome },
               now,
-            )
+            })
             return
           }
           case 'close':
@@ -787,11 +784,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
             await queueNotifications(
               session,
               [...student, ...followers.map((row) => row.complainantId)],
-              decision.kind === 'close' ? 'COMPLAINT_CLOSED' : 'COMPLAINT_ESCALATED',
-              ENTITY,
-              id,
-              { outcome: state },
-              now,
+              {
+                eventCode: decision.kind === 'close' ? 'COMPLAINT_CLOSED' : 'COMPLAINT_ESCALATED',
+                entityType: ENTITY,
+                entityId: id,
+                payload: { outcome: state },
+                now,
+              },
             )
           }
         }
@@ -879,11 +878,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
         await queueNotifications(
           session,
           task?.assigneeId ? [task.assigneeId] : await officers(session),
-          'COMPLAINT_CLUB_RESPONDED',
-          ENTITY,
-          id,
-          {},
-          now,
+          {
+            eventCode: 'COMPLAINT_CLUB_RESPONDED',
+            entityType: ENTITY,
+            entityId: id,
+            payload: {},
+            now,
+          },
         )
       })
       return (await forClub([(await complaints.findById(id).lean()) as Doc]))[0]!
@@ -924,15 +925,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
             'UC52 E1',
             now,
           )
-          await queueNotifications(
-            session,
-            await officers(session),
-            'COMPLAINT_RESPONSE_OVERDUE',
-            ENTITY,
-            row._id as Types.ObjectId,
-            {},
+          await queueNotifications(session, await officers(session), {
+            eventCode: 'COMPLAINT_RESPONSE_OVERDUE',
+            entityType: ENTITY,
+            entityId: row._id as Types.ObjectId,
+            payload: {},
             now,
-          )
+          })
           return true
         })
         if (raised) {

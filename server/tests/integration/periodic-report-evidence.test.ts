@@ -51,6 +51,7 @@ describe.skipIf(!uri)('Periodic report evidence images', () => {
     async accessUrl(assetId) {
       return `https://files.test/${assetId}?signed=1`
     },
+    async remove() {},
   }
 
   async function call(

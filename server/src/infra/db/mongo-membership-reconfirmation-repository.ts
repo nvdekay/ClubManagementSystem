@@ -6,7 +6,7 @@ import type {
   MembershipReconfirmation,
   MembershipReconfirmationRepository,
 } from '../../domain/membership-reconfirmation.js'
-import { queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 type Doc = Record<string, unknown>
 // Repository xác nhận lại tư cách thành viên theo kỳ
@@ -154,15 +154,13 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
       { periodCode, fromState: 'Active', toState: 'Inactive', effectiveDate: now },
       now,
     )
-    await queueNotifications(
-      session,
-      [member.userId],
-      'MEMBERSHIP_RECONFIRMATION_EXPIRED',
-      'ClubMembership',
-      member._id as Types.ObjectId,
-      { periodCode },
+    await queueNotifications(session, [member.userId], {
+      eventCode: 'MEMBERSHIP_RECONFIRMATION_EXPIRED',
+      entityType: 'ClubMembership',
+      entityId: member._id as Types.ObjectId,
+      payload: { periodCode },
       now,
-    )
+    })
     changes.expired = 1
   }
   return {
@@ -279,15 +277,13 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
             request = docs[0]!.toObject()
             changes.opened = 1
             if (!exempt) {
-              await queueNotifications(
-                session,
-                [member.userId],
-                'MEMBERSHIP_RECONFIRMATION_REQUIRED',
-                'ClubMembership',
-                member._id as Types.ObjectId,
-                { periodCode: period.code, dueAt },
+              await queueNotifications(session, [member.userId], {
+                eventCode: 'MEMBERSHIP_RECONFIRMATION_REQUIRED',
+                entityType: 'ClubMembership',
+                entityId: member._id as Types.ObjectId,
+                payload: { periodCode: period.code, dueAt },
                 now,
-              )
+              })
             }
           }
           if (!request) {

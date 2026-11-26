@@ -1,6 +1,6 @@
 import { overduePostEventReports } from './post-event-report-deadlines.js'
 import { cancelEventInSession } from './event-cancellation.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { clubBoardUserIds } from './club-board.js'
 import { eventCancellationRequest } from './club-event-readers.js'
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
@@ -28,7 +28,7 @@ import {
 } from './event-defense-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { queueNotification } from './repo-helpers.js'
+import { queueNotification, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK_TYPE = 'EVENT_PROPOSAL'
@@ -564,20 +564,18 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         }
         if (event.clubId) {
           const recipients = await clubBoardUserIds(event.clubId as Types.ObjectId, session)
-          await queueNotifications(
-            session,
-            recipients,
-            'EVENT_CANCELLATION_DECIDED',
-            'Event',
-            id,
-            {
+          await queueNotifications(session, recipients, {
+            eventCode: 'EVENT_CANCELLATION_DECIDED',
+            entityType: 'Event',
+            entityId: id,
+            payload: {
               title: event.title,
               clubId: String(event.clubId),
               approved: input.approve,
               reason: input.reason ?? requestedReason,
             },
             now,
-          )
+          })
         }
       })
       return required(id, now)

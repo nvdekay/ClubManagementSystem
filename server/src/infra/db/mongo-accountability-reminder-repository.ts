@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import type { AccountabilityReminderRepository } from '../../domain/accountability-reminder.js'
 import { DomainError } from '../../domain/errors.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { postEventDeadline } from './post-event-report-deadlines.js'
 import { ucmsModels as m } from './ucms-models.js'
 const OFFICER_CODES: Readonly<Record<string, string>> = {
@@ -49,15 +50,13 @@ async function remindOnce(
     ],
     { session },
   )
-  await queueNotifications(
-    session,
-    await clubBoardUserIds(clubId, session),
-    code,
-    type,
-    id,
-    { dueAt },
+  await queueNotifications(session, await clubBoardUserIds(clubId, session), {
+    eventCode: code,
+    entityType: type,
+    entityId: id,
+    payload: { dueAt },
     now,
-  )
+  })
   // Leo thang cũng gửi tới ICPDP, dưới mã riêng để hiện trong workspace của cán bộ.
   const officerCode = OFFICER_CODES[code]
   if (officerCode) {
@@ -75,11 +74,7 @@ async function remindOnce(
     await queueNotifications(
       session,
       assignments.map((a) => a.userId),
-      officerCode,
-      type,
-      id,
-      { dueAt },
-      now,
+      { eventCode: officerCode, entityType: type, entityId: id, payload: { dueAt }, now },
     )
   }
   return 1
