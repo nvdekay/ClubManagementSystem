@@ -1,9 +1,10 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router'
 
 import { UniversityLogo } from '@/components/custom/UniversityLogo'
 import { NotificationBell } from '@/components/layout/NotificationBell'
+import { RouteFallback } from '@/components/layout/RouteFallback'
 import { SidebarAccountMenu } from '@/components/layout/SidebarAccountMenu'
 import { AppIcon, type AppIconName } from '@/components/ui/icon/AppIcon'
 import { common } from '@/i18n/common'
@@ -602,7 +603,9 @@ export function WorkspaceShell() {
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
           <div ref={pageRef} className="mx-auto w-full max-w-screen-2xl">
             {workspace ? (
-              <Outlet />
+              <Suspense fallback={<RouteFallback />}>
+                <Outlet />
+              </Suspense>
             ) : (
               <section className="mx-auto max-w-lg py-16 text-center">
                 <span
