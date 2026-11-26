@@ -35,6 +35,10 @@ export interface AccountAdminRepository {
   listUsers(search: string, page: number, pageSize: number): Promise<AdminUserPage>
   findUser(userId: string): Promise<AuthUser | null>
   systemRoles(userId: string): Promise<string[]>
+  /**
+   * Revoking ICPDP_OFFICER (and `setLock` locking a user) must fail with a conflict, atomically
+   * with the write, when it would leave no active, unlocked ICPDP officer.
+   */
   applyRoleChange(input: {
     actorId: string
     targetId: string
