@@ -8,15 +8,18 @@ import { AppInput } from '@/components/ui/input/AppInput'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
-import { useChangePeriodicReport } from '@/hooks/useClubPeriodicReports'
+import { useChangePeriodicReport, useUploadPeriodicEvidence } from '@/hooks/useClubPeriodicReports'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
-import type {
-  PeriodicAchievementEntry,
-  PeriodicCustomAnswer,
-  PeriodicEventEntry,
-  PeriodicMemberEntry,
-  PeriodicReportDetail,
-  ReturnSection,
+import { EVIDENCE_IMAGE_MAX_BYTES, EVIDENCE_IMAGE_TYPES } from '@/services/clubPeriodicReports'
+import {
+  evidenceDisplayUrl,
+  isEvidenceReference,
+  type PeriodicAchievementEntry,
+  type PeriodicCustomAnswer,
+  type PeriodicEventEntry,
+  type PeriodicMemberEntry,
+  type PeriodicReportDetail,
+  type ReturnSection,
 } from '@/services/periodicReports'
 import { formatMoney } from '@/utils/formatMoney'
 
@@ -26,41 +29,34 @@ interface Props {
   report: PeriodicReportDetail
 }
 
-// Đọc tệp thành data URL
-function readRawDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result ?? ''))
-    reader.onerror = () => reject(new Error('Could not read file'))
-    reader.readAsDataURL(file)
-  })
-}
-
-// Đọc ảnh thành data URL, nén nếu ảnh quá lớn
-async function readImageDataUrl(file: File): Promise<string> {
-  const raw = await readRawDataUrl(file)
-  if (raw.length <= 900_000 || file.type === 'image/gif' || file.type === 'image/svg+xml') {
-    return raw
+// Thu nhỏ ảnh lớn hơn giới hạn upload thành JPEG; ảnh vừa giới hạn giữ nguyên
+async function fitEvidenceImage(file: File): Promise<Blob> {
+  if (file.size <= EVIDENCE_IMAGE_MAX_BYTES) {
+    return file
   }
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const maxDim = 1600
-      const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1))
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.max(1, Math.round(img.width * scale))
-      canvas.height = Math.max(1, Math.round(img.height * scale))
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        resolve(raw)
-        return
-      }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL('image/jpeg', 0.85))
-    }
-    img.onerror = () => resolve(raw)
-    img.src = raw
-  })
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image()
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error('Could not read image'))
+      image.src = objectUrl
+    })
+    const maxDim = 2000
+    const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(img.width * scale))
+    canvas.height = Math.max(1, Math.round(img.height * scale))
+    canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', 0.85),
+    )
+    return blob ?? file
+  } catch {
+    return file
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 // Tạo tên tệp an toàn cho ảnh minh chứng từ tiêu đề
@@ -105,51 +101,88 @@ async function saveEvidenceImage(url: string, title: string) {
   }
 }
 
-// Ô nhập minh chứng: dán/chọn ảnh hoặc nhập URL, kèm xem trước
+// Ô nhập minh chứng: dán/chọn ảnh để upload hoặc nhập URL, kèm xem trước
 function EvidenceInputBlock({
+  clubId,
+  csrfToken,
   label,
   required,
   value,
+  displayUrl,
   editable,
   disabled,
   showMissingError,
   onChange,
+  onUploaded,
   onPreview,
   onRemoveRow,
 }: {
+  clubId: string
+  csrfToken: string
   label?: string
   required?: boolean
   value?: string
+  /** URL hiển thị được của `value` (signed URL cho ảnh đã upload). */
+  displayUrl?: string
   editable: boolean
   disabled: boolean
   showMissingError?: boolean
   onChange: (nextUrl: string) => void
+  onUploaded: (reference: string, url: string) => void
   onPreview: (url: string, title: string) => void
   onRemoveRow?: () => void
 }) {
   const { t } = useTranslation()
+  const upload = useUploadPeriodicEvidence(clubId)
   const fileRef = useRef<HTMLInputElement>(null)
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
   const hasValue = Boolean(value?.trim())
-  const isUploaded = Boolean(value?.startsWith('data:image/'))
-  const imgFailed = Boolean(value && failedUrl === value)
+  const isReference = isEvidenceReference(value)
+  const isLegacyImage = Boolean(value?.startsWith('data:image/'))
+  const isUploaded = isReference || isLegacyImage
+  const shownUrl = displayUrl
+  const imgFailed = Boolean(shownUrl && failedUrl === shownUrl)
   const displayTitle = label || t('clubPeriodicReports.eventEvidenceUrl')
   const isMissing = Boolean(required && showMissingError && !hasValue)
+  const busy = disabled || upload.isPending
+  const uploadError =
+    fileError ??
+    (upload.error ? upload.error.message || t('clubPeriodicReports.uploadFailed') : null)
 
-  // Xử lý khi chọn tệp ảnh minh chứng
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) {
+  // Kiểm loại và kích thước ảnh rồi upload, lưu tham chiếu trả về vào báo cáo
+  async function uploadFile(file: File) {
+    setFileError(null)
+    upload.reset()
+    if (!(EVIDENCE_IMAGE_TYPES as readonly string[]).includes(file.type)) {
+      setFileError(t('clubPeriodicReports.imageTypeInvalid'))
       return
     }
-    const dataUrl = await readImageDataUrl(file)
-    setFailedUrl(null)
-    onChange(dataUrl)
+    const fitted = await fitEvidenceImage(file)
+    if (fitted.size > EVIDENCE_IMAGE_MAX_BYTES) {
+      setFileError(t('clubPeriodicReports.imageTooLarge'))
+      return
+    }
+    try {
+      const uploaded = await upload.mutateAsync({ file: fitted, csrfToken })
+      setFailedUrl(null)
+      onUploaded(uploaded.reference, uploaded.url)
+    } catch {
+      /* Lỗi upload hiển thị ngay dưới ô nhập. */
+    }
+  }
+
+  // Xử lý khi chọn tệp ảnh minh chứng
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (file) {
+      void uploadFile(file)
+    }
   }
 
   // Xử lý khi dán ảnh từ clipboard làm minh chứng
-  async function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
+  function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
     const items = event.clipboardData?.items
     if (!items) {
       return
@@ -159,9 +192,7 @@ function EvidenceInputBlock({
         const file = item.getAsFile()
         if (file) {
           event.preventDefault()
-          const dataUrl = await readImageDataUrl(file)
-          setFailedUrl(null)
-          onChange(dataUrl)
+          void uploadFile(file)
           return
         }
       }
@@ -183,8 +214,8 @@ function EvidenceInputBlock({
             aria-invalid={isMissing ? true : undefined}
             className="min-w-60 flex-1 disabled:opacity-70"
             value={value ?? ''}
-            disabled={!editable || disabled}
-            onPaste={(e) => void handlePaste(e)}
+            disabled={!editable || busy}
+            onPaste={handlePaste}
             onChange={(e) => {
               setFailedUrl(null)
               onChange(e.target.value)
@@ -196,26 +227,24 @@ function EvidenceInputBlock({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept={EVIDENCE_IMAGE_TYPES.join(',')}
               className="sr-only"
-              disabled={disabled}
-              onChange={(e) => void handleFileChange(e)}
+              disabled={busy}
+              onChange={handleFileChange}
             />
-            <AppButton
-              variant="secondary"
-              disabled={disabled}
-              onClick={() => fileRef.current?.click()}
-            >
-              {isUploaded
-                ? t('clubPeriodicReports.changeImage')
-                : t('clubPeriodicReports.uploadImage')}
+            <AppButton variant="secondary" disabled={busy} onClick={() => fileRef.current?.click()}>
+              {upload.isPending
+                ? t('clubPeriodicReports.uploadingImage')
+                : isUploaded
+                  ? t('clubPeriodicReports.changeImage')
+                  : t('clubPeriodicReports.uploadImage')}
             </AppButton>
           </>
         )}
         {editable && hasValue && (
           <AppButton
             variant="secondary"
-            disabled={disabled}
+            disabled={busy}
             onClick={() => {
               setFailedUrl(null)
               onChange('')
@@ -225,32 +254,45 @@ function EvidenceInputBlock({
           </AppButton>
         )}
         {editable && onRemoveRow && (
-          <AppButton variant="secondary" disabled={disabled} onClick={onRemoveRow}>
+          <AppButton variant="secondary" disabled={busy} onClick={onRemoveRow}>
             {t('clubPeriodicReports.remove')}
           </AppButton>
         )}
       </div>
 
+      {upload.isPending && (
+        <p role="status" className="text-xs text-muted-app">
+          {t('clubPeriodicReports.uploadingImageHint')}
+        </p>
+      )}
+      <AppFieldError message={uploadError ?? undefined} />
       {isMissing && <AppFieldError message={t('clubPeriodicReports.validationEvidenceMissing')} />}
+      {editable && isLegacyImage && (
+        <AppNotice tone="warning">{t('clubPeriodicReports.legacyImageNotice')}</AppNotice>
+      )}
 
       {value && (
         <div className="flex flex-wrap items-start gap-3 rounded-lg border border-border-app bg-surface-app p-3">
-          {!imgFailed ? (
+          {shownUrl && !imgFailed ? (
             <img
-              src={value}
+              src={shownUrl}
               alt={displayTitle}
-              onError={() => setFailedUrl(value)}
+              onError={() => setFailedUrl(shownUrl)}
               className="max-h-40 rounded-lg border border-border-app object-contain"
             />
-          ) : (
+          ) : shownUrl && !isReference ? (
             <a
-              href={value}
+              href={shownUrl}
               target="_blank"
               rel="noreferrer"
               className="text-xs font-medium text-primary-app break-all hover:underline"
             >
-              {value}
+              {shownUrl}
             </a>
+          ) : (
+            <span className="text-xs text-muted-app">
+              {t('clubPeriodicReports.imageUnavailable')}
+            </span>
           )}
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -261,22 +303,22 @@ function EvidenceInputBlock({
               </AppBadge>
             </div>
             <div className="flex flex-wrap gap-2">
-              {!imgFailed && (
+              {shownUrl && !imgFailed && (
                 <>
-                  <AppButton variant="secondary" onClick={() => onPreview(value, displayTitle)}>
+                  <AppButton variant="secondary" onClick={() => onPreview(shownUrl, displayTitle)}>
                     {t('clubPeriodicReports.viewImage')}
                   </AppButton>
                   <AppButton
                     variant="secondary"
-                    onClick={() => void saveEvidenceImage(value, displayTitle)}
+                    onClick={() => void saveEvidenceImage(shownUrl, displayTitle)}
                   >
                     {t('clubPeriodicReports.saveImage')}
                   </AppButton>
                 </>
               )}
-              {!isUploaded && (
+              {shownUrl && !isUploaded && (
                 <a
-                  href={value}
+                  href={shownUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex min-h-10 items-center rounded-lg border border-border-app bg-bg-app px-3 py-1.5 text-xs font-medium text-text-app shadow-xs hover:bg-surface-app"
@@ -331,6 +373,14 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
   const [achievements, setAchievements] = useState<PeriodicAchievementEntry[]>(initialAchievements)
   const [customAnswers, setCustomAnswers] = useState<PeriodicCustomAnswer[]>(initialAnswers)
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null)
+  // Signed URL của ảnh vừa upload, dùng cho tới khi báo cáo được tải lại kèm evidenceUrls mới.
+  const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({})
+  const evidenceUrls = { ...report.evidenceUrls, ...uploadedUrls }
+
+  // Ghi nhớ signed URL của ảnh vừa upload theo tham chiếu
+  function rememberUpload(reference: string, url: string) {
+    setUploadedUrls((prev) => ({ ...prev, [reference]: url }))
+  }
 
   const customFields = report.campaign?.customFields ?? []
   const editable = ['Draft', 'Returned for correction'].includes(report.state)
@@ -741,11 +791,18 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
               <EvidenceInputBlock
                 label={t('clubPeriodicReports.eventEvidenceUrl')}
                 required
+                clubId={clubId}
+                csrfToken={csrfToken}
                 value={ev.evidenceUrl}
+                displayUrl={evidenceDisplayUrl(ev.evidenceUrl, evidenceUrls)}
                 editable={editable}
                 disabled={action.isPending}
                 showMissingError={Boolean(field.error('events'))}
                 onChange={(evidenceUrl) => updateEvent(idx, { evidenceUrl })}
+                onUploaded={(reference, url) => {
+                  rememberUpload(reference, url)
+                  updateEvent(idx, { evidenceUrl: reference })
+                }}
                 onPreview={(url, title) => setPreviewImage({ url, title: ev.title || title })}
                 onRemoveRow={() => setEvents((prev) => prev.filter((_, i) => i !== idx))}
               />
@@ -806,11 +863,18 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
               <EvidenceInputBlock
                 label={t('clubPeriodicReports.achievementEvidenceUrl')}
                 required
+                clubId={clubId}
+                csrfToken={csrfToken}
                 value={ach.evidenceUrl}
+                displayUrl={evidenceDisplayUrl(ach.evidenceUrl, evidenceUrls)}
                 editable={editable}
                 disabled={action.isPending}
                 showMissingError={Boolean(field.error('achievements'))}
                 onChange={(evidenceUrl) => updateAchievement(idx, { evidenceUrl })}
+                onUploaded={(reference, url) => {
+                  rememberUpload(reference, url)
+                  updateAchievement(idx, { evidenceUrl: reference })
+                }}
                 onPreview={(url, title) => setPreviewImage({ url, title: ach.title || title })}
                 onRemoveRow={() => setAchievements((prev) => prev.filter((_, i) => i !== idx))}
               />
@@ -864,13 +928,20 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 {cf.type === 'evidence' && (
                   <EvidenceInputBlock
                     required={cf.required}
+                    clubId={clubId}
+                    csrfToken={csrfToken}
                     value={answer?.evidenceUrl}
+                    displayUrl={evidenceDisplayUrl(answer?.evidenceUrl, evidenceUrls)}
                     editable={editable}
                     disabled={action.isPending}
                     showMissingError={Boolean(field.error('customAnswers'))}
                     onChange={(evidenceUrl) =>
                       updateCustomAnswer(cf.id, cf.label, 'evidence', { evidenceUrl })
                     }
+                    onUploaded={(reference, url) => {
+                      rememberUpload(reference, url)
+                      updateCustomAnswer(cf.id, cf.label, 'evidence', { evidenceUrl: reference })
+                    }}
                     onPreview={(url) => setPreviewImage({ url, title: cf.label })}
                   />
                 )}
