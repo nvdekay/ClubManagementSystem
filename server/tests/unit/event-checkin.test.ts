@@ -121,6 +121,17 @@ describe('event check-in (UC31)', () => {
         now,
       ),
     ).rejects.toMatchObject({ kind: 'conflict' })
+    // Legacy internal-event states no longer accept check-in (internal events were removed).
+    await expect(
+      checkInToEvent(
+        repo(target({}, { state: 'ONGOING' })),
+        policy,
+        actor,
+        eventId,
+        'DEMO-42',
+        now,
+      ),
+    ).rejects.toMatchObject({ kind: 'conflict' })
     await expect(
       checkInToEvent(
         repo(target({}, { published: false })),

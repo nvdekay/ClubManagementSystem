@@ -49,7 +49,7 @@ export interface EventCheckInRepository {
 }
 
 /** Các trạng thái mà sự kiện đã công bố nhận check-in (scheduler có thể chưa chuyển nó sang Ongoing). */
-export const checkInStates = ['Upcoming', 'Ongoing', 'PUBLIC', 'ONGOING'] as const
+export const checkInStates = ['Upcoming', 'Ongoing'] as const
 
 // UC31: lấy khung giờ check-in của sự kiện, mặc định là thời gian diễn ra sự kiện
 /** Khoảng thời gian UC31: cửa sổ check-in đã cấu hình của sự kiện, mặc định là giờ bắt đầu/kết thúc của chính sự kiện. */

@@ -221,7 +221,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           }
           const openFilter = {
             _id: eventId,
-            state: { $in: ['Upcoming', 'PUBLIC'] },
+            state: 'Upcoming',
             publishedAt: { $exists: true, $ne: null },
             registrationOpenAt: { $lte: input.now },
             registrationCloseAt: { $gt: input.now },

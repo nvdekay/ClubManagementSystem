@@ -36,7 +36,7 @@ function id(value: string, label: string): string {
 function assertOpen(context: EventRegistrationContext, now: Date): void {
   const event = context.event
   if (
-    !['Upcoming', 'PUBLIC'].includes(event.state) ||
+    event.state !== 'Upcoming' ||
     !event.registrationOpenAt ||
     !event.registrationCloseAt ||
     event.registrationOpenAt > now ||
@@ -64,7 +64,7 @@ export async function getEventRegistrationContext(
   return {
     ...result,
     registrationOpen:
-      ['Upcoming', 'PUBLIC'].includes(result.event.state) &&
+      result.event.state === 'Upcoming' &&
       Boolean(result.event.registrationOpenAt && result.event.registrationCloseAt) &&
       result.event.registrationOpenAt! <= now &&
       now < result.event.registrationCloseAt! &&
