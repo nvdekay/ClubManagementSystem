@@ -1,9 +1,7 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   allocateRoom,
   clubRoomAllocations,
@@ -15,6 +13,7 @@ import {
 } from '../../usecase/room-allocation.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const roomAllocationBody = z
@@ -37,19 +36,6 @@ export const roomOccupancyQuery = z
   .object({ semesterCode: z.string().trim().min(1).max(40), propertyId: id })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
-  const result = schema.safeParse(value)
-  if (!result.success) {
-    throw new DomainError('invalid room allocation request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-// Lấy actor đã xác thực từ res.locals
-function actor(res: Response): AccessActor {
-  return res.locals.actor as AccessActor
-}
-
 // Mount các route phân bổ phòng cho CLB của ICPDP
 /** UC58: ICPDP phân bổ phòng theo học kỳ; CLB chỉ đọc những gì mình nhận được. */
 export function roomAllocationRoutes(
@@ -63,7 +49,7 @@ export function roomAllocationRoutes(
   })
   // Xem tình trạng sử dụng phòng
   router.get('/admin/room-allocations/occupancy', authGuard(guard, false), async (req, res) => {
-    const query = parsed(roomOccupancyQuery, req.query)
+    const query = parse(roomOccupancyQuery, req.query, 'room allocation request')
     ok(
       res,
       await roomAllocationOccupancy(
@@ -82,7 +68,7 @@ export function roomAllocationRoutes(
       await listRoomAllocations(
         deps,
         actor(res),
-        parsed(roomAllocationQuery, req.query).semesterCode,
+        parse(roomAllocationQuery, req.query, 'room allocation request').semesterCode,
       ),
     )
   })
@@ -90,7 +76,12 @@ export function roomAllocationRoutes(
   router.post('/admin/room-allocations', authGuard(guard), async (req, res) => {
     ok(
       res,
-      await allocateRoom(deps, actor(res), parsed(roomAllocationBody, req.body), new Date()),
+      await allocateRoom(
+        deps,
+        actor(res),
+        parse(roomAllocationBody, req.body, 'room allocation request'),
+        new Date(),
+      ),
       201,
     )
   })
@@ -101,15 +92,23 @@ export function roomAllocationRoutes(
       await revokeRoomAllocation(
         deps,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(roomAllocationRevokeBody, req.body).reason,
+        parse(id, req.params.id, 'room allocation request'),
+        parse(roomAllocationRevokeBody, req.body, 'room allocation request').reason,
         new Date(),
       ),
     )
   })
   // CLB xem các phòng được phân bổ
   router.get('/clubs/:clubId/room-allocations', authGuard(guard, false), async (req, res) => {
-    ok(res, await clubRoomAllocations(deps, actor(res), parsed(id, req.params.clubId), new Date()))
+    ok(
+      res,
+      await clubRoomAllocations(
+        deps,
+        actor(res),
+        parse(id, req.params.clubId, 'room allocation request'),
+        new Date(),
+      ),
+    )
   })
   return router
 }

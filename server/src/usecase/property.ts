@@ -7,37 +7,7 @@ import {
   type PropertyInput,
   type PropertyRepository,
 } from '../domain/property.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng id tài sản
-function propertyId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid property id', 'validation')
-  }
-  return value
-}
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // ICPDP xem danh sách tài sản (phòng, thiết bị)
 export async function listProperties(
@@ -45,7 +15,7 @@ export async function listProperties(
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.list()
 }
 
@@ -57,7 +27,7 @@ export async function createProperty(
   input: PropertyInput,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   if (!PROPERTY_TYPES.includes(input.type)) {
     throw new DomainError('invalid property type', 'validation', { field: 'type' })
   }
@@ -77,8 +47,8 @@ export async function updateProperty(
   details: PropertyDetails,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
-  const current = await repo.find(propertyId(id))
+  const actorId = await requireIcpdpOfficer(auth, actor)
+  const current = await repo.find(parseObjectId(id, 'property id'))
   if (!current) {
     throw new DomainError('property not found', 'not_found')
   }
@@ -94,8 +64,8 @@ export async function setPropertyActive(
   isActive: boolean,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
-  return repo.setActive(propertyId(id), isActive, actorId, now)
+  const actorId = await requireIcpdpOfficer(auth, actor)
+  return repo.setActive(parseObjectId(id, 'property id'), isActive, actorId, now)
 }
 
 // ICPDP xóa tài sản chưa từng được đặt
@@ -107,8 +77,8 @@ export async function deleteProperty(
   id: string,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
-  const current = await repo.find(propertyId(id))
+  const actorId = await requireIcpdpOfficer(auth, actor)
+  const current = await repo.find(parseObjectId(id, 'property id'))
   if (!current) {
     throw new DomainError('property not found', 'not_found')
   }

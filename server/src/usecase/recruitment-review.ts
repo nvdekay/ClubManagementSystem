@@ -6,9 +6,7 @@ import type {
   RecruitmentReviewRepository,
 } from '../domain/recruitment-application.js'
 import type { ClubAccessRepository } from '../domain/access.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { assertClubAccess, isObjectId, type AccessActor } from './access.js'
 
 // Kiểm người xét duyệt đăng nhập và tài khoản Active
 function reviewerId(actor: AccessActor | null): string {
@@ -28,7 +26,7 @@ async function authorize(
   clubId: string,
   now: Date,
 ) {
-  if (!objectId.test(clubId)) {
+  if (!isObjectId(clubId)) {
     throw new DomainError('invalid club id', 'validation')
   }
   const userId = reviewerId(actor)
@@ -47,7 +45,7 @@ export async function listRecruitmentApplicationsForReview(
   now = new Date(),
 ) {
   await authorize(access, actor, clubId, now)
-  if (!objectId.test(campaignId)) {
+  if (!isObjectId(campaignId)) {
     throw new DomainError('invalid campaign id', 'validation')
   }
   return repo.listForReview(clubId, campaignId, state)
@@ -67,7 +65,7 @@ export async function reviewerAttachmentAccess(
     ['campaign', input.campaignId],
     ['application', input.applicationId],
   ] as const) {
-    if (!objectId.test(value)) {
+    if (!isObjectId(value)) {
       throw new DomainError(`invalid ${label} id`, 'validation')
     }
   }
@@ -101,10 +99,10 @@ export async function reviewRecruitmentApplications(
 ) {
   const actorId = await authorize(access, actor, input.clubId, now)
   if (
-    !objectId.test(input.campaignId) ||
+    !isObjectId(input.campaignId) ||
     !input.applicationIds.length ||
     input.applicationIds.length > 100 ||
-    input.applicationIds.some((id) => !objectId.test(id)) ||
+    input.applicationIds.some((id) => !isObjectId(id)) ||
     new Set(input.applicationIds).size !== input.applicationIds.length
   ) {
     throw new DomainError('invalid recruitment review request', 'validation')
@@ -141,9 +139,9 @@ export async function onboardAcceptedRecruitmentApplication(
 ) {
   const actorId = await authorize(access, actor, input.clubId, now)
   if (
-    !objectId.test(input.campaignId) ||
-    !objectId.test(input.applicationId) ||
-    (input.departmentId && !objectId.test(input.departmentId)) ||
+    !isObjectId(input.campaignId) ||
+    !isObjectId(input.applicationId) ||
+    (input.departmentId && !isObjectId(input.departmentId)) ||
     Number.isNaN(input.joinedAt.getTime()) ||
     input.joinedAt > now
   ) {
@@ -162,8 +160,8 @@ export async function declineAcceptedRecruitmentApplication(
 ) {
   const actorId = await authorize(access, actor, input.clubId, now)
   if (
-    !objectId.test(input.campaignId) ||
-    !objectId.test(input.applicationId) ||
+    !isObjectId(input.campaignId) ||
+    !isObjectId(input.applicationId) ||
     (input.reason && input.reason.trim().length > 2000)
   ) {
     throw new DomainError('invalid decline request', 'validation')

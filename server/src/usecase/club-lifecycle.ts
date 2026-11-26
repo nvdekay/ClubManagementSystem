@@ -6,33 +6,11 @@ import {
 } from '../domain/club-lifecycle.js'
 import { DomainError } from '../domain/errors.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
+import { isObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // Lấy chi tiết vòng đời CLB, không có thì báo not_found
 async function club(repo: ClubLifecycleRepository, clubId: string, now: Date) {
-  if (!objectId.test(clubId)) {
+  if (!isObjectId(clubId)) {
     throw new DomainError('invalid club id', 'validation')
   }
   const found = await repo.detail(clubId, now)
@@ -54,7 +32,7 @@ export async function listClubLifecycles(
   actor: AccessActor | null,
   now: Date,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   const clubs = await repo.list()
   return {
     clubs,
@@ -76,7 +54,7 @@ export async function getClubLifecycle(
   clubId: string,
   now: Date,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   const [detail, semester] = await Promise.all([
     club(repo, clubId, now),
     semesterAfter(policy, now),
@@ -93,7 +71,7 @@ export async function suspendClub(
   input: { reason: string; until?: Date },
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const reason = validateLifecycleReason(input.reason)
   if (input.until && (Number.isNaN(input.until.getTime()) || input.until <= now)) {
     throw new DomainError('the suspension must end in the future', 'validation', { field: 'until' })
@@ -114,7 +92,7 @@ export async function reactivateClub(
   input: { reason: string },
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const reason = validateLifecycleReason(input.reason)
   const current = await club(repo, clubId, now)
   if (current.state !== 'Suspended') {
@@ -135,7 +113,7 @@ export async function dissolveClub(
   input: { reason: string },
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const reason = validateLifecycleReason(input.reason)
   const current = await club(repo, clubId, now)
   if (!['Active', 'Suspended'].includes(current.state) || current.dissolution) {

@@ -1,4 +1,4 @@
-import { Router, json, raw, type Response } from 'express'
+import { Router, json, raw } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
@@ -13,7 +13,6 @@ import type {
   RecruitmentApplicationState,
   RecruitmentDecision,
 } from '../../domain/recruitment-application.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   createRecruitmentApplicationDraft,
   getMyCampaignApplication,
@@ -34,6 +33,7 @@ import {
 } from '../../usecase/recruitment-review.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface RecruitmentApplicationRouteDeps {
   repo: RecruitmentApplicationRepository
@@ -64,35 +64,6 @@ const reviewBody = z
     reason: z.string().max(2000).optional(),
   })
   .strict()
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(
-  schema: {
-    safeParse(
-      input: unknown,
-    ): { success: true; data: T } | { success: false; error: { issues: unknown } }
-  },
-  input: unknown,
-): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError(
-      'invalid recruitment application request',
-      'validation',
-      result.error.issues,
-    )
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Loại assetId nội bộ khỏi tệp đính kèm trước khi trả về client
 function publicAttachment(attachment: RecruitmentAttachment) {
@@ -130,7 +101,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
       const queryState = req.query.state
       const state =
         typeof queryState === 'string'
-          ? (parsed(
+          ? (parse(
               z.enum([
                 'Submitted',
                 'Screening',
@@ -143,6 +114,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
                 'Declined',
               ]),
               queryState,
+              'recruitment application request',
             ) as RecruitmentApplicationState)
           : undefined
       ok(
@@ -152,8 +124,8 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
             deps.repo,
             deps.accessRepo,
             actor(res),
-            parsed(id, req.params.clubId),
-            parsed(id, req.params.campaignId),
+            parse(id, req.params.clubId, 'recruitment application request'),
+            parse(id, req.params.campaignId, 'recruitment application request'),
             state,
           )
         ).map(publicApplication),
@@ -168,10 +140,14 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
       ok(
         res,
         await reviewerAttachmentAccess(deps.repo, deps.files, deps.accessRepo, actor(res), {
-          clubId: parsed(id, req.params.clubId),
-          campaignId: parsed(id, req.params.campaignId),
-          applicationId: parsed(id, req.params.applicationId),
-          attachmentId: parsed(attachmentId, req.params.attachmentId),
+          clubId: parse(id, req.params.clubId, 'recruitment application request'),
+          campaignId: parse(id, req.params.campaignId, 'recruitment application request'),
+          applicationId: parse(id, req.params.applicationId, 'recruitment application request'),
+          attachmentId: parse(
+            attachmentId,
+            req.params.attachmentId,
+            'recruitment application request',
+          ),
         }),
       )
     },
@@ -181,13 +157,13 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/review',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(reviewBody, req.body)
+      const body = parse(reviewBody, req.body, 'recruitment application request')
       ok(
         res,
         (
           await reviewRecruitmentApplications(deps.repo, deps.accessRepo, actor(res), {
-            clubId: parsed(id, req.params.clubId),
-            campaignId: parsed(id, req.params.campaignId),
+            clubId: parse(id, req.params.clubId, 'recruitment application request'),
+            campaignId: parse(id, req.params.campaignId, 'recruitment application request'),
             applicationIds: body.applicationIds,
             action: body.action,
             ...(body.outcome ? { outcome: body.outcome as RecruitmentDecision } : {}),
@@ -202,11 +178,12 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/onboard',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(
+      const body = parse(
         z
           .object({ joinedAt: z.string().datetime().optional(), departmentId: id.optional() })
           .strict(),
         req.body,
+        'recruitment application request',
       )
       const now = new Date()
       ok(
@@ -217,9 +194,9 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
             deps.accessRepo,
             actor(res),
             {
-              clubId: parsed(id, req.params.clubId),
-              campaignId: parsed(id, req.params.campaignId),
-              applicationId: parsed(id, req.params.applicationId),
+              clubId: parse(id, req.params.clubId, 'recruitment application request'),
+              campaignId: parse(id, req.params.campaignId, 'recruitment application request'),
+              applicationId: parse(id, req.params.applicationId, 'recruitment application request'),
               joinedAt: body.joinedAt ? new Date(body.joinedAt) : now,
               ...(body.departmentId ? { departmentId: body.departmentId } : {}),
             },
@@ -234,14 +211,18 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/decline',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(z.object({ reason: z.string().max(2000).optional() }).strict(), req.body)
+      const body = parse(
+        z.object({ reason: z.string().max(2000).optional() }).strict(),
+        req.body,
+        'recruitment application request',
+      )
       ok(
         res,
         publicApplication(
           await declineAcceptedRecruitmentApplication(deps.repo, deps.accessRepo, actor(res), {
-            clubId: parsed(id, req.params.clubId),
-            campaignId: parsed(id, req.params.campaignId),
-            applicationId: parsed(id, req.params.applicationId),
+            clubId: parse(id, req.params.clubId, 'recruitment application request'),
+            campaignId: parse(id, req.params.campaignId, 'recruitment application request'),
+            applicationId: parse(id, req.params.applicationId, 'recruitment application request'),
             ...(body.reason ? { reason: body.reason } : {}),
           }),
         ),
@@ -261,14 +242,18 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
       const application = await getMyCampaignApplication(
         deps.repo,
         actor(res),
-        parsed(id, req.params.campaignId),
+        parse(id, req.params.campaignId, 'recruitment application request'),
       )
       ok(res, application ? publicApplication(application) : null)
     },
   )
   // Tạo bản nháp đơn ứng tuyển
   router.post('/applications/recruitment', authGuard(guard), async (req, res) => {
-    const body = parsed(createRecruitmentApplicationBody, req.body)
+    const body = parse(
+      createRecruitmentApplicationBody,
+      req.body,
+      'recruitment application request',
+    )
     ok(
       res,
       publicApplication(
@@ -288,7 +273,11 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     ok(
       res,
       publicApplication(
-        await getMyRecruitmentApplication(deps.repo, actor(res), parsed(id, req.params.id)),
+        await getMyRecruitmentApplication(
+          deps.repo,
+          actor(res),
+          parse(id, req.params.id, 'recruitment application request'),
+        ),
       ),
     )
   })
@@ -305,8 +294,8 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
           await saveRecruitmentApplicationDraft(
             deps.repo,
             actor(res),
-            parsed(id, req.params.id),
-            parsed(updateRecruitmentApplicationBody, req.body),
+            parse(id, req.params.id, 'recruitment application request'),
+            parse(updateRecruitmentApplicationBody, req.body, 'recruitment application request'),
             new Date(),
           ),
         ),
@@ -327,7 +316,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
         deps.repo,
         deps.files,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'recruitment application request'),
         header(req.header('X-Field-Key'), 'field key'),
         header(req.header('X-Filename'), 'file name'),
         mimeType,
@@ -348,8 +337,8 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
           deps.repo,
           deps.files,
           actor(res),
-          parsed(id, req.params.id),
-          parsed(attachmentId, req.params.attachmentId),
+          parse(id, req.params.id, 'recruitment application request'),
+          parse(attachmentId, req.params.attachmentId, 'recruitment application request'),
         ),
       )
     },
@@ -362,7 +351,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
         await submitRecruitmentApplication(
           deps.repo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'recruitment application request'),
           new Date(),
         ),
       ),
@@ -376,7 +365,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
         await withdrawRecruitmentApplication(
           deps.repo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'recruitment application request'),
           new Date(),
         ),
       ),

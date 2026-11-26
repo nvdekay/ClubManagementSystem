@@ -14,7 +14,7 @@ import {
   type RoomAllocationOptions,
   type RoomAllocationRepository,
 } from '../domain/room-allocation.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 export interface RoomAllocationDeps {
   repo: RoomAllocationRepository
@@ -24,19 +24,6 @@ export interface RoomAllocationDeps {
   access: ClubAccessRepository
 }
 
-// Kiểm actor là ICPDP officer và trả id
-async function officer(deps: RoomAllocationDeps, actor: AccessActor | null): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError('account locked', 'locked')
-  }
-  if (!(await deps.auth.systemRoleCodes(allocationId(actor.id))).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
 // Lấy chính sách đang hiệu lực, chưa cấu hình thì báo lỗi
 async function effectivePolicy(deps: RoomAllocationDeps, now: Date) {
   const policy = await deps.policy.findEffective(now)
@@ -53,7 +40,7 @@ export async function roomAllocationOptions(
   actor: AccessActor | null,
   now: Date,
 ): Promise<RoomAllocationOptions> {
-  await officer(deps, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const policy = await effectivePolicy(deps, now)
   const [clubs, properties] = await Promise.all([deps.repo.clubs(), deps.properties.list()])
   return {
@@ -69,7 +56,7 @@ export async function listRoomAllocations(
   actor: AccessActor | null,
   semesterCode?: string,
 ) {
-  await officer(deps, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   return deps.repo.list(semesterCode ? { semesterCode } : {})
 }
 
@@ -80,7 +67,7 @@ export async function allocateRoom(
   raw: RoomAllocationInput,
   now: Date,
 ): Promise<RoomAllocation> {
-  const officerId = await officer(deps, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const input = validateRoomAllocationInput(raw)
   const [property, club, policy] = await Promise.all([
     deps.properties.find(input.propertyId),
@@ -100,7 +87,7 @@ export async function roomAllocationOccupancy(
   propertyId: string,
   now: Date,
 ) {
-  await officer(deps, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const policy = await effectivePolicy(deps, now)
   const semester = policy.academicCalendar.find((item) => item.code === semesterCode)
   if (!semester) {
@@ -126,7 +113,7 @@ export async function revokeRoomAllocation(
   reason: string,
   now: Date,
 ): Promise<RoomAllocation> {
-  const officerId = await officer(deps, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   return deps.repo.revoke(allocationId(id), allocationReason(reason), officerId, now)
 }
 

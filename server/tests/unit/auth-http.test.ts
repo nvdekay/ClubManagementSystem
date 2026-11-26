@@ -252,6 +252,16 @@ describe('auth HTTP boundary', () => {
     expect(res.redirect).toHaveBeenCalledWith(302, 'http://localhost:5173/login?error=oauth')
   })
 
+  it('does not audit a callback that carries no OAuth flow cookie', async () => {
+    const { deps, audits, complete } = fixture()
+    const unseal = deps.oauthFlow.unseal
+    deps.oauthFlow.unseal = (value, now) => (value ? unseal(value, now) : null)
+    const res = await callback(deps, { code: 'code', state: 'expected-state' }, '')
+    expect(complete).not.toHaveBeenCalled()
+    expect(audits).toEqual([])
+    expect(res.redirect).toHaveBeenCalledWith(302, 'http://localhost:5173/login?error=oauth')
+  })
+
   it('sets a scoped secure session cookie only after a valid callback', async () => {
     const { deps, audits, complete, issue } = fixture()
     deps.secureCookies = true

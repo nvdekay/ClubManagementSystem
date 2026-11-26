@@ -1,4 +1,4 @@
-import { Router, raw, type Response } from 'express'
+import { Router, raw } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type {
@@ -9,7 +9,6 @@ import type { ClubFieldRepository } from '../../domain/club-field.js'
 import { DomainError } from '../../domain/errors.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import type {
   ApplicationDocument,
   ClubApplicationDraft,
@@ -32,6 +31,7 @@ import {
 } from '../../usecase/club-application.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ClubApplicationRouteDeps {
   repo: ClubApplicationRepository
@@ -65,24 +65,6 @@ const applicationUpdateBody = applicationDraftBody
     draftRevision: z.number().int().nonnegative(),
   })
   .strict()
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid application request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Giải mã tên file từ header, báo lỗi nếu thiếu hoặc sai mã hoá
 function headerName(value: string | undefined): string {
@@ -131,7 +113,11 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   router.get('/applications/founder-lookup', authGuard(guard, false), async (req, res) => {
     ok(
       res,
-      await lookupFounder(deps.repo, actor(res), parsed(z.string().max(254), req.query.email)),
+      await lookupFounder(
+        deps.repo,
+        actor(res),
+        parse(z.string().max(254), req.query.email, 'application request'),
+      ),
     )
   })
   // Liệt kê đơn thành lập CLB của tôi
@@ -147,7 +133,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
           deps.repo,
           deps.fields,
           actor(res),
-          parsed(applicationDraftBody, req.body),
+          parse(applicationDraftBody, req.body, 'application request'),
           new Date(),
         ),
       ),
@@ -156,7 +142,11 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   })
   // Xem chi tiết đơn của tôi cùng phiên bản, quyết định và founders
   router.get('/applications/:id', authGuard(guard, false), async (req, res) => {
-    const detail = await getMyApplication(deps.repo, actor(res), parsed(id, req.params.id))
+    const detail = await getMyApplication(
+      deps.repo,
+      actor(res),
+      parse(id, req.params.id, 'application request'),
+    )
     ok(res, {
       application: publicRecord(detail.application),
       versions: detail.versions.map(publicVersion),
@@ -173,14 +163,14 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
         deps.policy,
         deps.fields,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'application request'),
         new Date(),
       ),
     )
   })
   // Lưu chỉnh sửa bản nháp đơn
   router.patch('/applications/:id/draft', authGuard(guard), async (req, res) => {
-    const body = parsed(applicationUpdateBody, req.body)
+    const body = parse(applicationUpdateBody, req.body, 'application request')
     const { draftRevision, ...draft } = body
     ok(
       res,
@@ -189,7 +179,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
           deps.repo,
           deps.fields,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'application request'),
           draft,
           draftRevision,
         ),
@@ -203,7 +193,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
       deps.policy,
       deps.fields,
       actor(res),
-      parsed(id, req.params.id),
+      parse(id, req.params.id, 'application request'),
       new Date(),
     )
     ok(res, { ...result, version: publicVersion(result.version) }, 201)
@@ -213,7 +203,12 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     ok(
       res,
       publicRecord(
-        await withdrawApplication(deps.repo, actor(res), parsed(id, req.params.id), new Date()),
+        await withdrawApplication(
+          deps.repo,
+          actor(res),
+          parse(id, req.params.id, 'application request'),
+          new Date(),
+        ),
       ),
     )
   })
@@ -233,7 +228,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
             deps.repo,
             deps.files,
             actor(res),
-            parsed(id, req.params.id),
+            parse(id, req.params.id, 'application request'),
             headerName(req.header('X-Document-Type')),
             headerName(req.header('X-Filename')),
             req.header('Content-Type') ?? '',
@@ -253,8 +248,8 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
         await removeApplicationDocument(
           deps.repo,
           actor(res),
-          parsed(id, req.params.id),
-          parsed(z.string().uuid(), req.params.documentId),
+          parse(id, req.params.id, 'application request'),
+          parse(z.string().uuid(), req.params.documentId, 'application request'),
         ),
       ),
     )
@@ -270,8 +265,8 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
           deps.repo,
           deps.files,
           actor(res),
-          parsed(id, req.params.id),
-          parsed(z.string().uuid(), req.params.documentId),
+          parse(id, req.params.id, 'application request'),
+          parse(z.string().uuid(), req.params.documentId, 'application request'),
         ),
       )
     },

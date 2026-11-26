@@ -155,14 +155,19 @@ export function authRoutes(deps: AuthRouteDeps): Router {
 
   // Callback OAuth: xác minh state, tạo phiên và đặt cookie ucms_session
   router.get('/auth/callback', async (req, res) => {
-    const flow = deps.oauthFlow.unseal(cookie(req, 'ucms_oauth'), new Date())
+    const sealedFlow = cookie(req, 'ucms_oauth')
+    const flow = deps.oauthFlow.unseal(sealedFlow, new Date())
     res.clearCookie('ucms_oauth', oauthCookie)
     const query = callbackQuery.safeParse(req.query)
     if (!flow || !query.success || !sameToken(query.data.state, flow.state)) {
-      await deps.repo.auditLogin(
-        { action: 'LOGIN_FAILED_GOOGLE', reason: 'invalid OAuth callback' },
-        new Date(),
-      )
+      // No flow cookie = nobody started a sign-in from this browser (scanners, replayed links):
+      // anonymous noise, so it is not written to auditLogs. A tampered or mismatched flow is.
+      if (sealedFlow) {
+        await deps.repo.auditLogin(
+          { action: 'LOGIN_FAILED_GOOGLE', reason: 'invalid OAuth callback' },
+          new Date(),
+        )
+      }
       const target = new URL('/login?error=oauth', deps.clientBaseUrl)
       res.redirect(302, target.toString())
       return

@@ -7,6 +7,10 @@ Adapter kích hoạt theo lịch (thay vì theo HTTP): mỗi job một file, ch�
 Không chứa logic nghiệp vụ — mọi quyết định nằm ở usecase để test được không cần đồng hồ thật. Được khởi
 động từ `main.ts`.
 
+`schedule.ts` là bộ hẹn giờ dùng chung: chạy ngay rồi lặp theo chu kỳ, không chạy chồng, log lượt lỗi, và hàm dừng
+chờ lượt đang chạy xong để `main.ts` chỉ ngắt Mongo sau đó. Job nhiều bước (`event-lifecycle-job.ts`) bọc từng
+bước trong try/catch riêng, nên một bước lỗi không làm bỏ qua các bước còn lại.
+
 - `club-lifecycle-job.ts` — UC15: chạy lúc khởi động và mỗi giờ: báo ICPDP trước khi hết hạn tạm ngừng, tự
   kích hoạt lại CLB hết hạn tạm ngừng, chuyển CLB đã có quyết định giải thể sang `Dissolving`/`Dissolved`
   (bước 6 lưu nghĩa vụ tồn đọng). Bước lỗi của một CLB hoặc cả lượt chạy lỗi → ICPDP nhận

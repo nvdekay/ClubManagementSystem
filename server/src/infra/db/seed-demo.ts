@@ -910,7 +910,7 @@ try {
     capacity: 25,
     waitlistEnabled: false,
     audienceScope: 'MEMBERS_ONLY',
-    state: 'PUBLIC',
+    state: 'Upcoming',
     registrationOpenAt: at(-3 * DAY),
     registrationCloseAt: at(3 * DAY),
   })

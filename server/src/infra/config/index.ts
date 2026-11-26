@@ -22,6 +22,23 @@ const schema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().optional(),
+  // Serve /docs and /docs/openapi.json in production too (always served in development and test).
+  API_DOCS: z
+    .enum(['true', 'false', ''])
+    .optional()
+    .transform((value) => value === 'true'),
+  // Express `trust proxy`: 'false' (default), 'true', or the number of reverse-proxy hops in front.
+  TRUST_PROXY: z
+    .string()
+    .trim()
+    .regex(/^(true|false|\d{1,2})?$/, 'TRUST_PROXY must be true, false or a hop count')
+    .optional()
+    .transform((value): boolean | number => {
+      if (value === undefined || value === '' || value === 'false') {
+        return false
+      }
+      return value === 'true' ? true : Number(value)
+    }),
 })
 
 const authSchema = z.object({

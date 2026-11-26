@@ -198,12 +198,18 @@ export function approvedBudget(
   }
   return requested.map((line, index) => {
     const { approvedAmount, reason, fundingDecision } = decided[index]!
+    // FR-UC26-14: every line needs its own decision; an undecided line blocks the approval.
+    if (fundingDecision === undefined) {
+      throw new DomainError('a funding decision is required for every budget line', 'validation', {
+        field: 'budgetLines',
+        index,
+      })
+    }
     if (
-      fundingDecision !== undefined &&
-      (!FUNDING_DECISIONS.includes(fundingDecision) ||
-        (fundingDecision === 'NOT_SPONSORED'
-          ? approvedAmount !== 0
-          : approvedAmount !== line.amount || approvedAmount <= 0))
+      !FUNDING_DECISIONS.includes(fundingDecision) ||
+      (fundingDecision === 'NOT_SPONSORED'
+        ? approvedAmount !== 0
+        : approvedAmount !== line.amount || approvedAmount <= 0)
     ) {
       throw new DomainError('funding decision and approved amount disagree', 'validation')
     }

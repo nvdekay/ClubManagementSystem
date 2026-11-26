@@ -6,32 +6,7 @@ import type {
 } from '../domain/board-nomination.js'
 import { DomainError } from '../domain/errors.js'
 import type { ClubAccessRepository } from '../domain/access.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm định dạng ObjectId
-function validId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid identifier', 'validation')
-  }
-  return value
-}
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(auth: AuthRepository, actor: AccessActor | null): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  const id = validId(actor.id)
-  if (!(await auth.systemRoleCodes(id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return id
-}
+import { assertClubAccess, parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // Lấy ngữ cảnh đề cử ban chủ nhiệm (vị trí, ứng viên) của CLB
 export async function getBoardNominationContext(
@@ -42,7 +17,7 @@ export async function getBoardNominationContext(
   now: Date,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.board.nominate', now)
-  const context = await repo.getContext(validId(clubId))
+  const context = await repo.getContext(parseObjectId(clubId, 'identifier'))
   if (!context) {
     throw new DomainError('club not found', 'not_found')
   }
@@ -62,8 +37,8 @@ export async function submitBoardNomination(
   if (!actor) {
     throw new DomainError('authentication required', 'unauthorized')
   }
-  const validClubId = validId(clubId)
-  validId(actor.id)
+  const validClubId = parseObjectId(clubId, 'identifier')
+  parseObjectId(actor.id, 'identifier')
   if (!seats.length || seats.length > 30) {
     throw new DomainError('at least one board seat is required', 'validation')
   }
@@ -90,8 +65,8 @@ export async function submitBoardNomination(
       .map((candidate) => [candidate.membershipId, candidate]),
   )
   for (const seat of seats) {
-    const positionId = validId(seat.positionId)
-    const membershipId = validId(seat.membershipId)
+    const positionId = parseObjectId(seat.positionId, 'identifier')
+    const membershipId = parseObjectId(seat.membershipId, 'identifier')
     const position = positions.get(positionId)
     if (!position) {
       throw new DomainError('position is not an active board seat', 'validation')
@@ -131,7 +106,7 @@ export async function listClubBoardNominations(
   now: Date,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.board.nominate', now)
-  return repo.listForClub(validId(clubId))
+  return repo.listForClub(parseObjectId(clubId, 'identifier'))
 }
 
 // ICPDP xem các đề cử ban chủ nhiệm đang mở
@@ -140,7 +115,7 @@ export async function listBoardNominations(
   auth: AuthRepository,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.listOpen()
 }
 
@@ -151,8 +126,8 @@ export async function getBoardNomination(
   actor: AccessActor | null,
   nominationId: string,
 ) {
-  await officer(auth, actor)
-  const detail = await repo.find(validId(nominationId))
+  await requireIcpdpOfficer(auth, actor)
+  const detail = await repo.find(parseObjectId(nominationId, 'identifier'))
   if (!detail) {
     throw new DomainError('board nomination not found', 'not_found')
   }
@@ -167,14 +142,20 @@ export async function claimBoardNomination(
   nominationId: string,
   now: Date,
 ) {
-  return repo.claim(validId(nominationId), await officer(auth, actor), now)
+  return repo.claim(
+    parseObjectId(nominationId, 'identifier'),
+    await requireIcpdpOfficer(auth, actor),
+    now,
+  )
 }
 
 // Chuẩn hóa và kiểm quyết định xác nhận hoặc trả lại từng ghế
 function normalizeDecision(input: BoardNominationDecisionInput, detailSeatIds: readonly string[]) {
-  const confirmedSeatIds = [...new Set(input.confirmedSeatIds.map(validId))]
+  const confirmedSeatIds = [
+    ...new Set(input.confirmedSeatIds.map((seatId) => parseObjectId(seatId, 'identifier'))),
+  ]
   const returnedSeats = input.returnedSeats.map((seat) => ({
-    seatId: validId(seat.seatId),
+    seatId: parseObjectId(seat.seatId, 'identifier'),
     reason: seat.reason.trim(),
   }))
   const returnedSeatIds = returnedSeats.map((seat) => seat.seatId)
@@ -215,8 +196,8 @@ export async function decideBoardNomination(
   input: BoardNominationDecisionInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
-  const detail = await repo.find(validId(nominationId))
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const detail = await repo.find(parseObjectId(nominationId, 'identifier'))
   if (!detail) {
     throw new DomainError('board nomination not found', 'not_found')
   }
@@ -232,5 +213,5 @@ export async function decideBoardNomination(
     input,
     pending.map((seat) => seat.id),
   )
-  return repo.decide(validId(nominationId), officerId, normalized, now)
+  return repo.decide(parseObjectId(nominationId, 'identifier'), officerId, normalized, now)
 }

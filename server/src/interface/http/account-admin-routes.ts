@@ -1,13 +1,12 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AccountAdminRepository } from '../../domain/account-admin.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
 import type { AuthRepository } from '../../domain/auth.js'
 import { changeSystemRole, searchAdminUsers, setAccountLock } from '../../usecase/account-admin.js'
-import type { AccessActor } from '../../usecase/access.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface AccountAdminRouteDeps {
   adminRepo: AccountAdminRepository
@@ -27,27 +26,9 @@ export const lockBody = z
   })
   .strict()
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid request body', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
 // Ép tham số route thành chuỗi hợp lệ
 function param(value: unknown): string {
-  return parsed(z.string(), value)
+  return parse(z.string(), value, 'route parameter')
 }
 
 // Mount các route quản trị tài khoản người dùng của ICPDP
@@ -68,7 +49,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
 
   // Cấp system role cho tài khoản kèm lý do
   router.post('/admin/users/:id/roles', authGuard(guardDeps), async (req, res) => {
-    const body = parsed(roleBody, req.body)
+    const body = parse(roleBody, req.body, 'request body')
     await changeSystemRole(
       deps.adminRepo,
       deps.sessions,
@@ -84,7 +65,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
 
   // Thu hồi system role của tài khoản kèm lý do
   router.delete('/admin/users/:id/roles/:roleCode', authGuard(guardDeps), async (req, res) => {
-    const body = parsed(reasonBody, req.body)
+    const body = parse(reasonBody, req.body, 'request body')
     await changeSystemRole(
       deps.adminRepo,
       deps.sessions,
@@ -100,7 +81,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
 
   // Khoá tài khoản (có thể gắn violationId) và thu hồi phiên
   router.post('/admin/users/:id/lock', authGuard(guardDeps), async (req, res) => {
-    const body = parsed(lockBody, req.body)
+    const body = parse(lockBody, req.body, 'request body')
     await setAccountLock(
       deps.adminRepo,
       deps.sessions,
@@ -116,7 +97,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
 
   // Mở khoá tài khoản kèm lý do
   router.post('/admin/users/:id/unlock', authGuard(guardDeps), async (req, res) => {
-    const body = parsed(reasonBody, req.body)
+    const body = parse(reasonBody, req.body, 'request body')
     await setAccountLock(
       deps.adminRepo,
       deps.sessions,

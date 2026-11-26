@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { BoardNominationRepository } from '../../domain/board-nomination.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   claimBoardNomination,
   decideBoardNomination,
@@ -17,6 +15,7 @@ import {
 } from '../../usecase/board-nomination.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface BoardNominationRouteDeps {
   repo: BoardNominationRepository
@@ -44,24 +43,6 @@ export const boardNominationDecisionBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid board nomination request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route đề cử ban chủ nhiệm của CLB và ICPDP
 export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
   const router = Router()
@@ -77,7 +58,7 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
           deps.repo,
           deps.accessRepo,
           actor(res),
-          parsed(id, req.params.clubId),
+          parse(id, req.params.clubId, 'board nomination request'),
           new Date(),
         ),
       )
@@ -91,21 +72,21 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'board nomination request'),
         new Date(),
       ),
     )
   })
   // Club Leader gửi đề cử các ghế ban chủ nhiệm
   router.post('/clubs/:clubId/board-nominations', authGuard(guard), async (req, res) => {
-    const body = parsed(boardNominationBody, req.body)
+    const body = parse(boardNominationBody, req.body, 'board nomination request')
     ok(
       res,
       await submitBoardNomination(
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'board nomination request'),
         body.seats,
         new Date(),
       ),
@@ -120,7 +101,12 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
   router.get('/admin/board-nominations/:id', authGuard(guard, false), async (req, res) => {
     ok(
       res,
-      await getBoardNomination(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)),
+      await getBoardNomination(
+        deps.repo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'board nomination request'),
+      ),
     )
   })
   // ICPDP nhận xử lý (claim) một đề cử
@@ -131,7 +117,7 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'board nomination request'),
         new Date(),
       ),
     )
@@ -144,8 +130,8 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(boardNominationDecisionBody, req.body),
+        parse(id, req.params.id, 'board nomination request'),
+        parse(boardNominationDecisionBody, req.body, 'board nomination request'),
         new Date(),
       ),
     )

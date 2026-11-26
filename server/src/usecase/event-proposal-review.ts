@@ -13,38 +13,9 @@ import {
   type EventReviewSection,
   type NormalizedEventDecision,
 } from '../domain/event-proposal-review.js'
-import type { AccessActor } from './access.js'
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const sections = new Set<string>(EVENT_REVIEW_SECTIONS)
-
-/** Require an authenticated, unlocked ICPDP officer and return the acting account ID. */
-export async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Reject malformed proposal IDs before repository access.
-function eventId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid event id', 'validation')
-  }
-  return value
-}
 
 // Treat whitespace-only optional comments as absent.
 function trimmed(value: string | undefined): string | undefined {
@@ -113,7 +84,7 @@ export async function listEventProposalReviews(
   actor: AccessActor | null,
   view: 'pending' | 'approved' = 'pending',
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.listOpen(view)
 }
 
@@ -125,8 +96,8 @@ export async function getEventProposalReview(
   id: string,
   now: Date,
 ) {
-  await officer(auth, actor)
-  const detail = await repo.find(eventId(id), now)
+  await requireIcpdpOfficer(auth, actor)
+  const detail = await repo.find(parseObjectId(id, 'event id'), now)
   if (!detail) {
     throw new DomainError('event proposal not found', 'not_found')
   }
@@ -141,7 +112,7 @@ export async function claimEventProposalReview(
   id: string,
   now: Date,
 ) {
-  return repo.claim(eventId(id), await officer(auth, actor), now)
+  return repo.claim(parseObjectId(id, 'event id'), await requireIcpdpOfficer(auth, actor), now)
 }
 
 /** Validate the decision against submitted evidence before the repository commits it. */
@@ -153,9 +124,9 @@ export async function decideEventProposalReview(
   input: EventReviewDecisionInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   const decision = normalizedEventDecision(input, now)
-  const detail = await repo.find(eventId(id), now)
+  const detail = await repo.find(parseObjectId(id, 'event id'), now)
   if (!detail) {
     throw new DomainError('event proposal not found', 'not_found')
   }
@@ -178,7 +149,7 @@ export async function decideEventCancellationReview(
   input: { approve: boolean; reason?: string },
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   const reason = trimmed(input.reason)
   if (!input.approve && !reason) {
     throw new DomainError('decision reason is required', 'validation', { field: 'reason' })
@@ -189,7 +160,12 @@ export async function decideEventCancellationReview(
   if (!repo.decideCancellation) {
     throw new DomainError('event cancellation review is not supported', 'unavailable')
   }
-  return repo.decideCancellation(eventId(id), officerId, { approve: input.approve, reason }, now)
+  return repo.decideCancellation(
+    parseObjectId(id, 'event id'),
+    officerId,
+    { approve: input.approve, reason },
+    now,
+  )
 }
 
 // Job: chuyển trạng thái sự kiện theo thời gian (hết hạn, bắt đầu, hoàn thành)

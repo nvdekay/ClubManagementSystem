@@ -232,12 +232,12 @@ describe.skipIf(!uri)('Mongo event defense repository', () => {
         outcome: 'Approve',
         sections: [],
         conditions: ['Submit final vendor contract'],
-        budgetLines: [{ approvedAmount: 4_500_000, reason: 'Negotiated discount' }],
+        budgetLines: [{ fundingDecision: 'BEFORE_EVENT', approvedAmount: 5_000_000 }],
       },
       round2Start,
     )
     expect(approvedDetail.event.state).toBe('Approved')
-    expect(approvedDetail.budget?.approvedTotal).toBe(4_500_000)
+    expect(approvedDetail.budget?.approvedTotal).toBe(5_000_000)
   })
 
   it('marks NO_SHOW and immediately rejects the proposal', async () => {

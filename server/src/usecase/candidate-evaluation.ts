@@ -7,14 +7,12 @@ import {
   type CandidateEvaluationRepository,
 } from '../domain/candidate-evaluation.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { assertClubAccess, isObjectId, type AccessActor } from './access.js'
 
 // Kiểm các id truyền vào đúng định dạng ObjectId
 function assertIds(ids: Record<string, string>): void {
   for (const [label, value] of Object.entries(ids)) {
-    if (!objectId.test(value)) {
+    if (!isObjectId(value)) {
       throw new DomainError(`invalid ${label} id`, 'validation')
     }
   }

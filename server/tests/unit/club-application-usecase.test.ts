@@ -380,6 +380,7 @@ describe('UC07 application submission use case', () => {
     const storage: ApplicationFileStorage = {
       upload,
       accessUrl: async () => 'https://example.test/file',
+      remove: async () => undefined,
     }
     const addDocument = vi.fn(async () => record())
     const removeDocument = vi.fn(async () => record())

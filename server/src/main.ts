@@ -31,6 +31,7 @@ import {
   mailConfig,
   optionalAuthConfig,
   optionalCloudinaryConfig,
+  requireAuthConfig,
 } from './infra/config/index.js'
 import { ensureUcmsDatabase } from './infra/db/ucms-models.js'
 import {
@@ -88,7 +89,14 @@ import { cloudinaryEventProposalFiles } from './infra/files/event-proposal-files
 import { cloudinaryPeriodicEvidenceFiles } from './infra/files/cloudinary-periodic-evidence-files.js'
 
 const config = loadConfig() // việc đầu tiên — thoát nếu env không hợp lệ
-const authConfig = optionalAuthConfig(config)
+// Production never runs without sign-in: a missing Auth config is a deployment mistake, so fail fast.
+const authConfig =
+  config.NODE_ENV === 'production' ? requireAuthConfig(config) : optionalAuthConfig(config)
+if (!authConfig) {
+  console.warn(
+    'auth configuration is not set: only public routes are mounted (fill every Auth variable in .env to enable sign-in)',
+  )
+}
 // EXT-02: dùng SMTP khi đã cấu hình (bắt buộc ở production); log transport chỉ dành cho môi trường dev.
 const mail = mailConfig(config)
 const mailTransport =
@@ -113,6 +121,14 @@ const membershipReconfirmationRepo = mongoMembershipReconfirmationRepository()
 const commonDeps = {
   publicRepo: mongoPublicDiscoveryRepository(),
   dbReady: () => mongoose.connection.readyState === 1,
+  trustProxy: config.TRUST_PROXY,
+  // The API map is not advertised in production unless API_DOCS=true.
+  apiDocs: config.NODE_ENV !== 'production' || config.API_DOCS,
+  // Per client IP: strict on the sign-in flow (brute force, OAuth callback spam), loose elsewhere.
+  rateLimits: {
+    auth: { limit: 20, windowMs: 60_000 },
+    api: { limit: 300, windowMs: 60_000 },
+  },
 }
 const clubLifecycleRepo = mongoClubLifecycleRepository()
 const eventProposalReviewRepo = mongoEventProposalReviewRepository()
@@ -233,21 +249,24 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       process.exit(1)
     } // tín hiệu thứ hai = ngừng chờ, thoát ngay
     shuttingDown = true
-    stopApplicationExpiryJob()
-    stopComplaintResponseJob()
-    stopReconfirmationJob()
-    stopLifecycleJob()
-    stopBookingJob()
-    stopAccountabilityJob()
-    stopEventLifecycleJob()
-    stopNotificationJob()
+    // Timers stop now; each promise settles once that job's in-flight tick has finished.
+    const jobsStopped = Promise.all([
+      stopApplicationExpiryJob(),
+      stopComplaintResponseJob(),
+      stopReconfirmationJob(),
+      stopLifecycleJob(),
+      stopBookingJob(),
+      stopAccountabilityJob(),
+      stopEventLifecycleJob(),
+      stopNotificationJob(),
+    ])
     // Hạn xả — một request đang xử lý bị treo không được chặn SIGTERM cho tới khi nền tảng SIGKILL.
     setTimeout(() => {
       console.error('shutdown deadline hit — forcing exit')
       process.exit(1)
     }, 10_000)
     server.close(() => {
-      mongoose.disconnect().finally(() => process.exit(0))
+      jobsStopped.then(() => mongoose.disconnect()).finally(() => process.exit(0))
     })
     server.closeIdleConnections()
   })

@@ -221,6 +221,7 @@ describe('UC08 club application review use case', () => {
         auth([]),
         {
           accessUrl,
+          remove: async () => undefined,
           upload: async () => {
             throw new Error('unused')
           },
@@ -236,6 +237,7 @@ describe('UC08 club application review use case', () => {
         auth(['ICPDP_OFFICER']),
         {
           accessUrl,
+          remove: async () => undefined,
           upload: async () => {
             throw new Error('unused')
           },

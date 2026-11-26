@@ -13,9 +13,13 @@ import {
   type ComplaintState,
 } from '../domain/complaint.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import {
+  assertClubAccess,
+  isObjectId,
+  parseObjectId,
+  requireIcpdpOfficer,
+  type AccessActor,
+} from './access.js'
 
 // Kiểm người dùng đã đăng nhập, chưa bị khóa và trả id
 function signedIn(actor: AccessActor | null): string {
@@ -25,30 +29,10 @@ function signedIn(actor: AccessActor | null): string {
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function id(value: string, label: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${label}`, 'validation')
-  }
-  return value
-}
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  const actorId = signedIn(actor)
-  if (!(await auth.systemRoleCodes(actorId)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actorId
 }
 
 // Sinh viên gửi khiếu nại về một CLB hoặc sự kiện
@@ -65,13 +49,13 @@ export async function submitComplaint(
   }
   const description = complaintText(input.description, 'description')
   const evidence = normalizeEvidence(input.evidence)
-  const club = await repo.club(id(input.clubId, 'club id'))
+  const club = await repo.club(parseObjectId(input.clubId, 'club id'))
   if (!club || club.state === 'Dissolved') {
     throw new DomainError('club not found', 'not_found')
   }
   if (
     input.eventId &&
-    !(await repo.eventBelongsToClub(id(input.eventId, 'event id'), input.clubId))
+    !(await repo.eventBelongsToClub(parseObjectId(input.eventId, 'event id'), input.clubId))
   ) {
     throw new DomainError('the event does not belong to this club', 'validation', {
       field: 'eventId',
@@ -93,7 +77,11 @@ export async function withdrawComplaint(
   complaintId: string,
   now: Date,
 ) {
-  const withdrawn = await repo.withdraw(signedIn(actor), id(complaintId, 'complaint id'), now)
+  const withdrawn = await repo.withdraw(
+    signedIn(actor),
+    parseObjectId(complaintId, 'complaint id'),
+    now,
+  )
   if (!withdrawn) {
     throw new DomainError(
       'only your own complaint that ICPDP has not decided can be withdrawn',
@@ -110,7 +98,7 @@ export async function listComplaintQueue(
   actor: AccessActor | null,
   state?: string,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   if (state && !COMPLAINT_STATES.includes(state as ComplaintState)) {
     throw new DomainError('invalid state', 'validation')
   }
@@ -124,8 +112,8 @@ export async function getComplaintForIcpdp(
   actor: AccessActor | null,
   complaintId: string,
 ) {
-  await officer(auth, actor)
-  const found = await repo.findForIcpdp(id(complaintId, 'complaint id'))
+  await requireIcpdpOfficer(auth, actor)
+  const found = await repo.findForIcpdp(parseObjectId(complaintId, 'complaint id'))
   if (!found) {
     throw new DomainError('complaint not found', 'not_found')
   }
@@ -142,8 +130,8 @@ export async function decideComplaint(
   decision: ComplaintDecision,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
-  const current = await repo.findForIcpdp(id(complaintId, 'complaint id'))
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const current = await repo.findForIcpdp(parseObjectId(complaintId, 'complaint id'))
   if (!current) {
     throw new DomainError('complaint not found', 'not_found')
   }
@@ -165,7 +153,13 @@ export async function listClubComplaints(
   clubId: string,
   now: Date,
 ) {
-  await assertClubAccess(access, actor, id(clubId, 'club id'), 'club.complaint.respond', now)
+  await assertClubAccess(
+    access,
+    actor,
+    parseObjectId(clubId, 'club id'),
+    'club.complaint.respond',
+    now,
+  )
   return repo.clubInbox(clubId)
 }
 
@@ -179,13 +173,19 @@ export async function respondToComplaint(
   input: Omit<ComplaintClubResponse, 'at'>,
   now: Date,
 ) {
-  await assertClubAccess(access, actor, id(clubId, 'club id'), 'club.complaint.respond', now)
+  await assertClubAccess(
+    access,
+    actor,
+    parseObjectId(clubId, 'club id'),
+    'club.complaint.respond',
+    now,
+  )
   const response = {
     text: complaintText(input.text, 'text'),
     action: complaintText(input.action, 'action', 2_000),
     evidence: normalizeEvidence(input.evidence),
   }
-  return repo.respond(clubId, id(complaintId, 'complaint id'), actor!.id, response, now)
+  return repo.respond(clubId, parseObjectId(complaintId, 'complaint id'), actor!.id, response, now)
 }
 
 // Đánh dấu các khiếu nại đã chuyển CLB nhưng quá hạn phản hồi

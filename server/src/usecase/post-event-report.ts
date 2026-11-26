@@ -6,8 +6,8 @@ import {
   normalizeReport,
 } from '../domain/post-event-report.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-import { assertFinanceOfficer, financeId } from './event-finance.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { financeId } from './event-finance.js'
 export interface PostEventReportDeps {
   repo: PostEventReportRepository
   access: ClubAccessRepository
@@ -23,7 +23,7 @@ async function authorized(
   if (clubId) {
     await assertClubAccess(deps.access, actor, financeId(clubId), 'club.report.submit', now)
   } else {
-    await assertFinanceOfficer(deps.auth, actor)
+    await requireIcpdpOfficer(deps.auth, actor)
   }
 }
 // Liệt kê báo cáo sau sự kiện theo CLB hoặc cho ICPDP

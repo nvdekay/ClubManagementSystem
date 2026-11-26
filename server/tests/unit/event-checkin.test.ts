@@ -121,6 +121,17 @@ describe('event check-in (UC31)', () => {
         now,
       ),
     ).rejects.toMatchObject({ kind: 'conflict' })
+    // Legacy internal-event states no longer accept check-in (internal events were removed).
+    await expect(
+      checkInToEvent(
+        repo(target({}, { state: 'ONGOING' })),
+        policy,
+        actor,
+        eventId,
+        'DEMO-42',
+        now,
+      ),
+    ).rejects.toMatchObject({ kind: 'conflict' })
     await expect(
       checkInToEvent(
         repo(target({}, { published: false })),
@@ -189,9 +200,11 @@ describe('event check-in (UC31)', () => {
   })
 
   it("lists the student's check-ins with their feedback windows", async () => {
-    expect(await listMyAttendances(repo(), policy, actor, now)).toEqual([
+    expect(await listMyAttendances(repo(), policy, actor)).toEqual([
       { ...attendance(), feedbackOpensAt: now, feedbackClosesAt: new Date('2026-10-13T12:00:00Z') },
     ])
     expect(feedbackWindow(attendance(), null).feedbackClosesAt).toBeNull()
+    // The window comes from the policy in force at the event's end, not at listing time.
+    expect(policy.findEffective).toHaveBeenLastCalledWith(attendance().eventEndAt)
   })
 })

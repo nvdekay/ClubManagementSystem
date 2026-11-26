@@ -1,7 +1,6 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
 import {
   LIFECYCLE_LINKS,
@@ -11,7 +10,6 @@ import {
   type ViolationRepository,
   type ViolationStep,
 } from '../../domain/violation.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   applyViolationCaseStep,
   getViolation,
@@ -21,6 +19,7 @@ import {
 } from '../../usecase/violation.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ViolationRouteDeps {
   repo: ViolationRepository
@@ -99,24 +98,6 @@ export const violationStepBody = z.discriminatedUnion('type', [
   z.object({ type: z.literal('resolve'), note: z.string().max(1_000).optional() }).strict(),
 ])
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid violation request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Chuyển body bước xử lý vi phạm sang ViolationStep
 function step(body: z.infer<typeof violationStepBody>): ViolationStep {
   switch (body.type) {
@@ -149,7 +130,7 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'violation request'),
       ),
     )
   })
@@ -161,7 +142,7 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'violation request'),
         new Date(),
       ),
     )
@@ -174,7 +155,7 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(violationOpenBody, req.body),
+        parse(violationOpenBody, req.body, 'violation request'),
         new Date(),
       ),
       201,
@@ -188,8 +169,8 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        step(parsed(violationStepBody, req.body)),
+        parse(id, req.params.id, 'violation request'),
+        step(parse(violationStepBody, req.body, 'violation request')),
         new Date(),
       ),
     )

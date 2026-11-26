@@ -6,6 +6,8 @@ const config: Config = {
   NODE_ENV: 'development',
   PORT: 3000,
   MONGO_URI: 'mongodb://127.0.0.1:27017/ucms',
+  TRUST_PROXY: false,
+  API_DOCS: false,
   APP_BASE_URL: 'http://localhost:3000',
   CLIENT_BASE_URL: 'http://localhost:5173',
 }

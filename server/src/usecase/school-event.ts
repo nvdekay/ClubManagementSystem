@@ -7,41 +7,11 @@ import {
   type SchoolEventInput,
   type SchoolEventRepository,
 } from '../domain/school-event.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function checkedId(value: string, what: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${what} id`, 'validation')
-  }
-  return value
-}
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // Lấy sự kiện trường theo id, không có thì báo not_found
 async function existing(repo: SchoolEventRepository, id: string) {
-  const found = await repo.find(checkedId(id, 'event'))
+  const found = await repo.find(parseObjectId(id, 'event id'))
   if (!found) {
     throw new DomainError('school event not found', 'not_found')
   }
@@ -54,7 +24,7 @@ export async function listSchoolEvents(
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.list()
 }
 
@@ -65,7 +35,7 @@ export async function getSchoolEvent(
   actor: AccessActor | null,
   id: string,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return existing(repo, id)
 }
 
@@ -77,9 +47,9 @@ export async function checkSchoolEventConflicts(
   actor: AccessActor | null,
   input: { propertyId?: string; startAt: Date; endAt: Date },
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   if (input.propertyId) {
-    checkedId(input.propertyId, 'property')
+    parseObjectId(input.propertyId, 'property id')
   }
   if (
     Number.isNaN(input.startAt.getTime()) ||
@@ -100,12 +70,12 @@ export async function createSchoolEvent(
   input: SchoolEventInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   if (input.propertyId) {
-    checkedId(input.propertyId, 'property')
+    parseObjectId(input.propertyId, 'property id')
   }
   for (const clubId of input.clubIds ?? []) {
-    checkedId(clubId, 'club')
+    parseObjectId(clubId, 'club id')
   }
   const calendar = (await policy.findEffective(now))?.academicCalendar ?? []
   return repo.create(normalizedSchoolEvent(input, calendar, now), officerId, now)
@@ -120,9 +90,9 @@ export async function inviteClubs(
   input: { clubIds?: string[]; allActiveClubs?: boolean; deadline?: Date },
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   for (const clubId of input.clubIds ?? []) {
-    checkedId(clubId, 'club')
+    parseObjectId(clubId, 'club id')
   }
   const event = await existing(repo, id)
   if (!['Approved', 'Upcoming'].includes(event.state)) {
@@ -145,10 +115,10 @@ export async function withdrawInvitation(
   invitationId: string,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   return repo.withdraw(
-    checkedId(id, 'event'),
-    checkedId(invitationId, 'invitation'),
+    parseObjectId(id, 'event id'),
+    parseObjectId(invitationId, 'invitation id'),
     officerId,
     now,
   )
@@ -162,7 +132,7 @@ export async function publishSchoolEvent(
   id: string,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   const event = await existing(repo, id)
   if (event.state !== 'Approved') {
     throw new DomainError('only an unpublished school event can be published', 'conflict')

@@ -197,31 +197,40 @@ describe('UC26 event proposal review use case', () => {
   })
 
   it('checks approved amounts line by line against the requested budget', () => {
-    expect(() => approvedBudget(lines, [{ approvedAmount: 2_000_000 }])).toThrow(
-      'for every budget line',
-    )
     expect(() =>
-      approvedBudget(lines, [{ approvedAmount: 2_500_000 }, { approvedAmount: 3_000_000 }]),
-    ).toThrow('cannot exceed')
+      approvedBudget(lines, [{ fundingDecision: 'BEFORE_EVENT', approvedAmount: 2_000_000 }]),
+    ).toThrow('for every budget line')
     expect(() =>
-      approvedBudget(lines, [{ approvedAmount: 1_000_000 }, { approvedAmount: 3_000_000 }]),
-    ).toThrow('needs a reason')
+      approvedBudget(lines, [
+        { fundingDecision: 'BEFORE_EVENT', approvedAmount: 2_000_000 },
+        { approvedAmount: 3_000_000 },
+      ]),
+    ).toThrow('a funding decision is required for every budget line')
     expect(() =>
-      approvedBudget(lines, [{ approvedAmount: 1.5 }, { approvedAmount: 3_000_000 }]),
-    ).toThrow('whole, non-negative')
+      approvedBudget(lines, [
+        { fundingDecision: 'NOT_SPONSORED', approvedAmount: 0, reason: 'Out of scope' },
+        { fundingDecision: 'AFTER_EVENT', approvedAmount: 3_000_000 },
+      ]),
+    ).not.toThrow()
     expect(
       approvedBudget(lines, [
-        { approvedAmount: 1_000_000, reason: 'Chỉ in 50 poster' },
-        { approvedAmount: 3_000_000 },
+        { fundingDecision: 'NOT_SPONSORED', approvedAmount: 0, reason: 'Chỉ tài trợ hậu cần' },
+        { fundingDecision: 'AFTER_EVENT', approvedAmount: 3_000_000 },
       ]),
     ).toEqual([
       {
         category: 'Truyền thông',
         requestedAmount: 2_000_000,
-        approvedAmount: 1_000_000,
-        reason: 'Chỉ in 50 poster',
+        approvedAmount: 0,
+        fundingDecision: 'NOT_SPONSORED',
+        reason: 'Chỉ tài trợ hậu cần',
       },
-      { category: 'Hậu cần', requestedAmount: 3_000_000, approvedAmount: 3_000_000 },
+      {
+        category: 'Hậu cần',
+        requestedAmount: 3_000_000,
+        approvedAmount: 3_000_000,
+        fundingDecision: 'AFTER_EVENT',
+      },
     ])
   })
 
@@ -281,7 +290,10 @@ describe('UC26 event proposal review use case', () => {
       eventId,
       {
         outcome: 'Approve',
-        budgetLines: [{ approvedAmount: 2_000_000 }, { approvedAmount: 3_000_000 }],
+        budgetLines: [
+          { fundingDecision: 'BEFORE_EVENT', approvedAmount: 2_000_000 },
+          { fundingDecision: 'AFTER_EVENT', approvedAmount: 3_000_000 },
+        ],
       },
       now,
     )
@@ -290,7 +302,10 @@ describe('UC26 event proposal review use case', () => {
       officer.id,
       expect.objectContaining({
         outcome: 'Approve',
-        budgetLines: [{ approvedAmount: 2_000_000 }, { approvedAmount: 3_000_000 }],
+        budgetLines: [
+          { fundingDecision: 'BEFORE_EVENT', approvedAmount: 2_000_000 },
+          { fundingDecision: 'AFTER_EVENT', approvedAmount: 3_000_000 },
+        ],
       }),
       now,
     )

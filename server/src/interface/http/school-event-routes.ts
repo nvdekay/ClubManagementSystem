@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import { MAX_INVITED_CLUBS, type SchoolEventRepository } from '../../domain/school-event.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   checkSchoolEventConflicts,
   createSchoolEvent,
@@ -17,6 +15,7 @@ import {
 } from '../../usecase/school-event.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface SchoolEventRouteDeps {
   repo: SchoolEventRepository
@@ -60,24 +59,6 @@ export const schoolEventConflictQuery = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid school event request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Chuyển chuỗi ngày thành Date, trả undefined nếu không có
 function date(value: string | undefined): Date | undefined {
   return value ? new Date(value) : undefined
@@ -94,7 +75,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
   })
   // Kiểm tra xung đột lịch của sự kiện cấp trường
   router.get('/admin/school-events/conflicts', authGuard(guard, false), async (req, res) => {
-    const query = parsed(schoolEventConflictQuery, req.query)
+    const query = parse(schoolEventConflictQuery, req.query, 'school event request')
     ok(
       res,
       await checkSchoolEventConflicts(deps.repo, deps.authRepo, actor(res), {
@@ -106,11 +87,19 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
   })
   // Xem chi tiết sự kiện cấp trường
   router.get('/admin/school-events/:id', authGuard(guard, false), async (req, res) => {
-    ok(res, await getSchoolEvent(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)))
+    ok(
+      res,
+      await getSchoolEvent(
+        deps.repo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'school event request'),
+      ),
+    )
   })
   // Tạo sự kiện cấp trường
   router.post('/admin/school-events', authGuard(guard), async (req, res) => {
-    const body = parsed(schoolEventBody, req.body)
+    const body = parse(schoolEventBody, req.body, 'school event request')
     ok(
       res,
       await createSchoolEvent(
@@ -131,14 +120,14 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
   })
   // Mời CLB tham gia sự kiện cấp trường
   router.post('/admin/school-events/:id/invitations', authGuard(guard), async (req, res) => {
-    const body = parsed(schoolEventInviteBody, req.body)
+    const body = parse(schoolEventInviteBody, req.body, 'school event request')
     ok(
       res,
       await inviteClubs(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'school event request'),
         { ...body, deadline: date(body.deadline) },
         new Date(),
       ),
@@ -155,8 +144,8 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
           deps.repo,
           deps.authRepo,
           actor(res),
-          parsed(id, req.params.id),
-          parsed(id, req.params.invitationId),
+          parse(id, req.params.id, 'school event request'),
+          parse(id, req.params.invitationId, 'school event request'),
           new Date(),
         ),
       )
@@ -170,7 +159,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'school event request'),
         new Date(),
       ),
     )
