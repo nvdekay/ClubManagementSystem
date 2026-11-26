@@ -12,6 +12,7 @@ import { AppStackBar } from '@/components/ui/chart/AppStackBar'
 import type { ChartTone } from '@/components/ui/chart/chartScale'
 import { AppStatTile } from '@/components/ui/chart/AppStatTile'
 import type { Dashboard, IcpdpDashboardCharts } from '@/services/dashboard'
+import { formatDateWith } from '@/utils/formatDate'
 
 const queueHref: Record<string, string> = {
   CLUB_APPLICATION: '/workspace/reviews',
@@ -49,17 +50,14 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   function monthName(month: string) {
     return i18n.language.startsWith('vi')
       ? `T${Number(month.slice(5))}`
-      : new Intl.DateTimeFormat(i18n.language, { month: 'short', timeZone: 'UTC' }).format(
-          new Date(`${month}-01T00:00:00Z`),
-        )
+      : formatDateWith(`${month}-01T00:00:00Z`, i18n.language, { month: 'short' })
   }
   // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
   function monthLong(month: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
+    return formatDateWith(`${month}-01T00:00:00Z`, i18n.language, {
       month: 'long',
       year: 'numeric',
-      timeZone: 'UTC',
-    }).format(new Date(`${month}-01T00:00:00Z`))
+    })
   }
   const current = charts.eventsByMonth.at(-3)
   const next = charts.eventsByMonth.at(-2)

@@ -19,6 +19,7 @@ import { ProposalSectionComments } from '@/components/custom/ProposalSectionComm
 import { useProposalReasonDraft } from '@/hooks/useProposalReasonDraft'
 import type { EventDefenseState } from '@/services/eventDefense'
 import { cn } from '@/utils/cn'
+import { formatDate, formatTime } from '@/utils/formatDate'
 
 // Chuyển markdown inline (đậm, nghiêng, code) thành phần tử React
 function renderInlineMarkdown(text: string): ReactNode[] {
@@ -192,13 +193,6 @@ export function LiveDefenseRoomPage() {
     }, 2000)
     return () => window.clearTimeout(timer)
   }, [csrfToken, id, localDraft, mutateDefense, serverContent, session?.state, userId])
-
-  function formatDate(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
-  }
 
   function formatMoney(value: number) {
     return new Intl.NumberFormat(i18n.language, {
@@ -374,7 +368,8 @@ export function LiveDefenseRoomPage() {
               <div>
                 <dt className="text-xs text-muted-app">{t('eventReviews.when')}</dt>
                 <dd className="mt-1 font-medium">
-                  {formatDate(event.startAt)} – {formatDate(event.endAt)}
+                  {formatDate(event.startAt, i18n.language)} –{' '}
+                  {formatDate(event.endAt, i18n.language)}
                 </dd>
               </div>
               <div>
@@ -486,7 +481,7 @@ export function LiveDefenseRoomPage() {
               <div>
                 <h2 className="font-heading text-base font-semibold">{session.title}</h2>
                 <p className="mt-1 text-sm text-muted-app">
-                  {formatDate(session.startAt)} ·{' '}
+                  {formatDate(session.startAt, i18n.language)} ·{' '}
                   {t('eventDefense.durationValue', { minutes: session.durationMinutes })} ·{' '}
                   {session.propertyName}
                 </p>
@@ -605,7 +600,7 @@ export function LiveDefenseRoomPage() {
                       ? t('eventDefense.savingNote')
                       : displayedSavedAt
                         ? t('eventDefense.savedAt', {
-                            time: new Date(displayedSavedAt).toLocaleTimeString(i18n.language),
+                            time: formatTime(displayedSavedAt, i18n.language),
                           })
                         : ''}
                   </span>
@@ -622,7 +617,7 @@ export function LiveDefenseRoomPage() {
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-app pb-2">
                         <span className="text-sm font-semibold">{entry.officerName}</span>
                         <span className="text-xs text-muted-app">
-                          {formatDate(entry.updatedAt)}
+                          {formatDate(entry.updatedAt, i18n.language)}
                         </span>
                       </div>
                       <div className="mt-3">

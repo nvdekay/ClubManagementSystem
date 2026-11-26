@@ -11,6 +11,7 @@ import { AppStackBar } from '@/components/ui/chart/AppStackBar'
 import { AppStatTile } from '@/components/ui/chart/AppStatTile'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import type { ClubDashboardCharts, Dashboard } from '@/services/dashboard'
+import { dateFormatter, formatDateWith } from '@/utils/formatDate'
 
 interface ClubDashboardProps {
   clubId: string
@@ -38,23 +39,16 @@ export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
   function monthName(month: string) {
     return i18n.language.startsWith('vi')
       ? `T${Number(month.slice(5))}`
-      : new Intl.DateTimeFormat(i18n.language, { month: 'short', timeZone: 'UTC' }).format(
-          new Date(`${month}-01T00:00:00Z`),
-        )
+      : formatDateWith(`${month}-01T00:00:00Z`, i18n.language, { month: 'short' })
   }
   // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
   function monthLong(month: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
+    return formatDateWith(`${month}-01T00:00:00Z`, i18n.language, {
       month: 'long',
       year: 'numeric',
-      timeZone: 'UTC',
-    }).format(new Date(`${month}-01T00:00:00Z`))
+    })
   }
-  const day = new Intl.DateTimeFormat(i18n.language, {
-    day: '2-digit',
-    month: '2-digit',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  })
+  const day = dateFormatter(i18n.language, { day: '2-digit', month: '2-digit' })
   const members = charts.membersByMonth
   const active = count('activeMembers')
   const funnel = charts.recruitment

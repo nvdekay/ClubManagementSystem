@@ -7,6 +7,7 @@ import {
   useConfirmMembership,
   useMembershipReconfirmations,
 } from '@/hooks/useMembershipReconfirmations'
+import { formatDate } from '@/utils/formatDate'
 // Panel nhắc sinh viên xác nhận lại tư cách thành viên CLB
 export function MembershipReconfirmationPanel() {
   const { t, i18n } = useTranslation()
@@ -59,8 +60,7 @@ export function MembershipReconfirmationPanel() {
             </p>
             <p className="text-muted-app">{t(`membershipReconfirmations.${r.state}`)}</p>
             <p className="text-muted-app">
-              {t('membershipReconfirmations.deadline')}:{' '}
-              {new Date(r.dueAt).toLocaleString(i18n.language)}
+              {t('membershipReconfirmations.deadline')}: {formatDate(r.dueAt, i18n.language)}
             </p>
           </div>
           {r.state === 'Pending' && new Date(r.dueAt) > new Date() && (

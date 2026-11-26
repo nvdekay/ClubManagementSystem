@@ -1,15 +1,50 @@
-// Nguồn duy nhất quyết định cách app hiển thị mốc thời gian từ backend.
-const DATE_FORMAT: Intl.DateTimeFormatOptions = {
-  dateStyle: 'medium',
-  timeStyle: 'short',
+// Nguồn duy nhất quyết định cách app hiển thị mốc thời gian từ backend: luôn theo giờ Việt Nam,
+// locale suy ra từ ngôn ngữ i18n, formatter được cache theo locale + tuỳ chọn.
+
+export const VN_TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
+// Maps an i18n language ('vi', 'en', or an already regional tag) to the Intl locale used for dates
+/** `vi` → `vi-VN`, mọi ngôn ngữ khác → `en-GB` (ngày trước tháng, giờ 24h, giống thứ tự của bản tiếng Việt). */
+export function dateLocale(language: string): string {
+  return language.startsWith('vi') ? 'vi-VN' : 'en-GB'
+}
+
+const formatters = new Map<string, Intl.DateTimeFormat>()
+
+// Cached Intl.DateTimeFormat for a language and options, always in Vietnam time
+export function dateFormatter(
+  language: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const locale = dateLocale(language)
+  const key = `${locale}|${JSON.stringify(options)}`
+  let formatter = formatters.get(key)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, { ...options, timeZone: VN_TIME_ZONE })
+    formatters.set(key, formatter)
+  }
+  return formatter
+}
+
+// Formats a backend timestamp with explicit Intl options, in Vietnam time
+export function formatDateWith(
+  value: string | number | Date,
+  language: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  return dateFormatter(language, options).format(new Date(value))
 }
 
 // Định dạng ngày giờ từ backend theo locale
+/** Ngày + giờ (`dateStyle: medium`, `timeStyle: short`), giờ Việt Nam. */
 export function formatDate(value: string | number | Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, DATE_FORMAT).format(new Date(value))
+  return formatDateWith(value, locale, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-const dayFormatters = new Map<string, Intl.DateTimeFormat>()
+// Ngày + giờ dạng ngắn (dd/mm/yyyy hh:mm), giờ Việt Nam
+export function formatShortDateTime(value: string | number | Date, locale: string): string {
+  return formatDateWith(value, locale, { dateStyle: 'short', timeStyle: 'short' })
+}
 
 // Định dạng chỉ ngày theo giờ Việt Nam
 /** Chỉ ngày theo lịch, giờ Việt Nam — cho các ngày mà server so sánh theo ngày (vd ngày rời CLB). */
@@ -17,19 +52,15 @@ export function formatDay(value: string | number | Date | undefined, locale: str
   if (value === undefined) {
     return '—'
   }
-
-  let formatter = dayFormatters.get(locale)
-  if (!formatter) {
-    formatter = new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeZone: 'Asia/Ho_Chi_Minh',
-    })
-    dayFormatters.set(locale, formatter)
-  }
-  return formatter.format(new Date(value))
+  return formatDateWith(value, locale, { dateStyle: 'medium' })
 }
 
-const inputFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+// Chỉ giờ (hh:mm), giờ Việt Nam
+export function formatTime(value: string | number | Date, locale: string): string {
+  return formatDateWith(value, locale, { timeStyle: 'short' })
+}
+
+const inputFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: VN_TIME_ZONE })
 
 // Đổi thời điểm thành giá trị YYYY-MM-DD của input ngày theo giờ Việt Nam
 /** Giá trị `YYYY-MM-DD` của ô nhập ngày cho một thời điểm, tính theo giờ Việt Nam. */
@@ -51,34 +82,24 @@ export function vnTomorrowInput(): string {
   return vnDateInput(Date.now() + 86_400_000)
 }
 
-const VN_TIME_ZONE = 'Asia/Ho_Chi_Minh'
-
 // Định dạng thời gian sự kiện theo thứ tự cố định cho cả hai ngôn ngữ
 /**
  * Thời gian sự kiện theo một thứ tự cố định cho cả hai ngôn ngữ, giờ Việt Nam:
  * "Th 6, 13/11 · 22:26" (vi) và "Fri 13 Nov · 22:26" (en). Định dạng vi mặc định của trình duyệt lại đặt giờ lên trước.
  */
 export function formatEventWhen(value: string | number | Date, locale: string): string {
-  const date = new Date(value)
   const vi = locale.startsWith('vi')
-  const weekday = new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
-    timeZone: VN_TIME_ZONE,
-  }).format(date)
-  const day = new Intl.DateTimeFormat(
+  const weekday = formatDateWith(value, locale, { weekday: 'short' })
+  const day = formatDateWith(
+    value,
     locale,
-    vi
-      ? { day: '2-digit', month: '2-digit', timeZone: VN_TIME_ZONE }
-      : { day: 'numeric', month: 'short', timeZone: VN_TIME_ZONE },
-  )
-    .format(date)
-    .replace('-', '/')
-  const time = new Intl.DateTimeFormat(locale, {
+    vi ? { day: '2-digit', month: '2-digit' } : { day: 'numeric', month: 'short' },
+  ).replace('-', '/')
+  const time = formatDateWith(value, locale, {
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-    timeZone: VN_TIME_ZONE,
-  }).format(date)
+  })
   return `${weekday}${vi ? ',' : ''} ${day} · ${time}`
 }
 
@@ -88,12 +109,9 @@ export function formatDayBadge(
   value: string | number | Date,
   locale: string,
 ): { day: string; month: string } {
-  const date = new Date(value)
-  const day = new Intl.DateTimeFormat(locale, { day: '2-digit', timeZone: VN_TIME_ZONE }).format(
-    date,
-  )
+  const day = formatDateWith(value, locale, { day: '2-digit' })
   const month = locale.startsWith('vi')
-    ? `T${new Intl.DateTimeFormat('en-GB', { month: 'numeric', timeZone: VN_TIME_ZONE }).format(date)}`
-    : new Intl.DateTimeFormat(locale, { month: 'short', timeZone: VN_TIME_ZONE }).format(date)
+    ? `T${formatDateWith(value, 'en', { month: 'numeric' })}`
+    : formatDateWith(value, locale, { month: 'short' })
   return { day, month }
 }

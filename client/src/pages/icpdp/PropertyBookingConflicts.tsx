@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/button/AppButton'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useBlackoutBookings } from '@/hooks/useFacilityBookings'
+import { formatDate } from '@/utils/formatDate'
 
 /** Mục đích mà server lưu cho mọi buổi được sinh ra từ một lần phân bổ phòng UC58. */
 const ROOM_ALLOCATION_PURPOSE = 'ICPDP room allocation'
@@ -23,11 +24,7 @@ export function PropertyBookingConflicts({
   const { t, i18n } = useTranslation()
   const bookings = useBlackoutBookings(propertyId, blackoutKey)
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Ho_Chi_Minh',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   return (
     <section className="mt-4 space-y-3">

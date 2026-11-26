@@ -17,6 +17,7 @@ import { cn } from '@/utils/cn'
 import { formatSponsoredDateTime, formatSponsoredMoney } from '@/utils/sponsoredItems'
 import { SponsoredItemInvoiceSection } from './SponsoredItemInvoiceSection'
 import { SponsoredItemRefundSection } from './SponsoredItemRefundSection'
+import { formatDate } from '@/utils/formatDate'
 
 export interface SponsoredItemCardProps {
   budget: SponsoredBudget
@@ -141,7 +142,7 @@ export function SponsoredItemCard({ budget, item, clubId, csrfToken }: Sponsored
             {t('sponsoredItems.opens')}: {formatDateTime(item.eventEndAt)}
           </p>
           <p>
-            {t('sponsoredItems.deadline')}: {deadline.toLocaleString(i18n.language)}
+            {t('sponsoredItems.deadline')}: {formatDate(deadline, i18n.language)}
           </p>
         </div>
       )}

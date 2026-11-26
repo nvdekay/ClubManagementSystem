@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
+import { formatShortDateTime } from '@/utils/formatDate'
 
 export interface ProposalCommentView {
   id: string
@@ -123,10 +124,7 @@ export function ProposalSectionComments({
               <p className="break-words font-semibold">{comment.authorName}</p>
               {comment.createdAt && (
                 <p className="mt-1 text-xs text-muted-app">
-                  {new Intl.DateTimeFormat(i18n.language, {
-                    dateStyle: 'short',
-                    timeStyle: 'short',
-                  }).format(new Date(comment.createdAt))}
+                  {formatShortDateTime(comment.createdAt, i18n.language)}
                 </p>
               )}
               {editingId === comment.id ? (

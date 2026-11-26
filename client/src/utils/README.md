@@ -1,6 +1,12 @@
 # utils/
 
-Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatDate`, `formatDay` và các helper ngày theo giờ Việt Nam (`vnDateInput`, `vnDayBoundary`, `vnTomorrowInput`), `formatMoney` (số tiền VND).
+Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatMoney` (số tiền VND).
+
+`formatDate` là nơi duy nhất định dạng mốc thời gian: luôn theo giờ `Asia/Ho_Chi_Minh`, locale lấy từ ngôn ngữ i18n qua
+`dateLocale` (`vi` → `vi-VN`, còn lại → `en-GB`), formatter được cache theo locale + tuỳ chọn. Dùng `formatDate` (ngày giờ),
+`formatShortDateTime`, `formatDay` (chỉ ngày), `formatTime`, `formatEventWhen`, `formatDayBadge`; định dạng khác thì
+`formatDateWith`/`dateFormatter(language, options)`. Không tự tạo `new Intl.DateTimeFormat` hay gọi `toLocaleString` cho
+ngày ở component. Các helper ô nhập ngày: `vnDateInput`, `vnDayBoundary`, `vnTomorrowInput`.
 `proposalReason` gộp nhận xét có tên mục vào lý do hiện có, giữ nguyên nội dung và chặn vượt 5.000 ký tự.
 `roomSchedule` — nhãn thứ trong tuần và slot dùng chung cho trang phân phòng (ICPDP) và phòng được phân (CLB).
 `notificationLink` — ánh xạ `eventCode` của thông báo sang trang đích thuộc đúng workspace của người nhận (sinh viên / ICPDP / CLB, khớp danh sách audience ở `server/src/domain/notification.ts`), nhóm chủ đề (tiêu đề dự phòng) và chủ thể hiển thị lấy từ payload.

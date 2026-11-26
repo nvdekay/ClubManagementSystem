@@ -1,4 +1,5 @@
 import type { ClubRosterMember } from '@/services/memberSpace'
+import { vnDateInput } from '@/utils/formatDate'
 
 interface ExportLabels {
   name: string
@@ -10,17 +11,10 @@ interface ExportLabels {
   stateLabel: (state: ClubRosterMember['state']) => string
 }
 
-const vietnamDay = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Ho_Chi_Minh',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-})
-
 // Định dạng ngày theo múi giờ Việt Nam để so sánh/ghi ra file
 /** YYYY-MM-DD của ngày theo lịch Việt Nam — ngày mà server dùng để so sánh ngày thành viên. */
 function dayKey(value: string | Date): string {
-  return vietnamDay.format(new Date(value))
+  return vnDateInput(value)
 }
 
 // Tạo ô tiêu đề in đậm cho dòng đầu của file xlsx

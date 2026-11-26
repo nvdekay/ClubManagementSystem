@@ -37,6 +37,7 @@ import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { documentHref } from '@/utils/documentLinks'
+import { formatDay } from '@/utils/formatDate'
 
 const filters = ['active', 'awaiting', 'actions', 'closed', 'all'] as const
 type Filter = (typeof filters)[number]
@@ -290,7 +291,7 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
     ...(sources.data?.events ?? []).map((event) => ({
       value: event.id,
       label: t('violations.relatedEvent', {
-        title: `${event.title} (${new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(event.startAt))})`,
+        title: `${event.title} (${formatDay(event.startAt, i18n.language)})`,
       }),
     })),
     ...(sources.data?.budgets ?? []).map((budget) => ({
@@ -433,7 +434,7 @@ function ViolationList({ csrfToken }: { csrfToken: string }) {
   const [filter, setFilter] = useState<Filter>('active')
   const [opening, setOpening] = useState(false)
   function day(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   return (
@@ -626,10 +627,7 @@ function EvidenceList({
             <p className="break-words">{item.note}</p>
           )}
           <p className="mt-0.5 text-xs text-muted-app">
-            {names[item.addedBy] ?? item.addedBy} ·{' '}
-            {new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(
-              new Date(item.addedAt),
-            )}
+            {names[item.addedBy] ?? item.addedBy} · {formatDay(item.addedAt, i18n.language)}
           </p>
         </li>
       ))}
@@ -690,7 +688,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
     ),
   )
   function day(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
   const back = { to: '/workspace/violations', label: t('violations.back') }
 

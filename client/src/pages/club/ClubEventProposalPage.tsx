@@ -47,6 +47,7 @@ import { formatBytes, proposalFileType } from '@/utils/proposalFile'
 import { importEventProposal, type ProposalImport } from '@/utils/eventProposalImport'
 import { openInNewTab } from '@/utils/openInNewTab'
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard'
+import { dateFormatter } from '@/utils/formatDate'
 
 const sectionCardClass =
   'space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6'
@@ -170,11 +171,7 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
       : undefined
   }
 
-  const format = new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  })
+  const format = dateFormatter(i18n.language, { dateStyle: 'short', timeStyle: 'short' })
 
   // Kiểm tra dữ liệu trích xuất trước khi lưu; server vẫn kiểm tra lại theo quy tắc riêng.
   const required = t('common.fieldRequired')

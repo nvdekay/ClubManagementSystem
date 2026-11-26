@@ -9,6 +9,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useLeadershipTransitionQueue } from '@/hooks/useLeadershipTransitions'
+import { formatDate } from '@/utils/formatDate'
 
 // Hàng đợi ICPDP các yêu cầu bàn giao lãnh đạo CLB
 export function LeadershipTransitionQueuePage() {
@@ -18,10 +19,7 @@ export function LeadershipTransitionQueuePage() {
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const queue = useLeadershipTransitionQueue(isOfficer)
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   const loading = (
     <div className="space-y-2">

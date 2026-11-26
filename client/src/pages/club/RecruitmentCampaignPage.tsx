@@ -29,6 +29,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { dateFormatter, formatDay } from '@/utils/formatDate'
 
 interface CampaignForm {
   title: string
@@ -225,7 +226,7 @@ export function RecruitmentCampaignPage() {
 
   // Định dạng ngày theo ngôn ngữ hiện tại
   function dateLabel(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   // Chọn một đợt tuyển để xem hoặc sửa (chỉ sửa được khi Draft)
@@ -310,7 +311,7 @@ export function RecruitmentCampaignPage() {
     } catch (error) {
       const found = overlapsFrom(error)
       const semesters = semestersFrom(error)
-      const day = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' })
+      const day = dateFormatter(i18n.language, { dateStyle: 'medium' })
       if (found.length) {
         setOverlaps(found)
       } else if (semesters.length) {

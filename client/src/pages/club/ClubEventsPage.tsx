@@ -45,6 +45,7 @@ import {
 } from '@/pages/club/clubEventFormat'
 import { openInNewTab } from '@/utils/openInNewTab'
 import { useNow } from '@/hooks/useNow'
+import { dateFormatter } from '@/utils/formatDate'
 
 const eventsEmpty: ClubEvent[] = []
 const tabClass =
@@ -204,12 +205,7 @@ export function ClubEventsPage({
       ? ((revisionRequest?.comments as DecisionComments | undefined)?.sections ?? [])
       : []
   const format = useMemo(
-    () =>
-      new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-        timeZone: 'Asia/Ho_Chi_Minh',
-      }),
+    () => dateFormatter(i18n.language, { dateStyle: 'short', timeStyle: 'short' }),
     [i18n.language],
   )
   const filtered = useMemo(

@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useClubPeriodicReports, useChangePeriodicReport } from '@/hooks/useClubPeriodicReports'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { ClubPeriodicReportEditor } from './ClubPeriodicReportEditor'
+import { formatDay } from '@/utils/formatDate'
 
 // Trang danh sách và tạo báo cáo định kỳ của CLB theo kỳ
 export function ClubPeriodicReportsPage() {
@@ -95,7 +96,7 @@ export function ClubPeriodicReportsPage() {
                   ) : (
                     <AppBadge tone="success">
                       {t('clubPeriodicReports.periodOpenBadge', {
-                        date: new Date(p.dueAt).toLocaleDateString(i18n.language),
+                        date: formatDay(p.dueAt, i18n.language),
                       })}
                     </AppBadge>
                   )}

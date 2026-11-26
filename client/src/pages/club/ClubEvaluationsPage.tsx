@@ -8,6 +8,7 @@ import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useClubEvaluations } from '@/hooks/useClubCompliance'
 import { evaluations } from '@/i18n/evaluations'
+import { formatDate } from '@/utils/formatDate'
 // Trang xem kết quả đánh giá hoạt động của CLB
 export function ClubEvaluationsPage() {
   const { clubId = '' } = useParams()
@@ -53,7 +54,7 @@ export function ClubEvaluationsPage() {
             <h2 className="font-heading text-base font-semibold">
               {e.periodCode} · {t('clubCompliance.version')} {e.revisionNo}
             </h2>
-            {e.publishedAt && <p>{new Date(e.publishedAt).toLocaleString(i18n.language)}</p>}
+            {e.publishedAt && <p>{formatDate(e.publishedAt, i18n.language)}</p>}
             <p className="text-xl font-semibold tabular-nums">
               {t('clubCompliance.score')}: {e.totalScore ?? t('clubCompliance.missing')}{' '}
               {e.classification && `· ${t(`evaluations.rating${e.classification}`)}`}

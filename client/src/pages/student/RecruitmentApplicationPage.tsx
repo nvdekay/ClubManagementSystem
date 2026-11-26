@@ -25,6 +25,7 @@ import type { RecruitmentAnswer } from '@/services/recruitmentApplications'
 import { cn } from '@/utils/cn'
 import { useConfirm } from '@/hooks/useConfirm'
 import { isHttpUrl } from '@/utils/validation'
+import { formatDate } from '@/utils/formatDate'
 
 // Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
 function stateLabel(state: RecruitmentApplication['state'], t: TFunction): string {
@@ -101,7 +102,6 @@ export function RecruitmentApplicationPage() {
   const canWithdraw = Boolean(
     application && ['Submitted', 'Screening', 'Shortlisted'].includes(application.state),
   )
-  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-US'
 
   const form = campaign && formState?.campaignId === campaign.id ? formState : null
   const position = form?.position || application?.position || campaign?.positions[0] || ''
@@ -714,10 +714,7 @@ export function RecruitmentApplicationPage() {
             <div>
               <dt className="text-sm text-muted-app">{t('recruitmentApplications.closes')}</dt>
               <dd className="mt-1 font-semibold">
-                {new Intl.DateTimeFormat(dateLocale, {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                }).format(new Date(campaign.windowEnd))}
+                {formatDate(campaign.windowEnd, i18n.language)}
               </dd>
             </div>
             <div>

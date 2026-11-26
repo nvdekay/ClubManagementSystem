@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { vnDateInput, vnDayBoundary, vnTomorrowInput } from '@/utils/formatDate'
+import { formatDate, vnDateInput, vnDayBoundary, vnTomorrowInput } from '@/utils/formatDate'
 import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
@@ -309,7 +309,7 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
                   <span className="font-medium text-text-app">{t(historyLabel(h.action))}</span>
                   <span className="text-muted-app">
                     {' · '}
-                    {new Date(h.at).toLocaleString(i18n.language)}
+                    {formatDate(h.at, i18n.language)}
                   </span>
                 </p>
                 {h.reason && (

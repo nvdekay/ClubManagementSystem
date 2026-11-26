@@ -15,6 +15,7 @@ import { useBoardNomination, useBoardNominationAction } from '@/hooks/useBoardNo
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { cn } from '@/utils/cn'
+import { formatDate, formatDay } from '@/utils/formatDate'
 
 // Trang ICPDP xem đề cử ban chủ nhiệm, xác nhận hoặc trả lại từng ghế
 export function BoardNominationDetailPage() {
@@ -56,14 +57,11 @@ export function BoardNominationDetailPage() {
           : value
   }
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   // Nhiệm kỳ tính theo trọn ngày, nên hiển thị mốc đầu/cuối không kèm giờ nửa đêm sẽ dễ đọc hơn.
   function day(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   // Officer nhận (claim) đề cử ban chủ nhiệm để xử lý

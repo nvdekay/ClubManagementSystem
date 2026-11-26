@@ -39,6 +39,7 @@ import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { openInNewTab } from '@/utils/openInNewTab'
 import { useNow } from '@/hooks/useNow'
+import { formatDate } from '@/utils/formatDate'
 
 // Đọc an toàn trường văn bản không bắt buộc trong dữ liệu phiên bản đã lưu.
 function text(value: unknown): string | undefined {
@@ -106,10 +107,7 @@ export function EventProposalReviewPage() {
 
   /** Định dạng thời gian nộp, lịch bảo vệ và thời điểm quyết định theo ngôn ngữ giao diện. */
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
 
   /** Hiển thị kinh phí theo tiền Việt Nam, không có phần thập phân. */

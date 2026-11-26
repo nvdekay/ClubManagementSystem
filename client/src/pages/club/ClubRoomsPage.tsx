@@ -12,6 +12,7 @@ import { useBookingSlots } from '@/hooks/useFacilityBookings'
 import { useAuth } from '@/hooks/useAuth'
 import { useClubRoomAllocations } from '@/hooks/useRoomAllocations'
 import { slotLabel, weekdayLabel } from '@/utils/roomSchedule'
+import { dateFormatter } from '@/utils/formatDate'
 
 // Định dạng ngày theo múi giờ Việt Nam
 function vietnamDay(value: string | Date): string {
@@ -31,26 +32,15 @@ export function ClubRoomsPage() {
   const allocations = useClubRoomAllocations(clubId, can)
   const slots = useBookingSlots(can)
   const slotList = slots.data ?? []
-  const locale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB'
-  const date = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric',
-        timeZone: 'Asia/Ho_Chi_Minh',
-      }),
-    [locale],
-  )
-  const time = useMemo(
-    () => new Intl.DateTimeFormat(locale, { timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }),
-    [locale],
-  )
-  const shortDate = useMemo(
-    () => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'Asia/Ho_Chi_Minh' }),
-    [locale],
-  )
+  const locale = i18n.language
+  const date = dateFormatter(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+  })
+  const time = dateFormatter(locale, { timeStyle: 'short' })
+  const shortDate = dateFormatter(locale, { dateStyle: 'medium' })
   const today = vietnamDay(new Date())
   const items = useMemo(
     () =>

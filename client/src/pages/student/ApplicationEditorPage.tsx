@@ -40,6 +40,7 @@ import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { SimilarClubHints } from '@/components/custom/SimilarClubHints'
 import { isEmail, isHttpUrl } from '@/utils/validation'
+import { formatDate } from '@/utils/formatDate'
 
 // Màu badge theo trạng thái đơn
 function stateTone(state: string): AppBadgeTone {
@@ -811,10 +812,7 @@ export function ApplicationEditorPage() {
           {state === 'Revision Requested' && application?.revisionDeadlineAt && (
             <p className="mt-2 text-sm">
               <span className="font-semibold">{t('applications.feedbackDeadline')}:</span>{' '}
-              {new Intl.DateTimeFormat(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              }).format(new Date(application.revisionDeadlineAt))}
+              {formatDate(application.revisionDeadlineAt, i18n.language)}
             </p>
           )}
         </section>
@@ -1173,10 +1171,7 @@ export function ApplicationEditorPage() {
                   </h3>
                   <p className="text-sm text-muted-app">
                     {t('applications.submittedAt', {
-                      date: new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      }).format(new Date(version.submittedAt)),
+                      date: formatDate(version.submittedAt, i18n.language),
                     })}
                   </p>
                   <p className="text-xs text-muted-app">

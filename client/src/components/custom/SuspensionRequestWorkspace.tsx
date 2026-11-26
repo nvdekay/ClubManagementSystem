@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDay, vnDayBoundary, vnTomorrowInput } from '@/utils/formatDate'
+import { formatDate, formatDay, vnDayBoundary, vnTomorrowInput } from '@/utils/formatDate'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
@@ -191,7 +191,7 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
           <ul className="list-inside list-disc">
             {query.data.impacts.map((i) => (
               <li key={i.id}>
-                {i.title} · {new Date(i.startAt).toLocaleString(i18n.language)}
+                {i.title} · {formatDate(i.startAt, i18n.language)}
               </li>
             ))}
           </ul>

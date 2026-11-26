@@ -37,6 +37,7 @@ import type {
   BookingSlot,
 } from '@/services/facilityBookings'
 import { cn } from '@/utils/cn'
+import { formatDate } from '@/utils/formatDate'
 
 interface BookingWorkspaceProps {
   clubId: string | null
@@ -227,15 +228,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     (state: string) => t(`facilityBookings.states.${state as (typeof states)[number]}`),
     [t],
   )
-  const date = useCallback(
-    (value: string) =>
-      new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-        timeZone: 'Asia/Ho_Chi_Minh',
-      }).format(new Date(value)),
-    [i18n.language],
-  )
+  const date = useCallback((value: string) => formatDate(value, i18n.language), [i18n.language])
   const interval = useCallback(
     (value: { startAt: string; endAt: string }) => {
       const number = slotNumber(value, slots.data ?? [])

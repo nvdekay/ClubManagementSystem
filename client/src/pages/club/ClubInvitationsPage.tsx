@@ -13,6 +13,7 @@ import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useClubInvitations, useRespondToInvitation } from '@/hooks/useClubInvitations'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { formatDate } from '@/utils/formatDate'
 
 // Trang CLB nhận lời mời tham gia sự kiện và phản hồi
 export function ClubInvitationsPage() {
@@ -142,8 +143,7 @@ export function ClubInvitationsPage() {
                 </AppBadge>
               </div>
               <p className="text-sm text-muted-app">
-                {new Date(invitation.event.startAt).toLocaleString(i18n.language)} ·{' '}
-                {invitation.event.venue}
+                {formatDate(invitation.event.startAt, i18n.language)} · {invitation.event.venue}
               </p>
               <p className="text-sm whitespace-pre-wrap break-words">
                 {invitation.event.objective}
@@ -152,8 +152,7 @@ export function ClubInvitationsPage() {
                 {invitation.event.coordination}
               </p>
               <p className="text-sm text-muted-app">
-                {t('clubInvitations.deadline')}:{' '}
-                {new Date(invitation.deadline).toLocaleString(i18n.language)}
+                {t('clubInvitations.deadline')}: {formatDate(invitation.deadline, i18n.language)}
               </p>
               {invitation.responseNote && (
                 <p className="text-sm whitespace-pre-wrap break-words">{invitation.responseNote}</p>
