@@ -14,3 +14,6 @@ docs/07-demo-videos/
 
 # Test coverage reports
 coverage/
+
+# Demo videos are too large for git; they are kept outside the repo
+*.mp4
