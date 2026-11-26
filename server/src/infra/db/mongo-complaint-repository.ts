@@ -859,7 +859,8 @@ export function mongoComplaintRepository(): ComplaintRepository {
         .lean()
       let flagged = 0
       for (const row of overdue) {
-        await mongoose.connection.transaction(async (session) => {
+        // Đếm theo giá trị trả về: callback có thể chạy lại khi transaction gặp lỗi tạm thời
+        const raised = await mongoose.connection.transaction(async (session) => {
           // Ghi khiếu nại trước khiến hai worker trên hai process xung đột ở đây; worker retry sau đó
           // thấy dòng audit và dừng, nên tín hiệu chỉ được phát một lần cho mỗi khiếu nại.
           await complaints.updateOne({ _id: row._id }, { $inc: { __v: 1 } }, { session })
@@ -872,7 +873,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
               })
               .session(session)
           ) {
-            return
+            return false
           }
           await audit(
             session,
@@ -894,8 +895,11 @@ export function mongoComplaintRepository(): ComplaintRepository {
             {},
             now,
           )
-          flagged += 1
+          return true
         })
+        if (raised) {
+          flagged += 1
+        }
       }
       return flagged
     },

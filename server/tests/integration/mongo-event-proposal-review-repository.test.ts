@@ -384,11 +384,39 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
     expect((await ucmsModels.events!.findById(id).lean())?.state).toBe('Expired')
     expect((await ucmsModels.events!.findById(running!._id).lean())?.state).toBe('Ongoing')
     expect((await ucmsModels.events!.findById(finished!._id).lean())?.state).toBe('Completed')
+    // Scheduled transitions are audited like the expiry path.
+    expect(
+      await ucmsModels
+        .auditLogs!.find({ entityId: { $in: [running!._id, finished!._id] } })
+        .select({ entityId: 1, action: 1, before: 1, after: 1, actorRole: 1 })
+        .lean(),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entityId: running!._id,
+          action: 'EVENT_STARTED',
+          actorRole: 'SYSTEM',
+          before: { state: 'Upcoming' },
+          after: { state: 'Ongoing' },
+        }),
+        expect.objectContaining({
+          entityId: finished!._id,
+          action: 'EVENT_COMPLETED',
+          before: { state: 'Ongoing' },
+          after: { state: 'Completed' },
+        }),
+      ]),
+    )
     expect(await repo.advanceLifecycle(later)).toMatchObject({
       expired: 0,
       started: 0,
       completed: 0,
     })
+    expect(
+      await ucmsModels.auditLogs!.countDocuments({
+        entityId: { $in: [running!._id, finished!._id] },
+      }),
+    ).toBe(2)
   })
 
   it('keeps approved proposals accessible without duplicating previous revision tasks', async () => {

@@ -754,9 +754,9 @@ export function mongoEvaluationRepository(): EvaluationRepository {
 
     // UC43: công bố các đánh giá đã chốt của kỳ
     async publish(periodCode, officerId, now) {
-      let published = 0
-      await mongoose.connection.transaction(async (session) => {
-        published = 0
+      // Đếm trong callback và trả về: callback có thể chạy lại khi transaction gặp lỗi tạm thời
+      return mongoose.connection.transaction(async (session) => {
+        let published = 0
         const latestIds = await evaluations
           .aggregate<{
             _id: Types.ObjectId
@@ -832,8 +832,8 @@ export function mongoEvaluationRepository(): EvaluationRepository {
             now,
           )
         }
+        return published
       })
-      return published
     },
   }
 }

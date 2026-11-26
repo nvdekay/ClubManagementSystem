@@ -285,6 +285,40 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
     return found
   }
 
+  // Chuyển trạng thái theo lịch của các sự kiện khớp bộ lọc và ghi audit từng sự kiện như luồng hết hạn
+  async function transitionEvents(
+    filter: Record<string, unknown>,
+    state: string,
+    action: string,
+    now: Date,
+  ): Promise<number> {
+    return mongoose.connection.transaction(async (session) => {
+      const due = await events.find(filter).select({ _id: 1, state: 1 }).session(session).lean()
+      if (!due.length) {
+        return 0
+      }
+      // Cùng bộ lọc trong transaction: một lượt job song song sửa cùng sự kiện sẽ xung đột và chạy lại
+      const changed = await events.updateMany(
+        { ...filter, _id: { $in: due.map((event) => event._id) } },
+        { $set: { state } },
+        { session },
+      )
+      await audits.insertMany(
+        due.map((event) => ({
+          entityType: 'Event',
+          entityId: event._id,
+          action,
+          actorRole: 'SYSTEM',
+          before: { state: event.state },
+          after: { state },
+          correlationId: randomUUID(),
+          at: now,
+        })),
+        { session },
+      )
+      return changed.modifiedCount
+    })
+  }
   return {
     // Liệt kê task thẩm định đề xuất và yêu cầu hủy đang Open
     async listOpen(view = 'pending') {
@@ -557,14 +591,15 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         .lean()
       let expired = 0
       for (const event of overdue) {
-        await mongoose.connection.transaction(async (session) => {
+        // Đếm theo giá trị trả về của transaction: callback có thể chạy lại khi lỗi tạm thời
+        const didExpire = await mongoose.connection.transaction(async (session) => {
           const changed = await events.updateOne(
             { _id: event._id, state: 'Revision Requested' },
             { $set: { state: 'Expired' } },
             { session },
           )
           if (changed.modifiedCount !== 1) {
-            return
+            return false
           }
           await m.eventDefenseSessions!.updateMany(
             {
@@ -602,7 +637,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
               )
             }
           }
-          expired += 1
           await audits.create(
             [
               {
@@ -641,17 +675,25 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
               { session },
             )
           }
+          return true
         })
+        if (didExpire) {
+          expired += 1
+        }
       }
-      const completed = await events.updateMany(
+      const completed = await transitionEvents(
         { state: { $in: ['Upcoming', 'Ongoing'] }, endAt: { $lte: now } },
-        { $set: { state: 'Completed' } },
+        'Completed',
+        'EVENT_COMPLETED',
+        now,
       )
-      const started = await events.updateMany(
+      const started = await transitionEvents(
         { state: 'Upcoming', startAt: { $lte: now }, endAt: { $gt: now } },
-        { $set: { state: 'Ongoing' } },
+        'Ongoing',
+        'EVENT_STARTED',
+        now,
       )
-      return { expired, started: started.modifiedCount, completed: completed.modifiedCount }
+      return { expired, started, completed }
     },
   }
 }

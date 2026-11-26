@@ -1019,15 +1019,14 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     },
     // Chuyển booking Approved sang In Use rồi Completed theo thời gian
     async advanceLifecycle(now) {
-      let started = 0
-      let completed = 0
-      await mongoose.connection.transaction(async (session) => {
+      // Đếm trong callback và trả về: callback có thể chạy lại khi transaction gặp lỗi tạm thời
+      return mongoose.connection.transaction(async (session) => {
         const docs = await bookings
           .find({ state: { $in: ['Approved', 'In Use'] }, startAt: { $lte: now } })
           .session(session)
           .lean()
-        started = 0
-        completed = 0
+        let started = 0
+        let completed = 0
         for (const doc of docs) {
           const state = (doc.endAt as Date) <= now ? 'Completed' : 'In Use'
           if (state === doc.state) {
@@ -1049,8 +1048,8 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
             started += 1
           }
         }
+        return { started, completed }
       })
-      return { started, completed }
     },
     // UC44: tìm booking bị ảnh hưởng bởi khung blackout của tài sản
     async blackoutConflicts(propertyId, now) {
