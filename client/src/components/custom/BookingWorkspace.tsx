@@ -19,6 +19,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { appToast } from '@/components/ui/toast/AppToast'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
   useBookingEvents,
@@ -104,14 +105,10 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   // Các nút của hộp thoại yêu cầu nằm ở footer cố định, ngoài <form>, liên kết với form qua form={id}.
   const bookingFormId = useId()
   const auth = useAuth()
-  const can = Boolean(
-    auth.data &&
-    (clubId
-      ? auth.data.workspaces.some(
-          (item) => item.clubId === clubId && item.permissions.includes('club.booking.manage'),
-        )
-      : auth.data.systemRoles.includes('ICPDP_OFFICER')),
-  )
+  const canManageClubBookings = useWorkspacePermission(clubId, 'club.booking.manage')
+  const can = clubId
+    ? canManageClubBookings
+    : Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const slots = useBookingSlots(can)
   const list = useBookings(clubId, can)
   const properties = useBookingProperties(clubId, can)

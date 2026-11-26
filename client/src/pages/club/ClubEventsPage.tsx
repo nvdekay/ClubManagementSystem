@@ -16,6 +16,7 @@ import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTable, appTableFeatures, type AppTableFeatures } from '@/components/ui/table/AppTable'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useAuth } from '@/hooks/useAuth'
+import { useClubWorkspace } from '@/hooks/useWorkspacePermission'
 import { useClubEventDefense, useEventDefenseActions } from '@/hooks/useEventDefense'
 import {
   useClubEvent,
@@ -114,7 +115,7 @@ export function ClubEventsPage({
   const { t, i18n } = useTranslation()
   const askConfirm = useConfirm()
   const auth = useAuth()
-  const workspace = auth.data?.workspaces.find((w) => w.kind === 'club' && w.clubId === clubId)
+  const workspace = useClubWorkspace(clubId)
   const canManageEvents = Boolean(workspace?.permissions.includes('club.event.manage'))
   const canManageAttendance = Boolean(workspace?.permissions.includes('club.attendance.manage'))
   const canViewFeedback = Boolean(workspace?.permissions.includes('club.feedback.view'))

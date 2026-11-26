@@ -16,6 +16,7 @@ import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
   useAccountabilityAction,
@@ -526,15 +527,12 @@ export function ReportWorkspace({ context }: { context: AccountabilityContext })
   const auth = useAuth()
   const [selected, setSelected] = useState('')
   const [page, setPage] = useState(0)
+  const canSubmitReports = useWorkspacePermission(
+    context.kind === 'club' ? context.clubId : undefined,
+    'club.report.submit',
+  )
   const allowed =
-    context.kind === 'admin'
-      ? auth.data?.systemRoles.includes('ICPDP_OFFICER')
-      : auth.data?.workspaces.some(
-          (w) =>
-            w.kind === 'club' &&
-            w.clubId === context.clubId &&
-            w.permissions.includes('club.report.submit'),
-        )
+    context.kind === 'admin' ? auth.data?.systemRoles.includes('ICPDP_OFFICER') : canSubmitReports
   const list = useReportObligations(context, !!allowed)
   const detail = useReportDetail(context, selected, !!allowed)
   if (auth.isPending) {

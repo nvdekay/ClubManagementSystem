@@ -10,6 +10,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import {
   useBoardNominationAction,
   useBoardNominationContext,
@@ -127,14 +128,7 @@ export function BoardNominationPage() {
   const { clubId } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const canNominate = Boolean(
-    auth.data?.workspaces.some(
-      (item) =>
-        item.kind === 'club' &&
-        item.clubId === clubId &&
-        item.permissions.includes('club.board.nominate'),
-    ),
-  )
+  const canNominate = useWorkspacePermission(clubId, 'club.board.nominate')
   const context = useBoardNominationContext(clubId, canNominate)
   const action = useBoardNominationAction()
   const [selection, setSelection] = useState<Record<string, string>>({})

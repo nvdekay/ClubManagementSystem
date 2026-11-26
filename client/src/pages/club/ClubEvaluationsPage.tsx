@@ -6,6 +6,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubEvaluations } from '@/hooks/useClubCompliance'
 import { evaluations } from '@/i18n/evaluations'
 import { formatDate } from '@/utils/formatDate'
@@ -14,12 +15,7 @@ export function ClubEvaluationsPage() {
   const { clubId = '' } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const allowed = Boolean(
-    auth.data?.workspaces.some(
-      (w) =>
-        w.kind === 'club' && w.clubId === clubId && w.permissions.includes('club.report.submit'),
-    ),
-  )
+  const allowed = useWorkspacePermission(clubId, 'club.report.submit')
   const query = useClubEvaluations(clubId, allowed)
   // Nhãn đã dịch của chỉ số đánh giá, giữ mã gốc nếu chưa có bản dịch
   function metric(code: string) {

@@ -10,6 +10,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useBookingSlots } from '@/hooks/useFacilityBookings'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubRoomAllocations } from '@/hooks/useRoomAllocations'
 import { slotLabel, weekdayLabel } from '@/utils/roomSchedule'
 import { dateFormatter } from '@/utils/formatDate'
@@ -24,11 +25,7 @@ export function ClubRoomsPage() {
   const { clubId = '' } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const can = Boolean(
-    auth.data?.workspaces.some(
-      (item) => item.clubId === clubId && item.permissions.includes('club.room.view'),
-    ),
-  )
+  const can = useWorkspacePermission(clubId, 'club.room.view')
   const allocations = useClubRoomAllocations(clubId, can)
   const slots = useBookingSlots(can)
   const slotList = slots.data ?? []

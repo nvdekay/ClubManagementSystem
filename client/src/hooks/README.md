@@ -25,3 +25,7 @@ theo khung thời gian (báo trước 24/72 giờ, cửa sổ check-in) để ch
 `useUnsavedChangesGuard(dirty)` hỏi lại trước khi rời một form còn thay đổi chưa lưu: điều hướng trong ứng dụng đi qua
 `useBlocker` + hộp xác nhận của `useConfirm`, đóng/tải lại tab đi qua `beforeunload` của trình duyệt. Gọi
 `allowNavigation()` ngay trước khi tự điều hướng sau khi lưu thành công. Dùng ở `ClubEventProposalPage` và `PolicyEditor`.
+
+`useWorkspacePermission(clubId, permission)` trả về người dùng có permission đó trong workspace CLB hay không (đọc từ
+`/auth/me`, chỉ để ẩn/hiện giao diện — server vẫn tự kiểm tra); `useClubWorkspace(clubId)` trả về chính workspace CLB
+khi trang cần nhiều permission hoặc tên CLB. Đừng tự viết lại `auth.data?.workspaces.find(...)` ở từng trang.

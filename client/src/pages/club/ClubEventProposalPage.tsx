@@ -17,6 +17,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { appToast } from '@/components/ui/toast/AppToast'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import {
   useClubEvent,
   useClubEventMutation,
@@ -642,9 +643,7 @@ export function ClubEventProposalPage() {
   const { t } = useTranslation()
   const auth = useAuth()
   // Xác định quyền trong đúng CLB trước khi cho phép tải dữ liệu được bảo vệ.
-  const permissions =
-    auth.data?.workspaces.find((w) => w.kind === 'club' && w.clubId === clubId)?.permissions ?? []
-  const allowed = permissions.includes('club.event.manage')
+  const allowed = useWorkspacePermission(clubId, 'club.event.manage')
   const detail = useClubEvent(clubId, eventId ?? '', allowed && Boolean(eventId))
   const options = useClubEventOptions(clubId, allowed)
   const eventsListUrl = `/club/${encodeURIComponent(clubId)}/events`

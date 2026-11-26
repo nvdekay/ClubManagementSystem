@@ -12,6 +12,7 @@ import { AppInput } from '@/components/ui/input/AppInput'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import {
   useRecruitmentCampaignAction,
   useRecruitmentCampaigns,
@@ -154,10 +155,7 @@ export function RecruitmentCampaignPage() {
   const { t, i18n } = useTranslation()
   const askConfirm = useConfirm()
   const auth = useAuth()
-  const workspace = auth.data?.workspaces.find(
-    (item) => item.kind === 'club' && item.clubId === clubId,
-  )
-  const canManage = Boolean(workspace?.permissions.includes('club.recruitment.manage'))
+  const canManage = useWorkspacePermission(clubId, 'club.recruitment.manage')
   const campaigns = useRecruitmentCampaigns(clubId, canManage)
   const action = useRecruitmentCampaignAction()
   const [selectedId, setSelectedId] = useState<string | null>(null)
