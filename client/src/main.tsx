@@ -1,5 +1,5 @@
 import './index.css'
-import './i18n' // khởi tạo i18next trước lần render đầu tiên
+import { i18nReady } from './i18n'
 import { applyInitialTheme } from './hooks/useTheme.js'
 import { markSignedOut } from './hooks/useAuth.js'
 import { isUnauthorized, shouldRetryQuery } from './utils/queryRetry.js'
@@ -375,12 +375,18 @@ const router = createBrowserRouter(
   ),
 )
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AppConfirmProvider>
-        <RouterProvider router={router} />
-      </AppConfirmProvider>
-    </QueryClientProvider>
-  </StrictMode>,
-)
+function renderApp() {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AppConfirmProvider>
+          <RouterProvider router={router} />
+        </AppConfirmProvider>
+      </QueryClientProvider>
+    </StrictMode>,
+  )
+}
+
+// Render only after the active locale chunk has loaded, so no raw i18n key is ever shown.
+// A failed locale load still renders the app rather than leaving a blank page.
+void i18nReady.then(renderApp, renderApp)
