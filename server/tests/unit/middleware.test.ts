@@ -7,6 +7,7 @@ function run(err: unknown, path = '/api/v1/users') {
   const out = { status: 0, body: undefined as unknown }
   const res = {
     headersSent: false,
+    locals: { requestId: 'req-1' },
     status(code: number) {
       out.status = code
       return this
@@ -87,6 +88,7 @@ describe('errorHandler', () => {
     })
     expect(run(err).status).toBe(500)
     const logged = String(error.mock.calls[0]?.[0])
+    expect(JSON.parse(logged)).toMatchObject({ level: 'error', requestId: 'req-1' })
     expect(logged).toContain('Error: write failed')
     expect(logged).toContain('code=E_WRITE')
     expect(logged).not.toContain('student@fpt.edu.vn')
@@ -113,25 +115,72 @@ describe('errorHandler', () => {
 })
 
 describe('requestLogger', () => {
-  it('logs the path without the query string', () => {
+  // Runs the logger over a fake request and returns the parsed log line and the response headers.
+  function logRequest(originalUrl: string, statusCode: number, incomingId?: string) {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const listeners: Array<() => void> = []
+    const headers: Record<string, string> = {}
     const res = {
-      statusCode: 302,
+      statusCode,
+      locals: {} as Record<string, unknown>,
+      setHeader(name: string, value: string) {
+        headers[name.toLowerCase()] = value
+      },
       on(event: string, listener: () => void) {
         if (event === 'finish') {
           listeners.push(listener)
         }
       },
     }
-    requestLogger(
-      { method: 'GET', originalUrl: '/api/v1/auth/callback?code=secret&state=s' } as Request,
-      res as unknown as Response,
-      () => undefined,
-    )
+    const req = {
+      method: 'GET',
+      originalUrl,
+      get: (name: string) => (name.toLowerCase() === 'x-request-id' ? incomingId : undefined),
+    }
+    requestLogger(req as unknown as Request, res as unknown as Response, () => undefined)
     listeners.forEach((listener) => listener())
-    const line = JSON.parse(String(log.mock.calls[0]?.[0])) as { path: string }
+    const written = [...log.mock.calls, ...warn.mock.calls, ...error.mock.calls]
+    vi.restoreAllMocks()
+    expect(written).toHaveLength(1)
+    return {
+      line: JSON.parse(String(written[0]?.[0])) as Record<string, unknown>,
+      headers,
+      locals: res.locals,
+    }
+  }
+
+  it('logs the path without the query string', () => {
+    const { line } = logRequest('/api/v1/auth/callback?code=secret&state=s', 302)
     expect(line.path).toBe('/api/v1/auth/callback')
-    log.mockRestore()
+    expect(JSON.stringify(line)).not.toContain('secret')
+  })
+
+  it('generates a request id, echoes it in X-Request-Id and logs it', () => {
+    const { line, headers, locals } = logRequest('/api/v1/health', 200)
+    expect(headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/)
+    expect(line).toMatchObject({ level: 'info', requestId: headers['x-request-id'], status: 200 })
+    expect(locals.requestId).toBe(headers['x-request-id'])
+  })
+
+  it('keeps a safe incoming X-Request-Id', () => {
+    const { line, headers } = logRequest('/api/v1/health', 200, 'edge-1a2b.3c:4')
+    expect(headers['x-request-id']).toBe('edge-1a2b.3c:4')
+    expect(line.requestId).toBe('edge-1a2b.3c:4')
+  })
+
+  it('replaces an unsafe or oversized incoming X-Request-Id', () => {
+    for (const unsafe of ['a b', 'x\r\nSet-Cookie: y', '<script>', 'a'.repeat(65), '']) {
+      const { headers } = logRequest('/api/v1/health', 200, unsafe)
+      expect(headers['x-request-id']).not.toBe(unsafe)
+      expect(headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/)
+    }
+  })
+
+  it('sets the level from the status code', () => {
+    expect(logRequest('/a', 302).line.level).toBe('info')
+    expect(logRequest('/a', 404).line.level).toBe('warn')
+    expect(logRequest('/a', 503).line.level).toBe('error')
   })
 })

@@ -67,6 +67,8 @@ import type { EventFeedbackRepository } from '../../domain/event-feedback.js'
 import type { ComplaintRepository } from '../../domain/complaint.js'
 import type { MemberSpaceRepository } from '../../domain/member-space.js'
 import { accessDenialAuditor, errorHandler, requestLogger } from './middleware.js'
+import { docsContentSecurityPolicy, securityHeaders } from './security-headers.js'
+import { staticClientRoutes } from './static-client.js'
 import type { AccessDenialAuditRepository } from '../../domain/access-denial.js'
 import { openApiDocument } from './openapi.js'
 import { fail } from './response.js'
@@ -105,6 +107,9 @@ import { rateLimit, type RateLimitRule } from './rate-limit.js'
 import type { NotificationRepository } from '../../domain/notification.js'
 import { notificationRoutes } from './notification-routes.js'
 
+const docsBootstrap = 'SwaggerUIBundle({ url: "/docs/openapi.json", dom_id: "#swagger" });'
+// The one inline script on /docs is allowed by its hash, so the page CSP needs no 'unsafe-inline'.
+const docsCsp = docsContentSecurityPolicy(docsBootstrap)
 // ponytail: Swagger UI từ CDN (ghim version + hash SRI, nên response CDN bị giả mạo sẽ không
 // được thực thi) — nếu cần dev offline thì vendor swagger-ui-dist cục bộ.
 const docsHtml = `<!doctype html>
@@ -121,7 +126,7 @@ const docsHtml = `<!doctype html>
   <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"
     integrity="sha384-wmyclcVGX/WhUkdkATwhaK1X1JtiNrr2EoYJ+diV3vj4v6OC5yCeSu+yW13SYJep"
     crossorigin="anonymous"></script>
-  <script>SwaggerUIBundle({ url: "/docs/openapi.json", dom_id: "#swagger" });</script>
+  <script>${docsBootstrap}</script>
 </body>
 </html>`
 
@@ -232,6 +237,10 @@ export function buildApp(deps: {
   trustProxy?: boolean | number
   /** Serve the Swagger UI and openapi.json (default true; main.ts turns it off in production). */
   apiDocs?: boolean
+  /** Send Strict-Transport-Security on HTTPS requests (main.ts turns it on in production). */
+  hsts?: boolean
+  /** Built client folder (client/dist) to serve with an SPA fallback; omitted means API only. */
+  clientDistDir?: string
 }) {
   const app = express()
   const apiRouters: Router[] = []
@@ -242,13 +251,8 @@ export function buildApp(deps: {
   }
   app.disable('x-powered-by')
   app.set('trust proxy', deps.trustProxy ?? false)
-  app.use((_req, res, next) => {
-    // ponytail: baseline security header không cần dependency helmet — thêm CSP khi app có trang thật
-    res.setHeader('X-Content-Type-Options', 'nosniff')
-    res.setHeader('X-Frame-Options', 'DENY')
-    res.setHeader('Referrer-Policy', 'no-referrer')
-    next()
-  })
+  // ponytail: security header tự đặt, không cần dependency helmet
+  app.use(securityHeaders({ hsts: deps.hsts ?? false }))
   app.use(requestLogger) // đặt trước body parsing, để request bị parser từ chối vẫn có dòng log
   if (deps.rateLimits) {
     // Limit before parsing bodies; the stricter auth limit counts on top of the global one.
@@ -737,8 +741,12 @@ export function buildApp(deps: {
     })
     // Phục vụ trang tài liệu API /docs
     app.get('/docs', (_req, res) => {
+      res.setHeader('Content-Security-Policy', docsCsp)
       res.type('html').send(docsHtml)
     })
+  }
+  if (deps.clientDistDir) {
+    app.use(staticClientRoutes(deps.clientDistDir))
   }
   app.use((req, res) => {
     fail(res, req, 404, 'not_found', 'not found') // giữ đúng hợp đồng error envelope cho đường dẫn không tồn tại
