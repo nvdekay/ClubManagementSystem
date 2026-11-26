@@ -83,6 +83,7 @@ describe.skipIf(!uri)('E2E: simplified club founding', () => {
     async accessUrl(assetId) {
       return `https://files.test/${assetId}`
     },
+    async remove() {},
   }
 
   async function call(

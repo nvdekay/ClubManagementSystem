@@ -278,7 +278,19 @@ export async function uploadEventProposalDocument(
     bytes,
     now,
   })
-  return deps.repo.act(clubId, eventId, { kind: 'attach-document', document }, actor!.id, now)
+  try {
+    return await deps.repo.act(
+      clubId,
+      eventId,
+      { kind: 'attach-document', document },
+      actor!.id,
+      now,
+    )
+  } catch (error) {
+    // The write lost (state changed, version race): do not leave an orphaned asset behind.
+    await storage.remove(document.assetId).catch(() => undefined)
+    throw error
+  }
 }
 /** Resolve a draft/submitted document and verify club ownership before issuing access. */
 export async function clubEventProposalDocumentAccess(

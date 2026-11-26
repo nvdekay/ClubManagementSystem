@@ -135,18 +135,24 @@ export async function uploadInvoiceImage(
     uploadedAt: now.toISOString(),
     uploadedBy: actor!.id,
   }
-  return actOnSponsoredItem(
-    deps,
-    actor,
-    id,
-    clubId,
-    itemId,
-    revision,
-    target === 'refund'
-      ? { kind: 'refundImage', image: uploaded }
-      : { kind: 'image', image: uploaded },
-    now,
-  )
+  try {
+    return await actOnSponsoredItem(
+      deps,
+      actor,
+      id,
+      clubId,
+      itemId,
+      revision,
+      target === 'refund'
+        ? { kind: 'refundImage', image: uploaded }
+        : { kind: 'image', image: uploaded },
+      now,
+    )
+  } catch (error) {
+    // The write lost (stale revision, state changed): do not leave an orphaned asset behind.
+    await deps.files.remove(file.assetId).catch(() => undefined)
+    throw error
+  }
 }
 
 // Cấp URL tạm để xem hoặc tải xuống tệp chứng từ (hóa đơn hoặc biên lai hoàn trả) của hạng mục

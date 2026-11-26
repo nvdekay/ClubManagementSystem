@@ -79,6 +79,27 @@ export async function uploadToCloudinary(
   }
 }
 
+/** Deletes assets by asset id through the Admin API (raw and image alike). */
+export async function deleteFromCloudinary(config: CloudinaryConfig, assetId: string) {
+  const authorization = `Basic ${Buffer.from(`${config.CLOUDINARY_API_KEY}:${config.CLOUDINARY_API_SECRET}`).toString('base64')}`
+  const body = new URLSearchParams()
+  body.append('asset_ids[]', assetId)
+  let response: globalThis.Response
+  try {
+    response = await fetch(`${cloudinaryBase(config)}/resources`, {
+      method: 'DELETE',
+      headers: { Authorization: authorization },
+      body,
+      signal: AbortSignal.timeout(30_000),
+    })
+  } catch {
+    throw new DomainError('file storage unavailable', 'unavailable')
+  }
+  if (!response.ok) {
+    throw new DomainError('file delete failed', 'unavailable')
+  }
+}
+
 // Tạo kho file hồ sơ đơn lập CLB trên Cloudinary
 export function cloudinaryApplicationFiles(config: CloudinaryConfig): ApplicationFileStorage {
   const base = cloudinaryBase(config)
@@ -125,5 +146,6 @@ export function cloudinaryApplicationFiles(config: CloudinaryConfig): Applicatio
       url.searchParams.set('signature', signature(params, config.CLOUDINARY_API_SECRET))
       return url.toString()
     },
+    remove: (assetId) => deleteFromCloudinary(config, assetId),
   }
 }

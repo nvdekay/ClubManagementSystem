@@ -71,6 +71,7 @@ describe.skipIf(!uri)('Event proposal template and document', () => {
         uploadedBy: input.actorId,
       }
     },
+    async remove() {},
     async accessUrl(assetId, options) {
       return `https://files.test/${assetId}?inline=${options?.inline === true}`
     },
