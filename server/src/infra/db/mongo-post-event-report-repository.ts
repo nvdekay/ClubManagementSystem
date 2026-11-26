@@ -6,10 +6,17 @@ import {
   assertReportSubmission,
   type PostEventReport,
   type PostEventReportRepository,
+  type ReportConfigurationIssue,
   type ReportDetail,
+  type ReportObligation,
   type ReportSnapshot,
 } from '../../domain/post-event-report.js'
-import { postEventDeadline } from './post-event-report-deadlines.js'
+import {
+  loadPolicyCatalog,
+  postEventDeadline,
+  postEventDeadlineFrom,
+  reportVersionSummaries,
+} from './post-event-report-deadlines.js'
 import { assertEventWriteAccess } from './club-event-access.js'
 import {
   accountabilityAudit,
@@ -28,6 +35,35 @@ function oid(value: string) {
 // Chuyển giá trị tiền thành số, mặc định 0
 function money(value: unknown) {
   return Number(String(value ?? 0))
+}
+// Chuyển một bản báo cáo trong DB thành phiên bản trả về cho client
+function toVersion(d: Doc, event: Doc, eventId: string, task: Doc | undefined): PostEventReport {
+  return {
+    id: String(d._id),
+    eventId,
+    clubId: String(event.clubId),
+    eventTitle: String(event.title),
+    eventState: String(event.state),
+    state: String(d.state),
+    versionNo: Number(d.versionNo),
+    revision: Number(event.__v ?? 0),
+    lateFlag: d.lateFlag === true,
+    actualResult: String(d.actualResult),
+    incidents: d.incidents as string | undefined,
+    lessonsLearned: d.lessonsLearned as string | undefined,
+    evidence: (d.evidence ?? []) as PostEventReport['evidence'],
+    submittedAt: d.submittedAt as Date | undefined,
+    decisionOutcome: d.decisionOutcome as string | undefined,
+    decisionReason: d.decisionReason as string | undefined,
+    findingViolationId: d.findingViolationId ? String(d.findingViolationId) : undefined,
+    preloadedFigures: d.preloadedFigures as unknown as ReportSnapshot,
+    task: task
+      ? {
+          id: String(task._id),
+          assigneeId: task.assigneeId ? String(task.assigneeId) : undefined,
+        }
+      : undefined,
+  }
 }
 // Repository báo cáo sau sự kiện của CLB và duyệt của ICPDP
 export function mongoPostEventReportRepository(): PostEventReportRepository {
@@ -157,35 +193,14 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
       })
       .session(session ?? null)
       .lean()
-    const versions: PostEventReport[] = docs.map((d) => {
-      const task = tasks.find((t) => String(t.entityId) === String(d._id))
-      return {
-        id: String(d._id),
+    const versions: PostEventReport[] = docs.map((d) =>
+      toVersion(
+        d,
+        event,
         eventId,
-        clubId: String(event.clubId),
-        eventTitle: String(event.title),
-        eventState: String(event.state),
-        state: String(d.state),
-        versionNo: Number(d.versionNo),
-        revision: Number(event.__v ?? 0),
-        lateFlag: d.lateFlag === true,
-        actualResult: String(d.actualResult),
-        incidents: d.incidents as string | undefined,
-        lessonsLearned: d.lessonsLearned as string | undefined,
-        evidence: (d.evidence ?? []) as PostEventReport['evidence'],
-        submittedAt: d.submittedAt as Date | undefined,
-        decisionOutcome: d.decisionOutcome as string | undefined,
-        decisionReason: d.decisionReason as string | undefined,
-        findingViolationId: d.findingViolationId ? String(d.findingViolationId) : undefined,
-        preloadedFigures: d.preloadedFigures as unknown as ReportSnapshot,
-        task: task
-          ? {
-              id: String(task._id),
-              assigneeId: task.assigneeId ? String(task.assigneeId) : undefined,
-            }
-          : undefined,
-      }
-    })
+        tasks.find((t) => String(t.entityId) === String(d._id)),
+      ),
+    )
     const dueAt = versions.find((v) => v.submittedAt)?.preloadedFigures.dueAt ?? preview.dueAt
     return {
       obligation: {
@@ -213,26 +228,74 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         })
         .sort({ endAt: -1, _id: -1 })
         .lean()
-      const details = await Promise.all(
-        events.map(async (e) => {
-          try {
-            const d = await detail(String(e._id), clubId, now)
-            return d?.obligation
-          } catch (error) {
-            if (!(error instanceof DomainError) || error.kind !== 'unavailable') {
-              throw error
-            }
-            return {
-              eventId: String(e._id),
+      if (!events.length) {
+        return []
+      }
+      // Nạp theo lô thay vì gọi detail() cho từng sự kiện; kết quả phải khớp detail().obligation
+      const eventIds = events.map((e) => e._id)
+      const [budgeted, summaries, policies] = await Promise.all([
+        m.eventBudgets!.distinct('eventId', { eventId: { $in: eventIds } }),
+        reportVersionSummaries(eventIds),
+        loadPolicyCatalog(),
+      ])
+      const withBudget = new Set(budgeted.map(String))
+      const tasks = await m
+        .approvalTasks!.find({
+          entityType: 'POST_EVENT_REPORT',
+          entityId: { $in: [...summaries.values()].map((s) => s.latest._id) },
+          state: 'Open',
+        })
+        .lean()
+      // snapshot() đòi một policy hiệu lực tại `now` trước khi tính hạn
+      const policyNow = policies.at(now)
+      return events.flatMap((e): (ReportObligation | ReportConfigurationIssue)[] => {
+        const eventId = String(e._id)
+        if (e.audienceScope === 'MEMBERS_ONLY' && !withBudget.has(eventId)) {
+          return []
+        }
+        const summary = summaries.get(eventId)
+        let dueAt: Date
+        try {
+          if (!policyNow) {
+            throw new DomainError('policy is not configured', 'unavailable')
+          }
+          const deadline = postEventDeadlineFrom(e, summary, policies)
+          dueAt = summary?.submitted?.dueAt ?? deadline.dueAt
+        } catch (error) {
+          if (!(error instanceof DomainError) || error.kind !== 'unavailable') {
+            throw error
+          }
+          return [
+            {
+              eventId,
               eventTitle: String(e.title),
               state: String(e.state),
               revision: Number(e.__v ?? 0),
               configurationError: 'REPORT_DEADLINE_NOT_CONFIGURED' as const,
-            }
-          }
-        }),
-      )
-      return details.filter((d): d is NonNullable<typeof d> => Boolean(d))
+            },
+          ]
+        }
+        const latest = summary?.latest
+        return [
+          {
+            eventId,
+            eventTitle: String(e.title),
+            state: String(e.state),
+            revision: Number(e.__v ?? 0),
+            dueAt,
+            overdue: now > dueAt && !summary?.submitted,
+            attendanceFinalized: e.attendanceFinalized === true,
+            report: latest
+              ? toVersion(
+                  latest,
+                  e,
+                  eventId,
+                  tasks.find((t) => String(t.entityId) === String(latest._id)),
+                )
+              : undefined,
+          },
+        ]
+      })
     },
     find: detail,
     // Xử lý hành động trên báo cáo sau sự kiện: lưu, nộp, claim, quyết định, quá hạn

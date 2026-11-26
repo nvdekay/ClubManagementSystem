@@ -102,6 +102,22 @@ async function expense(
   }
   return d
 }
+// The batched ICPDP/club list must stay identical to detail().obligation for every event
+async function expectListMatchesDetail(at: Date) {
+  for (const scope of [String(club), undefined]) {
+    const list = await reports.list(scope, at)
+    expect(list.length).toBeGreaterThan(0)
+    for (const item of list) {
+      if ('configurationError' in item) {
+        await expect(reports.find(item.eventId, scope, at)).rejects.toMatchObject({
+          kind: 'unavailable',
+        })
+      } else {
+        expect(item).toEqual((await reports.find(item.eventId, scope, at))?.obligation)
+      }
+    }
+  }
+}
 describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
   it('submits an item without an advance, caps concurrent images and records one payment', async () => {
     const { budgetId } = await fixture(0)
@@ -865,6 +881,7 @@ describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
     )
     expect(result.filter((r) => r.status === 'fulfilled')).toHaveLength(1)
     d = (await reports.find(f.eventId, undefined, now))!
+    await expectListMatchesDetail(now)
     expect(d.versions[0]?.preloadedFigures.feedback).toEqual({
       respondents: 0,
       visible: false,
@@ -890,6 +907,7 @@ describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
       now,
     )
     const lateNow = new Date(now.getTime() + 30 * DAY)
+    await expectListMatchesDetail(lateNow)
     expect((await reports.find(f.eventId, undefined, lateNow))?.obligation.overdue).toBe(false)
     await expect(
       reports.act(
@@ -940,6 +958,7 @@ describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
       now,
     )
     expect(d.obligation.state).toBe('Closed')
+    await expectListMatchesDetail(now)
     expect((await finance.find(f.budgetId))?.state).toBe('Disbursed')
   })
   it('keeps report snapshots private, blocks attendance unlocking and requires valid finding ownership', async () => {
@@ -1242,5 +1261,6 @@ describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
     await expect(reports.find(old.eventId, String(club), now)).rejects.toMatchObject({
       kind: 'unavailable',
     })
+    await expectListMatchesDetail(now)
   })
 })
