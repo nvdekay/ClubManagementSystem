@@ -37,15 +37,18 @@ python3 server/src/infra/db/generate-ucms-schema.py          # sinh lại schema
 
 `server/src/main.ts` là composition root: dựng mọi repository Mongo rồi truyền vào
 `buildApp(deps)` ở `interface/http/server.ts`. Hầu hết `deps` là tuỳ chọn và một route chỉ được
-mount khi đủ dependency của nó. Thiếu bộ biến Auth thì chỉ khu công khai chạy. `server.ts` cũng lọc
-tài liệu OpenAPI theo các cờ `has…`, nên `/docs` chỉ hiện route thực sự được mount.
+mount khi đủ dependency của nó. Thiếu bộ biến Auth thì chỉ khu công khai chạy (production thì dừng
+khởi động). Mọi router `/api/v1` mount qua hàm `mount()` trong `buildApp`; tài liệu OpenAPI được lọc
+theo chính các route đã mount, nên `/docs` chỉ hiện route thực sự chạy (ẩn ở production trừ khi
+`API_DOCS=true`). Body JSON chung tối đa 100kb; route cần body lớn tự gắn `express.json` sau
+`authGuard` và được liệt kê trong `LARGE_JSON_ROUTES`.
 
 Một endpoint mới đi qua nhiều chỗ:
 
 1. Port trong `domain/<module>.ts`, usecase trong `usecase/`, hiện thực trong
    `infra/db/mongo-<module>-repository.ts`.
 2. `interface/http/<module>-routes.ts`; dependency mới khai báo trong `buildApp`, mount có điều
-   kiện, cờ `has…` nếu cần, và nối thật ở `main.ts`.
+   kiện bằng `mount()`, và nối thật ở `main.ts`.
 3. OpenAPI: `openapi.ts` hoặc các file `openapi-*.ts`.
 4. Stub trong cả hai lời gọi `buildApp` đầy đủ của `tests/unit/openapi.test.ts`; test này duyệt
    route thật của Express để so với spec và kiểm tra mọi mutation đều có auth.
