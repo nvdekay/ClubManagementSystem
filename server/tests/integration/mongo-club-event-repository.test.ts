@@ -65,10 +65,18 @@ async function approve(id: string, budget = false) {
       outcome: 'Approve',
       sections: [],
       conditions: [],
-      budgetLines: budget ? [{ approvedAmount: 100000 }] : [],
+      budgetLines: budget ? [{ approvedAmount: 100000, fundingDecision: 'AFTER_EVENT' }] : [],
     },
     now,
   )
+  if (budget) {
+    // These tests cover the legacy lump-sum budget (advance + settlement); approvals now always
+    // carry funding decisions (FR-UC26-14), so drop the sponsored items to get that older shape.
+    await m.eventBudgets!.updateOne(
+      { eventId: new Types.ObjectId(id) },
+      { $unset: { sponsoredItems: '' } },
+    )
+  }
   return (await repo.find(String(club), id))!
 }
 async function submitted(scope: 'PUBLIC' | 'MEMBERS_ONLY' = 'PUBLIC', budget = false) {

@@ -304,7 +304,10 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
       { $set: { requiredLevel: 2, currentLevel: 1 } },
     )
     await repo.claim(id, String(officer), now)
-    const approved = [{ approvedAmount: 2_000_000 }, { approvedAmount: 3_000_000 }]
+    const approved = [
+      { approvedAmount: 2_000_000, fundingDecision: 'BEFORE_EVENT' as const },
+      { approvedAmount: 3_000_000, fundingDecision: 'AFTER_EVENT' as const },
+    ]
     const final = await repo.decide(
       id,
       String(officer),
