@@ -460,7 +460,13 @@ export async function uploadApplicationDocument(
   })
   // Mỗi loại một file: bản upload mới thay thế bản trước.
   const replaced = record.draft.documents.filter((item) => item.documentType === type)
-  await repo.addDocument(record.id, ownerId, document)
+  try {
+    await repo.addDocument(record.id, ownerId, document)
+  } catch (error) {
+    // The draft does not reference the upload: do not leave an orphaned asset behind.
+    await storage.remove(document.assetId).catch(() => undefined)
+    throw error
+  }
   for (const previous of replaced) {
     await repo.removeDocument(record.id, ownerId, previous.id)
   }

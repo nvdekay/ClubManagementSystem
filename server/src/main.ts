@@ -87,6 +87,9 @@ import { mongoSponsoredItemRepository } from './infra/db/mongo-sponsored-item-re
 import { cloudinaryRecruitmentFiles } from './infra/files/cloudinary-recruitment-files.js'
 import { cloudinaryEventProposalFiles } from './infra/files/event-proposal-files.js'
 import { cloudinaryPeriodicEvidenceFiles } from './infra/files/cloudinary-periodic-evidence-files.js'
+import { mongoUploadedEvidenceRepository } from './infra/db/mongo-uploaded-evidence-repository.js'
+import { startEvidenceCleanupJob } from './interface/jobs/evidence-cleanup-job.js'
+import { trackEvidenceUploads } from './usecase/periodic-evidence-cleanup.js'
 
 const config = loadConfig() // việc đầu tiên — thoát nếu env không hợp lệ
 // Production never runs without sign-in: a missing Auth config is a deployment mistake, so fail fast.
@@ -102,6 +105,11 @@ const mail = mailConfig(config)
 const mailTransport =
   mail.transport === 'smtp' ? smtpMailTransport(mail, createSmtpSender(mail)) : logMailTransport()
 const cloudinaryConfig = optionalCloudinaryConfig(config)
+const uploadedEvidenceRepo = mongoUploadedEvidenceRepository()
+// Mỗi ảnh minh chứng upload được ghi lại để job hằng ngày dọn ảnh không được tham chiếu.
+const periodicEvidenceFiles = cloudinaryConfig
+  ? trackEvidenceUploads(cloudinaryPeriodicEvidenceFiles(cloudinaryConfig), uploadedEvidenceRepo)
+  : null
 
 try {
   await mongoose.connect(config.MONGO_URI)
@@ -195,9 +203,7 @@ const app = authConfig
         : null,
       applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
       eventProposalFiles: cloudinaryConfig ? cloudinaryEventProposalFiles(cloudinaryConfig) : null,
-      periodicEvidenceFiles: cloudinaryConfig
-        ? cloudinaryPeriodicEvidenceFiles(cloudinaryConfig)
-        : null,
+      periodicEvidenceFiles,
       auth: {
         repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
         accessRepo: mongoAccessRepository(),
@@ -238,6 +244,7 @@ const stopNotificationJob = startNotificationDeliveryJob(
   mailTransport,
   authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {},
 )
+const stopEvidenceCleanupJob = startEvidenceCleanupJob(uploadedEvidenceRepo, periodicEvidenceFiles)
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`)
 })
@@ -259,6 +266,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       stopAccountabilityJob(),
       stopEventLifecycleJob(),
       stopNotificationJob(),
+      stopEvidenceCleanupJob(),
     ])
     // Hạn xả — một request đang xử lý bị treo không được chặn SIGTERM cho tới khi nền tảng SIGKILL.
     setTimeout(() => {

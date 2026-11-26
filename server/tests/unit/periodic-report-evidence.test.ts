@@ -71,6 +71,7 @@ function storage(): PeriodicEvidenceStorage {
   return {
     upload: vi.fn(async () => ({ assetId })),
     accessUrl: vi.fn(async (id: string) => `https://files.example/${id}?sig=1`),
+    remove: vi.fn(async () => undefined),
   }
 }
 

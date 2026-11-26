@@ -1,6 +1,10 @@
 import type { PeriodicEvidenceStorage } from '../../domain/periodic-report.js'
 import type { CloudinaryConfig } from '../config/index.js'
-import { signedDownloadUrl, uploadToCloudinary } from './cloudinary-application-files.js'
+import {
+  deleteFromCloudinary,
+  signedDownloadUrl,
+  uploadToCloudinary,
+} from './cloudinary-application-files.js'
 
 const extensionForMime = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' } as const
 // Ảnh minh chứng hiển thị ngay trên trang báo cáo nên cần sống lâu hơn link tải 60 giây của tệp đính kèm.
@@ -27,6 +31,10 @@ export function cloudinaryPeriodicEvidenceFiles(config: CloudinaryConfig): Perio
         inline: true,
         ttlSeconds: EVIDENCE_URL_TTL_SECONDS,
       })
+    },
+    // Xoá ảnh minh chứng không còn được tham chiếu (job dọn dẹp)
+    async remove(assetId) {
+      await deleteFromCloudinary(config, assetId)
     },
   }
 }

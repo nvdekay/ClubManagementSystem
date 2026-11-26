@@ -1,3 +1,4 @@
+import { DomainError } from '../../src/domain/errors.js'
 import { describe, expect, it, vi } from 'vitest'
 import type {
   ApplicationDocument,
@@ -428,5 +429,36 @@ describe('UC07 application submission use case', () => {
       'PROPOSAL-id',
       'LOGO-id',
     ])
+  })
+
+  it('deletes the uploaded file when the draft cannot reference it', async () => {
+    const remove = vi.fn(async () => undefined)
+    const storage: ApplicationFileStorage = {
+      upload: async () => ({ ...document('PROPOSAL'), id: 'new-id', assetId: 'asset-new' }),
+      accessUrl: async () => 'https://example.test/file',
+      remove,
+    }
+    const removeDocument = vi.fn(async () => record())
+    const repo = repository({
+      addDocument: vi.fn(async () => {
+        throw new DomainError('draft changed', 'conflict')
+      }),
+      removeDocument,
+    })
+    await expect(
+      uploadApplicationDocument(
+        repo,
+        storage,
+        actor,
+        record().id,
+        'PROPOSAL',
+        'de-an.pdf',
+        'application/pdf',
+        Buffer.from('%PDF-1.7'),
+        now,
+      ),
+    ).rejects.toMatchObject({ kind: 'conflict' })
+    expect(remove).toHaveBeenCalledWith('asset-new')
+    expect(removeDocument).not.toHaveBeenCalled()
   })
 })

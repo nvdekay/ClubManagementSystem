@@ -371,6 +371,7 @@ const stubViolations: ViolationRepository = {
 const stubPeriodicEvidenceFiles = {
   upload: async () => ({ assetId: '0123456789abcdef0123456789abcdef' }),
   accessUrl: async () => 'https://files.example/evidence',
+  remove: async () => undefined,
 }
 const stubClubPeriodicReports = {
   list: async () => [],

@@ -471,6 +471,33 @@ describe('event proposal document (UC25/UC26)', () => {
     ).rejects.toMatchObject({ kind: 'conflict' })
     expect(files.remove).toHaveBeenCalledWith('asset-1')
   })
+  it('deletes the uploaded template when saving it as the active template fails', async () => {
+    const d = {
+      ...deps(),
+      auth: { systemRoleCodes: async () => ['ICPDP_OFFICER'] },
+    }
+    const files = {
+      uploadProposalDocument: vi.fn(),
+      uploadTemplateDocument: vi.fn(async () => ({
+        id: 'tpl',
+        fileName: 't.docx',
+        mimeType: DOCX,
+        bytes: docx.length,
+        assetId: 'asset-tpl',
+        uploadedAt: now,
+        uploadedBy: actor.id,
+      })),
+      remove: vi.fn(async () => {
+        throw new Error('storage down')
+      }),
+      accessUrl: vi.fn(),
+    }
+    vi.mocked(d.repo.saveProposalTemplate).mockRejectedValue(new Error('write failed'))
+    await expect(
+      uploadEventProposalTemplate({ ...d, files }, actor, 't.docx', DOCX, docx, now),
+    ).rejects.toThrow('write failed')
+    expect(files.remove).toHaveBeenCalledWith('asset-tpl')
+  })
   it('refuses uploads without storage, for internal events, and template uploads by non-officers', async () => {
     const d = deps()
     await expect(
