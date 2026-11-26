@@ -1141,6 +1141,7 @@ Table propertyBookings {
     (propertyId, startAt, endAt) [name: 'ix_booking_slot', note: 'Phía đọc xung đột của BR15 và chốt chặn lúc phê duyệt của BR33.']
     (clubId, state) [name: 'ix_booking_club_state']
     (state, startAt) [name: 'ix_booking_schedule', note: 'Scheduler chuyển Approved → In Use → Completed (SCH-02).']
+    eventId [name: 'ix_booking_event', note: 'Booking đính kèm một đề xuất sự kiện (UC25, UC26, phiên bảo vệ).']
   }
 }
 
@@ -1325,12 +1326,15 @@ Table notifications {
   attempts int [not null, default: 0]
   lastError string
   readAt datetime
+  clubId objectId [note: 'CLB mà thông báo thuộc về, suy từ payload hoặc thực thể sở hữu; null = không thuộc CLB nào. Được điền lần đầu khi inbox CLB đọc tới dòng này (dòng cũ chưa có trường này).']
   createdAt datetime [not null]
 
   Note: 'Hàng đợi outbox. Được đưa vào hàng đợi BÊN TRONG transaction nghiệp vụ đã commit và được scheduler rút ra bất đồng bộ — một email gửi lỗi không bao giờ làm hỏng một thay đổi đã commit (CON-09, NTF-01).'
   indexes {
     (state, dueAt) [name: 'ix_outbox_drain', note: 'Scheduler quét index này; nó không bao giờ quét cả collection (NTF-06).']
     (recipientUserId, readAt) [name: 'ix_notification_inbox']
+    (recipientUserId, createdAt) [name: 'ix_notification_recent', note: 'Inbox sắp xếp mới nhất trước.']
+    (recipientUserId, clubId, createdAt) [name: 'ix_notification_club', note: 'Inbox của một CLB (scope=club).']
   }
 }
 

@@ -8,6 +8,7 @@ import {
 } from '../../domain/club-field.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 // Ánh xạ document thành ClubField
 function fieldFrom(doc: Record<string, unknown>): ClubField {
@@ -17,11 +18,6 @@ function fieldFrom(doc: Record<string, unknown>): ClubField {
     sortOrder: Number(doc.sortOrder ?? 0),
     isActive: doc.isActive !== false,
   }
-}
-
-// Kiểm tra lỗi trùng khóa duy nhất (mã 11000)
-function duplicate(error: unknown): boolean {
-  return error instanceof mongoose.mongo.MongoServerError && error.code === 11000
 }
 
 // Repository danh mục lĩnh vực hoạt động của CLB
@@ -61,12 +57,20 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
   return {
     // Liệt kê lĩnh vực đang bật theo thứ tự hiển thị
     async listActive() {
-      const docs = await fields.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean()
+      const docs = await fields
+        .find({ isActive: true })
+        .sort({ sortOrder: 1, name: 1 })
+        .collation({ locale: 'vi' })
+        .lean()
       return docs.map(fieldFrom)
     },
     // Liệt kê mọi lĩnh vực kèm số CLB và hồ sơ đang dùng
     async listWithUsage() {
-      const docs = await fields.find().sort({ isActive: -1, sortOrder: 1, name: 1 }).lean()
+      const docs = await fields
+        .find()
+        .sort({ isActive: -1, sortOrder: 1, name: 1 })
+        .collation({ locale: 'vi' })
+        .lean()
       const names = docs.map((doc) => String(doc.name))
       const [clubCounts, applicationCounts] = await Promise.all([
         clubs.aggregate<{ _id: string; count: number }>([
@@ -154,7 +158,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
           return fieldFrom(created!.toObject())
         })
       } catch (error) {
-        if (duplicate(error)) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('club field name already exists', 'conflict')
         }
         throw error
@@ -214,7 +218,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
           return fieldFrom(updated)
         })
       } catch (error) {
-        if (duplicate(error)) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('club field name already exists', 'conflict')
         }
         throw error

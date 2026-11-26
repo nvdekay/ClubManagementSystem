@@ -772,7 +772,11 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       const club = new Types.ObjectId(clubId)
       let violationId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
-        const found = await m.clubs!.findById(club).select({ name: 1 }).session(session).lean()
+        // Ghi __v của CLB trước để hai lần ghi nhận thiếu báo cáo đồng thời tuần tự hoá
+        const found = await m
+          .clubs!.findOneAndUpdate({ _id: club }, { $inc: { __v: 1 } }, { session })
+          .select({ name: 1 })
+          .lean()
         if (!found) {
           throw new DomainError('club not found', 'not_found')
         }

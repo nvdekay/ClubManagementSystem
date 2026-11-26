@@ -17,6 +17,7 @@ import {
 import type { SimilarityCandidate } from '../../domain/similar-club.js'
 import { routedTaskFields } from './approval-routing.js'
 import { ucmsModels } from './ucms-models.js'
+import { queueNotification } from './repo-helpers.js'
 
 // Chuẩn hóa tài liệu đính kèm hồ sơ (ngày tải lên thành Date)
 function documentFrom(raw: ApplicationDocument): ApplicationDocument {
@@ -177,7 +178,6 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
   const clubs = ucmsModels.clubs!
   const tasks = ucmsModels.approvalTasks!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
   const decisions = ucmsModels.approvalDecisions!
   const positions = ucmsModels.clubPositions!
   const terms = ucmsModels.clubTerms!
@@ -470,23 +470,14 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           ],
           { session },
         )
-        await notifications.create(
-          [
-            {
-              recipientUserId: new Types.ObjectId(input.ownerId),
-              eventCode: 'CLUB_APPLICATION_SUBMITTED',
-              entityType: 'ClubApplication',
-              entityId: id,
-              channels: ['IN_APP'],
-              payload: { versionNo, clubName: input.snapshot.clubName },
-              state: 'Queued',
-              dueAt: input.now,
-              attempts: 0,
-              createdAt: input.now,
-            },
-          ],
-          { session },
-        )
+        await queueNotification(session, {
+          recipientUserId: new Types.ObjectId(input.ownerId),
+          eventCode: 'CLUB_APPLICATION_SUBMITTED',
+          entityType: 'ClubApplication',
+          entityId: id,
+          payload: { versionNo, clubName: input.snapshot.clubName },
+          now: input.now,
+        })
         return mapApplicationVersion(created[0]!.toObject())
       })
     },
@@ -534,23 +525,14 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           ],
           { session },
         )
-        await notifications.create(
-          [
-            {
-              recipientUserId: new Types.ObjectId(ownerId),
-              eventCode: 'CLUB_APPLICATION_WITHDRAWN',
-              entityType: 'ClubApplication',
-              entityId: objectId,
-              channels: ['IN_APP'],
-              payload: {},
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            },
-          ],
-          { session },
-        )
+        await queueNotification(session, {
+          recipientUserId: new Types.ObjectId(ownerId),
+          eventCode: 'CLUB_APPLICATION_WITHDRAWN',
+          entityType: 'ClubApplication',
+          entityId: objectId,
+          payload: {},
+          now,
+        })
         return mapApplicationRecord({ ...previous, state: 'Withdrawn' })
       })
     },

@@ -247,6 +247,17 @@ describe.skipIf(!uri)('Mongo notification inbox and mail outbox', () => {
     expect(await repo.unreadCount(id, { audience: 'icpdp' })).toBe(2)
     expect(await repo.unreadCount(id, { audience: 'club', clubId: String(clubId) })).toBe(2)
     expect(await repo.unreadCount(id, { audience: 'club', clubId: String(otherClub) })).toBe(1)
+    // The club of each club row is resolved once and stored, so club pages filter in Mongo.
+    const stored = await m
+      .notifications!.find({ recipientUserId: multi, clubId: { $exists: true } })
+      .sort({ createdAt: -1 })
+      .lean()
+    expect(stored.map((doc) => (doc.clubId ? String(doc.clubId) : null))).toEqual([
+      null,
+      String(otherClub),
+      String(clubId),
+      String(clubId),
+    ])
 
     // Club pages follow the same cursor as the plain inbox, and every row carries the club for its link.
     const first = await repo.listMine(id, {

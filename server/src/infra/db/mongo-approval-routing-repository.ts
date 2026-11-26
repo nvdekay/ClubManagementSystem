@@ -9,6 +9,7 @@ import type {
 } from '../../domain/approval-routing.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
@@ -86,7 +87,7 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
           createdAt: now,
         })
       } catch (error) {
-        if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('another version was created meanwhile; retry', 'conflict')
         }
         throw error

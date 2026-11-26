@@ -8,6 +8,11 @@ import { mongoEventProposalReviewRepository } from '../../src/infra/db/mongo-eve
 import { mongoEventRegistrationRepository } from '../../src/infra/db/mongo-event-registration-repository.js'
 import { mongoEventCheckInRepository } from '../../src/infra/db/mongo-event-checkin-repository.js'
 import { mongoEventFeedbackRepository } from '../../src/infra/db/mongo-event-feedback-repository.js'
+import {
+  clubEventFrom,
+  eventCancellationRequest,
+  eventDraftPayload,
+} from '../../src/infra/db/club-event-readers.js'
 import { ensureUcmsDatabase, ucmsModels as m } from '../../src/infra/db/ucms-models.js'
 const uri = process.env.MONGO_URI
 const now = new Date('2026-10-11T00:00:00Z')
@@ -901,5 +906,45 @@ describe.skipIf(!uri)('Mongo club event lifecycle', () => {
       (await repo.act(String(club), d.event.id, { kind: 'finalize' }, String(actor), finished))
         .event.attendanceFinalized,
     ).toBe(true)
+  })
+  it('lists club events with the same payload and cancellation request as per-event reads', async () => {
+    const events = await m
+      .events!.find({ clubId: club, organizerType: 'CLUB', audienceScope: 'PUBLIC' })
+      .lean()
+    expect(events.length).toBeGreaterThan(1)
+    const target = events[0]!
+    await m.auditLogs!.create([
+      {
+        actorId: actor,
+        action: 'EVENT_CANCELLATION_REQUESTED',
+        entityType: 'Event',
+        entityId: target._id,
+        correlationId: 'list-test',
+        after: { reason: 'Rain', requestedAt: now },
+        at: now,
+      },
+      {
+        actorId: actor,
+        action: 'EVENT_CANCELLATION_REJECTED',
+        entityType: 'Event',
+        entityId: target._id,
+        correlationId: 'list-test',
+        after: { reason: 'Rain', requestedAt: now, reviewReason: 'Keep it' },
+        at: new Date(now.getTime() + 1000),
+      },
+    ])
+    const list = await repo.list(String(club))
+    expect(list).toHaveLength(events.length)
+    for (const item of list) {
+      const id = new Types.ObjectId(item.id)
+      const doc = events.find((e) => String(e._id) === item.id)!
+      expect(item).toEqual(
+        clubEventFrom(doc, await eventDraftPayload(id), await eventCancellationRequest(id)),
+      )
+    }
+    expect(list.find((e) => e.id === String(target._id))?.cancellationRequest).toMatchObject({
+      state: 'Rejected',
+      reviewReason: 'Keep it',
+    })
   })
 })
