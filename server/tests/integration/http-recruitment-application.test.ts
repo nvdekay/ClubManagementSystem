@@ -528,9 +528,8 @@ describe.skipIf(!process.env.MONGO_URI)('HTTP: recruitment application routes', 
       ).toBe(400)
       expect((await h.call(leader, 'POST', path, { departmentId: missingId() })).status).toBe(400)
       expect((await h.call(member, 'POST', path, {})).status).toBe(403)
-      // An unknown application is reported like one that is not Accepted.
       expect((await h.call(leader, 'POST', `${base()}/${missingId()}/onboard`, {})).status).toBe(
-        409,
+        404,
       )
       expect((await h.call(leader, 'POST', `${base()}/${daveApp}/onboard`, {})).status).toBe(409)
 
@@ -546,7 +545,7 @@ describe.skipIf(!process.env.MONGO_URI)('HTTP: recruitment application routes', 
       expect((await h.call(leader, 'POST', path, { note: 'x' })).status).toBe(400)
       expect((await h.call(member, 'POST', path, {})).status).toBe(403)
       expect((await h.call(leader, 'POST', `${base()}/${missingId()}/decline`, {})).status).toBe(
-        409,
+        404,
       )
       expect(dataOf(await h.call(leader, 'POST', path, { reason: 'studies abroad' })).state).toBe(
         'Declined',

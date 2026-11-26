@@ -433,7 +433,12 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           .session(session)
           .lean()
         if (!current) {
-          throw new DomainError('only accepted candidates can be onboarded', 'conflict')
+          const exists = await applications
+            .exists({ _id: applicationId, clubId, campaignId })
+            .session(session)
+          throw exists
+            ? new DomainError('only accepted candidates can be onboarded', 'conflict')
+            : new DomainError('application not found', 'not_found')
         }
         const [club, candidate, banned, active, memberRole] = await Promise.all([
           clubs.findOne({ _id: clubId, state: 'Active' }).session(session).select('_id').lean(),
@@ -565,7 +570,12 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           .session(session)
           .lean()
         if (!current) {
-          throw new DomainError('only accepted candidates can be marked declined', 'conflict')
+          const exists = await applications
+            .exists({ _id: applicationId, clubId, campaignId })
+            .session(session)
+          throw exists
+            ? new DomainError('only accepted candidates can be marked declined', 'conflict')
+            : new DomainError('application not found', 'not_found')
         }
         const changed = await applications.updateOne(
           { _id: applicationId, state: 'Accepted' },
