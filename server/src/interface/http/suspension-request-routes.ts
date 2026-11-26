@@ -12,6 +12,7 @@ import {
   suspensionContext,
 } from '../../usecase/suspension-request.js'
 import { authGuard } from './auth-routes.js'
+import { pageQuery } from './request.js'
 import { ok } from './response.js'
 const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const suspensionRequestBody = z
@@ -23,6 +24,7 @@ export const suspensionRequestBody = z
     acknowledgedImpactIds: z.array(z.string().max(100)).max(1000),
   })
   .strict()
+export const suspensionListQuery = pageQuery.strict()
 export const suspensionDecisionBody = z
   .object({ outcome: z.enum(['Approve', 'Reject']), reason: z.string().min(1).max(2000) })
   .strict()
@@ -73,8 +75,18 @@ export function suspensionRequestRoutes(deps: {
     )
   })
   // ICPDP liệt kê yêu cầu tạm ngưng cần xét
-  r.get('/admin/suspension-requests', authGuard(guard, false), async (_req, res) => {
-    ok(res, await reviewSuspensions(deps.repo, deps.authRepo, res.locals.actor as AccessActor))
+  r.get('/admin/suspension-requests', authGuard(guard, false), async (req, res) => {
+    ok(
+      res,
+      await reviewSuspensions(
+        deps.repo,
+        deps.authRepo,
+        res.locals.actor as AccessActor,
+        undefined,
+        new Date(),
+        parse(suspensionListQuery, req.query),
+      ),
+    )
   })
   // ICPDP ghi quyết định yêu cầu tạm ngưng
   r.post('/admin/suspension-requests/:id/decision', authGuard(guard), async (req, res) => {

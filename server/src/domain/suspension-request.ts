@@ -1,4 +1,5 @@
 import { DomainError } from './errors.js'
+import type { Page, PageRequest } from './paging.js'
 export interface SuspensionImpact {
   id: string
   kind: 'event' | 'booking'
@@ -33,7 +34,8 @@ export interface SuspensionRequestRepository {
     userId: string,
     now: Date,
   ): Promise<SuspensionRequest>
-  list(): Promise<SuspensionRequest[]>
+  /** One page of every club's requests, newest submission first. */
+  list(page: PageRequest): Promise<Page<SuspensionRequest>>
   decide(
     id: string,
     outcome: 'Approve' | 'Reject',

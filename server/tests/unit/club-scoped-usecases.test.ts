@@ -373,7 +373,7 @@ describe('suspension request', () => {
     return {
       context: vi.fn(async () => ({ impacts: [], requests: [] })),
       submit: vi.fn(async () => ({ id: REQUEST_ID })),
-      list: vi.fn(async () => []),
+      list: vi.fn(async () => ({ items: [], total: 0, page: 1, pageSize: 20 })),
       decide: vi.fn(async () => undefined),
     }
   }
@@ -479,6 +479,7 @@ describe('suspension request', () => {
       NOW,
     )
     expect(requests.list).toHaveBeenCalledTimes(1)
+    expect(requests.list).toHaveBeenLastCalledWith({ page: 1, pageSize: 20 })
     expect(requests.decide).not.toHaveBeenCalled()
     await reviewSuspensions(
       requests as unknown as Repo,
@@ -495,6 +496,15 @@ describe('suspension request', () => {
       NOW,
     )
     expect(requests.list).toHaveBeenCalledTimes(2)
+    await reviewSuspensions(
+      requests as unknown as Repo,
+      officerAuth as unknown as AuthRepository,
+      officer,
+      undefined,
+      NOW,
+      { page: 3, pageSize: 50 },
+    )
+    expect(requests.list).toHaveBeenLastCalledWith({ page: 3, pageSize: 50 })
   })
 
   it.each([
