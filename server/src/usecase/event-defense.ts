@@ -4,6 +4,7 @@ import { DomainError } from '../domain/errors.js'
 import {
   MAX_DEFENSE_DURATION_MINUTES,
   MIN_DEFENSE_DURATION_MINUTES,
+  assertRevisionDeadlineBeforeDefense,
   validateDefenseScheduleSlot,
   type EventDefenseRepository,
   type RespondRescheduleInput,
@@ -142,6 +143,7 @@ export async function cancelEventDefense(
 // ICPDP chấp nhận (đặt lịch mới) hoặc từ chối yêu cầu dời lịch bảo vệ của CLB
 export async function respondDefenseReschedule(
   repo: EventDefenseRepository,
+  events: Pick<EventProposalReviewRepository, 'find'>,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
   eventId: string,
@@ -174,6 +176,12 @@ export async function respondDefenseReschedule(
     }
     const propertyId = validObjectId(input.propertyId ?? '', 'property id')
     const note = trimmedOptional(input.note, 2000)
+    // BR63: an open revision deadline must stay at least 12h before the defense, also when it moves.
+    // FR-UC26-20: the accepted start only has to be in the future (the 48h notice is for first scheduling).
+    const event = (await events.find(id, now))?.event
+    if (event?.state === 'Revision Requested' && event.revisionDeadlineAt) {
+      assertRevisionDeadlineBeforeDefense(event.revisionDeadlineAt, input.startAt)
+    }
     return repo.respondReschedule(
       id,
       officerId,

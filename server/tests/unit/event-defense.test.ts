@@ -21,6 +21,7 @@ import {
   confirmClubEventDefense,
   decideAfterDefense,
   requestClubDefenseReschedule,
+  respondDefenseReschedule,
   saveDefenseNote,
   scheduleEventDefense,
   startEventDefense,
@@ -374,5 +375,43 @@ describe('Event defense domain & use cases', () => {
       'Midterm schedule conflict',
       now,
     )
+  })
+
+  it('keeps an open revision deadline 12h before an accepted reschedule (BR63)', async () => {
+    const deadline = new Date(now.getTime() + 6 * 3_600_000)
+    const proposal = sampleProposal()
+    proposal.event = {
+      ...proposal.event,
+      state: 'Revision Requested',
+      revisionDeadlineAt: deadline,
+    }
+    const events = { find: async () => proposal }
+    const respond = vi.fn(async () => sampleSession())
+    function accept(startAt: Date) {
+      return respondDefenseReschedule(
+        mockDefenseRepo({ respondReschedule: respond }),
+        events,
+        auth(['ICPDP_OFFICER']),
+        officerActor,
+        eventId,
+        { accept: true, startAt, propertyId },
+        now,
+      )
+    }
+
+    await expect(accept(new Date(deadline.getTime() + 11 * 3_600_000))).rejects.toMatchObject({
+      kind: 'validation',
+      details: { field: 'revisionDeadlineAt' },
+    })
+    expect(respond).not.toHaveBeenCalled()
+
+    // FR-UC26-20: a future start is enough once the revision deadline gap holds.
+    await accept(new Date(deadline.getTime() + 12 * 3_600_000))
+    expect(respond).toHaveBeenCalledOnce()
+
+    // A stale deadline on an event no longer waiting for revision does not constrain the new start.
+    proposal.event = { ...proposal.event, state: 'Under Review' }
+    await accept(new Date(now.getTime() + 3_600_000))
+    expect(respond).toHaveBeenCalledTimes(2)
   })
 })

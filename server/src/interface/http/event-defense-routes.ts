@@ -187,6 +187,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
         res,
         await respondDefenseReschedule(
           deps.repo,
+          deps.reviewRepo,
           deps.authRepo,
           actor(res),
           parsed(id, req.params.id),
