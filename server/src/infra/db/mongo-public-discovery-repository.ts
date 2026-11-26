@@ -161,13 +161,14 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
         const search = new RegExp(escapeRegex(input.search), 'i')
         filter.$or = [{ name: search }, { code: search }, { description: search }]
       }
+      const page = clubs
+        .find(filter)
+        .sort(input.newestActive ? { createdAt: -1, _id: -1 } : { name: 1, _id: 1 })
+        .skip((input.page - 1) * input.pageSize)
+        .limit(input.pageSize)
       const [docs, total] = await Promise.all([
-        clubs
-          .find(filter)
-          .sort(input.newestActive ? { createdAt: -1, _id: -1 } : { name: 1, _id: 1 })
-          .skip((input.page - 1) * input.pageSize)
-          .limit(input.pageSize)
-          .lean(),
+        // Sắp xếp tên tiếng Việt cần collation; nhánh mới nhất sắp theo ngày nên giữ mặc định
+        (input.newestActive ? page : page.collation({ locale: 'vi' })).lean(),
         clubs.countDocuments(filter),
       ])
       const activeClubIds = docs.filter((club) => club.state === 'Active').map((club) => club._id)

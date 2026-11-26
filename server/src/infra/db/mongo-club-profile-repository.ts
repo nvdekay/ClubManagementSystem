@@ -115,6 +115,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
     const docs = await departments
       .find({ clubId: new Types.ObjectId(clubId) })
       .sort({ isActive: -1, sortOrder: 1, name: 1 })
+      .collation({ locale: 'vi' })
       .lean()
     return docs.map(departmentFrom)
   }

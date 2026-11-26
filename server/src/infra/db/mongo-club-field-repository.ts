@@ -61,12 +61,20 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
   return {
     // Liệt kê lĩnh vực đang bật theo thứ tự hiển thị
     async listActive() {
-      const docs = await fields.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean()
+      const docs = await fields
+        .find({ isActive: true })
+        .sort({ sortOrder: 1, name: 1 })
+        .collation({ locale: 'vi' })
+        .lean()
       return docs.map(fieldFrom)
     },
     // Liệt kê mọi lĩnh vực kèm số CLB và hồ sơ đang dùng
     async listWithUsage() {
-      const docs = await fields.find().sort({ isActive: -1, sortOrder: 1, name: 1 }).lean()
+      const docs = await fields
+        .find()
+        .sort({ isActive: -1, sortOrder: 1, name: 1 })
+        .collation({ locale: 'vi' })
+        .lean()
       const names = docs.map((doc) => String(doc.name))
       const [clubCounts, applicationCounts] = await Promise.all([
         clubs.aggregate<{ _id: string; count: number }>([

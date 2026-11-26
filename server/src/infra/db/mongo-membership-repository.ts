@@ -252,6 +252,7 @@ export function mongoMembershipRepository(): MembershipRepository {
         positions
           .find({ clubId: club, isActive: true })
           .sort({ isLeaderRole: -1, isBoardSeat: -1, name: 1 })
+          .collation({ locale: 'vi' })
           .select('name isLeaderRole')
           .lean(),
       ])
