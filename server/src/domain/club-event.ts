@@ -204,7 +204,6 @@ export interface EventPublishInput {
   checkInCloseAt: Date
   allowWalkIn: boolean
   waitlistEnabled: boolean
-  notifyMembers?: boolean
 }
 export type ClubEventAction =
   | { kind: 'save'; input: ClubEventInput; expectedVersion: number }

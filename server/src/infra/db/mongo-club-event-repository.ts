@@ -611,46 +611,25 @@ async function syncProposalSessionBookings(
     )
   }
 }
-// Công bố sự kiện: mở đăng ký, tạo mã check-in và thông báo thành viên
+// Công bố sự kiện: mở đăng ký và tạo mã check-in (không gửi thông báo — quyết định 17/10/2026, FR-UC27-02)
 async function publishInSession(
   session: ClientSession,
   id: Types.ObjectId,
-  clubId: Types.ObjectId,
-  title: string,
   startAt: Date,
   endAt: Date,
   input: EventPublishInput,
-  state: 'Upcoming' | 'PUBLIC',
   actorId: Types.ObjectId,
   now: Date,
 ) {
   validateEventPublication(input, startAt, endAt, now)
-  const { notifyMembers, ...schedule } = input
   const code = checkInCode(() => randomInt(1000000) / 1000000)
   await m.events!.updateOne(
     { _id: id },
-    { $set: { ...schedule, state, publishedAt: now, checkInCode: code } },
+    { $set: { ...input, state: 'Upcoming', publishedAt: now, checkInCode: code } },
     { session },
   )
-  await audit(session, id, 'EVENT_PUBLISHED', actorId, { state, ...input }, now)
-  if (state === 'PUBLIC' && notifyMembers) {
-    const userIds = await m
-      .clubMemberships!.find({ clubId, state: 'Active' })
-      .session(session)
-      .distinct('userId')
-    await queueNotifications(
-      session,
-      userIds,
-      'EVENT_PUBLISHED',
-      'Event',
-      id,
-      { clubId: String(clubId), title, startAt, endAt },
-      now,
-    )
-  }
+  await audit(session, id, 'EVENT_PUBLISHED', actorId, { state: 'Upcoming', ...input }, now)
 }
-// Chuyển input sự kiện nội bộ thành input sự kiện chuẩn (chỉ thành viên)
-/** Sự kiện nội bộ dùng lại cấu trúc đầu vào của đề xuất: luôn chỉ dành cho thành viên và không bao giờ có ngân sách của trường. */
 export function mongoClubEventRepository(rules: ClubEventRules): ClubEventRepository {
   async function required(clubId: string, eventId: string) {
     const detail = await readClubEvent(clubId, eventId)
@@ -958,12 +937,9 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           await publishInSession(
             session,
             event._id as Types.ObjectId,
-            oid(clubId),
-            String(event.title),
             event.startAt as Date,
             event.endAt as Date,
             action.input,
-            'Upcoming',
             oid(actorId),
             now,
           )
@@ -1144,7 +1120,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           }
         } else if (action.kind === 'capacity' || action.kind === 'promote') {
           if (
-            !['Upcoming', 'PUBLIC'].includes(String(event.state)) ||
+            event.state !== 'Upcoming' ||
             (event.startAt as Date) <= now ||
             !(event.registrationOpenAt instanceof Date) ||
             !(event.registrationCloseAt instanceof Date) ||

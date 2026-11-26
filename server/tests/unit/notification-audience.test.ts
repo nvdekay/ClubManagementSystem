@@ -199,8 +199,13 @@ const dynamicCodes = [
   'REPORT_ESCALATED_TO_ICPDP',
   'REFUND_OVERDUE_TO_ICPDP',
 ]
-// Legacy codes from the withdrawn UC23; no server code sends them any more.
-const legacyCodes = ['CLUB_ROLE_ASSIGNED', 'CLUB_ROLE_REVOKED', 'CLUB_ROLE_UPDATED']
+// Legacy codes no server code sends any more: UC23 (withdrawn) and EVENT_PUBLISHED (internal events removed).
+const legacyCodes = [
+  'CLUB_ROLE_ASSIGNED',
+  'CLUB_ROLE_REVOKED',
+  'CLUB_ROLE_UPDATED',
+  'EVENT_PUBLISHED',
+]
 
 // Either quote style: some infra files are formatted with single quotes.
 const code = /["']([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)["']/g
