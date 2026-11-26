@@ -12,6 +12,10 @@ export default defineConfig({
   test: {
     // Removes databases left behind by integration runs that were killed before afterAll ran.
     globalSetup: ['./tests/global-setup.ts'],
+    // Drop requestLogger's one-JSON-line-per-request output so test failures stay readable.
+    onConsoleLog(log, type) {
+      return !(type === 'stdout' && log.startsWith('{"ts"'))
+    },
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
