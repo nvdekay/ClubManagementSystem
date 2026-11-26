@@ -1736,6 +1736,42 @@ export const openApiDocument = createDocument({
         },
       },
     },
+    '/clubs/{clubId}/periodic-reports/evidence-images': {
+      post: {
+        summary:
+          'UC38 upload a private PNG/JPEG/WebP evidence image (max 5 MB, CSRF required); store the returned reference in the report',
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: {
+          required: true,
+          content: {
+            'image/png': { schema: z.string() },
+            'image/jpeg': { schema: z.string() },
+            'image/webp': { schema: z.string() },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Evidence reference and a short-lived signed preview URL',
+            content: {
+              'application/json': {
+                schema: envelope(
+                  z.object({
+                    reference: z.string(),
+                    url: z.string(),
+                    mimeType: z.string(),
+                    bytes: z.number().int(),
+                  }),
+                ),
+              },
+            },
+          },
+          '400': { description: 'Unsupported type, content mismatch or empty file' },
+          '403': { description: 'Periodic report permission required' },
+          '413': { description: 'Image larger than 5 MB' },
+          '503': { description: 'File storage is not configured' },
+        },
+      },
+    },
     '/clubs/{clubId}/periodic-reports/{id}': {
       put: {
         summary: 'UC38 save draft/correction using revision for concurrency (CSRF required)',

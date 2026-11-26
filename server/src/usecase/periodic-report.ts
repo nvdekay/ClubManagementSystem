@@ -8,12 +8,14 @@ import {
   type PeriodicCampaign,
   type PeriodicCampaignInput,
   type PeriodicDecisionInput,
+  type PeriodicEvidenceStorage,
   type PeriodicOverview,
   type PeriodicReportRepository,
 } from '../domain/periodic-report.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from '../domain/violation.js'
 import type { AccessActor } from './access.js'
+import { withEvidenceUrls } from './club-periodic-report.js'
 import { generateClubEvaluation, type EvaluationDeps } from './evaluation.js'
 
 const objectId = /^[0-9a-f]{24}$/i
@@ -24,6 +26,8 @@ export interface PeriodicReportDeps {
   auth: Pick<AuthRepository, 'systemRoleCodes'>
   /** Khi có, việc accept báo cáo cũng tạo bản nháp evaluation của CLB cho kỳ (UC42). */
   evaluation?: EvaluationDeps
+  /** Kho ảnh minh chứng; có thì chi tiết báo cáo kèm signed URL cho ảnh đã upload. */
+  files?: PeriodicEvidenceStorage | null
 }
 
 // Kiểm actor là ICPDP officer và trả id
@@ -134,7 +138,7 @@ export async function getPeriodicReport(
   if (!found) {
     throw new DomainError('periodic report not found', 'not_found')
   }
-  return found
+  return withEvidenceUrls(deps.files ?? null, found)
 }
 
 // ICPDP chấp nhận hoặc trả lại báo cáo định kỳ, chấp nhận thì tạo bản nháp đánh giá
@@ -162,7 +166,7 @@ export async function decidePeriodicReport(
       }
     })
   }
-  return report
+  return withEvidenceUrls(deps.files ?? null, report)
 }
 
 // UC39 E1: ghi nhận CLB không nộp báo cáo định kỳ đúng hạn

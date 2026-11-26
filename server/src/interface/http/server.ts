@@ -44,7 +44,10 @@ import type { EventProposalReviewRepository } from '../../domain/event-proposal-
 import type { EventDefenseRepository } from '../../domain/event-defense.js'
 import type { BudgetDisbursementRepository } from '../../domain/budget-disbursement.js'
 import type { ViolationRepository } from '../../domain/violation.js'
-import type { PeriodicReportRepository } from '../../domain/periodic-report.js'
+import type {
+  PeriodicEvidenceStorage,
+  PeriodicReportRepository,
+} from '../../domain/periodic-report.js'
 import type { SchoolEventRepository } from '../../domain/school-event.js'
 import type { EvaluationRepository } from '../../domain/evaluation.js'
 import type { ClubProfileRepository } from '../../domain/club-profile.js'
@@ -167,6 +170,7 @@ export function buildApp(deps: {
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null
   applicationFiles?: ApplicationFileStorage | null
   eventProposalFiles?: EventProposalFileStorage | null
+  periodicEvidenceFiles?: PeriodicEvidenceStorage | null
   clubTransitionPlanRepo?: ClubTransitionPlanRepository
   suspensionRequestRepo?: SuspensionRequestRepository
   membershipReconfirmationRepo?: MembershipReconfirmationRepository
@@ -567,6 +571,7 @@ export function buildApp(deps: {
             access: deps.auth.accessRepo,
             authRepo: deps.auth.repo,
             sessions: deps.auth.sessions,
+            files: deps.periodicEvidenceFiles ?? null,
           }),
         )
       }
@@ -580,6 +585,7 @@ export function buildApp(deps: {
             sessions: deps.auth.sessions,
             evaluationRepo: deps.evaluationRepo,
             evaluationSchemeRepo: deps.evaluationSchemeRepo,
+            files: deps.periodicEvidenceFiles ?? null,
           }),
         )
       }

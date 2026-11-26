@@ -7,6 +7,7 @@ const extensionForMime: Record<string, string> = {
   'application/pdf': 'pdf',
   'image/png': 'png',
   'image/jpeg': 'jpg',
+  'image/webp': 'webp',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
 }
@@ -79,9 +80,30 @@ export async function uploadToCloudinary(
   }
 }
 
+// Tạo URL tải asset có xác thực, có chữ ký và hết hạn sau ttlSeconds
+export function signedDownloadUrl(
+  config: CloudinaryConfig,
+  assetId: string,
+  options: { inline: boolean; ttlSeconds: number },
+): string {
+  const now = Math.floor(Date.now() / 1000)
+  const params = {
+    asset_id: assetId,
+    attachment: options.inline ? 'false' : 'true',
+    expires_at: String(now + options.ttlSeconds),
+    timestamp: String(now),
+  }
+  const url = new URL(`${cloudinaryBase(config)}/asset/download`)
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value)
+  }
+  url.searchParams.set('api_key', config.CLOUDINARY_API_KEY)
+  url.searchParams.set('signature', signature(params, config.CLOUDINARY_API_SECRET))
+  return url.toString()
+}
+
 // Tạo kho file hồ sơ đơn lập CLB trên Cloudinary
 export function cloudinaryApplicationFiles(config: CloudinaryConfig): ApplicationFileStorage {
-  const base = cloudinaryBase(config)
   return {
     // Upload tài liệu hồ sơ và trả metadata tài liệu để lưu
     async upload(input): Promise<ApplicationDocument> {
@@ -110,20 +132,10 @@ export function cloudinaryApplicationFiles(config: CloudinaryConfig): Applicatio
     },
     // Tạo URL tải file có chữ ký, hiệu lực 60 giây
     async accessUrl(assetId, options): Promise<string> {
-      const now = Math.floor(Date.now() / 1000)
-      const params = {
-        asset_id: assetId,
-        attachment: options?.inline ? 'false' : 'true',
-        expires_at: String(now + 60),
-        timestamp: String(now),
-      }
-      const url = new URL(`${base}/asset/download`)
-      for (const [key, value] of Object.entries(params)) {
-        url.searchParams.set(key, value)
-      }
-      url.searchParams.set('api_key', config.CLOUDINARY_API_KEY)
-      url.searchParams.set('signature', signature(params, config.CLOUDINARY_API_SECRET))
-      return url.toString()
+      return signedDownloadUrl(config, assetId, {
+        inline: options?.inline ?? false,
+        ttlSeconds: 60,
+      })
     },
   }
 }
