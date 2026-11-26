@@ -98,6 +98,7 @@ import { complaintRoutes } from './complaint-routes.js'
 import type { ApprovalRoutingRepository } from '../../domain/approval-routing.js'
 import { approvalRoutingRoutes } from './approval-routing-routes.js'
 import { memberSpaceRoutes } from './member-space-routes.js'
+import { rateLimit, type RateLimitRule } from './rate-limit.js'
 import type { NotificationRepository } from '../../domain/notification.js'
 import { notificationRoutes } from './notification-routes.js'
 
@@ -175,9 +176,14 @@ export function buildApp(deps: {
   eventDefenseRepo?: EventDefenseRepository
   publicRepo: PublicDiscoveryRepository
   dbReady: () => boolean
+  /** Per-IP request limits; omitted (tests) means no limiting. */
+  rateLimits?: { auth: RateLimitRule; api: RateLimitRule }
+  /** Express `trust proxy` setting, so req.ip is the real client behind a reverse proxy. */
+  trustProxy?: boolean | number
 }) {
   const app = express()
   app.disable('x-powered-by')
+  app.set('trust proxy', deps.trustProxy ?? false)
   app.use((_req, res, next) => {
     // ponytail: baseline security header không cần dependency helmet — thêm CSP khi app có trang thật
     res.setHeader('X-Content-Type-Options', 'nosniff')
@@ -186,6 +192,11 @@ export function buildApp(deps: {
     next()
   })
   app.use(requestLogger) // đặt trước body parsing, để request bị parser từ chối vẫn có dòng log
+  if (deps.rateLimits) {
+    // Limit before parsing bodies; the stricter auth limit counts on top of the global one.
+    app.use('/api/v1/auth', rateLimit(deps.rateLimits.auth))
+    app.use('/api/v1', rateLimit(deps.rateLimits.api))
+  }
   app.use(express.json({ limit: '15mb' }))
   // Endpoint health check, trả 503 khi database chưa sẵn sàng
   app.get('/api/v1/health', (_req, res) => {

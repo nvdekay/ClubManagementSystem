@@ -112,6 +112,12 @@ const membershipReconfirmationRepo = mongoMembershipReconfirmationRepository()
 const commonDeps = {
   publicRepo: mongoPublicDiscoveryRepository(),
   dbReady: () => mongoose.connection.readyState === 1,
+  trustProxy: config.TRUST_PROXY,
+  // Per client IP: strict on the sign-in flow (brute force, OAuth callback spam), loose elsewhere.
+  rateLimits: {
+    auth: { limit: 20, windowMs: 60_000 },
+    api: { limit: 300, windowMs: 60_000 },
+  },
 }
 const clubLifecycleRepo = mongoClubLifecycleRepository()
 const eventProposalReviewRepo = mongoEventProposalReviewRepository()
