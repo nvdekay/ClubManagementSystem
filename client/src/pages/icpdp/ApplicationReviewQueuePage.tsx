@@ -12,6 +12,7 @@ import {
   useApplicationReviewAction,
   useApplicationReviewQueue,
 } from '@/hooks/useApplicationReviews'
+import { formatDate } from '@/utils/formatDate'
 
 // Hàng đợi ICPDP các hồ sơ lập CLB chờ xét duyệt
 export function ApplicationReviewQueuePage() {
@@ -24,10 +25,7 @@ export function ApplicationReviewQueuePage() {
   const currentUserId = auth.data?.user.id
 
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
 
   // Nhận hồ sơ (claim) rồi mở trang xét duyệt, hoặc mở chế độ chỉ xem

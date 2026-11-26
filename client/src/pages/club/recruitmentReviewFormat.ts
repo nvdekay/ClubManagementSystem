@@ -1,5 +1,6 @@
 import type { AppBadgeTone } from '@/components/ui/badge/AppBadge'
 import type { RecruitmentApplication } from '@/services/recruitmentApplications'
+import { formatDay } from '@/utils/formatDate'
 
 // Định dạng điểm: số nguyên giữ nguyên, số thập phân lấy 1 chữ số
 /** Dùng chung cho bảng xét duyệt, hộp chi tiết và bảng đánh giá (UC18/UC19). */
@@ -26,5 +27,5 @@ export function stateTone(state: RecruitmentApplication['state']): AppBadgeTone 
 
 // Định dạng ngày theo locale, trả dấu gạch nếu không có giá trị
 export function formatDate(value: string | undefined, locale: string) {
-  return value ? new Date(value).toLocaleDateString(locale) : '—'
+  return value ? formatDay(value, locale) : '—'
 }

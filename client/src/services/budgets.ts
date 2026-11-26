@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 
 export interface BudgetItemCounts {
   total: number
@@ -33,18 +33,9 @@ export interface BudgetDetail extends BudgetSummary {
   lines: { category: string; requestedAmount: number; approvedAmount: number; reason?: string }[]
 }
 
-// Gọi API /admin/budgets và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/budgets${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/budgets${path}`, options)
 }
 
 // GET danh sách ngân sách của các CLB cho ICPDP

@@ -1,15 +1,13 @@
 /** HTTP adapter for ICPDP reviews; business authorization/validation lives in the use case. */
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import {
   EVENT_REVIEW_SECTIONS,
   MAX_APPROVAL_CONDITIONS,
   type EventProposalReviewRepository,
 } from '../../domain/event-proposal-review.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   claimEventProposalReview,
   decideEventCancellationReview,
@@ -19,6 +17,7 @@ import {
 } from '../../usecase/event-proposal-review.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface EventProposalReviewRouteDeps {
   repo: EventProposalReviewRepository
@@ -61,28 +60,6 @@ export const eventCancellationDecisionBody = z
   })
   .strict()
 
-// Convert schema failures to the application's standard validation error response.
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError(
-      'invalid event proposal review request',
-      'validation',
-      result.error.issues,
-    )
-  }
-  return result.data
-}
-
-// authGuard supplies the authenticated actor; never accept actor identity from the body.
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 /** Register authenticated reads and CSRF-protected review writes. */
 export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): Router {
   const router = Router()
@@ -90,7 +67,7 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
 
   // Read-only requests authenticate the session without requiring a CSRF token.
   router.get('/admin/event-proposals', authGuard(guard, false), async (req, res) => {
-    const { view } = parsed(eventProposalListQuery, req.query)
+    const { view } = parse(eventProposalListQuery, req.query, 'event proposal review request')
     ok(res, await listEventProposalReviews(deps.repo, deps.authRepo, actor(res), view))
   })
   // Load the complete review dossier for one proposal.
@@ -101,7 +78,7 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event proposal review request'),
         new Date(),
       ),
     )
@@ -114,21 +91,21 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event proposal review request'),
         new Date(),
       ),
     )
   })
   // Convert the validated ISO deadline into a Date before calling the review use case.
   router.post('/admin/event-proposals/:id/decision', authGuard(guard), async (req, res) => {
-    const body = parsed(eventReviewDecisionBody, req.body)
+    const body = parse(eventReviewDecisionBody, req.body, 'event proposal review request')
     ok(
       res,
       await decideEventProposalReview(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event proposal review request'),
         {
           ...body,
           revisionDeadlineAt: body.revisionDeadlineAt
@@ -144,14 +121,14 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
     '/admin/event-proposals/:id/cancellation-decision',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(eventCancellationDecisionBody, req.body)
+      const body = parse(eventCancellationDecisionBody, req.body, 'event proposal review request')
       ok(
         res,
         await decideEventCancellationReview(
           deps.repo,
           deps.authRepo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'event proposal review request'),
           body,
           new Date(),
         ),

@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure } from '@/services/apiRequest'
 export interface ClubFieldUsage {
   id: string
   name: string
@@ -18,19 +19,16 @@ export type ClubFieldRemoval = 'deleted' | 'deactivated'
 /** Server trả 409: đã có lĩnh vực khác dùng tên này. */
 export class DuplicateClubFieldError extends ApiError {
   constructor(message: string) {
-    super(message)
+    super(message, 409)
     this.name = 'DuplicateClubFieldError'
   }
 }
 
-// Đổi response lỗi thành ApiError (409 thành lỗi trùng lĩnh vực)
-async function failure(response: Response): Promise<never> {
-  const body = (await response.json().catch(() => null)) as { message?: string } | null
-  const message = body?.message ?? `HTTP ${response.status}`
-  if (response.status === 409) {
-    throw new DuplicateClubFieldError(message)
-  }
-  throw new ApiError(message)
+// Maps a failed response to ApiError (409 becomes the duplicate club field error)
+function toClubFieldError(failure: ApiFailure): Error {
+  return failure.status === 409
+    ? new DuplicateClubFieldError(failure.message)
+    : new ApiError(failure.message, failure.status)
 }
 
 // Gửi POST/PATCH/DELETE có CSRF và trả về data
@@ -40,30 +38,15 @@ async function mutate<T>(
   csrfToken: string,
   body?: ClubFieldInput,
 ): Promise<T> {
-  const response = await apiFetch(path, {
-    method,
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  })
-  if (!response.ok) {
-    return failure(response)
-  }
-  const result: { data: T } = await response.json()
-  return result.data
+  return apiRequest<T>(path, { method, csrfToken, body, toError: toClubFieldError })
 }
 
 // GET /admin/club-fields: danh mục lĩnh vực CLB kèm mức sử dụng
 export async function fetchClubFields(signal: AbortSignal): Promise<ClubFieldUsage[]> {
-  const response = await apiFetch('/api/v1/admin/club-fields', {
+  return apiRequest<ClubFieldUsage[]>('/api/v1/admin/club-fields', {
     signal,
-    credentials: 'same-origin',
+    toError: toClubFieldError,
   })
-  if (!response.ok) {
-    return failure(response)
-  }
-  const body: { data: ClubFieldUsage[] } = await response.json()
-  return body.data
 }
 
 // POST tạo lĩnh vực CLB mới

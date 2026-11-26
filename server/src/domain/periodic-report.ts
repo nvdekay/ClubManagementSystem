@@ -233,16 +233,45 @@ function trimmed(value: string | undefined): string | undefined {
   return value?.trim() || undefined
 }
 
-// Kiểm tra link minh chứng hợp lệ
+/** Độ dài tối đa của một link hoặc tham chiếu minh chứng khi ghi báo cáo. */
+export const EVIDENCE_LINK_MAX_LENGTH = 2_000
+/** Tiền tố tham chiếu ảnh minh chứng đã upload: `ucms-evidence:{clubId}:{assetId}`. */
+export const EVIDENCE_REFERENCE_PREFIX = 'ucms-evidence:'
+/** Ảnh minh chứng tối đa 5 MiB; chỉ PNG, JPEG, WebP (không SVG vì SVG chạy được script). */
+export const EVIDENCE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+export const EVIDENCE_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
+export type EvidenceImageMimeType = (typeof EVIDENCE_IMAGE_MIME_TYPES)[number]
+
+const evidenceReferencePattern = /^ucms-evidence:([0-9a-f]{24}):([0-9a-f]{32})$/i
+
+/** Kho ảnh minh chứng báo cáo định kỳ; ảnh là asset riêng tư, chỉ đọc qua signed URL ngắn hạn. */
+export interface PeriodicEvidenceStorage {
+  upload(input: {
+    clubId: string
+    mimeType: EvidenceImageMimeType
+    bytes: Buffer
+  }): Promise<{ assetId: string }>
+  accessUrl(assetId: string): Promise<string>
+}
+
+// Dựng tham chiếu ảnh minh chứng gắn với CLB sở hữu
+export function evidenceReference(clubId: string, assetId: string): string {
+  return `${EVIDENCE_REFERENCE_PREFIX}${clubId}:${assetId}`
+}
+
+// Tách clubId và assetId từ tham chiếu ảnh minh chứng, sai định dạng thì trả null
+export function parseEvidenceReference(value: string): { clubId: string; assetId: string } | null {
+  const match = evidenceReferencePattern.exec(value)
+  return match ? { clubId: match[1]!.toLowerCase(), assetId: match[2]!.toLowerCase() } : null
+}
+
+// Kiểm tra link minh chứng khi ghi: chỉ http(s) hoặc tham chiếu ảnh đã upload, không nhận data: URL
 export function isValidEvidenceLink(url: string): boolean {
-  if (!url || url.length > 5_000_000) {
+  if (!url || url.length > EVIDENCE_LINK_MAX_LENGTH) {
     return false
   }
-  if (/^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/i.test(url)) {
-    return true
-  }
-  if (url.length > 2_000) {
-    return false
+  if (url.startsWith(EVIDENCE_REFERENCE_PREFIX)) {
+    return parseEvidenceReference(url) !== null
   }
   try {
     const parsed = new URL(url)
@@ -250,6 +279,46 @@ export function isValidEvidenceLink(url: string): boolean {
   } catch {
     return false
   }
+}
+
+// Kiểm nội dung ảnh khớp magic bytes của loại MIME khai báo
+export function evidenceImageSignatureMatches(mimeType: string, bytes: Buffer): boolean {
+  if (mimeType === 'image/png') {
+    return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+  }
+  if (mimeType === 'image/jpeg') {
+    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  }
+  if (mimeType === 'image/webp') {
+    return (
+      bytes.length >= 12 &&
+      bytes.subarray(0, 4).toString('latin1') === 'RIFF' &&
+      bytes.subarray(8, 12).toString('latin1') === 'WEBP'
+    )
+  }
+  return false
+}
+
+interface EvidenceCarrier {
+  evidence?: { url?: string }[]
+  events?: { evidenceUrl?: string }[]
+  achievements?: { evidenceUrl?: string }[]
+  customAnswers?: { evidenceUrl?: string }[]
+  systemData?: { events?: { evidenceUrl?: string }[] }
+  versions?: EvidenceCarrier[]
+}
+
+// Gom mọi link minh chứng của báo cáo (kể cả các phiên bản cũ)
+export function evidenceLinks(report: EvidenceCarrier): string[] {
+  const links = [
+    ...(report.evidence ?? []).map((item) => item.url),
+    ...(report.events ?? []).map((item) => item.evidenceUrl),
+    ...(report.achievements ?? []).map((item) => item.evidenceUrl),
+    ...(report.customAnswers ?? []).map((item) => item.evidenceUrl),
+    ...(report.systemData?.events ?? []).map((item) => item.evidenceUrl),
+    ...(report.versions ?? []).flatMap((version) => evidenceLinks(version)),
+  ]
+  return links.filter((link): link is string => typeof link === 'string' && link.length > 0)
 }
 
 // Kiểm tra và chuẩn hoá đợt báo cáo định kỳ do ICPDP mở

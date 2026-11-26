@@ -1,9 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { fetchLoginError, fetchMe, logout, type Me } from '@/services/auth'
 
 export const authKeyRoot = ['auth'] as const
 const authKey = [...authKeyRoot, 'me'] as const
+
+// Marks the session as signed out (e.g. after any request answered 401); WorkspaceShell then
+// redirects to /login with the current page as returnTo.
+export function markSignedOut(queryClient: QueryClient) {
+  queryClient.setQueryData(authKey, null)
+}
 
 // Ẩn workspace Student với nhân sự ICPDP trên giao diện
 /** Nhân sự ICPDP làm việc trong workspace ICPDP, nên giao diện ẩn workspace Student của họ (quyền truy cập ở server không đổi). */
@@ -19,7 +25,6 @@ export function useAuth() {
   return useQuery({
     queryKey: authKey,
     queryFn: ({ signal }) => fetchMe(signal),
-    retry: false,
     select: hideStudentForIcpdp,
   })
 }
@@ -45,6 +50,5 @@ export function useLoginError(enabled: boolean) {
     queryFn: ({ signal }) => fetchLoginError(signal),
     enabled,
     staleTime: Infinity,
-    retry: false,
   })
 }

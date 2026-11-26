@@ -1,6 +1,10 @@
 import { DomainError } from './errors.js'
 import {
+  EVIDENCE_LINK_MAX_LENGTH,
+  EVIDENCE_REFERENCE_PREFIX,
+  evidenceLinks,
   isValidEvidenceLink,
+  parseEvidenceReference,
   type PeriodicAchievementEntry,
   type PeriodicCampaign,
   type PeriodicCustomAnswer,
@@ -287,7 +291,7 @@ export function normalizePeriodicDraft(
   const evidence = rawEvidence.map((entry) => {
     const note = entry.note?.trim()
     const url = entry.url?.trim()
-    if ((note?.length ?? 0) > 2_000 || (url?.length ?? 0) > 5_000_000) {
+    if ((note?.length ?? 0) > 2_000 || (url?.length ?? 0) > EVIDENCE_LINK_MAX_LENGTH) {
       throw new DomainError('evidence is too long', 'validation')
     }
     if (url && !isValidEvidenceLink(url)) {
@@ -322,5 +326,17 @@ export function normalizePeriodicDraft(
     ...(events !== undefined ? { events } : {}),
     ...(achievements !== undefined ? { achievements } : {}),
     ...(customAnswers !== undefined ? { customAnswers } : {}),
+  }
+}
+
+// Ảnh minh chứng đã upload chỉ được gắn vào báo cáo của chính CLB sở hữu ảnh
+export function assertEvidenceOwnedByClub(draft: PeriodicDraftInput, clubId: string): void {
+  for (const link of evidenceLinks(draft)) {
+    if (
+      link.startsWith(EVIDENCE_REFERENCE_PREFIX) &&
+      parseEvidenceReference(link)?.clubId !== clubId.toLowerCase()
+    ) {
+      throw new DomainError('evidence image belongs to another club', 'validation')
+    }
   }
 }

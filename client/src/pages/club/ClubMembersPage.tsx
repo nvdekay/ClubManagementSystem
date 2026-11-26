@@ -20,6 +20,7 @@ import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppTable, appTableFeatures, type AppTableFeatures } from '@/components/ui/table/AppTable'
 import { AppTableLimitSelect } from '@/components/ui/table/AppTableLimitSelect'
 import { useAuth } from '@/hooks/useAuth'
+import { useClubWorkspace } from '@/hooks/useWorkspacePermission'
 import {
   useClubMembers,
   useClubWithdrawals,
@@ -48,9 +49,7 @@ export function ClubMembersPage() {
   const locale: Locale = i18n.language === 'vi' ? 'vi' : 'en'
   const { clubId } = useParams()
   const auth = useAuth()
-  const workspace = auth.data?.workspaces.find(
-    (item) => item.kind === 'club' && item.clubId === clubId,
-  )
+  const workspace = useClubWorkspace(clubId)
   const canManage = Boolean(workspace?.permissions.includes('club.member.manage'))
   const signedIn = Boolean(auth.data) && canManage
   const members = useClubMembers(clubId, signedIn)

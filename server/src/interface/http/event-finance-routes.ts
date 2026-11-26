@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
@@ -8,8 +8,6 @@ import {
   type FinanceAction,
 } from '../../domain/event-finance.js'
 import type { SessionService } from '../../domain/session.js'
-import { DomainError } from '../../domain/errors.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   actOnEventFinance,
   getEventFinance,
@@ -17,6 +15,7 @@ import {
 } from '../../usecase/event-finance.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 export const financePath = z.object({
   clubId: z.string().regex(/^[0-9a-f]{24}$/i),
   id: z.string().regex(/^[0-9a-f]{24}$/i),
@@ -80,18 +79,6 @@ export const financeActionBody = z.discriminatedUnion('kind', [
     })
     .strict(),
 ])
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
-  const result = schema.safeParse(value)
-  if (!result.success) {
-    throw new DomainError('invalid finance request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-// Lấy actor đã xác thực từ res.locals
-function actor(res: Response) {
-  return res.locals.actor as AccessActor
-}
 // Mount các route tài chính sự kiện của CLB và ICPDP
 export function eventFinanceRoutes(deps: {
   repo: EventFinanceRepository
@@ -113,7 +100,7 @@ export function eventFinanceRoutes(deps: {
       await listEventFinances(
         usecaseDeps,
         actor(res),
-        parsed(financePath.shape.clubId, req.params.clubId),
+        parse(financePath.shape.clubId, req.params.clubId, 'finance request'),
         new Date(),
       ),
     )
@@ -126,15 +113,17 @@ export function eventFinanceRoutes(deps: {
         await getEventFinance(
           usecaseDeps,
           actor(res),
-          parsed(financePath.shape.id, req.params.id),
-          req.params.clubId ? parsed(financePath.shape.clubId, req.params.clubId) : undefined,
+          parse(financePath.shape.id, req.params.id, 'finance request'),
+          req.params.clubId
+            ? parse(financePath.shape.clubId, req.params.clubId, 'finance request')
+            : undefined,
           new Date(),
         ),
       )
     })
     // Thực hiện hành động trên tài chính sự kiện (vd ghi chi tiêu)
     router.post(`${base}/actions`, authGuard(guard), async (req, res) => {
-      const body = parsed(financeActionBody, req.body)
+      const body = parse(financeActionBody, req.body, 'finance request')
       const action: FinanceAction =
         body.kind === 'expense'
           ? {
@@ -147,8 +136,10 @@ export function eventFinanceRoutes(deps: {
         await actOnEventFinance(
           usecaseDeps,
           actor(res),
-          parsed(financePath.shape.id, req.params.id),
-          req.params.clubId ? parsed(financePath.shape.clubId, req.params.clubId) : undefined,
+          parse(financePath.shape.id, req.params.id, 'finance request'),
+          req.params.clubId
+            ? parse(financePath.shape.clubId, req.params.clubId, 'finance request')
+            : undefined,
           action,
           new Date(),
         ),

@@ -28,3 +28,5 @@ Các khung bố cục cấu trúc. Không có tiền tố `App`.
   thông báo của workspace hiện tại (`scope` lấy từ context của `WorkspaceShell`: sinh viên / ICPDP / CLB — CLB thì chỉ
   thông báo về đúng CLB đó); "Đánh dấu tất cả đã đọc" cũng chỉ áp dụng trong workspace đó.
 - `PageHeader` — khối tiêu đề (tiêu đề, mô tả, link quay lại, hành động) ở đầu mỗi trang quản lý.
+- `RouteFallback` — khung xương giả đặt trong `Suspense` quanh `Outlet` của `PublicLayout` và `WorkspaceShell`, hiện
+  trong lúc tải chunk của trang (mọi trang trong `main.tsx` được nạp lười bằng `React.lazy`).

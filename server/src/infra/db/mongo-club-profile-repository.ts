@@ -7,6 +7,7 @@ import type {
 } from '../../domain/club-profile.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 // Ánh xạ document CLB thành ClubProfile
 function profileFrom(doc: Record<string, unknown>): ClubProfile {
@@ -62,7 +63,7 @@ function normalizedName(name: string): string {
 
 // Đổi lỗi trùng khóa thành lỗi conflict về tên phòng ban
 function duplicate(error: unknown): never {
-  if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+  if (isDuplicateKey(error)) {
     throw new DomainError('department name already exists', 'conflict')
   }
   throw error
@@ -115,6 +116,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
     const docs = await departments
       .find({ clubId: new Types.ObjectId(clubId) })
       .sort({ isActive: -1, sortOrder: 1, name: 1 })
+      .collation({ locale: 'vi' })
       .lean()
     return docs.map(departmentFrom)
   }

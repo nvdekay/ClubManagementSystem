@@ -15,15 +15,12 @@ import { DomainError } from '../../domain/errors.js'
 import { queueNotifications } from './club-board.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { oid } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK = 'COMPLAINT'
 const ENTITY = 'Complaint'
 
-// Chuyển chuỗi id thành ObjectId (giữ nguyên nếu đã là ObjectId)
-function oid(value: string | Types.ObjectId): Types.ObjectId {
-  return value instanceof Types.ObjectId ? value : new Types.ObjectId(value)
-}
 // Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, 'conflict')
@@ -859,7 +856,8 @@ export function mongoComplaintRepository(): ComplaintRepository {
         .lean()
       let flagged = 0
       for (const row of overdue) {
-        await mongoose.connection.transaction(async (session) => {
+        // Đếm theo giá trị trả về: callback có thể chạy lại khi transaction gặp lỗi tạm thời
+        const raised = await mongoose.connection.transaction(async (session) => {
           // Ghi khiếu nại trước khiến hai worker trên hai process xung đột ở đây; worker retry sau đó
           // thấy dòng audit và dừng, nên tín hiệu chỉ được phát một lần cho mỗi khiếu nại.
           await complaints.updateOne({ _id: row._id }, { $inc: { __v: 1 } }, { session })
@@ -872,7 +870,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
               })
               .session(session)
           ) {
-            return
+            return false
           }
           await audit(
             session,
@@ -894,8 +892,11 @@ export function mongoComplaintRepository(): ComplaintRepository {
             {},
             now,
           )
-          flagged += 1
+          return true
         })
+        if (raised) {
+          flagged += 1
+        }
       }
       return flagged
     },

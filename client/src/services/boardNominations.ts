@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface BoardTerm {
   id: string
   name: string
@@ -78,24 +78,9 @@ export interface BoardNominationDecisionInput {
   reason?: string
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 
 // GET ngữ cảnh đề cử ban chủ nhiệm của CLB
@@ -119,10 +104,11 @@ export function submitBoardNomination(
   seats: Array<{ positionId: string; membershipId: string }>,
   csrfToken: string,
 ) {
-  return request<BoardNomination>(
-    `/clubs/${encodeURIComponent(clubId)}/board-nominations`,
-    mutation('POST', csrfToken, { seats }),
-  )
+  return request<BoardNomination>(`/clubs/${encodeURIComponent(clubId)}/board-nominations`, {
+    method: 'POST',
+    csrfToken,
+    body: { seats },
+  })
 }
 
 // GET hàng đợi đề cử ban chủ nhiệm cho ICPDP
@@ -137,10 +123,10 @@ export function fetchBoardNomination(id: string, signal: AbortSignal) {
 
 // POST /claim: ICPDP nhận xử lý đề cử
 export function claimBoardNomination(id: string, csrfToken: string) {
-  return request<BoardNomination>(
-    `/admin/board-nominations/${encodeURIComponent(id)}/claim`,
-    mutation('POST', csrfToken),
-  )
+  return request<BoardNomination>(`/admin/board-nominations/${encodeURIComponent(id)}/claim`, {
+    method: 'POST',
+    csrfToken,
+  })
 }
 
 // POST /decision: ICPDP ghi quyết định đề cử
@@ -149,8 +135,9 @@ export function decideBoardNomination(
   input: BoardNominationDecisionInput,
   csrfToken: string,
 ) {
-  return request<BoardNomination>(
-    `/admin/board-nominations/${encodeURIComponent(id)}/decision`,
-    mutation('POST', csrfToken, input),
-  )
+  return request<BoardNomination>(`/admin/board-nominations/${encodeURIComponent(id)}/decision`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }

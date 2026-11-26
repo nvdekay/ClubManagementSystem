@@ -8,15 +8,15 @@ import {
   type PeriodicCampaign,
   type PeriodicCampaignInput,
   type PeriodicDecisionInput,
+  type PeriodicEvidenceStorage,
   type PeriodicOverview,
   type PeriodicReportRepository,
 } from '../domain/periodic-report.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from '../domain/violation.js'
-import type { AccessActor } from './access.js'
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { withEvidenceUrls } from './club-periodic-report.js'
 import { generateClubEvaluation, type EvaluationDeps } from './evaluation.js'
-
-const objectId = /^[0-9a-f]{24}$/i
 
 export interface PeriodicReportDeps {
   repo: PeriodicReportRepository
@@ -24,34 +24,8 @@ export interface PeriodicReportDeps {
   auth: Pick<AuthRepository, 'systemRoleCodes'>
   /** Khi có, việc accept báo cáo cũng tạo bản nháp evaluation của CLB cho kỳ (UC42). */
   evaluation?: EvaluationDeps
-}
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function checkedId(value: string, what: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${what} id`, 'validation')
-  }
-  return value
+  /** Kho ảnh minh chứng; có thì chi tiết báo cáo kèm signed URL cho ảnh đã upload. */
+  files?: PeriodicEvidenceStorage | null
 }
 
 // Lấy lịch học vụ và số ngày hạn nộp báo cáo của chính sách hiện hành
@@ -71,7 +45,7 @@ export async function periodicReportOverview(
   periodCode: string | undefined,
   now: Date,
 ): Promise<PeriodicOverview> {
-  await officer(deps.auth, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const { periods, dueDays } = await calendar(deps.policy, now)
   const listed = periods.map((item) => ({
     code: item.code,
@@ -109,7 +83,7 @@ export async function savePeriodicCampaign(
   input: PeriodicCampaignInput,
   now: Date,
 ): Promise<PeriodicCampaign> {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const normalized = normalizedPeriodicCampaign(input)
   const { periods } = await calendar(deps.policy, now)
   if (!periods.some((item) => item.code === normalized.periodCode)) {
@@ -129,12 +103,12 @@ export async function getPeriodicReport(
   actor: AccessActor | null,
   id: string,
 ) {
-  await officer(deps.auth, actor)
-  const found = await deps.repo.find(checkedId(id, 'report'))
+  await requireIcpdpOfficer(deps.auth, actor)
+  const found = await deps.repo.find(parseObjectId(id, 'report id'))
   if (!found) {
     throw new DomainError('periodic report not found', 'not_found')
   }
-  return found
+  return withEvidenceUrls(deps.files ?? null, found)
 }
 
 // ICPDP chấp nhận hoặc trả lại báo cáo định kỳ, chấp nhận thì tạo bản nháp đánh giá
@@ -145,9 +119,9 @@ export async function decidePeriodicReport(
   input: PeriodicDecisionInput,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const decision = normalizedPeriodicDecision(input)
-  const report = await deps.repo.decide(checkedId(id, 'report'), officerId, decision, now)
+  const report = await deps.repo.decide(parseObjectId(id, 'report id'), officerId, decision, now)
   if (decision.outcome === 'Accept' && deps.evaluation) {
     // Việc accept vẫn có hiệu lực; bản nháp chưa tạo được thì để officer xử lý sau.
     await generateClubEvaluation(
@@ -162,7 +136,7 @@ export async function decidePeriodicReport(
       }
     })
   }
-  return report
+  return withEvidenceUrls(deps.files ?? null, report)
 }
 
 // UC39 E1: ghi nhận CLB không nộp báo cáo định kỳ đúng hạn
@@ -173,8 +147,8 @@ export async function recordMissingPeriodicReport(
   input: { clubId: string; periodCode: string; severity: ViolationSeverity; note?: string },
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
-  checkedId(input.clubId, 'club')
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
+  parseObjectId(input.clubId, 'club id')
   if (!VIOLATION_SEVERITIES.includes(input.severity)) {
     throw new DomainError('invalid severity', 'validation', { field: 'severity' })
   }

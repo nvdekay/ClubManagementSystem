@@ -19,7 +19,6 @@ vòng đời CLB) và luôn đi kèm nhãn chữ.
   chú giải nằm cạnh vòng khi khung đủ rộng, xuống dưới khi khung hẹp (container query).
 - `AppSparkline` — đường xu hướng trang trí trong `AppStatTile`; con số và dòng ngữ cảnh mang nghĩa.
 - `AppStackBar` — thanh mảnh phần-trên-tổng cho `AppStatTile`, kèm chú giải chữ.
-- `AppMeter` — một tỉ lệ so với mức trần (thanh trên rãnh nhạt cùng tông).
 - `chartScale.ts` — tông màu được phép và cách làm tròn trục (1, 2, 5 × 10ⁿ).
 
 Mọi cột/thanh/điểm đều focus được bằng bàn phím, tooltip hiện khi rê chuột hoặc focus.

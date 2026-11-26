@@ -21,12 +21,14 @@ const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = performance.now()
   const { method, originalUrl } = req // lấy ngay bây giờ — express ghi đè req.path theo từng router
+  // Never log the query string: it can carry secrets such as the OAuth authorization code.
+  const path = originalUrl.split('?', 1)[0]
   res.on('finish', () => {
     console.log(
       JSON.stringify({
         ts: new Date().toISOString(),
         method,
-        path: originalUrl,
+        path,
         status: res.statusCode,
         duration_ms: Math.round(performance.now() - start),
       }),
@@ -122,6 +124,32 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
     fail(res, req, status, reason, reason)
     return
   }
-  console.error(err)
+  if (isDuplicateKeyError(err)) {
+    // A unique index caught a race the usecase check missed: a conflict, not a server fault.
+    console.warn(`duplicate key on ${req.method} ${req.path}`)
+    fail(res, req, 409, 'conflict', 'resource already exists')
+    return
+  }
+  console.error(describeError(err))
   fail(res, req, 500, 'internal server error', 'internal server error')
+}
+
+// Mongo duplicate key (E11000), detected structurally: interface/ must not import the driver.
+function isDuplicateKeyError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { code?: unknown }).code === 11000
+}
+
+// Only name/message/code/stack: the raw error object can carry document values (keyValue, op…).
+function describeError(err: unknown): string {
+  if (!(err instanceof Error)) {
+    return `non-error thrown: ${typeof err}`
+  }
+  const code = (err as { code?: unknown }).code
+  return [
+    `${err.name}: ${err.message}`,
+    typeof code === 'string' || typeof code === 'number' ? `code=${code}` : undefined,
+    err.stack,
+  ]
+    .filter(Boolean)
+    .join('\n')
 }

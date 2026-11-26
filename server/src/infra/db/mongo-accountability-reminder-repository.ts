@@ -95,15 +95,15 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
         .select({ _id: 1 })
         .lean()
       for (const eventRef of events) {
-        let changed = 0
-        await mongoose.connection.transaction(async (session) => {
-          changed = 0
+        // Đếm trong callback và trả về: callback có thể chạy lại khi transaction gặp lỗi tạm thời
+        count += await mongoose.connection.transaction(async (session) => {
+          let changed = 0
           const event = await m
             .events!.findOne({ _id: eventRef._id, state: 'Completed' })
             .session(session)
             .lean()
           if (!event) {
-            return
+            return 0
           }
           function lock() {
             return m.events!.updateOne(
@@ -116,7 +116,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
             event.audienceScope === 'MEMBERS_ONLY' &&
             !(await m.eventBudgets!.exists({ eventId: event._id }).session(session))
           ) {
-            return
+            return 0
           }
           const latest = await m
             .postEventReports!.findOne({ eventId: event._id })
@@ -124,14 +124,14 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
             .session(session)
             .lean()
           if (latest && ['Submitted', 'Accepted'].includes(String(latest.state))) {
-            return
+            return 0
           }
           let deadline
           try {
             deadline = await postEventDeadline(event, session)
           } catch (error) {
             if (error instanceof DomainError && error.kind === 'unavailable') {
-              return
+              return 0
             }
             throw error
           }
@@ -171,8 +171,8 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               lock,
             )
           }
+          return changed
         })
-        count += changed
       }
       const budgets = await m
         .eventBudgets!.find({
@@ -183,9 +183,9 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
         .select({ _id: 1 })
         .lean()
       for (const budgetRef of budgets) {
-        let changed = 0
-        await mongoose.connection.transaction(async (session) => {
-          changed = 0
+        // Đếm trong callback và trả về: callback có thể chạy lại khi transaction gặp lỗi tạm thời
+        count += await mongoose.connection.transaction(async (session) => {
+          let changed = 0
           const open = {
             _id: budgetRef._id,
             state: {
@@ -194,7 +194,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
           }
           const budget = await m.eventBudgets!.findOne(open).session(session).lean()
           if (!budget) {
-            return
+            return 0
           }
           function lock() {
             return m.eventBudgets!.updateOne(open, { $inc: { __v: 1 } }, { session })
@@ -202,7 +202,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
           const refund = budget.state === 'Recovery Pending'
           const dueAt = (refund ? budget.recoveryDueAt : budget.settlementDueAt) as Date | undefined
           if (!dueAt) {
-            return
+            return 0
           }
           const id = budget._id as Types.ObjectId,
             club = budget.clubId as Types.ObjectId
@@ -230,8 +230,8 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               lock,
             )
           }
+          return changed
         })
-        count += changed
       }
       return count
     },

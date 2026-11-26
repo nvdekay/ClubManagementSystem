@@ -16,7 +16,6 @@ export function useClubLifecycles(enabled: boolean) {
     queryKey: [...lifecycleKeyRoot, 'list'],
     queryFn: ({ signal }) => fetchClubLifecycles(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -26,7 +25,6 @@ export function useClubLifecycle(id: string | null) {
     queryKey: [...lifecycleKeyRoot, 'detail', id],
     queryFn: ({ signal }) => fetchClubLifecycle(id!, signal),
     enabled: Boolean(id),
-    retry: false,
   })
 }
 

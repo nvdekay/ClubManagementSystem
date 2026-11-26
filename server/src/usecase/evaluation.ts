@@ -18,9 +18,8 @@ import type {
   EvaluationSchemeRepository,
 } from '../domain/evaluation-scheme.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
+import { isObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const editableStates = new Set(['Draft', 'Data Ready', 'Under Review'])
 
 export interface EvaluationDeps {
@@ -30,29 +29,9 @@ export interface EvaluationDeps {
   auth: Pick<AuthRepository, 'systemRoleCodes'>
 }
 
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
 // Lấy đánh giá theo id, không có thì báo not_found
 async function evaluation(repo: EvaluationRepository, id: string): Promise<EvaluationDetail> {
-  if (!objectId.test(id)) {
+  if (!isObjectId(id)) {
     throw new DomainError('invalid evaluation id', 'validation')
   }
   const found = await repo.find(id)
@@ -171,7 +150,7 @@ export async function evaluationOverview(
   periodCode: string | undefined,
   now: Date,
 ): Promise<EvaluationOverview> {
-  await officer(deps.auth, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const { calendar, schemes } = await context(deps, now)
   const periods = calendar.map((item) => ({
     ...item,
@@ -234,7 +213,7 @@ export async function generateEvaluations(
   periodCode: string,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const { calendar, minRespondents, schemes } = await context(deps, now)
   const window = period(calendar, periodCode)
   const [clubs, latest] = await Promise.all([
@@ -272,7 +251,7 @@ export async function generateClubEvaluation(
   periodCode: string,
   now: Date,
 ): Promise<void> {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const { calendar, minRespondents, schemes } = await context(deps, now)
   const window = calendar.find((item) => item.code === periodCode)
   if (!window) {
@@ -305,7 +284,7 @@ export async function generateClubEvaluation(
 
 // ICPDP xem chi tiết một đánh giá CLB
 export async function getEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string) {
-  await officer(deps.auth, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   return evaluation(deps.repo, id)
 }
 
@@ -317,7 +296,7 @@ export async function regenerateEvaluation(
   id: string,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const current = await evaluation(deps.repo, id)
   const { calendar, minRespondents, schemes } = await context(deps, now)
   const scheme = periodScheme(schemes, current.periodCode, current.schemeId)
@@ -370,7 +349,7 @@ export async function setManualScore(
   manual: { score: number; justification: string } | null,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const current = await evaluation(deps.repo, id)
   if (!editableStates.has(current.state)) {
     throw new DomainError('only an evaluation under review can change', 'conflict')
@@ -399,7 +378,7 @@ export async function finalizeEvaluation(
   id: string,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   let current = await evaluation(deps.repo, id)
   if (!editableStates.has(current.state)) {
     throw new DomainError('this evaluation cannot be finalized now', 'conflict')
@@ -425,7 +404,7 @@ export async function reopenEvaluation(
   id: string,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const current = await evaluation(deps.repo, id)
   if (current.state !== 'Finalized') {
     throw new DomainError('only a finalized, unpublished evaluation can be reopened', 'conflict')
@@ -442,7 +421,7 @@ export async function publishEvaluations(
   periodCode: string,
   now: Date,
 ) {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const overview = await evaluationOverview(deps, actor, periodCode, now)
   if (!overview.canPublish) {
     throw new DomainError('finalize the evaluation of every club before publishing', 'conflict')

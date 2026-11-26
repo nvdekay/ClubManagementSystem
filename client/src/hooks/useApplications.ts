@@ -25,7 +25,6 @@ export function useApplicationConfig(enabled: boolean) {
     queryKey: [...applicationsKey, 'config'],
     queryFn: ({ signal }) => fetchApplicationConfig(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -35,7 +34,6 @@ export function useMyApplications(enabled: boolean) {
     queryKey: [...applicationsKey, 'mine'],
     queryFn: ({ signal }) => fetchMyApplications(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -45,7 +43,6 @@ export function useApplication(id: string | undefined, enabled: boolean) {
     queryKey: [...applicationsKey, 'detail', id],
     queryFn: ({ signal }) => fetchApplication(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 
@@ -55,7 +52,6 @@ export function useApplicationPreview(id: string | undefined, enabled: boolean) 
     queryKey: [...applicationsKey, 'preview', id],
     queryFn: ({ signal }) => previewApplication(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 

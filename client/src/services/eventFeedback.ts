@@ -1,4 +1,4 @@
-import { apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 import { EventRegistrationError } from '@/services/eventRegistrations'
 
 export interface MyEventFeedback {
@@ -26,15 +26,14 @@ export interface EventFeedbackInput {
   isAnonymous: boolean
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new EventRegistrationError(body?.message ?? `HTTP ${response.status}`, response.status)
-  }
-  const body = (await response.json()) as { data: T }
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRegistrationError })
+}
+
+// Maps a failed response to this module's error type
+function toRegistrationError(failure: ApiFailure): Error {
+  return new EventRegistrationError(failure.message, failure.status)
 }
 
 // GET /events/:id/feedback: điều kiện và form phản hồi sự kiện
@@ -53,7 +52,7 @@ export function fetchMyEventFeedback(signal: AbortSignal) {
 export function submitEventFeedback(eventId: string, input: EventFeedbackInput, csrfToken: string) {
   return request<MyEventFeedback>(`/events/${encodeURIComponent(eventId)}/feedback`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(input),
+    csrfToken,
+    body: input,
   })
 }

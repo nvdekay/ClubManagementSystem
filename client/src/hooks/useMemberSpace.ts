@@ -29,7 +29,6 @@ export function useMyMemberships(enabled: boolean) {
     queryKey: [...key, 'mine'],
     queryFn: ({ signal }) => fetchMyMemberships(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -39,7 +38,6 @@ export function useMyWithdrawals(enabled: boolean) {
     queryKey: [...key, 'withdrawals', 'mine'],
     queryFn: ({ signal }) => fetchMyWithdrawals(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -49,7 +47,6 @@ export function useMemberSpace(clubId: string | undefined, enabled: boolean) {
     queryKey: [...key, 'space', clubId],
     queryFn: ({ signal }) => fetchMemberSpace(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 
@@ -59,7 +56,6 @@ export function useClubMembers(clubId: string | undefined, enabled: boolean) {
     queryKey: [...key, 'club', clubId, 'members'],
     queryFn: ({ signal }) => fetchClubMemberships(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 
@@ -69,7 +65,6 @@ export function useClubWithdrawals(clubId: string | undefined, enabled: boolean)
     queryKey: [...key, 'club', clubId, 'withdrawals'],
     queryFn: ({ signal }) => fetchClubWithdrawals(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 

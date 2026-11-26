@@ -146,4 +146,85 @@ describe.skipIf(!uri)('Mongo account administration (UC03)', () => {
       }),
     ).toBe(1)
   }, 60_000)
+
+  it('never leaves zero active, unlocked ICPDP officers', async () => {
+    const [first, second] = [new Types.ObjectId(), new Types.ObjectId()]
+    await m.users!.insertMany([
+      {
+        _id: first,
+        email: 'first.officer@example.edu',
+        displayName: 'First',
+        accountState: 'Active',
+        createdAt: now,
+      },
+      {
+        _id: second,
+        email: 'second.officer@example.edu',
+        displayName: 'Second',
+        accountState: 'Active',
+        createdAt: now,
+      },
+    ])
+    const role = await m.roles!.findOneAndUpdate(
+      { code: 'ICPDP_OFFICER', scope: 'system' },
+      {
+        $setOnInsert: {
+          code: 'ICPDP_OFFICER',
+          name: 'ICPDP Officer',
+          scope: 'system',
+          isSystem: true,
+        },
+      },
+      { upsert: true, new: true },
+    )
+    // Only these two accounts hold the role in this database.
+    await m.userRoleAssignments!.deleteMany({ roleId: role!._id })
+    await m.userRoleAssignments!.insertMany([
+      { userId: first, roleId: role!._id, grantedBy: first, grantedAt: now },
+      { userId: second, roleId: role!._id, grantedBy: first, grantedAt: now },
+    ])
+    const repo = mongoAccountAdminRepository()
+    function revoke(actor: Types.ObjectId, target: Types.ObjectId) {
+      return repo.applyRoleChange({
+        actorId: String(actor),
+        targetId: String(target),
+        roleCode: 'ICPDP_OFFICER',
+        action: 'revoke',
+        reason: 'rotation',
+        now,
+      })
+    }
+
+    await repo.setLock({
+      actorId: String(first),
+      targetId: String(second),
+      locked: true,
+      reason: 'case',
+      now,
+    })
+    // The other holder is locked, so the first officer is the last active one.
+    await expect(revoke(second, first)).rejects.toMatchObject({ kind: 'conflict' })
+    await expect(
+      repo.setLock({
+        actorId: String(second),
+        targetId: String(first),
+        locked: true,
+        reason: 'x',
+        now,
+      }),
+    ).rejects.toMatchObject({ kind: 'conflict' })
+    expect((await m.users!.findById(first).lean())?.accountState).toBe('Active')
+
+    await repo.setLock({
+      actorId: String(first),
+      targetId: String(second),
+      locked: false,
+      reason: 'ok',
+      now,
+    })
+    await revoke(first, second)
+    expect(await repo.systemRoles(String(second))).toEqual([])
+    await expect(revoke(second, first)).rejects.toMatchObject({ kind: 'conflict' })
+    expect(await repo.systemRoles(String(first))).toEqual(['ICPDP_OFFICER'])
+  }, 60_000)
 })

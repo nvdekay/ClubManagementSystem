@@ -1,4 +1,5 @@
 import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, readApiFailure, type ApiFailure } from '@/services/apiRequest'
 import type { DimensionCode } from '@/services/evaluationSchemes'
 import type { Classification } from '@/services/evaluations'
 
@@ -111,38 +112,32 @@ export class ExportRequestError extends ApiError {
     message: string,
     readonly status: number,
   ) {
-    super(message)
+    super(message, status)
     this.name = 'ExportRequestError'
   }
 }
 
-// Đổi response lỗi thành ExportRequestError
-async function failure(response: Response): Promise<never> {
-  const body = (await response.json().catch(() => null)) as { message?: string } | null
-  throw new ExportRequestError(body?.message ?? `HTTP ${response.status}`, response.status)
+// Maps a failed response to ExportRequestError
+function toExportError(failure: ApiFailure): Error {
+  return new ExportRequestError(failure.message, failure.status)
 }
 
-// POST có CSRF tới /admin/exports và trả về response thô
-function post(path: string, csrfToken: string, body: object): Promise<Response> {
-  return apiFetch(`/api/v1/admin/exports${path}`, {
+// CSRF-protected POST to /admin/exports that unwraps `{ data }`
+function post<T>(path: string, csrfToken: string, body: object): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/exports${path}`, {
     method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
+    csrfToken,
+    body,
+    toError: toExportError,
   })
 }
 
 // GET /admin/exports/options: các loại dữ liệu và bộ lọc có thể xuất
 export async function fetchExportOptions(signal: AbortSignal): Promise<ExportOptions> {
-  const response = await apiFetch('/api/v1/admin/exports/options', {
+  return apiRequest<ExportOptions>('/api/v1/admin/exports/options', {
     signal,
-    credentials: 'same-origin',
+    toError: toExportError,
   })
-  if (!response.ok) {
-    return failure(response)
-  }
-  const body: { data: ExportOptions } = await response.json()
-  return body.data
 }
 
 export interface ExportPreview {
@@ -157,12 +152,7 @@ export async function previewExport(
   filter: ExportFilter,
   csrfToken: string,
 ): Promise<ExportPreview> {
-  const response = await post('/preview', csrfToken, { types, filter })
-  if (!response.ok) {
-    return failure(response)
-  }
-  const body: { data: ExportPreview } = await response.json()
-  return body.data
+  return post<ExportPreview>('/preview', csrfToken, { types, filter })
 }
 
 // Đọc response thành blob và tên file từ Content-Disposition
@@ -172,7 +162,7 @@ async function file(
   fallbackName: string,
 ): Promise<{ blob: Blob; fileName: string }> {
   if (!response.ok) {
-    return failure(response)
+    throw toExportError(await readApiFailure(response))
   }
   const disposition = response.headers.get('Content-Disposition') ?? ''
   const fileName = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? fallbackName
@@ -186,18 +176,20 @@ export async function downloadExport(
   format: ExportFormat,
   csrfToken: string,
 ): Promise<{ blob: Blob; fileName: string }> {
-  return file(await post('', csrfToken, { types, filter, format }), `ucms-export.${format}`)
+  // The file comes back as a raw download, not a JSON envelope, so this one call stays on apiFetch.
+  const response = await apiFetch('/api/v1/admin/exports', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify({ types, filter, format }),
+  })
+  return file(response, `ucms-export.${format}`)
 }
 
 // POST /annual-report/preview: xem trước báo cáo đánh giá năm
 /** 404 khi năm đó không có đánh giá Published. */
 export async function previewAnnualReport(year: number, csrfToken: string): Promise<AnnualReport> {
-  const response = await post('/annual-report/preview', csrfToken, { year })
-  if (!response.ok) {
-    return failure(response)
-  }
-  const body: { data: AnnualReport } = await response.json()
-  return body.data
+  return post<AnnualReport>('/annual-report/preview', csrfToken, { year })
 }
 
 // POST /annual-report: tải báo cáo đánh giá năm

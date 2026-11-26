@@ -20,7 +20,6 @@ export function useRoutingRuleSets(enabled: boolean) {
     queryKey: routingKey.list(),
     queryFn: ({ signal }) => fetchRoutingRuleSets(signal),
     enabled,
-    retry: false,
   })
 }
 // Query mô phỏng một bộ luật định tuyến
@@ -29,7 +28,6 @@ export function useRoutingSimulation(id: string, limit: number, enabled: boolean
     queryKey: routingKey.simulation(id, limit),
     queryFn: ({ signal }) => fetchRoutingSimulation(id, limit, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 // Mutation tạo, lưu hoặc kích hoạt bộ luật định tuyến, rồi làm mới cache

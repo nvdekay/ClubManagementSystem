@@ -347,6 +347,22 @@ const stubViolations: ViolationRepository = {
     throw new Error('unused')
   },
 }
+const stubPeriodicEvidenceFiles = {
+  upload: async () => ({ assetId: '0123456789abcdef0123456789abcdef' }),
+  accessUrl: async () => 'https://files.example/evidence',
+}
+const stubClubPeriodicReports = {
+  list: async () => [],
+  create: async () => {
+    throw new Error('unused')
+  },
+  save: async () => {
+    throw new Error('unused')
+  },
+  submit: async () => {
+    throw new Error('unused')
+  },
+}
 const stubPeriodicReports: PeriodicReportRepository = {
   overview: async () => [],
   find: async () => null,
@@ -648,18 +664,8 @@ describe('openapi document', () => {
         run: async () => ({ opened: 0, expired: 0, exempt: 0 }),
         expireOverdue: async () => ({ expired: 0, exempt: 0 }),
       },
-      clubPeriodicReportRepo: {
-        list: async () => [],
-        create: async () => {
-          throw new Error('unused')
-        },
-        save: async () => {
-          throw new Error('unused')
-        },
-        submit: async () => {
-          throw new Error('unused')
-        },
-      },
+      clubPeriodicReportRepo: stubClubPeriodicReports,
+      periodicEvidenceFiles: stubPeriodicEvidenceFiles,
       clubInvitationRepo: {
         list: async () => [],
         respond: async () => {
@@ -788,6 +794,8 @@ describe('openapi document', () => {
       postEventReportRepo: stubPostReports,
       violationRepo: stubViolations,
       periodicReportRepo: stubPeriodicReports,
+      clubPeriodicReportRepo: stubClubPeriodicReports,
+      periodicEvidenceFiles: stubPeriodicEvidenceFiles,
       clubEventRepo: stubClubEvents,
       schoolEventRepo: stubSchoolEvents,
       evaluationRepo: stubEvaluations,
@@ -866,5 +874,61 @@ describe('openapi document', () => {
     expect(document.paths).toHaveProperty('/public/clubs')
     expect(document.paths).not.toHaveProperty('/auth/login')
     expect(document.paths).not.toHaveProperty('/admin/users')
+  })
+
+  it('does not serve the API docs when they are turned off (production default)', () => {
+    const app = buildApp({ publicRepo: stubPublic, dbReady: () => true, apiDocs: false })
+    const stack = (app as unknown as { router: { stack: Array<{ route?: { path: string } }> } })
+      .router.stack
+    const paths = stack.flatMap((layer) => (layer.route ? [layer.route.path] : []))
+    expect(paths).not.toContain('/docs')
+    expect(paths).not.toContain('/docs/openapi.json')
+  })
+
+  it('documents a route exactly when its router is mounted', () => {
+    function servedDocument(app: ReturnType<typeof buildApp>) {
+      const stack = (
+        app as unknown as {
+          router: {
+            stack: Array<{
+              route?: {
+                path: string
+                stack: Array<{ handle: (req: unknown, res: unknown) => void }>
+              }
+            }>
+          }
+        }
+      ).router.stack
+      const handler = stack.find((layer) => layer.route?.path === '/docs/openapi.json')?.route
+        ?.stack[0]?.handle
+      if (!handler) {
+        throw new Error('OpenAPI route missing')
+      }
+      const send = vi.fn()
+      handler({}, { type: vi.fn().mockReturnThis(), send })
+      return JSON.parse(String(send.mock.calls[0]?.[0])) as { paths: Record<string, unknown> }
+    }
+    // Routing rules mount only with auth and the admin repository; documentation must agree.
+    const withoutAdmin = servedDocument(
+      buildApp({
+        auth: stubAuth,
+        approvalRoutingRepo: stubRouting,
+        publicRepo: stubPublic,
+        dbReady: () => true,
+      }),
+    )
+    expect(withoutAdmin.paths).not.toHaveProperty('/admin/routing-rules')
+    expect(withoutAdmin.paths).toHaveProperty('/health')
+    const withAdmin = servedDocument(
+      buildApp({
+        auth: stubAuth,
+        adminRepo: stubAdmin,
+        approvalRoutingRepo: stubRouting,
+        publicRepo: stubPublic,
+        dbReady: () => true,
+      }),
+    )
+    expect(withAdmin.paths).toHaveProperty('/admin/routing-rules')
+    expect(withAdmin.paths).toHaveProperty('/auth/login')
   })
 })

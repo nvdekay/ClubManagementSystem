@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type {
   ApplicationRecord,
   ApplicationVersion,
@@ -50,27 +50,9 @@ export interface ReviewDecisionInput {
   revisionDeadlineAt?: string
 }
 
-// Gọi API /admin/application-reviews và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/application-reviews${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function mutation(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/application-reviews${path}`, options)
 }
 
 // GET hàng đợi hồ sơ thành lập CLB chờ ICPDP xét duyệt
@@ -85,7 +67,7 @@ export function fetchReview(id: string, signal: AbortSignal): Promise<ReviewDeta
 
 // POST /claim: ICPDP nhận xử lý hồ sơ
 export function claimReview(id: string, csrfToken: string): Promise<ReviewDetail> {
-  return request(`/${encodeURIComponent(id)}/claim`, mutation(csrfToken))
+  return request(`/${encodeURIComponent(id)}/claim`, { method: 'POST', csrfToken })
 }
 
 // POST /decision: ghi quyết định xét duyệt hồ sơ
@@ -94,7 +76,7 @@ export function decideReview(
   input: ReviewDecisionInput,
   csrfToken: string,
 ): Promise<ReviewDetail> {
-  return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input))
+  return request(`/${encodeURIComponent(id)}/decision`, { method: 'POST', csrfToken, body: input })
 }
 
 // GET đường dẫn truy cập tài liệu đính kèm của hồ sơ khi xét duyệt

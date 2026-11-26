@@ -1,13 +1,83 @@
 import type { ClubAccessRepository } from '../domain/access.js'
 import {
+  assertEvidenceOwnedByClub,
   normalizePeriodicDraft,
   type ClubPeriodicReportRepository,
   type PeriodicDraftInput,
 } from '../domain/club-periodic-report.js'
 import { DomainError } from '../domain/errors.js'
-import { periodicDueAt, periodicDueDays } from '../domain/periodic-report.js'
+import {
+  EVIDENCE_IMAGE_MAX_BYTES,
+  EVIDENCE_IMAGE_MIME_TYPES,
+  evidenceImageSignatureMatches,
+  evidenceLinks,
+  evidenceReference,
+  parseEvidenceReference,
+  periodicDueAt,
+  periodicDueDays,
+  type EvidenceImageMimeType,
+  type PeriodicEvidenceStorage,
+} from '../domain/periodic-report.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import { assertClubAccess, type AccessActor } from './access.js'
+
+export type WithEvidenceUrls<T> = T & { evidenceUrls: Record<string, string> }
+
+// Gắn signed URL ngắn hạn cho các ảnh minh chứng đã upload của chính CLB trong báo cáo
+/** Link http(s) và data: URL cũ giữ nguyên trong báo cáo; client dùng `evidenceUrls[reference]` để hiển thị ảnh. */
+export async function withEvidenceUrls<
+  T extends { clubId: string } & Parameters<typeof evidenceLinks>[0],
+>(storage: PeriodicEvidenceStorage | null, report: T): Promise<WithEvidenceUrls<T>> {
+  const evidenceUrls: Record<string, string> = {}
+  if (storage) {
+    const owner = report.clubId.toLowerCase()
+    const references = [...new Set(evidenceLinks(report))].flatMap((link) => {
+      const parsed = parseEvidenceReference(link)
+      return parsed && parsed.clubId === owner ? [{ link, assetId: parsed.assetId }] : []
+    })
+    await Promise.all(
+      references.map(async ({ link, assetId }) => {
+        evidenceUrls[link] = await storage.accessUrl(assetId)
+      }),
+    )
+  }
+  return { ...report, evidenceUrls }
+}
+
+// CLB tải ảnh minh chứng cho báo cáo định kỳ, trả tham chiếu để lưu vào báo cáo
+export async function uploadPeriodicEvidenceImage(
+  storage: PeriodicEvidenceStorage | null,
+  access: ClubAccessRepository,
+  actor: AccessActor | null,
+  clubId: string,
+  mimeType: string,
+  bytes: Buffer,
+  now: Date,
+) {
+  await assertClubAccess(access, actor, clubId, 'club.report.submit', now)
+  if (
+    !(EVIDENCE_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType) ||
+    bytes.length === 0 ||
+    bytes.length > EVIDENCE_IMAGE_MAX_BYTES ||
+    !evidenceImageSignatureMatches(mimeType, bytes)
+  ) {
+    throw new DomainError('evidence must be a PNG, JPEG or WebP image up to 5 MB', 'validation')
+  }
+  if (!storage) {
+    throw new DomainError('file storage is not configured', 'unavailable')
+  }
+  const owner = clubId.toLowerCase()
+  const { assetId } = await storage.upload({
+    clubId: owner,
+    mimeType: mimeType as EvidenceImageMimeType,
+    bytes,
+  })
+  const reference = evidenceReference(owner, assetId)
+  if (!parseEvidenceReference(reference)) {
+    throw new DomainError('file upload failed', 'unavailable')
+  }
+  return { reference, url: await storage.accessUrl(assetId), mimeType, bytes: bytes.length }
+}
 
 // CLB xem các kỳ báo cáo định kỳ (hạn, trạng thái mở) và báo cáo đã có
 export async function listClubPeriodicReports(
@@ -17,6 +87,7 @@ export async function listClubPeriodicReports(
   actor: AccessActor | null,
   clubId: string,
   now: Date,
+  storage: PeriodicEvidenceStorage | null = null,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.report.submit', now)
   const effective = await policy.findEffective(now)
@@ -34,7 +105,11 @@ export async function listClubPeriodicReports(
       }
     }),
   )
-  return { periods, reports: await repo.list(clubId) }
+  const reports = await repo.list(clubId)
+  return {
+    periods,
+    reports: await Promise.all(reports.map((report) => withEvidenceUrls(storage, report))),
+  }
 }
 
 // CLB tạo báo cáo định kỳ cho một kỳ đang mở và còn hạn
@@ -64,14 +139,21 @@ export async function createClubPeriodicReport(
     if (now > campaign.dueAt) {
       throw new DomainError('the periodic report submission deadline has passed', 'conflict')
     }
-    return repo.create(clubId, period.code, campaign.dueAt, actor!.id, now)
+    // Báo cáo mới chưa có minh chứng nên không cần ký URL.
+    return withEvidenceUrls(
+      null,
+      await repo.create(clubId, period.code, campaign.dueAt, actor!.id, now),
+    )
   }
-  return repo.create(
-    clubId,
-    period.code,
-    periodicDueAt(period, periodicDueDays(effective?.reportDeadlines)),
-    actor!.id,
-    now,
+  return withEvidenceUrls(
+    null,
+    await repo.create(
+      clubId,
+      period.code,
+      periodicDueAt(period, periodicDueDays(effective?.reportDeadlines)),
+      actor!.id,
+      now,
+    ),
   )
 }
 
@@ -85,12 +167,16 @@ export async function changeClubPeriodicReport(
   revision: number,
   input: PeriodicDraftInput | null,
   now: Date,
+  storage: PeriodicEvidenceStorage | null = null,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.report.submit', now)
   if (!/^[0-9a-f]{24}$/i.test(id) || !Number.isInteger(revision) || revision < 0) {
     throw new DomainError('invalid report identifier or version', 'validation')
   }
-  return input
-    ? repo.save(clubId, id, revision, normalizePeriodicDraft(input), actor!.id, now)
-    : repo.submit(clubId, id, revision, actor!.id, now)
+  if (!input) {
+    return withEvidenceUrls(storage, await repo.submit(clubId, id, revision, actor!.id, now))
+  }
+  const draft = normalizePeriodicDraft(input)
+  assertEvidenceOwnedByClub(draft, clubId)
+  return withEvidenceUrls(storage, await repo.save(clubId, id, revision, draft, actor!.id, now))
 }

@@ -14,7 +14,6 @@ import { initReactI18next } from 'react-i18next'
 
 import { common } from './common'
 import { auth } from './auth'
-import { demo } from './demo'
 import { discovery } from './discovery'
 import { policy } from './policy'
 import { applications } from './applications'
@@ -99,7 +98,6 @@ export const resources = {
       clubEvents: clubEvents.en,
       clubOversight: clubOversight.en,
       notifications: notifications.en,
-      demo: demo.en,
     },
   },
   vi: {
@@ -149,7 +147,6 @@ export const resources = {
       clubEvents: clubEvents.vi,
       clubOversight: clubOversight.vi,
       notifications: notifications.vi,
-      demo: demo.vi,
     },
   },
 }

@@ -1,10 +1,8 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { LeadershipTransitionRepository } from '../../domain/leadership-transition.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   claimLeadershipTransition,
   decideLeadershipTransition,
@@ -13,6 +11,7 @@ import {
 } from '../../usecase/leadership-transition.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface LeadershipTransitionRouteDeps {
   repo: LeadershipTransitionRepository
@@ -28,24 +27,6 @@ export const transitionDecisionBody = z
     followUpObligationIds: z.array(z.string().trim().min(1).max(200)).max(100).default([]),
   })
   .strict()
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid transition plan request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Mount các route ICPDP duyệt chuyển giao ban chủ nhiệm
 export function leadershipTransitionRoutes(deps: LeadershipTransitionRouteDeps): Router {
@@ -63,7 +44,7 @@ export function leadershipTransitionRoutes(deps: LeadershipTransitionRouteDeps):
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'transition plan request'),
       ),
     )
   })
@@ -75,21 +56,21 @@ export function leadershipTransitionRoutes(deps: LeadershipTransitionRouteDeps):
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'transition plan request'),
         new Date(),
       ),
     )
   })
   // ICPDP ghi quyết định chuyển giao ban chủ nhiệm
   router.post('/admin/leadership-transitions/:id/decision', authGuard(guard), async (req, res) => {
-    const body = parsed(transitionDecisionBody, req.body)
+    const body = parse(transitionDecisionBody, req.body, 'transition plan request')
     ok(
       res,
       await decideLeadershipTransition(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'transition plan request'),
         { ...body, followUpObligationIds: body.followUpObligationIds ?? [] },
         new Date(),
       ),

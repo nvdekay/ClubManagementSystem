@@ -10,12 +10,14 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import {
   useBoardNominationAction,
   useBoardNominationContext,
   useClubBoardNominations,
 } from '@/hooks/useBoardNominations'
 import type { BoardNomination } from '@/services/boardNominations'
+import { dateFormatter, formatDay } from '@/utils/formatDate'
 
 // Màu badge theo trạng thái đề cử
 function nominationTone(state: string) {
@@ -53,7 +55,7 @@ function NominationHistory({ clubId }: { clubId: string }) {
     }
     return t('boardNominations.pending')
   }
-  const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' })
+  const date = dateFormatter(i18n.language, { dateStyle: 'medium' })
   return (
     <section className="mt-8">
       <h2 className="font-heading text-base font-semibold">{t('boardNominations.clubHistory')}</h2>
@@ -126,14 +128,7 @@ export function BoardNominationPage() {
   const { clubId } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const canNominate = Boolean(
-    auth.data?.workspaces.some(
-      (item) =>
-        item.kind === 'club' &&
-        item.clubId === clubId &&
-        item.permissions.includes('club.board.nominate'),
-    ),
-  )
+  const canNominate = useWorkspacePermission(clubId, 'club.board.nominate')
   const context = useBoardNominationContext(clubId, canNominate)
   const action = useBoardNominationAction()
   const [selection, setSelection] = useState<Record<string, string>>({})
@@ -142,7 +137,7 @@ export function BoardNominationPage() {
   const inFlight = useRef(false)
   // Định dạng ngày theo ngôn ngữ hiện tại
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   // Gửi đề cử các ghế đã chọn lên ICPDP

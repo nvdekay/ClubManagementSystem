@@ -20,10 +20,9 @@ import {
 } from '../domain/club-application.js'
 import type { FoundingRequirements, PolicyRepository } from '../domain/policy.js'
 import { similarClubHints, type SimilarClubHint } from '../domain/similar-club.js'
-import type { AccessActor } from './access.js'
+import { isObjectId, parseObjectId, type AccessActor } from './access.js'
 import { foundingRequirementsAt } from './policy.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 const documentRules: Record<
   ApplicationDocumentType,
@@ -79,18 +78,10 @@ function owner(actor: AccessActor | null): string {
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
-}
-
-// Kiểm định dạng id đơn lập CLB
-function applicationId(id: string): string {
-  if (!objectId.test(id)) {
-    throw new DomainError('invalid application id', 'validation')
-  }
-  return id
 }
 
 // Chỉ cho sửa đơn ở trạng thái Draft hoặc Revision Requested
@@ -138,7 +129,7 @@ async function resolvedField(
   fieldId: string,
   current?: ClubApplicationDraft,
 ): Promise<{ fieldId: string; field: string }> {
-  if (!objectId.test(fieldId)) {
+  if (!isObjectId(fieldId)) {
     throw new DomainError('club field is required', 'validation')
   }
   const found = await fields.find(fieldId)
@@ -167,7 +158,7 @@ async function draftFrom(
     input.founders.length > 100 ||
     input.founders.some(
       (founder) =>
-        !objectId.test(founder.userId) || !FOUNDER_ROLES.some((role) => role === founder.role),
+        !isObjectId(founder.userId) || !FOUNDER_ROLES.some((role) => role === founder.role),
     )
   ) {
     throw new DomainError('invalid founding member', 'validation')
@@ -193,7 +184,7 @@ async function owned(
   id: string,
   ownerId: string,
 ): Promise<ClubApplicationRecord> {
-  const record = await repo.findOwned(applicationId(id), ownerId)
+  const record = await repo.findOwned(parseObjectId(id, 'application id'), ownerId)
   if (!record) {
     throw new DomainError('application not found', 'not_found')
   }
@@ -321,11 +312,7 @@ async function submissionIssues(
   now: Date,
 ): Promise<ExtendedIssue[]> {
   const issues: ExtendedIssue[] = foundingSubmissionIssues(draft, applicantId, requirements)
-  if (
-    draft.fieldId &&
-    objectId.test(draft.fieldId) &&
-    !(await fields.find(draft.fieldId))?.isActive
-  ) {
+  if (draft.fieldId && isObjectId(draft.fieldId) && !(await fields.find(draft.fieldId))?.isActive) {
     issues.push('fieldUnavailable')
   }
   const leader = draft.founders.find((founder) => founder.role === 'LEADER')

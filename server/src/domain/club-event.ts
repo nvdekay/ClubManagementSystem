@@ -120,6 +120,8 @@ export interface EventProposalFileStorage {
   }): Promise<EventProposalDocument>
   /** URL có chữ ký, sống ngắn. */
   accessUrl(assetId: string, options?: { inline: boolean }): Promise<string>
+  /** Deletes a stored asset; used to clean up an upload whose database write then failed. */
+  remove(assetId: string): Promise<void>
 }
 export interface EventCancellationRequest {
   state: 'Pending' | 'Approved' | 'Rejected'

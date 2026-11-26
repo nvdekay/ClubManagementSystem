@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type { RecruitmentFormField, RecruitmentRubricCriterion } from './recruitmentCampaigns'
 
 export type RecruitmentAnswer = string | string[]
@@ -43,24 +43,9 @@ export interface RecruitmentApplication {
 export type RecruitmentReviewAction =
   'screen' | 'shortlist' | 'decide' | 'promote' | 'close-withdrawn'
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 
 // GET đơn ứng tuyển CLB của tôi
@@ -90,10 +75,11 @@ export function createRecruitmentApplication(
   position: string,
   csrfToken: string,
 ) {
-  return request<RecruitmentApplication>(
-    '/applications/recruitment',
-    mutation('POST', csrfToken, { campaignId, position }),
-  )
+  return request<RecruitmentApplication>('/applications/recruitment', {
+    method: 'POST',
+    csrfToken,
+    body: { campaignId, position },
+  })
 }
 
 // Lưu nháp đơn ứng tuyển
@@ -105,7 +91,7 @@ export function saveRecruitmentApplication(
 ) {
   return request<RecruitmentApplication>(
     `/applications/recruitment/${encodeURIComponent(applicationId)}/draft`,
-    mutation('PATCH', csrfToken, { position, answers }),
+    { method: 'PATCH', csrfToken, body: { position, answers } },
   )
 }
 
@@ -116,26 +102,19 @@ export async function uploadRecruitmentFile(
   file: File,
   csrfToken: string,
 ) {
-  const response = await apiFetch(
+  return apiRequest<RecruitmentApplication>(
     `/api/v1/applications/recruitment/${encodeURIComponent(applicationId)}/attachments`,
     {
       method: 'POST',
-      credentials: 'same-origin',
+      csrfToken,
       body: file,
       headers: {
-        'X-CSRF-Token': csrfToken,
         'X-Field-Key': encodeURIComponent(field.key),
         'X-Filename': encodeURIComponent(file.name),
         'Content-Type': file.type,
       },
     },
   )
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: RecruitmentApplication } = await response.json()
-  return body.data
 }
 
 // GET link file đính kèm của ứng viên khi CLB xét đơn
@@ -161,7 +140,7 @@ export function accessRecruitmentFile(applicationId: string, attachmentId: strin
 export function submitRecruitmentApplication(applicationId: string, csrfToken: string) {
   return request<RecruitmentApplication>(
     `/applications/recruitment/${encodeURIComponent(applicationId)}/submit`,
-    mutation('POST', csrfToken),
+    { method: 'POST', csrfToken },
   )
 }
 
@@ -169,7 +148,7 @@ export function submitRecruitmentApplication(applicationId: string, csrfToken: s
 export function withdrawRecruitmentApplication(applicationId: string, csrfToken: string) {
   return request<RecruitmentApplication>(
     `/applications/recruitment/${encodeURIComponent(applicationId)}/withdraw`,
-    mutation('POST', csrfToken),
+    { method: 'POST', csrfToken },
   )
 }
 
@@ -200,7 +179,7 @@ export function reviewApplications(
   const { csrfToken, ...body } = input
   return request<RecruitmentApplication[]>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/applications/review`,
-    mutation('POST', csrfToken, body),
+    { method: 'POST', csrfToken, body },
   )
 }
 
@@ -214,7 +193,7 @@ export function onboardRecruitmentApplication(
 ) {
   return request<RecruitmentApplication>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/applications/${encodeURIComponent(applicationId)}/onboard`,
-    mutation('POST', csrfToken, joinedAt ? { joinedAt } : {}),
+    { method: 'POST', csrfToken, body: joinedAt ? { joinedAt } : {} },
   )
 }
 
@@ -227,7 +206,7 @@ export function declineRecruitmentApplication(
 ) {
   return request<RecruitmentApplication>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/applications/${encodeURIComponent(applicationId)}/decline`,
-    mutation('POST', csrfToken),
+    { method: 'POST', csrfToken },
   )
 }
 
@@ -279,6 +258,6 @@ export function saveCandidateEvaluation(
 ) {
   return request<CandidateEvaluation>(
     `/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/applications/${encodeURIComponent(applicationId)}/evaluation`,
-    mutation('PUT', csrfToken, input),
+    { method: 'PUT', csrfToken, body: input },
   )
 }

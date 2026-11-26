@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type MembershipState = 'Active' | 'Inactive' | 'Left' | 'Banned'
 export type WithdrawalState = 'Pending' | 'Held' | 'Executed' | 'Cancelled'
 
@@ -85,24 +86,14 @@ export class MemberSpaceError extends ApiError {
   }
 }
 
-// Gọi API /api/v1 và trả về data, ném lỗi kèm status nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new MemberSpaceError(body?.message ?? `HTTP ${response.status}`, response.status)
-  }
-  const body = (await response.json()) as { data: T }
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toMemberSpaceError })
 }
 
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function post(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toMemberSpaceError(failure: ApiFailure): Error {
+  return new MemberSpaceError(failure.message, failure.status)
 }
 
 // GET /memberships/mine: các CLB tôi tham gia
@@ -129,7 +120,7 @@ export function requestWithdrawal(
 ) {
   return request<WithdrawalRequest>(
     `/memberships/${encodeURIComponent(membershipId)}/withdrawal-requests`,
-    post(csrfToken, input),
+    { method: 'POST', csrfToken, body: input },
   )
 }
 
@@ -158,8 +149,8 @@ export function changeMembershipState(
     `/clubs/${encodeURIComponent(clubId)}/memberships/${encodeURIComponent(membershipId)}/state`,
     {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-      body: JSON.stringify({ ...input, effectiveDate: new Date().toISOString() }),
+      csrfToken,
+      body: { ...input, effectiveDate: new Date().toISOString() },
     },
   )
 }
@@ -171,16 +162,17 @@ export function onboardMember(
   input: { email: string; reason: string },
   csrfToken: string,
 ) {
-  return request<Membership>(
-    `/clubs/${encodeURIComponent(clubId)}/memberships`,
-    post(csrfToken, input),
-  )
+  return request<Membership>(`/clubs/${encodeURIComponent(clubId)}/memberships`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // POST /execute: CLB thực hiện yêu cầu rời CLB
 export function executeWithdrawal(clubId: string, requestId: string, csrfToken: string) {
   return request<Membership>(
     `/clubs/${encodeURIComponent(clubId)}/membership-withdrawals/${encodeURIComponent(requestId)}/execute`,
-    post(csrfToken),
+    { method: 'POST', csrfToken },
   )
 }

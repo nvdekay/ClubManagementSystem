@@ -1,7 +1,6 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { EvaluationRepository } from '../../domain/evaluation.js'
 import {
   EVALUATION_DIMENSIONS,
@@ -10,7 +9,6 @@ import {
 } from '../../domain/evaluation-scheme.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   evaluationOverview,
   finalizeEvaluation,
@@ -24,6 +22,7 @@ import {
 } from '../../usecase/evaluation.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface EvaluationRouteDeps {
   repo: EvaluationRepository
@@ -53,24 +52,6 @@ export const evaluationManualBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid evaluation request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route đánh giá CLB của ICPDP
 export function evaluationRoutes(deps: EvaluationRouteDeps): Router {
   const router = Router()
@@ -89,7 +70,7 @@ export function evaluationRoutes(deps: EvaluationRouteDeps): Router {
       await evaluationOverview(
         use,
         actor(res),
-        parsed(evaluationOverviewQuery, req.query).period,
+        parse(evaluationOverviewQuery, req.query, 'evaluation request').period,
         new Date(),
       ),
     )
@@ -101,7 +82,7 @@ export function evaluationRoutes(deps: EvaluationRouteDeps): Router {
       await generateEvaluations(
         use,
         actor(res),
-        parsed(evaluationPeriodBody, req.body).periodCode,
+        parse(evaluationPeriodBody, req.body, 'evaluation request').periodCode,
         new Date(),
       ),
     )
@@ -113,28 +94,36 @@ export function evaluationRoutes(deps: EvaluationRouteDeps): Router {
       await publishEvaluations(
         use,
         actor(res),
-        parsed(evaluationPeriodBody, req.body).periodCode,
+        parse(evaluationPeriodBody, req.body, 'evaluation request').periodCode,
         new Date(),
       ),
     )
   })
   // Xem chi tiết một đánh giá CLB
   router.get('/admin/evaluations/:id', authGuard(guard, false), async (req, res) => {
-    ok(res, await getEvaluation(use, actor(res), parsed(id, req.params.id)))
+    ok(res, await getEvaluation(use, actor(res), parse(id, req.params.id, 'evaluation request')))
   })
   // Tính lại một đánh giá CLB
   router.post('/admin/evaluations/:id/regenerate', authGuard(guard), async (req, res) => {
-    ok(res, await regenerateEvaluation(use, actor(res), parsed(id, req.params.id), new Date()))
+    ok(
+      res,
+      await regenerateEvaluation(
+        use,
+        actor(res),
+        parse(id, req.params.id, 'evaluation request'),
+        new Date(),
+      ),
+    )
   })
   // Nhập điểm thủ công cho đánh giá
   router.post('/admin/evaluations/:id/manual', authGuard(guard), async (req, res) => {
-    const body = parsed(evaluationManualBody, req.body)
+    const body = parse(evaluationManualBody, req.body, 'evaluation request')
     ok(
       res,
       await setManualScore(
         use,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'evaluation request'),
         body.dimensionCode,
         body.manual,
         new Date(),
@@ -143,11 +132,27 @@ export function evaluationRoutes(deps: EvaluationRouteDeps): Router {
   })
   // Chốt (finalize) đánh giá CLB
   router.post('/admin/evaluations/:id/finalize', authGuard(guard), async (req, res) => {
-    ok(res, await finalizeEvaluation(use, actor(res), parsed(id, req.params.id), new Date()))
+    ok(
+      res,
+      await finalizeEvaluation(
+        use,
+        actor(res),
+        parse(id, req.params.id, 'evaluation request'),
+        new Date(),
+      ),
+    )
   })
   // Mở lại đánh giá đã chốt
   router.post('/admin/evaluations/:id/reopen', authGuard(guard), async (req, res) => {
-    ok(res, await reopenEvaluation(use, actor(res), parsed(id, req.params.id), new Date()))
+    ok(
+      res,
+      await reopenEvaluation(
+        use,
+        actor(res),
+        parse(id, req.params.id, 'evaluation request'),
+        new Date(),
+      ),
+    )
   })
 
   return router

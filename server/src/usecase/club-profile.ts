@@ -11,9 +11,8 @@ import {
   type ClubProfileFormField,
   type PolicyRepository,
 } from '../domain/policy.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, parseObjectId, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const defaultDepartments: readonly ClubDepartmentInput[] = [
   { name: 'Ban Chủ nhiệm', description: 'Điều phối và quản trị chung', sortOrder: 10 },
@@ -21,14 +20,6 @@ const defaultDepartments: readonly ClubDepartmentInput[] = [
   { name: 'Ban Truyền thông', description: 'Phụ trách nội dung và truyền thông', sortOrder: 30 },
   { name: 'Ban Sự kiện', description: 'Phụ trách tổ chức hoạt động', sortOrder: 40 },
 ]
-
-// Kiểm định dạng ObjectId của một định danh
-function id(value: string, label: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${label}`, 'validation')
-  }
-  return value
-}
 
 // Cắt khoảng trắng chuỗi tùy chọn và kiểm độ dài tối đa
 function optional(value: string | undefined, max: number): string | undefined {
@@ -134,7 +125,7 @@ async function allowed(
   clubId: string,
   now: Date,
 ) {
-  const parsed = id(clubId, 'club id')
+  const parsed = parseObjectId(clubId, 'club id')
   await assertClubAccess(access, actor, parsed, 'club.profile.manage', now)
   if (!actor) {
     throw new DomainError('authentication required', 'unauthorized')
@@ -151,7 +142,13 @@ export async function getClubSettings(
   clubId: string,
   now = new Date(),
 ) {
-  await assertClubAccess(access, actor, id(clubId, 'club id'), 'club.profile.manage', now)
+  await assertClubAccess(
+    access,
+    actor,
+    parseObjectId(clubId, 'club id'),
+    'club.profile.manage',
+    now,
+  )
   const ids = { clubId }
   const [profile, departments, requiredProfileFields] = await Promise.all([
     repo.findProfile(ids.clubId),
@@ -218,7 +215,7 @@ export async function updateClubDepartment(
   const ids = await allowed(access, actor, clubId, now)
   return repo.updateDepartment(
     ids.clubId,
-    id(departmentId, 'department id'),
+    parseObjectId(departmentId, 'department id'),
     ids.actorId,
     departmentInput(input),
     now,
@@ -235,5 +232,10 @@ export async function deactivateClubDepartment(
   now: Date,
 ) {
   const ids = await allowed(access, actor, clubId, now)
-  return repo.deactivateDepartment(ids.clubId, id(departmentId, 'department id'), ids.actorId, now)
+  return repo.deactivateDepartment(
+    ids.clubId,
+    parseObjectId(departmentId, 'department id'),
+    ids.actorId,
+    now,
+  )
 }

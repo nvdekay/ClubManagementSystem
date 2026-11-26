@@ -9,7 +9,6 @@ export function useMyAttendances(enabled: boolean) {
     queryKey: [...key, 'mine'],
     queryFn: ({ signal }) => fetchMyAttendances(signal),
     enabled,
-    retry: false,
   })
 }
 

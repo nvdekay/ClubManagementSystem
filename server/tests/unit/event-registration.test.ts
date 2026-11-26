@@ -108,6 +108,16 @@ describe('UC29 event registration', () => {
     })
   })
 
+  it('does not open registration for legacy internal-event states (BR53 withdrawn)', async () => {
+    const legacy = repo(context({ event: { ...context().event, state: 'PUBLIC' } }))
+    await expect(
+      registerForEvent(legacy, policy, actor, eventId, { dietary: 'None' }, now),
+    ).rejects.toMatchObject({ kind: 'conflict' })
+    expect((await getEventRegistrationContext(legacy, actor, eventId, now)).registrationOpen).toBe(
+      false,
+    )
+  })
+
   it('rejects closed windows, members-only outsiders, duplicates, and invalid answers', async () => {
     const closed = repo(
       context({

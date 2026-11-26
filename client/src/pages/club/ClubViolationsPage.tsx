@@ -10,21 +10,16 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useAuth } from '@/hooks/useAuth'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubViolations, useSubmitComplianceResponse } from '@/hooks/useClubCompliance'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { formatDate, formatDay } from '@/utils/formatDate'
 // Trang CLB xem vi phạm và gửi giải trình, hành động khắc phục
 export function ClubViolationsPage() {
   const { clubId = '' } = useParams()
   const { t, i18n } = useTranslation()
   const auth = useAuth()
-  const allowed = Boolean(
-    auth.data?.workspaces.some(
-      (w) =>
-        w.kind === 'club' &&
-        w.clubId === clubId &&
-        w.permissions.includes('club.complaint.respond'),
-    ),
-  )
+  const allowed = useWorkspacePermission(clubId, 'club.complaint.respond')
   const query = useClubViolations(clubId, allowed)
   const action = useSubmitComplianceResponse(clubId)
   const [texts, setTexts] = useState<Record<string, string>>({})
@@ -106,8 +101,7 @@ export function ClubViolationsPage() {
                 </h3>
                 <p className="whitespace-pre-wrap break-words">{v.clubResponse.requestMessage}</p>
                 <p className="text-muted-app">
-                  {t('clubCompliance.due')}:{' '}
-                  {new Date(v.clubResponse.dueAt).toLocaleString(i18n.language)}
+                  {t('clubCompliance.due')}: {formatDate(v.clubResponse.dueAt, i18n.language)}
                 </p>
                 {v.clubResponse.source ? (
                   <p className="whitespace-pre-wrap break-words">{v.clubResponse.text}</p>
@@ -138,7 +132,7 @@ export function ClubViolationsPage() {
               <div key={a.id} className="space-y-3 border-t border-border-app pt-3">
                 <h3 className="font-heading text-sm font-semibold">{a.description}</h3>
                 <p className="text-muted-app">
-                  {t('clubCompliance.due')}: {new Date(a.dueAt).toLocaleDateString(i18n.language)}
+                  {t('clubCompliance.due')}: {formatDay(a.dueAt, i18n.language)}
                 </p>
                 {a.submission ? (
                   <AppNotice>

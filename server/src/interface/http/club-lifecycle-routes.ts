@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubLifecycleRepository } from '../../domain/club-lifecycle.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   dissolveClub,
   getClubLifecycle,
@@ -15,6 +13,7 @@ import {
 } from '../../usecase/club-lifecycle.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ClubLifecycleRouteDeps {
   repo: ClubLifecycleRepository
@@ -30,24 +29,6 @@ export const suspendBody = lifecycleReasonBody
     until: z.string().datetime({ offset: true }).optional(),
   })
   .strict()
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid club lifecycle request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Mount các route quản lý vòng đời CLB của ICPDP
 export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
@@ -67,21 +48,21 @@ export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
         deps.policy,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'club lifecycle request'),
         new Date(),
       ),
     )
   })
   // ICPDP tạm đình chỉ một CLB
   router.post('/admin/clubs/:id/suspend', authGuard(guard), async (req, res) => {
-    const body = parsed(suspendBody, req.body)
+    const body = parse(suspendBody, req.body, 'club lifecycle request')
     ok(
       res,
       await suspendClub(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'club lifecycle request'),
         { reason: body.reason, ...(body.until ? { until: new Date(body.until) } : {}) },
         new Date(),
       ),
@@ -95,8 +76,8 @@ export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(lifecycleReasonBody, req.body),
+        parse(id, req.params.id, 'club lifecycle request'),
+        parse(lifecycleReasonBody, req.body, 'club lifecycle request'),
         new Date(),
       ),
     )
@@ -110,8 +91,8 @@ export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
         deps.policy,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(lifecycleReasonBody, req.body),
+        parse(id, req.params.id, 'club lifecycle request'),
+        parse(lifecycleReasonBody, req.body, 'club lifecycle request'),
         new Date(),
       ),
     )

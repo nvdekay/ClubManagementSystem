@@ -9,6 +9,7 @@ import type {
   EventRegistrationState,
 } from '../../domain/event-registration.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey, queueNotification } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
@@ -82,7 +83,6 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
   const proposals = ucmsModels.eventProposalVersions!
   const registrations = ucmsModels.eventRegistrations!
   const memberships = ucmsModels.clubMemberships!
-  const notifications = ucmsModels.notifications!
   const audits = ucmsModels.auditLogs!
 
   // Ánh xạ document đăng ký sang EventRegistration kèm thông tin sự kiện
@@ -221,7 +221,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           }
           const openFilter = {
             _id: eventId,
-            state: { $in: ['Upcoming', 'PUBLIC'] },
+            state: 'Upcoming',
             publishedAt: { $exists: true, $ne: null },
             registrationOpenAt: { $lte: input.now },
             registrationCloseAt: { $gt: input.now },
@@ -310,29 +310,20 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
             ],
             { session },
           )
-          await notifications.create(
-            [
-              {
-                recipientUserId: studentId,
-                eventCode:
-                  state === 'Confirmed'
-                    ? 'EVENT_REGISTRATION_CONFIRMED'
-                    : 'EVENT_REGISTRATION_WAITLISTED',
-                entityType: 'EventRegistration',
-                entityId: registrationId,
-                channels: ['IN_APP'],
-                payload: { eventId: input.eventId, state, waitlistPosition },
-                state: 'Queued',
-                dueAt: input.now,
-                attempts: 0,
-                createdAt: input.now,
-              },
-            ],
-            { session },
-          )
+          await queueNotification(session, {
+            recipientUserId: studentId,
+            eventCode:
+              state === 'Confirmed'
+                ? 'EVENT_REGISTRATION_CONFIRMED'
+                : 'EVENT_REGISTRATION_WAITLISTED',
+            entityType: 'EventRegistration',
+            entityId: registrationId,
+            payload: { eventId: input.eventId, state, waitlistPosition },
+            now: input.now,
+          })
         })
       } catch (error) {
-        if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('student is already registered for this event', 'conflict')
         }
         throw error
@@ -404,23 +395,14 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           ],
           { session },
         )
-        await notifications.create(
-          [
-            {
-              recipientUserId: userId,
-              eventCode: 'EVENT_REGISTRATION_CANCELLED',
-              entityType: 'EventRegistration',
-              entityId: id,
-              channels: ['IN_APP'],
-              payload: { eventId: String(registration.eventId) },
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            },
-          ],
-          { session },
-        )
+        await queueNotification(session, {
+          recipientUserId: userId,
+          eventCode: 'EVENT_REGISTRATION_CANCELLED',
+          entityType: 'EventRegistration',
+          entityId: id,
+          payload: { eventId: String(registration.eventId) },
+          now,
+        })
       })
       const result = await owned(id, userId)
       if (!result) {

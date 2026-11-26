@@ -1,10 +1,15 @@
-import { Router } from 'express'
+import { Router, json, raw } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubPeriodicReportRepository } from '../../domain/club-periodic-report.js'
 import { DomainError } from '../../domain/errors.js'
-import { CUSTOM_FIELD_TYPES } from '../../domain/periodic-report.js'
+import {
+  CUSTOM_FIELD_TYPES,
+  EVIDENCE_IMAGE_MAX_BYTES,
+  EVIDENCE_LINK_MAX_LENGTH,
+  type PeriodicEvidenceStorage,
+} from '../../domain/periodic-report.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
 import type { AccessActor } from '../../usecase/access.js'
@@ -12,11 +17,13 @@ import {
   changeClubPeriodicReport,
   createClubPeriodicReport,
   listClubPeriodicReports,
+  uploadPeriodicEvidenceImage,
 } from '../../usecase/club-periodic-report.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i)
+const evidenceLink = z.string().max(EVIDENCE_LINK_MAX_LENGTH)
 export const clubPeriodicCreateBody = z
   .object({ periodCode: z.string().trim().min(1).max(100) })
   .strict()
@@ -42,7 +49,7 @@ const eventEntryBody = z
     description: z.string().max(5_000),
     heldAt: z.string().max(100),
     participantCount: z.number().int().nonnegative(),
-    evidenceUrl: z.string().max(5_000_000).optional(),
+    evidenceUrl: evidenceLink.optional(),
     evidenceNote: z.string().max(1_000).optional(),
     source: z.enum(['SYSTEM', 'MANUAL']).optional(),
   })
@@ -52,7 +59,7 @@ const achievementEntryBody = z
   .object({
     title: z.string().max(300),
     description: z.string().max(5_000),
-    evidenceUrl: z.string().max(5_000_000).optional(),
+    evidenceUrl: evidenceLink.optional(),
     evidenceNote: z.string().max(1_000).optional(),
   })
   .strict()
@@ -64,7 +71,7 @@ const customAnswerBody = z
     type: z.enum(CUSTOM_FIELD_TYPES).optional(),
     textValue: z.string().max(10_000).optional(),
     numberValue: z.number().optional(),
-    evidenceUrl: z.string().max(5_000_000).optional(),
+    evidenceUrl: evidenceLink.optional(),
   })
   .strict()
 
@@ -77,7 +84,7 @@ export const clubPeriodicDraftBody = clubPeriodicVersionBody
         z
           .object({
             note: z.string().max(2_000).optional(),
-            url: z.string().max(5_000_000).optional(),
+            url: evidenceLink.optional(),
           })
           .strict(),
       )
@@ -108,6 +115,7 @@ export function clubPeriodicReportRoutes(deps: {
   access: ClubAccessRepository
   authRepo: AuthRepository
   sessions: SessionService
+  files: PeriodicEvidenceStorage | null
 }): Router {
   const router = Router()
   const guard = { repo: deps.authRepo, sessions: deps.sessions }
@@ -123,9 +131,35 @@ export function clubPeriodicReportRoutes(deps: {
         res.locals.actor as AccessActor,
         clubId,
         new Date(),
+        deps.files,
       ),
     )
   })
+  // Tải ảnh minh chứng (PNG/JPEG/WebP) cho báo cáo định kỳ; authGuard chạy trước khi đọc body
+  router.post(
+    '/clubs/:clubId/periodic-reports/evidence-images',
+    authGuard(guard),
+    raw({ type: () => true, limit: EVIDENCE_IMAGE_MAX_BYTES }),
+    async (req, res) => {
+      const { clubId } = parse(path, req.params)
+      if (!Buffer.isBuffer(req.body)) {
+        throw new DomainError('file body is required', 'validation')
+      }
+      ok(
+        res,
+        await uploadPeriodicEvidenceImage(
+          deps.files,
+          deps.access,
+          res.locals.actor as AccessActor,
+          clubId,
+          req.header('Content-Type') ?? '',
+          req.body,
+          new Date(),
+        ),
+        201,
+      )
+    },
+  )
   // Tạo báo cáo định kỳ của CLB
   router.post('/clubs/:clubId/periodic-reports', authGuard(guard), async (req, res) => {
     const { clubId } = parse(path, req.params)
@@ -144,23 +178,30 @@ export function clubPeriodicReportRoutes(deps: {
     )
   })
   // Cập nhật nội dung báo cáo định kỳ
-  router.put('/clubs/:clubId/periodic-reports/:id', authGuard(guard), async (req, res) => {
-    const { clubId, id } = parse(path, req.params)
-    const { revision, ...input } = parse(clubPeriodicDraftBody, req.body)
-    ok(
-      res,
-      await changeClubPeriodicReport(
-        deps.repo,
-        deps.access,
-        res.locals.actor as AccessActor,
-        clubId,
-        id!,
-        revision,
-        input,
-        new Date(),
-      ),
-    )
-  })
+  // Bản nháp đầy đủ (500 thành viên, 200 sự kiện) vượt giới hạn JSON 100kb chung.
+  router.put(
+    '/clubs/:clubId/periodic-reports/:id',
+    authGuard(guard),
+    json({ limit: '2mb' }),
+    async (req, res) => {
+      const { clubId, id } = parse(path, req.params)
+      const { revision, ...input } = parse(clubPeriodicDraftBody, req.body)
+      ok(
+        res,
+        await changeClubPeriodicReport(
+          deps.repo,
+          deps.access,
+          res.locals.actor as AccessActor,
+          clubId,
+          id!,
+          revision,
+          input,
+          new Date(),
+          deps.files,
+        ),
+      )
+    },
+  )
   // Nộp báo cáo định kỳ cho ICPDP
   router.post('/clubs/:clubId/periodic-reports/:id/submit', authGuard(guard), async (req, res) => {
     const { clubId, id } = parse(path, req.params)
@@ -175,6 +216,7 @@ export function clubPeriodicReportRoutes(deps: {
         parse(clubPeriodicVersionBody, req.body).revision,
         null,
         new Date(),
+        deps.files,
       ),
     )
   })

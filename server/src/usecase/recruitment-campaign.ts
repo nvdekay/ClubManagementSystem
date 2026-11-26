@@ -1,22 +1,13 @@
-import { resolveClubPermissions, type ClubAccessRepository } from '../domain/access.js'
+import type { ClubAccessRepository } from '../domain/access.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import type {
   RecruitmentCampaignInput,
   RecruitmentCampaignRepository,
 } from '../domain/recruitment-campaign.js'
 import { DomainError } from '../domain/errors.js'
-import type { AccessActor } from './access.js'
+import { assertClubAccess, parseObjectId, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const formKey = /^[a-z][a-z0-9_]{0,49}$/
-
-// Kiểm định dạng ObjectId của một định danh
-function id(value: string, label: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${label}`, 'validation')
-  }
-  return value
-}
 
 // Cắt khoảng trắng chuỗi tùy chọn và kiểm độ dài tối đa
 function optionalText(value: string | undefined, max: number, field: string): string | undefined {
@@ -133,33 +124,18 @@ function normalizeInput(input: RecruitmentCampaignInput, now: Date): Recruitment
   }
 }
 
-// Kiểm CLB Active và quyền quản lý tuyển thành viên của actor
+// Recruitment needs club.recruitment.manage and an Active club.
 async function actorForClub(
   access: ClubAccessRepository,
   actor: AccessActor | null,
   clubId: string,
   now: Date,
 ) {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  const userId = id(actor.id, 'actor id')
-  const parsedClubId = id(clubId, 'club id')
-  const snapshot = await access.findSnapshot(userId, parsedClubId)
-  if (!snapshot) {
-    throw new DomainError('club access denied', 'forbidden')
-  }
+  const snapshot = await assertClubAccess(access, actor, clubId, 'club.recruitment.manage', now)
   if (snapshot.clubState !== 'Active') {
     throw new DomainError('club is not active', 'conflict', { clubState: snapshot.clubState })
   }
-  const permissions = resolveClubPermissions(snapshot, now)
-  if (!permissions.includes('club.recruitment.manage')) {
-    throw new DomainError('club access denied', 'forbidden')
-  }
-  return { clubId: parsedClubId, actorId: userId }
+  return { clubId, actorId: actor!.id }
 }
 
 // CLB xem các đợt tuyển thành viên của mình
@@ -184,7 +160,7 @@ export async function getRecruitmentCampaign(
   now = new Date(),
 ) {
   const ids = await actorForClub(access, actor, clubId, now)
-  const campaign = await repo.find(ids.clubId, id(campaignId, 'campaign id'))
+  const campaign = await repo.find(ids.clubId, parseObjectId(campaignId, 'campaign id'))
   if (!campaign) {
     throw new DomainError('recruitment campaign not found', 'not_found')
   }
@@ -225,7 +201,7 @@ export async function updateRecruitmentCampaignDraft(
   const ids = await actorForClub(access, actor, clubId, now)
   const campaign = await repo.updateDraft(
     ids.clubId,
-    id(campaignId, 'campaign id'),
+    parseObjectId(campaignId, 'campaign id'),
     ids.actorId,
     normalizeInput(input, now),
     now,
@@ -252,7 +228,7 @@ export async function publishRecruitmentCampaign(
   now: Date,
 ) {
   const ids = await actorForClub(access, actor, clubId, now)
-  const campaign = await repo.find(ids.clubId, id(campaignId, 'campaign id'))
+  const campaign = await repo.find(ids.clubId, parseObjectId(campaignId, 'campaign id'))
   if (!campaign) {
     throw new DomainError('recruitment campaign not found', 'not_found')
   }
@@ -301,5 +277,5 @@ export async function cancelRecruitmentCampaign(
   now: Date,
 ) {
   const ids = await actorForClub(access, actor, clubId, now)
-  return repo.cancel(ids.clubId, id(campaignId, 'campaign id'), ids.actorId, now)
+  return repo.cancel(ids.clubId, parseObjectId(campaignId, 'campaign id'), ids.actorId, now)
 }

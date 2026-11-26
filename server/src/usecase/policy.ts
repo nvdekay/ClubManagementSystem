@@ -14,9 +14,7 @@ import {
   type ReportDeadline,
   type SchoolRefundAccount,
 } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // Ném lỗi validation cho một trường cấu hình chính sách không hợp lệ
 function invalid(field: string): never {
@@ -184,27 +182,6 @@ export function normalizePolicySettings(input: PolicySettings): PolicySettings {
   }
 }
 
-// Kiểm actor là ICPDP officer được quản trị chính sách
-async function requirePolicyOfficer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  const roles = await auth.systemRoleCodes(actor.id)
-  if (!roles.includes('ICPDP_OFFICER')) {
-    throw new DomainError('policy administration denied', 'forbidden')
-  }
-  return actor.id
-}
-
 // Lấy phiên bản chính sách có hiệu lực tại một thời điểm
 export async function resolvePolicyAt(repo: PolicyRepository, at: Date): Promise<PolicyVersion> {
   if (Number.isNaN(at.getTime())) {
@@ -248,7 +225,7 @@ export async function listPolicyVersions(
   actor: AccessActor | null,
   now: Date,
 ): Promise<{ current: PolicyVersion | null; versions: PolicyVersion[] }> {
-  await requirePolicyOfficer(auth, actor)
+  await requireIcpdpOfficer(auth, actor, 'policy administration denied')
   const [current, versions] = await Promise.all([repo.findEffective(now), repo.listRecent(20)])
   return { current, versions }
 }
@@ -263,7 +240,7 @@ export async function createPolicyVersion(
   reason: string | undefined,
   now: Date,
 ): Promise<PolicyVersion> {
-  const actorId = await requirePolicyOfficer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor, 'policy administration denied')
   const normalized = normalizePolicySettings(settings)
   if (
     requestedEffectiveFrom &&

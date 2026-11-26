@@ -5,9 +5,7 @@ import {
   type MembershipState,
 } from '../domain/membership.js'
 import type { ClubAccessRepository } from '../domain/access.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { assertClubAccess, isObjectId, parseObjectId, type AccessActor } from './access.js'
 
 // Kiểm người dùng đăng nhập, tài khoản Active và trả id
 function actorId(actor: AccessActor | null): string {
@@ -17,18 +15,10 @@ function actorId(actor: AccessActor | null): string {
   if (actor.accountState !== 'Active') {
     throw new DomainError('account is not active', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function validId(value: string, name: string) {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${name}`, 'validation')
-  }
-  return value
 }
 
 // Kiểm quyền quản lý thành viên của CLB và trả id actor
@@ -39,7 +29,7 @@ async function authorize(
   now: Date,
 ) {
   const userId = actorId(actor)
-  validId(clubId, 'club id')
+  parseObjectId(clubId, 'club id')
   await assertClubAccess(access, actor, clubId, 'club.member.manage', now)
   return userId
 }
@@ -71,7 +61,7 @@ export async function onboardMemberManually(
   now = new Date(),
 ) {
   const id = actorId(actor)
-  validId(input.clubId, 'club id')
+  parseObjectId(input.clubId, 'club id')
   await assertClubAccess(access, actor, input.clubId, 'club.application.review', now)
   const email = input.email.trim().toLowerCase()
   const reason = input.reason.trim()
@@ -99,7 +89,7 @@ export async function changeMembershipState(
   now = new Date(),
 ) {
   const id = await authorize(access, actor, input.clubId, now)
-  validId(input.membershipId, 'membership id')
+  parseObjectId(input.membershipId, 'membership id')
   // So theo ngày lịch Việt Nam: đồng hồ máy client lệch vài giây vẫn là "hôm nay".
   if (
     Number.isNaN(input.effectiveDate.getTime()) ||
@@ -134,7 +124,7 @@ export async function requestMembershipWithdrawal(
   now = new Date(),
 ) {
   const userId = actorId(actor)
-  validId(input.membershipId, 'membership id')
+  parseObjectId(input.membershipId, 'membership id')
   const reason = input.reason.trim()
   if (
     !reason ||
@@ -182,7 +172,7 @@ export async function executeMembershipWithdrawal(
   now = new Date(),
 ) {
   const id = await authorize(access, actor, input.clubId, now)
-  validId(input.requestId, 'withdrawal request id')
+  parseObjectId(input.requestId, 'withdrawal request id')
   return repo.executeWithdrawal({
     clubId: input.clubId,
     requestId: input.requestId,

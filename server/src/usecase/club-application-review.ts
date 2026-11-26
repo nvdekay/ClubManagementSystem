@@ -7,9 +7,8 @@ import type {
 import type { ApplicationFileStorage } from '../domain/club-application.js'
 import { DomainError } from '../domain/errors.js'
 import { similarClubHints, type SimilarClubHint } from '../domain/similar-club.js'
-import type { AccessActor } from './access.js'
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const allowedSections = new Set([
   'club-information',
   'founders',
@@ -17,31 +16,6 @@ const allowedSections = new Set([
   'role-structure',
   'other',
 ])
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(auth: AuthRepository, actor: AccessActor | null): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng id đơn lập CLB
-function applicationId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid application id', 'validation')
-  }
-  return value
-}
 
 // Chuẩn hóa và kiểm quyết định xét duyệt (lý do, mục cần sửa, hạn sửa)
 function normalizedDecision(input: ApplicationReviewDecisionInput, now: Date) {
@@ -101,7 +75,7 @@ export async function listApplicationReviews(
   auth: AuthRepository,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.listOpen()
 }
 
@@ -112,8 +86,8 @@ export async function getApplicationReview(
   actor: AccessActor | null,
   id: string,
 ) {
-  await officer(auth, actor)
-  const detail = await repo.find(applicationId(id))
+  await requireIcpdpOfficer(auth, actor)
+  const detail = await repo.find(parseObjectId(id, 'application id'))
   if (!detail) {
     throw new DomainError('application review not found', 'not_found')
   }
@@ -130,7 +104,11 @@ export async function claimApplicationReview(
 ) {
   return withSimilarClubs(
     repo,
-    await repo.claim(applicationId(id), await officer(auth, actor), now),
+    await repo.claim(
+      parseObjectId(id, 'application id'),
+      await requireIcpdpOfficer(auth, actor),
+      now,
+    ),
   )
 }
 
@@ -143,10 +121,15 @@ export async function decideApplicationReview(
   input: ApplicationReviewDecisionInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   return withSimilarClubs(
     repo,
-    await repo.decide(applicationId(id), officerId, normalizedDecision(input, now), now),
+    await repo.decide(
+      parseObjectId(id, 'application id'),
+      officerId,
+      normalizedDecision(input, now),
+      now,
+    ),
   )
 }
 
@@ -159,11 +142,11 @@ export async function applicationReviewDocumentAccess(
   id: string,
   documentId: string,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   if (!storage) {
     throw new DomainError('file storage is not configured', 'unavailable')
   }
-  const document = await repo.findDocument(applicationId(id), documentId)
+  const document = await repo.findDocument(parseObjectId(id, 'application id'), documentId)
   if (!document) {
     throw new DomainError('application document not found', 'not_found')
   }

@@ -186,6 +186,8 @@ export interface ApplicationFileStorage {
     now: Date
   }): Promise<ApplicationDocument>
   accessUrl(assetId: string, options?: { inline: boolean }): Promise<string>
+  /** Deletes a stored asset; used to clean up an upload whose database write then failed. */
+  remove(assetId: string): Promise<void>
 }
 
 const objectId = /^[0-9a-f]{24}$/i

@@ -12,6 +12,7 @@ import {
   type ProposalSection,
 } from '@/utils/eventProposalImport'
 import { cn } from '@/utils/cn'
+import { formatDate } from '@/utils/formatDate'
 
 interface EventProposalPreviewProps {
   input: ClubEventInput
@@ -70,14 +71,9 @@ export function EventProposalPreview({
     currency: 'VND',
     maximumFractionDigits: 0,
   })
-  const dateFormat = new Intl.DateTimeFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  })
   const empty = t('clubEvents.importNotFound')
   function date(value: string): string {
-    return Number.isFinite(Date.parse(value)) ? dateFormat.format(new Date(value)) : empty
+    return Number.isFinite(Date.parse(value)) ? formatDate(value, i18n.language) : empty
   }
   function raw(part: string): string {
     return fields.find((field) => field.label.toLocaleLowerCase('vi').includes(part))?.value ?? ''

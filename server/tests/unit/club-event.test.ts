@@ -1,3 +1,4 @@
+import { DomainError } from '../../src/domain/errors.js'
 import {
   APPROVED_EVENT_CANCEL_NOTICE_HOURS,
   assertApprovedEventCancellationNotice,
@@ -436,6 +437,40 @@ describe('event proposal document (UC25/UC26)', () => {
       ),
     ).toBe(template.fileName)
   })
+  it('deletes the uploaded asset when attaching it to the proposal fails', async () => {
+    const d = deps()
+    const files = {
+      uploadProposalDocument: vi.fn(async () => ({
+        id: 'doc',
+        fileName: 'a.pdf',
+        mimeType: 'application/pdf',
+        bytes: pdf.length,
+        assetId: 'asset-1',
+        uploadedAt: now,
+        uploadedBy: actor.id,
+      })),
+      uploadTemplateDocument: vi.fn(),
+      remove: vi.fn(async () => undefined),
+      accessUrl: vi.fn(),
+    }
+    vi.mocked(d.repo.find).mockResolvedValue({
+      event: { state: 'Draft' },
+    } as unknown as Awaited<ReturnType<ClubEventRepository['find']>>)
+    vi.mocked(d.repo.act).mockRejectedValue(new DomainError('version conflict', 'conflict'))
+    await expect(
+      uploadEventProposalDocument(
+        { ...d, files },
+        actor,
+        clubId,
+        id,
+        'a.pdf',
+        'application/pdf',
+        pdf,
+        now,
+      ),
+    ).rejects.toMatchObject({ kind: 'conflict' })
+    expect(files.remove).toHaveBeenCalledWith('asset-1')
+  })
   it('refuses uploads without storage, for internal events, and template uploads by non-officers', async () => {
     const d = deps()
     await expect(
@@ -444,6 +479,7 @@ describe('event proposal document (UC25/UC26)', () => {
     const files = {
       uploadProposalDocument: vi.fn(),
       uploadTemplateDocument: vi.fn(),
+      remove: vi.fn(),
       accessUrl: vi.fn(),
     }
     vi.mocked(d.repo.find).mockResolvedValue({

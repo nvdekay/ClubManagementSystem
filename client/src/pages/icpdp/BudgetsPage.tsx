@@ -17,6 +17,7 @@ import { useSponsoredItems } from '@/hooks/useSponsoredItems'
 import type { BudgetSummary } from '@/services/budgets'
 import { cn } from '@/utils/cn'
 import { formatMoney } from '@/utils/formatMoney'
+import { formatDay } from '@/utils/formatDate'
 
 const filters = [
   'all',
@@ -135,7 +136,7 @@ function BudgetList() {
     return formatMoney(value, i18n.language)
   }
   function day(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   if (list.isPending) {
@@ -324,7 +325,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
   const back = { to: '/workspace/budgets', label: t('budgets.back') }
 
   function day(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   if (budget.isPending || sponsored.isPending) {

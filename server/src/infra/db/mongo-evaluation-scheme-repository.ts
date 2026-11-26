@@ -11,6 +11,7 @@ import {
   type SchemeThresholds,
 } from '../../domain/evaluation-scheme.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 const catalogue = new Map<string, (typeof EVALUATION_DIMENSIONS)[number]>(
   EVALUATION_DIMENSIONS.map((dimension) => [dimension.code, dimension]),
@@ -22,11 +23,6 @@ const order = new Map(
 // Tính tổng trọng số các chiều đánh giá
 function total(settings: SchemeSettings): number {
   return settings.dimensions.reduce((sum, dimension) => sum + dimension.weight, 0)
-}
-
-// Kiểm tra lỗi trùng khóa duy nhất (mã 11000)
-function duplicate(error: unknown): boolean {
-  return error instanceof mongoose.mongo.MongoServerError && error.code === 11000
 }
 
 // Repository scheme đánh giá CLB theo kỳ (UC41)
@@ -186,7 +182,7 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
           })
           return (await load([id]))[0]!
         } catch (error) {
-          if (!duplicate(error)) {
+          if (!isDuplicateKey(error)) {
             throw error
           } // cán bộ khác đã lấy số phiên bản này: thử lại
         }

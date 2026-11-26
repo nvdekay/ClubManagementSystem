@@ -9,6 +9,7 @@ import type {
 import type { AuthUser } from '../../domain/auth.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
+import { escapeRegex } from './repo-helpers.js'
 
 // Ánh xạ document user thành AuthUser
 function mapUser(doc: Record<string, unknown>): AuthUser {
@@ -24,7 +25,7 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
 
 // Tạo regex không phân biệt hoa thường từ chuỗi tìm kiếm đã escape
 function escapedRegex(value: string): RegExp {
-  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+  return new RegExp(escapeRegex(value), 'i')
 }
 
 // Repository quản trị tài khoản: tìm user, cấp/thu hồi role hệ thống, khóa tài khoản
@@ -132,6 +133,39 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
       }
     })
     return result
+  }
+
+  /**
+   * Invariant: at least one active, unlocked ICPDP_OFFICER remains. Called inside the transaction
+   * after the change. Bumping the role document first makes concurrent revocations/locks write the
+   * same document, so one of them aborts with a write conflict and is retried against the new
+   * state instead of both passing a check that each read before the other committed.
+   */
+  async function assertOfficerRemains(session: mongoose.ClientSession): Promise<void> {
+    const officerRole = await roles
+      .findOneAndUpdate(
+        { code: 'ICPDP_OFFICER', scope: 'system', isSystem: true },
+        { $inc: { __v: 1 } },
+        { session },
+      )
+      .lean()
+    if (!officerRole) {
+      return
+    }
+    const holders = await assignments
+      .find({ roleId: officerRole._id, revokedAt: null })
+      .select('userId')
+      .session(session)
+      .lean()
+    const remaining = await users
+      .countDocuments({
+        _id: { $in: holders.map((holder) => holder.userId) },
+        accountState: 'Active',
+      })
+      .session(session)
+    if (remaining === 0) {
+      throw new DomainError('at least one active ICPDP officer account must remain', 'conflict')
+    }
   }
 
   return {
@@ -253,6 +287,9 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
             },
             { session },
           )
+          if (input.roleCode === 'ICPDP_OFFICER') {
+            await assertOfficerRemains(session)
+          }
         }
         await audits.create(
           [
@@ -327,6 +364,9 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
               },
           { session },
         )
+        if (input.locked) {
+          await assertOfficerRemains(session)
+        }
         await audits.create(
           [
             {

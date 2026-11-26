@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export const VIOLATION_ORIGINS = [
   'COMPLAINT',
   'REPORT_FINDING',
@@ -125,27 +125,9 @@ export type ViolationStep =
   | { type: 'verifyAction'; actionId: string; outcome: 'Verified' | 'Failed'; note?: string }
   | { type: 'resolve'; note?: string }
 
-// Gọi API /admin/violations và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/violations${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit POST có CSRF và body JSON
-function post(csrfToken: string, body: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/violations${path}`, options)
 }
 
 // GET danh sách vi phạm của các CLB
@@ -171,7 +153,7 @@ export function openViolation(
   input: OpenViolationInput,
   csrfToken: string,
 ): Promise<ViolationDetail> {
-  return request('', post(csrfToken, input))
+  return request('', { method: 'POST', csrfToken, body: input })
 }
 
 // POST /steps: thực hiện bước xử lý vi phạm
@@ -180,5 +162,5 @@ export function applyViolationStep(
   step: ViolationStep,
   csrfToken: string,
 ): Promise<ViolationDetail> {
-  return request(`/${encodeURIComponent(id)}/steps`, post(csrfToken, step))
+  return request(`/${encodeURIComponent(id)}/steps`, { method: 'POST', csrfToken, body: step })
 }

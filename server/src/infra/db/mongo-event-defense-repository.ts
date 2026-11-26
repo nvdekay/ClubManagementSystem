@@ -24,6 +24,7 @@ import {
   oid,
 } from './event-defense-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { queueNotification } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ACTIVE_STATES_ARRAY = [...ACTIVE_DEFENSE_STATES]
@@ -278,6 +279,9 @@ export function mongoEventDefenseRepository(
             'defense session can only be scheduled for an event under review or pending re-defense',
           )
         }
+        // Ghi __v của sự kiện trước khi kiểm tra phiên đang mở để hai lượt lên lịch đồng thời
+        // tuần tự hoá trên cùng document thay vì cùng tạo một phiên active
+        await events.updateOne({ _id: id }, { $inc: { __v: 1 } }, { session })
         const existingActive = await sessions
           .findOne({
             eventId: id,
@@ -1098,29 +1102,20 @@ export function mongoEventDefenseRepository(
             .select({ title: 1, clubName: 1 })
             .session(session)
             .lean()
-          await m.notifications!.create(
-            [
-              {
-                recipientUserId: doc.leadOfficerId,
-                eventCode: 'EVENT_DEFENSE_CONFIRM_OVERDUE',
-                entityType: 'Event',
-                entityId: doc.eventId,
-                channels: notificationChannels('EVENT_DEFENSE_CONFIRM_OVERDUE'),
-                payload: {
-                  defenseId: String(doc._id),
-                  defenseTitle: doc.title,
-                  eventTitle: event?.title,
-                  clubName: event?.clubName,
-                  startAt: doc.startAt,
-                },
-                state: 'Queued',
-                dueAt: now,
-                attempts: 0,
-                createdAt: now,
-              },
-            ],
-            { session },
-          )
+          await queueNotification(session, {
+            recipientUserId: doc.leadOfficerId,
+            eventCode: 'EVENT_DEFENSE_CONFIRM_OVERDUE',
+            entityType: 'Event',
+            entityId: doc.eventId,
+            payload: {
+              defenseId: String(doc._id),
+              defenseTitle: doc.title,
+              eventTitle: event?.title,
+              clubName: event?.clubName,
+              startAt: doc.startAt,
+            },
+            now,
+          })
           return true
         })
         if (sent) {

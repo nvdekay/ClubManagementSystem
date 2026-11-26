@@ -23,7 +23,6 @@ export function useEventRegistrationContext(eventId: string, enabled: boolean) {
     queryKey: [...key, 'context', eventId],
     queryFn: ({ signal }) => fetchEventRegistrationContext(eventId, signal),
     enabled: enabled && Boolean(eventId),
-    retry: false,
   })
 }
 
@@ -33,7 +32,6 @@ export function useMyEventRegistrations(enabled: boolean) {
     queryKey: [...key, 'mine'],
     queryFn: ({ signal }) => fetchMyEventRegistrations(signal),
     enabled,
-    retry: false,
   })
 }
 

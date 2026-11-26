@@ -226,6 +226,147 @@ function trendOf(first: number, last: number): Trend {
   return delta >= TREND_DELTA ? 'UP' : delta <= -TREND_DELTA ? 'DOWN' : 'STABLE'
 }
 
+type SeasonEvaluation = AnnualEvaluation & { season: Season }
+
+/** Each club has one evaluation per term: two codes of one term merge, the later publication wins. */
+function evaluationsOfYear(year: number, evaluations: AnnualEvaluation[]): SeasonEvaluation[] {
+  const kept = new Map<string, SeasonEvaluation>()
+  for (const item of evaluations) {
+    const parsed = parsePeriodCode(item.periodCode)
+    if (parsed?.year !== year) {
+      continue
+    }
+    const key = `${item.clubId}:${parsed.season}`
+    const current = kept.get(key)
+    if (!current || (item.publishedAt?.getTime() ?? 0) > (current.publishedAt?.getTime() ?? 0)) {
+      kept.set(key, { ...item, season: parsed.season })
+    }
+  }
+  return [...kept.values()]
+}
+
+/** Mean of one dimension over the given evaluations, skipping terms with insufficient data. */
+function dimensionMean(items: SeasonEvaluation[], code: DimensionCode): number | null {
+  return mean(
+    items.flatMap((item) =>
+      item.dimensions
+        .filter(
+          (entry) => entry.code === code && !entry.insufficientData && entry.score !== undefined,
+        )
+        .map((entry) => entry.score!),
+    ),
+  )
+}
+
+/** Row of a club with at least one scored term; null when none of its terms has a score. */
+function evaluatedRow(
+  clubId: string,
+  items: SeasonEvaluation[],
+  club: AnnualClub | undefined,
+  thresholds: SchemeThresholds,
+): AnnualClubRow | null {
+  const ordered = items
+    .filter((item) => item.totalScore !== undefined)
+    .sort((left, right) => SEASONS.indexOf(left.season) - SEASONS.indexOf(right.season))
+  if (!ordered.length) {
+    return null
+  }
+  const yearScore = mean(ordered.map((item) => item.totalScore!))!
+  return {
+    clubId,
+    clubName: club?.name ?? '',
+    field: club?.field ?? null,
+    state: club?.state ?? '',
+    terms: bySeason((season) => {
+      const item = ordered.find((entry) => entry.season === season)
+      return item
+        ? {
+            score: item.totalScore!,
+            classification: item.classification ?? classify(item.totalScore!, item.thresholds),
+          }
+        : null
+    }),
+    evaluatedTerms: ordered.length,
+    yearScore,
+    yearClassification: classify(yearScore, thresholds),
+    trend:
+      ordered.length > 1 ? trendOf(ordered[0]!.totalScore!, ordered.at(-1)!.totalScore!) : null,
+    dimensions: Object.fromEntries(
+      EVALUATION_DIMENSIONS.map(({ code }) => [code, dimensionMean(items, code)]),
+    ) as Record<DimensionCode, number | null>,
+  }
+}
+
+/** Active or suspended clubs without any scored term, listed by name after the evaluated ones. */
+function unevaluatedRows(clubs: AnnualClub[], evaluatedIds: Set<string>): AnnualClubRow[] {
+  return clubs
+    .filter(
+      (club) =>
+        !evaluatedIds.has(club.id) && (club.state === 'Active' || club.state === 'Suspended'),
+    )
+    .sort((left, right) => left.name.localeCompare(right.name, 'vi'))
+    .map((club) => ({
+      clubId: club.id,
+      clubName: club.name,
+      field: club.field ?? null,
+      state: club.state,
+      terms: bySeason(() => null),
+      evaluatedTerms: 0,
+      yearScore: null,
+      yearClassification: null,
+      trend: null,
+      dimensions: Object.fromEntries(
+        EVALUATION_DIMENSIONS.map(({ code }) => [code, null]),
+      ) as Record<DimensionCode, number | null>,
+    }))
+}
+
+/** Achievements of the year's accepted reports, by term and then club name. */
+function achievementsOf(
+  reports: AnnualPeriodicReport[],
+  nameOf: (clubId: string) => string,
+): AnnualAchievement[] {
+  return reports
+    .flatMap((report) =>
+      report.achievements.map((item, index) => ({
+        key: achievementKey(report, index),
+        clubName: nameOf(report.clubId),
+        title: item.title,
+        description: item.description,
+        periodCode: report.periodCode,
+        season: parsePeriodCode(report.periodCode)!.season,
+      })),
+    )
+    .sort(
+      (left, right) =>
+        SEASONS.indexOf(left.season) - SEASONS.indexOf(right.season) ||
+        left.clubName.localeCompare(right.clubName, 'vi'),
+    )
+}
+
+/** Finance section: totals of the year's accepted reports and evaluated terms without one. */
+function financeOf(
+  reports: AnnualPeriodicReport[],
+  counted: SeasonEvaluation[],
+): AnnualReport['finance'] {
+  const approvedTotal = sum(reports.map((report) => report.approvedTotal))
+  const disbursedTotal = sum(reports.map((report) => report.disbursedTotal))
+  const accepted = new Set(
+    reports.map((report) => `${report.clubId}:${parsePeriodCode(report.periodCode)!.season}`),
+  )
+  return {
+    hasData: reports.length > 0,
+    approvedTotal,
+    disbursedTotal,
+    disbursementRate: approvedTotal > 0 ? round((disbursedTotal / approvedTotal) * 100) : null,
+    clubsWithoutAcceptedReport: new Set(
+      counted
+        .filter((item) => !accepted.has(`${item.clubId}:${item.season}`))
+        .map((item) => item.clubId),
+    ).size,
+  }
+}
+
 // Dựng báo cáo năm sáu phần từ các nguồn đã được ICPDP xác nhận
 /** Dựng sáu phần của báo cáo năm từ các nguồn đã xác nhận của một năm. Không bao giờ tính lại điểm. */
 export function buildAnnualReport(year: number, source: AnnualSource): AnnualReport {
@@ -234,20 +375,7 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
     return clubs.get(clubId)?.name ?? ''
   }
 
-  // Mỗi CLB mỗi kỳ chỉ có một đánh giá: hai mã của cùng một kỳ được gộp lại, bản công bố sau thắng.
-  const evaluations = new Map<string, AnnualEvaluation & { season: Season }>()
-  for (const item of source.evaluations) {
-    const parsed = parsePeriodCode(item.periodCode)
-    if (parsed?.year !== year) {
-      continue
-    }
-    const key = `${item.clubId}:${parsed.season}`
-    const kept = evaluations.get(key)
-    if (!kept || (item.publishedAt?.getTime() ?? 0) > (kept.publishedAt?.getTime() ?? 0)) {
-      evaluations.set(key, { ...item, season: parsed.season })
-    }
-  }
-  const scored = [...evaluations.values()]
+  const scored = evaluationsOfYear(year, source.evaluations)
   const termCodes = bySeason<string[]>(() => [])
   for (const item of scored) {
     if (!termCodes[item.season].includes(item.periodCode)) {
@@ -268,82 +396,19 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
       (left, right) => (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0),
     )[0]?.thresholds ?? { excellent: 85, good: 70, fair: 50 }
 
-  const perClub = new Map<string, (AnnualEvaluation & { season: Season })[]>()
+  const perClub = new Map<string, SeasonEvaluation[]>()
   for (const item of scored) {
     perClub.set(item.clubId, [...(perClub.get(item.clubId) ?? []), item])
   }
 
-  const evaluatedRows: AnnualClubRow[] = []
-  for (const [clubId, items] of perClub) {
-    const ordered = items
-      .filter((item) => item.totalScore !== undefined)
-      .sort((left, right) => SEASONS.indexOf(left.season) - SEASONS.indexOf(right.season))
-    if (!ordered.length) {
-      continue
-    }
-    const yearScore = mean(ordered.map((item) => item.totalScore!))!
-    const club = clubs.get(clubId)
-    evaluatedRows.push({
-      clubId,
-      clubName: nameOf(clubId),
-      field: club?.field ?? null,
-      state: club?.state ?? '',
-      terms: bySeason((season) => {
-        const item = ordered.find((entry) => entry.season === season)
-        return item
-          ? {
-              score: item.totalScore!,
-              classification: item.classification ?? classify(item.totalScore!, item.thresholds),
-            }
-          : null
-      }),
-      evaluatedTerms: ordered.length,
-      yearScore,
-      yearClassification: classify(yearScore, thresholds),
-      trend:
-        ordered.length > 1 ? trendOf(ordered[0]!.totalScore!, ordered.at(-1)!.totalScore!) : null,
-      dimensions: Object.fromEntries(
-        EVALUATION_DIMENSIONS.map(({ code }) => [
-          code,
-          mean(
-            items.flatMap((item) =>
-              item.dimensions
-                .filter(
-                  (entry) =>
-                    entry.code === code && !entry.insufficientData && entry.score !== undefined,
-                )
-                .map((entry) => entry.score!),
-            ),
-          ),
-        ]),
-      ) as Record<DimensionCode, number | null>,
-    })
-  }
-  evaluatedRows.sort(
-    (left, right) =>
-      right.yearScore! - left.yearScore! || left.clubName.localeCompare(right.clubName, 'vi'),
-  )
-  const evaluatedIds = new Set(evaluatedRows.map((row) => row.clubId))
-  const unevaluatedRows: AnnualClubRow[] = source.clubs
-    .filter(
-      (club) =>
-        !evaluatedIds.has(club.id) && (club.state === 'Active' || club.state === 'Suspended'),
+  const evaluatedRows = [...perClub]
+    .map(([clubId, items]) => evaluatedRow(clubId, items, clubs.get(clubId), thresholds))
+    .filter((row): row is AnnualClubRow => row !== null)
+    .sort(
+      (left, right) =>
+        right.yearScore! - left.yearScore! || left.clubName.localeCompare(right.clubName, 'vi'),
     )
-    .sort((left, right) => left.name.localeCompare(right.name, 'vi'))
-    .map((club) => ({
-      clubId: club.id,
-      clubName: club.name,
-      field: club.field ?? null,
-      state: club.state,
-      terms: bySeason(() => null),
-      evaluatedTerms: 0,
-      yearScore: null,
-      yearClassification: null,
-      trend: null,
-      dimensions: Object.fromEntries(
-        EVALUATION_DIMENSIONS.map(({ code }) => [code, null]),
-      ) as Record<DimensionCode, number | null>,
-    }))
+  const evaluatedIds = new Set(evaluatedRows.map((row) => row.clubId))
 
   const counted = scored.filter((item) => evaluatedIds.has(item.clubId))
   const latestPerClub = [...perClub.values()].map((items) =>
@@ -355,15 +420,7 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
   const dimensionAverages = EVALUATION_DIMENSIONS.map(({ code, name }) => ({
     code,
     name,
-    average: mean(
-      counted.flatMap((item) =>
-        item.dimensions
-          .filter(
-            (entry) => entry.code === code && !entry.insufficientData && entry.score !== undefined,
-          )
-          .map((entry) => entry.score!),
-      ),
-    ),
+    average: dimensionMean(counted, code),
   }))
   const ranked = dimensionAverages
     .filter((item) => item.average !== null)
@@ -372,33 +429,6 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
   const reports = source.reports.filter(
     (report) => parsePeriodCode(report.periodCode)?.year === year,
   )
-  const approvedTotal = sum(reports.map((report) => report.approvedTotal))
-  const disbursedTotal = sum(reports.map((report) => report.disbursedTotal))
-  const accepted = new Set(
-    reports.map((report) => `${report.clubId}:${parsePeriodCode(report.periodCode)!.season}`),
-  )
-  const clubsWithoutAcceptedReport = new Set(
-    counted
-      .filter((item) => !accepted.has(`${item.clubId}:${item.season}`))
-      .map((item) => item.clubId),
-  ).size
-
-  const achievements = reports
-    .flatMap((report) =>
-      report.achievements.map((item, index) => ({
-        key: achievementKey(report, index),
-        clubName: nameOf(report.clubId),
-        title: item.title,
-        description: item.description,
-        periodCode: report.periodCode,
-        season: parsePeriodCode(report.periodCode)!.season,
-      })),
-    )
-    .sort(
-      (left, right) =>
-        SEASONS.indexOf(left.season) - SEASONS.indexOf(right.season) ||
-        left.clubName.localeCompare(right.clubName, 'vi'),
-    )
 
   const clubsByState: Record<string, number> = {}
   for (const club of source.clubs) {
@@ -434,7 +464,7 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
       averageByTerm: bySeason((season) =>
         mean(evaluatedRows.flatMap((row) => (row.terms[season] ? [row.terms[season].score] : []))),
       ),
-      rows: [...evaluatedRows, ...unevaluatedRows],
+      rows: [...evaluatedRows, ...unevaluatedRows(source.clubs, evaluatedIds)],
       top: evaluatedRows.slice(0, 5).map((row) => ({ ...pick(row), yearScore: row.yearScore! })),
     },
     dimensions: {
@@ -442,13 +472,7 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
       highest: ranked[0]?.code ?? null,
       lowest: ranked.at(-1)?.code ?? null,
     },
-    finance: {
-      hasData: reports.length > 0,
-      approvedTotal,
-      disbursedTotal,
-      disbursementRate: approvedTotal > 0 ? round((disbursedTotal / approvedTotal) * 100) : null,
-      clubsWithoutAcceptedReport,
-    },
+    finance: financeOf(reports, counted),
     compliance: {
       openViolations: sum(
         latestPerClub
@@ -464,6 +488,6 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
         .sort((left, right) => left.name.localeCompare(right.name, 'vi'))
         .map((club) => ({ clubId: club.id, clubName: club.name, state: club.state })),
     },
-    achievements,
+    achievements: achievementsOf(reports, nameOf),
   }
 }

@@ -1,3 +1,4 @@
+import { DomainError } from '../../src/domain/errors.js'
 import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_FORM_REQUIREMENTS, type SchoolRefundAccount } from '../../src/domain/policy.js'
 import type { SponsoredItem } from '../../src/domain/sponsored-item.js'
@@ -6,6 +7,7 @@ import {
   getRefundAccount,
   getSponsoredBudget,
   invoiceImageUrl,
+  uploadInvoiceImage,
   type SponsoredItemDeps,
 } from '../../src/usecase/sponsored-item.js'
 
@@ -74,7 +76,7 @@ function fixture(
     repo: { find, act: vi.fn() },
     access: { findSnapshot: async () => null },
     auth: { systemRoleCodes: async () => ['ICPDP_OFFICER'] },
-    files: { upload: vi.fn(), accessUrl: sign },
+    files: { upload: vi.fn(), accessUrl: sign, remove: vi.fn() },
     policy: {
       findEffective: async () => ({
         id: 'policy-1',
@@ -380,5 +382,77 @@ describe('private invoice access', () => {
       refundAmount: 500_000,
       account: schoolAccount,
     })
+  })
+
+  it('deletes the uploaded invoice file when the budget write fails', async () => {
+    const { deps } = fixture({ images: [] })
+    deps.access = {
+      findSnapshot: async () => ({
+        clubId: id,
+        clubName: 'HEBE Club',
+        clubState: 'Active',
+        membership: { id: 'm1', clubId: id, state: 'Active' },
+        terms: [
+          {
+            id: 't1',
+            clubId: id,
+            state: 'Active',
+            startAt: new Date('2026-01-01'),
+            endAt: new Date('2026-12-31'),
+          },
+        ],
+        positions: [
+          {
+            id: 'p1',
+            clubId: id,
+            code: 'CLUB_LEADER',
+            isActive: true,
+            isLeaderRole: true,
+            isBoardSeat: true,
+          },
+        ],
+        assignments: [
+          {
+            clubId: id,
+            termId: 't1',
+            positionId: 'p1',
+            membershipId: 'm1',
+            effectiveFrom: new Date('2026-01-01'),
+            effectiveTo: null,
+            confirmedBy: 'officer-1',
+          },
+        ],
+        isApprovedFounder: false,
+      }),
+    }
+    const upload = vi.fn(async () => ({
+      id: 'doc',
+      documentType: 'INVOICE',
+      fileName: 'invoice.png',
+      mimeType: 'image/png',
+      bytes: 9,
+      assetId: 'asset-new',
+      uploadedAt: new Date(),
+    }))
+    const remove = vi.fn(async () => undefined)
+    deps.files = { upload, accessUrl: vi.fn(), remove }
+    deps.repo.act = vi.fn(async () => {
+      throw new DomainError('budget changed', 'conflict')
+    })
+    const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0])
+    await expect(
+      uploadInvoiceImage(
+        deps,
+        actor,
+        id,
+        id,
+        'item',
+        0,
+        { fileName: 'invoice.png', mimeType: 'image/png', bytes: png },
+        new Date('2026-11-10T00:00:00Z'),
+      ),
+    ).rejects.toMatchObject({ kind: 'conflict' })
+    expect(upload).toHaveBeenCalledOnce()
+    expect(remove).toHaveBeenCalledWith('asset-new')
   })
 })

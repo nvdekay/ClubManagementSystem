@@ -18,7 +18,6 @@ export function useProperties(enabled: boolean) {
     queryKey: [...propertiesKeyRoot, 'catalogue'],
     queryFn: ({ signal }) => fetchProperties(signal),
     enabled,
-    retry: false,
   })
 }
 

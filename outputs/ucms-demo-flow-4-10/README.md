@@ -1,5 +1,7 @@
 # Video tập demo flow 4 và 10
 
+> **Lưu ý:** từ 26/11/2026 các file MP4 không còn nằm trong repo (để giảm dung lượng clone). Link bên dưới chỉ chạy khi bạn đặt file video vào đúng thư mục này; bản gốc do nhóm lưu ngoài repo.
+
 Thư mục chứa video quay giao diện UCMS và hướng dẫn tập trình bày của Người 2 cho buổi bảo vệ.
 Mỗi đoạn có gợi ý lời nói ngay dưới màn hình, dấu trỏ ở chỗ thao tác và thẻ chuyển vai rõ ràng.
 

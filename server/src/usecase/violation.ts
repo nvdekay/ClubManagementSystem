@@ -6,37 +6,7 @@ import {
   type ViolationRepository,
   type ViolationStep,
 } from '../domain/violation.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function checkedId(value: string, what: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${what} id`, 'validation')
-  }
-  return value
-}
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // ICPDP xem danh sách các vụ vi phạm
 export async function listViolations(
@@ -44,7 +14,7 @@ export async function listViolations(
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.list()
 }
 
@@ -56,8 +26,8 @@ export async function getViolation(
   id: string,
   now: Date,
 ) {
-  await officer(auth, actor)
-  const found = await repo.find(checkedId(id, 'case'), now)
+  await requireIcpdpOfficer(auth, actor)
+  const found = await repo.find(parseObjectId(id, 'case id'), now)
   if (!found) {
     throw new DomainError('violation case not found', 'not_found')
   }
@@ -71,8 +41,8 @@ export async function getViolationSources(
   actor: AccessActor | null,
   clubId: string,
 ) {
-  await officer(auth, actor)
-  const found = await repo.sources(checkedId(clubId, 'club'))
+  await requireIcpdpOfficer(auth, actor)
+  const found = await repo.sources(parseObjectId(clubId, 'club id'))
   if (!found) {
     throw new DomainError('club not found', 'not_found')
   }
@@ -87,10 +57,10 @@ export async function openViolation(
   input: OpenViolationInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
-  checkedId(input.clubId, 'club')
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  parseObjectId(input.clubId, 'club id')
   if (input.originRefId) {
-    checkedId(input.originRefId, 'source record')
+    parseObjectId(input.originRefId, 'source record id')
   }
   return repo.open(normalizedOpenInput(input), officerId, now)
 }
@@ -104,6 +74,6 @@ export async function applyViolationCaseStep(
   step: ViolationStep,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
-  return repo.apply(checkedId(id, 'case'), officerId, step, now)
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  return repo.apply(parseObjectId(id, 'case id'), officerId, step, now)
 }

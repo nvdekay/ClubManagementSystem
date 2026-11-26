@@ -1,10 +1,12 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router'
 
 import { UniversityLogo } from '@/components/custom/UniversityLogo'
 import { NotificationBell } from '@/components/layout/NotificationBell'
+import { RouteFallback } from '@/components/layout/RouteFallback'
 import { SidebarAccountMenu } from '@/components/layout/SidebarAccountMenu'
+import { AppButton } from '@/components/ui/button/AppButton'
 import { AppIcon, type AppIconName } from '@/components/ui/icon/AppIcon'
 import { common } from '@/i18n/common'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
@@ -164,6 +166,20 @@ export function WorkspaceShell() {
           <AppSkeleton className="h-64 w-full" />
         </div>
       </div>
+    )
+  }
+  // A 5xx or network failure is not a sign-out (401 resolves to null): offer a retry instead of the login page.
+  if (auth.isError && !auth.data) {
+    return (
+      <section className="mx-auto max-w-lg space-y-4 px-4 py-16 text-center">
+        <h1 className="font-heading text-2xl font-semibold">{t('auth.accountError')}</h1>
+        <p role="alert" className="text-sm text-danger-app">
+          {auth.error.message}
+        </p>
+        <AppButton disabled={auth.isFetching} onClick={() => void auth.refetch()}>
+          {t('auth.retry')}
+        </AppButton>
+      </section>
     )
   }
   if (!auth.data) {
@@ -602,7 +618,9 @@ export function WorkspaceShell() {
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
           <div ref={pageRef} className="mx-auto w-full max-w-screen-2xl">
             {workspace ? (
-              <Outlet />
+              <Suspense fallback={<RouteFallback />}>
+                <Outlet />
+              </Suspense>
             ) : (
               <section className="mx-auto max-w-lg py-16 text-center">
                 <span

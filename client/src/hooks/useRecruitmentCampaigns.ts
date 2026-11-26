@@ -23,7 +23,6 @@ export function useRecruitmentCampaigns(clubId: string | undefined, enabled: boo
     queryKey: campaignListKey(clubId),
     queryFn: ({ signal }) => fetchRecruitmentCampaigns(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 
@@ -33,7 +32,6 @@ export function usePublicRecruitmentCampaign(campaignId: string | undefined) {
     queryKey: [...publicCampaignKeyRoot, campaignId],
     queryFn: ({ signal }) => fetchPublicRecruitmentCampaign(campaignId!, signal),
     enabled: Boolean(campaignId),
-    retry: false,
   })
 }
 

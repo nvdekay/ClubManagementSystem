@@ -22,8 +22,7 @@ import {
   validateEventProposalFile,
 } from '../domain/club-event-rules.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-import { officer } from './event-proposal-review.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 export interface ClubEventDeps {
   repo: ClubEventRepository
@@ -278,7 +277,19 @@ export async function uploadEventProposalDocument(
     bytes,
     now,
   })
-  return deps.repo.act(clubId, eventId, { kind: 'attach-document', document }, actor!.id, now)
+  try {
+    return await deps.repo.act(
+      clubId,
+      eventId,
+      { kind: 'attach-document', document },
+      actor!.id,
+      now,
+    )
+  } catch (error) {
+    // The write lost (state changed, version race): do not leave an orphaned asset behind.
+    await storage.remove(document.assetId).catch(() => undefined)
+    throw error
+  }
 }
 /** Resolve a draft/submitted document and verify club ownership before issuing access. */
 export async function clubEventProposalDocumentAccess(
@@ -306,7 +317,7 @@ export async function uploadEventProposalTemplate(
   bytes: Buffer,
   now: Date,
 ): Promise<EventProposalTemplateInfo> {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const name = validateEventProposalFile(
     fileName,
     mimeType,
@@ -332,7 +343,7 @@ export async function reviewEventProposalDocumentAccess(
   revisionNo: number | undefined,
   inline: boolean,
 ) {
-  await officer(deps.auth, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const found = await deps.repo.proposalDocument(clubEventId(eventId), revisionNo ?? 'latest')
   if (!found) {
     throw new DomainError('event proposal not found', 'not_found')

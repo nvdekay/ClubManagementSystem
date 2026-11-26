@@ -7,6 +7,7 @@ import {
   type MyEventFeedback,
 } from '../../domain/event-feedback.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
@@ -122,7 +123,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
           )
         })
       } catch (error) {
-        if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('feedback was already submitted for this event', 'conflict')
         }
         throw error

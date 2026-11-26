@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import type { PublicEvent, PublicEventStatus } from '@/services/discovery'
+import { dateFormatter } from '@/utils/formatDate'
 
 interface PublicEventCardProps {
   event: PublicEvent
@@ -22,11 +23,8 @@ function coverUrl(url: string): string {
 // Định dạng khoảng ngày của sự kiện dd/MM/yyyy
 /** Khoảng ngày kiểu PDP: "08/09/2026 - 19/09/2026" (chỉ một ngày khi sự kiện diễn ra trong một ngày). */
 export function eventDateRange(startAt: string, endAt: string): string {
-  const format = new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  // Always dd/MM/yyyy, whatever the UI language (PDP style).
+  const format = dateFormatter('vi', { day: '2-digit', month: '2-digit', year: 'numeric' })
   const start = format.format(new Date(startAt))
   const end = format.format(new Date(endAt))
   return start === end ? start : `${start} - ${end}`

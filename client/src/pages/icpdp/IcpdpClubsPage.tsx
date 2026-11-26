@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useClubLifecycles } from '@/hooks/useClubLifecycle'
 
 import { ClubManageDialog } from './ClubManageDialog'
+import { formatDay } from '@/utils/formatDate'
 
 const PAGE_SIZE = 20
 const tones: Record<string, AppBadgeTone> = {
@@ -62,7 +63,7 @@ export function IcpdpClubsPage() {
   }
 
   function date(value: string): string {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   // Áp dụng thay đổi bộ lọc rồi quay về trang đầu

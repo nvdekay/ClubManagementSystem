@@ -3,7 +3,11 @@ import { readFile, stat } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import type { EventProposalDocument, EventProposalFileStorage } from '../../domain/club-event.js'
 import type { CloudinaryConfig } from '../config/index.js'
-import { cloudinaryApplicationFiles, uploadToCloudinary } from './cloudinary-application-files.js'
+import {
+  cloudinaryApplicationFiles,
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from './cloudinary-application-files.js'
 
 // Tạo kho file đề án sự kiện và template của ICPDP trên Cloudinary
 /** Tài liệu đề xuất và template của ICPDP là raw asset có xác thực, chỉ đọc qua signed URL 60 giây. */
@@ -34,6 +38,7 @@ export function cloudinaryEventProposalFiles(config: CloudinaryConfig): EventPro
       upload(`ucms/event-proposals/${input.clubId}/${input.eventId}`, input),
     uploadTemplateDocument: (input) => upload('ucms/event-proposal-templates', input),
     accessUrl: (assetId, options) => cloudinaryApplicationFiles(config).accessUrl(assetId, options),
+    remove: (assetId) => deleteFromCloudinary(config, assetId),
   }
 }
 

@@ -9,7 +9,6 @@ export function useBudgets(enabled: boolean) {
     queryKey: [...budgetsKeyRoot, 'list'],
     queryFn: ({ signal }) => fetchBudgets(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -19,6 +18,5 @@ export function useBudget(id: string | undefined, enabled: boolean) {
     queryKey: [...budgetsKeyRoot, 'detail', id],
     queryFn: ({ signal }) => fetchBudget(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }

@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export interface ReportInput {
   actualResult: string
   incidents?: string
@@ -105,19 +105,9 @@ export interface FinanceDetail {
   history: { action: string; at: string; snapshot: unknown; reason?: string }[]
 }
 export type AccountabilityContext = { kind: 'club'; clubId: string } | { kind: 'admin' }
-// Gọi API /api/v1 và trả về trường data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      message?: string
-    } | null
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
-  }
-  return ((await res.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 // Chọn đường dẫn gốc báo cáo sự kiện theo ngữ cảnh CLB hoặc admin
 function reportBase(context: AccountabilityContext) {
@@ -170,8 +160,8 @@ export function reportAction(
 ): Promise<ReportDetail> {
   return request(`${reportBase(context)}/${encodeURIComponent(id)}/actions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
-    body: JSON.stringify(body),
+    csrfToken: token,
+    body,
   })
 }
 // POST thao tác (nộp, đối soát...) trên ngân sách/đối soát
@@ -183,7 +173,7 @@ export function financeAction(
 ): Promise<FinanceDetail> {
   return request(`${financeBase(context, id)}/actions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
-    body: JSON.stringify(body),
+    csrfToken: token,
+    body,
   })
 }

@@ -3,14 +3,14 @@
 ## Stack
 
 - **React 19** + TypeScript, build bằng **Vite** (`client/`, một trong hai npm workspace bên cạnh `server/`).
-- `react-router` điều hướng các trang công khai UC06 (`/`, `/clubs`, `/events`) và Auth (`/login`, `/workspace`); `BrowserRouter` nằm ở `main.tsx`. Điều kiện thêm router của ADR-002 đã xảy ra.
+- `react-router` điều hướng các trang công khai UC06 (`/`, `/clubs`, `/events`) và Auth (`/login`, `/workspace`); router tạo bằng `createBrowserRouter` + `RouterProvider` ở `main.tsx`; mỗi trang được nạp lười (`React.lazy`) sau một `Suspense` trong layout. Điều kiện thêm router của ADR-002 đã xảy ra.
 - Không thư viện state — state cục bộ của component (`useState`/`useReducer`) là đủ ở quy mô này.
-- Không thư viện HTTP client — dùng `fetch` gốc, gọi tới `/api/v1/...` (Vite proxy `/api` sang server ở môi trường dev). **TanStack React Query** (`@tanstack/react-query`) quản lý server state: `useQuery`/`useMutation` bọc quanh các hàm fetch đó, `QueryClientProvider` đặt trong `main.tsx`. Truyền `signal` của queryFn vào `fetch`; sau một mutation, cập nhật cache theo quy tắc 4 của mục Fetch/Service (`setQueryData` khi response đã quyết định được giá trị mới, `invalidateQueries` khi danh sách được lọc ở phía server). Truy vấn có phân trang/tìm kiếm dùng `placeholderData: keepPreviousData` để khi key đổi (trang mới, từ khoá mới) các dòng cũ vẫn nằm trên màn hình thay vì chớp trắng (xem `useUsers`).
+- Không thư viện HTTP client — dùng `fetch` gốc, gọi tới `/api/v1/...` (Vite proxy `/api` sang server ở môi trường dev). **TanStack React Query** (`@tanstack/react-query`) quản lý server state: `useQuery`/`useMutation` bọc quanh các hàm fetch đó, `QueryClientProvider` đặt trong `main.tsx`. Truyền `signal` của queryFn vào `fetch`; sau một mutation, cập nhật cache theo quy tắc 4 của mục Fetch/Service (`setQueryData` khi response đã quyết định được giá trị mới, `invalidateQueries` khi danh sách được lọc ở phía server). Truy vấn có phân trang/tìm kiếm dùng `placeholderData: keepPreviousData` để khi key đổi (trang mới, từ khoá mới) các dòng cũ vẫn nằm trên màn hình thay vì chớp trắng (xem `useAccounts`).
 - **Tailwind v4**, CSS-first (plugin `@tailwindcss/vite`, không có `tailwind.config.*`). Token màu khai báo trong `client/src/index.css` bên trong `@theme` dưới dạng `--color-<name>-app`, sinh ra các utility `<name>-app` (`bg-danger-app`, `text-danger-app`, …).
 - Dark mode là thủ công (không chỉ dựa vào `prefers-color-scheme`): một class `.dark` bật/tắt trên `<html>` (xem state `theme` trong `App.tsx`) ghi đè chính các token đó dưới `:root.dark` trong `index.css`. Không dùng variant `dark:` của Tailwind — chỉ riêng lớp gián tiếp token đã đủ để mọi utility `*-app` đổi màu.
-- Ngôn ngữ: **i18next** + `react-i18next`, khởi tạo ở `client/src/i18n/index.ts` (`en`/`vi`, `fallbackLng: "en"`, ngôn ngữ được lưu vào `localStorage`). Chuỗi được tách mỗi miền nghiệp vụ một file (`i18n/common.ts`, `i18n/users.ts`, `i18n/demo.ts`), mỗi file export `{ en, vi }`, rồi ghép thành `resources` trong `index.ts`. Component đọc chuỗi bằng `const { t } = useTranslation()` và key có namespace (`t("users.title")`); đổi ngôn ngữ bằng `i18n.changeLanguage("vi")`. Tính năng mới → thêm `i18n/<module>.ts`, rồi đăng ký nó ở cả hai ngôn ngữ trong `index.ts`.
+- Ngôn ngữ: **i18next** + `react-i18next`, khởi tạo ở `client/src/i18n/index.ts` (`en`/`vi`, `fallbackLng: "en"`, ngôn ngữ được lưu vào `localStorage`). Chuỗi được tách mỗi miền nghiệp vụ một file (`i18n/common.ts`, `i18n/users.ts`, `i18n/clubEvents.ts`, …), mỗi file export `{ en, vi }`, rồi ghép thành `resources` trong `index.ts`. Component đọc chuỗi bằng `const { t } = useTranslation()` và key có namespace (`t("users.title")`); đổi ngôn ngữ bằng `i18n.changeLanguage("vi")`. Tính năng mới → thêm `i18n/<module>.ts`, rồi đăng ký nó ở cả hai ngôn ngữ trong `index.ts`.
 - `cn()` ở `client/src/utils/cn.ts` — `twMerge(clsx(inputs))` — dùng cho mọi class có điều kiện.
-- **TanStack Table v9** (`@tanstack/react-table`) cho bảng — headless: người gọi sở hữu instance `useTable` và truyền nó vào bộ kit `ui/table/` (`AppTable`, `AppTableColumnToggle`, `AppTableLimitSelect`). Bộ điều khiển phân trang không phụ thuộc bảng — `ui/pagination/AppPagination` nhận props thuần `pageIndex`/`pageCount`/`onPageChange`, không cần instance bảng. v9 ≠ v8: `useTable({ features, columns, data })` với `tableFeatures({...})` (không còn `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` thay cho `table.getState()`. Tập feature dùng chung nằm trong `AppTable.tsx` (`appTableFeatures`); mở rộng ở đó khi một bảng cần sắp xếp/chọn dòng/…. Tài liệu dành cho agent nằm trong `node_modules/@tanstack/react-table/skills/`. Giữ `data`/`columns` ổn định về tham chiếu (mảng rỗng khai báo ở phạm vi module, `useMemo` cho columns).
+- **TanStack Table v9** (`@tanstack/react-table`) cho bảng — headless: người gọi sở hữu instance `useTable` và truyền nó vào bộ kit `ui/table/` (`AppTable`, `AppTableLimitSelect`). Bộ điều khiển phân trang không phụ thuộc bảng — `ui/pagination/AppPagination` nhận props thuần `pageIndex`/`pageCount`/`onPageChange`, không cần instance bảng. v9 ≠ v8: `useTable({ features, columns, data })` với `tableFeatures({...})` (không còn `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` thay cho `table.getState()`. Tập feature dùng chung nằm trong `AppTable.tsx` (`appTableFeatures`); mở rộng ở đó khi một bảng cần sắp xếp/chọn dòng/…. Tài liệu dành cho agent nằm trong `node_modules/@tanstack/react-table/skills/`. Giữ `data`/`columns` ổn định về tham chiếu (mảng rỗng khai báo ở phạm vi module, `useMemo` cho columns).
 - Alias `@/` đã cấu hình (`client/tsconfig.json` mục `paths`, `client/vite.config.ts` mục `resolve.alias`) → `client/src/*`.
 
 Không thêm Redux/Zustand/Valtio hay axios theo kiểu phòng xa. Mỗi thứ đều có một điều kiện kích hoạt cụ thể nêu bên dưới; chỉ thêm — và cập nhật tài liệu này — khi điều kiện đó thực sự xảy ra, không phải trước đó.
@@ -21,18 +21,17 @@ Hiện tại (các thư mục liên quan; mỗi thư mục có README mô tả m
 
 ```
 client/src/
-  main.tsx     # điểm vào, QueryClientProvider, BrowserRouter và routes
+  main.tsx     # điểm vào, QueryClientProvider, router (createBrowserRouter) và routes nạp lười
   App.tsx      # màn Auth và workspace hiện hành
   index.css    # import Tailwind + token màu @theme (nơi duy nhất được phép có mã màu) + ghi đè :root.dark
   i18n/
     index.ts   # khởi tạo i18next + kiểu Locale + resources (đăng ký mọi module ở en/vi)
     common.ts  # mỗi miền nghiệp vụ một file, mỗi file export { en, vi }
     users.ts
-    demo.ts
   services/
-    users.ts   # tầng HTTP: mỗi endpoint một hàm async có kiểu. Biết endpoint, không bao giờ import React.
+    accounts.ts # tầng HTTP: mỗi endpoint một hàm async có kiểu. Biết endpoint, không bao giờ import React.
   hooks/
-    useUsers.ts # tầng React Query: useUsers()/useCreateUser(), sở hữu usersKey. Biết cache, không tự gọi fetch.
+    useAccounts.ts # tầng React Query: useAccounts()/useAccountAction(), sở hữu accountsKeyRoot. Biết cache, không tự gọi fetch.
   utils/
     cn.ts      # twMerge(clsx(inputs)) — dùng cho mọi className có điều kiện
   pages/public/ # trang UC06: home, danh bạ/chi tiết CLB và sự kiện
@@ -47,8 +46,7 @@ client/src/
       search-input/AppSearchInput.tsx  # ô tìm kiếm có debounce (trả giá trị đã trim qua onSearch)
       skeleton/AppSkeleton.tsx         # khối giữ chỗ nhấp nháy — định cỡ bằng className, ghép tại nơi dùng
       switch/AppSwitch.tsx
-      table/AppTable.tsx               # kit TanStack Table v9 headless: AppTable + AppTableColumnToggle + AppTableLimitSelect + appTableFeatures dùng chung
-      table/AppTableColumnToggle.tsx
+      table/AppTable.tsx               # kit TanStack Table v9 headless: AppTable + AppTableLimitSelect + appTableFeatures dùng chung
       table/AppTableLimitSelect.tsx
       toast/AppToast.tsx
     custom/    # component dùng nhiều trang, có hiểu biết nghiệp vụ (README giữ chỗ)
@@ -90,14 +88,14 @@ Có hai tầng giữa một component và mạng — component không bao giờ 
 component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → services/<domain>.ts (fetch, sở hữu endpoint)
 ```
 
-1. `services/<domain>.ts` — mỗi endpoint một hàm async được export, request/response có kiểu, kiểu thực thể (`User`, …) khai báo tại đây. Không bao giờ import React; test được mà không cần render. Dùng `fetch` gốc — không dùng axios (ở đây không có gì cần interceptor hay refresh token; nếu sau này xuất hiện một header xác thực dùng chung thì thêm đúng một helper `apiFetch` trong `services/`, không phải một class client).
-2. `hooks/use<Domain>.ts` — các lớp bọc `useQuery`/`useMutation` quanh hàm service (`useUsers()`, `useCreateUser()`). `queryKey` của miền được khai báo đúng một lần ở đây — một gốc để thao tác cache theo tiền tố, cộng một factory nhúng mọi input của queryFn (`usersKeyRoot` / `usersKey(search)` trong `useUsers.ts`); không bao giờ viết chuỗi `["users"]` rải rác nơi khác. Mọi biến mà queryFn dùng đều phải xuất hiện trong key (nó chính là mảng phụ thuộc). Chuyển tiếp `signal` của queryFn vào `fetch`.
-3. Các component chia sẻ server state qua cache của React Query, không qua props/context: hai component bất kỳ cùng gọi `useUsers()` đọc cùng một mục cache, và mutation cập nhật nó cho tất cả. Server state sống trong React Query; client state (theme, ngôn ngữ, ô nhập liệu) ở lại trong `useState`.
-4. Sau một mutation: nếu riêng response đã quyết định được giá trị cache mới (danh sách không lọc, response chứa thực thể), dùng `cancelQueries` + `setQueryData` để khỏi phải gọi lại; nếu danh sách được lọc/sắp xếp/phân trang ở phía server nên response không cho biết thực thể rơi vào đâu (hay có rơi vào không), thì `invalidateQueries` trên key gốc của miền (xem `useCreateUser`).
+1. `services/<domain>.ts` — mỗi endpoint một hàm async được export, request/response có kiểu, kiểu thực thể (`AdminUserPage`, …) khai báo tại đây. Không bao giờ import React; test được mà không cần render. Dùng `fetch` gốc — không dùng axios (ở đây không có gì cần interceptor hay refresh token; mọi lời gọi JSON đi qua đúng một helper `apiRequest` trong `services/apiRequest.ts` — gắn header JSON/CSRF, mở phong bì `{ data }`, ném `ApiError` kèm `status` — không phải một class client).
+2. `hooks/use<Domain>.ts` — các lớp bọc `useQuery`/`useMutation` quanh hàm service (`useAccounts()`, `useAccountAction()`). `queryKey` của miền được khai báo đúng một lần ở đây — một gốc để thao tác cache theo tiền tố, cộng một factory nhúng mọi input của queryFn (`accountsKeyRoot` cộng `search`/`page`/`pageSize` trong `useAccounts.ts`); không bao giờ viết chuỗi `["accounts"]` rải rác nơi khác. Mọi biến mà queryFn dùng đều phải xuất hiện trong key (nó chính là mảng phụ thuộc). Chuyển tiếp `signal` của queryFn vào `fetch`.
+3. Các component chia sẻ server state qua cache của React Query, không qua props/context: hai component bất kỳ cùng gọi `useAccounts()` đọc cùng một mục cache, và mutation cập nhật nó cho tất cả. Server state sống trong React Query; client state (theme, ngôn ngữ, ô nhập liệu) ở lại trong `useState`.
+4. Sau một mutation: nếu riêng response đã quyết định được giá trị cache mới (danh sách không lọc, response chứa thực thể), dùng `cancelQueries` + `setQueryData` để khỏi phải gọi lại; nếu danh sách được lọc/sắp xếp/phân trang ở phía server nên response không cho biết thực thể rơi vào đâu (hay có rơi vào không), thì `invalidateQueries` trên key gốc của miền (xem `useAccountAction`).
 5. Phong bì của server (`server/src/interface/http/response.ts`) — hãy khai kiểu theo nó, đừng tự chế hình dạng riêng:
    - thành công: `{ statusCode, message, data, timestamp }`
    - lỗi: `{ statusCode, error, message, details?, timestamp, path }`
-6. Luôn kiểm tra `res.ok` trước khi đọc body. Body lỗi không chắc chắn là JSON (lỗi proxy, trang 404 dạng HTML) — dùng `res.json().catch(() => null)` ở nhánh lỗi.
+6. Luôn kiểm tra `res.ok` trước khi đọc body. Body lỗi không chắc chắn là JSON (lỗi proxy, trang 404 dạng HTML) — `apiRequest`/`readApiFailure` đã xử lý việc này; chỉ khi buộc phải gọi `apiFetch` trực tiếp (tải file thô) mới tự kiểm tra.
 
 ## Quy tắc về lỗi & trạng thái tải
 
@@ -105,6 +103,10 @@ component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → servic
 2. Dùng `try`/`catch` hoặc `.catch()` thuần. Dự án không cài thư viện xử lý lỗi nào; đừng thêm (`neverthrow`, …) cho nhu cầu ở quy mô này.
 3. Hiển thị lỗi ngay trong component như `App.tsx` đang làm; dùng `appToast` (`@/components/ui/toast/AppToast`, chạy trên sonner) cho các thông báo thoáng qua mang tính xuyên suốt.
 4. Giao diện lúc tải: chỉ dùng skeleton cho lần tải *đầu tiên* của dữ liệu bất đồng bộ (`isPending`), ghép từ `AppSkeleton` với kích thước khớp bố cục thật (xem prop `loading` của `AppTable` và thẻ demo AppSkeleton trong `App.tsx`) — không tạo file `*Skeleton` cho từng component, và không đặt skeleton ở nơi nội dung thật vốn tĩnh hoặc nơi `keepPreviousData` đã giữ dữ liệu cũ trên màn hình. Không bao giờ hiển thị thông điệp trạng thái rỗng khi lần tải đầu còn đang chạy.
+5. Chính sách lỗi chung nằm ở `QueryClient` trong `main.tsx`, đừng lặp lại ở từng hook: query không retry lỗi 4xx
+   (`ApiError.status`), lỗi 5xx/mạng retry tối đa 2 lần (`utils/queryRetry.ts`) — không viết `retry: false` trong hook.
+   Mọi query/mutation nhận 401 đều đặt phiên `['auth','me']` về `null` (`markSignedOut`), nên `WorkspaceShell` tự chuyển
+   về `/login?returnTo=…`; lỗi 5xx/mạng khi tải phiên hiện thông báo kèm nút thử lại thay vì coi như đã đăng xuất.
 
 ## Quy tắc về styling
 
@@ -138,7 +140,7 @@ Cả `theme` lẫn `locale` đều là công tắc người dùng bật được
 
 ## Routing & State
 
-- Router: dùng `react-router` declarative mode vì UC06 có nhiều URL mở trực tiếp; `Routes` ở `main.tsx`, trang ở `pages/`, shell ở `components/layout/`. Không dùng thêm tầng data router khi React Query đã quản lý server state.
+- Router: dùng `react-router` vì UC06 có nhiều URL mở trực tiếp; route khai báo bằng JSX qua `createRoutesFromElements` ở `main.tsx`, trang ở `pages/`, shell ở `components/layout/`. Router là data router (`createBrowserRouter`) chỉ để dùng được `useBlocker` (hook `useUnsavedChangesGuard`); không dùng `loader`/`action` vì React Query đã quản lý server state.
 - State: `useState`/`useReducer`/`Context` là đủ cho template này. Chỉ thêm thư viện state khi việc truyền props qua nhiều tầng đã thực sự gây khó chịu và chứng minh được trong chính codebase này — không phải phòng xa.
 
 ## Checklist trước khi code

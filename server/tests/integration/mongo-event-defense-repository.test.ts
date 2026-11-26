@@ -232,12 +232,12 @@ describe.skipIf(!uri)('Mongo event defense repository', () => {
         outcome: 'Approve',
         sections: [],
         conditions: ['Submit final vendor contract'],
-        budgetLines: [{ approvedAmount: 4_500_000, reason: 'Negotiated discount' }],
+        budgetLines: [{ fundingDecision: 'BEFORE_EVENT', approvedAmount: 5_000_000 }],
       },
       round2Start,
     )
     expect(approvedDetail.event.state).toBe('Approved')
-    expect(approvedDetail.budget?.approvedTotal).toBe(4_500_000)
+    expect(approvedDetail.budget?.approvedTotal).toBe(5_000_000)
   })
 
   it('marks NO_SHOW and immediately rejects the proposal', async () => {
@@ -268,5 +268,53 @@ describe.skipIf(!uri)('Mongo event defense repository', () => {
     expect(session.state).toBe('NO_SHOW')
     const detail = await reviewRepo.find(eventId, slotStart)
     expect(detail?.event.state).toBe('Rejected')
+  })
+
+  it('lets only one of two concurrent schedules for the same proposal create a session', async () => {
+    const reviewRepo = mongoEventProposalReviewRepository()
+    const defenseRepo = mongoEventDefenseRepository(reviewRepo)
+    const otherRoom = new Types.ObjectId()
+    await ucmsModels.properties!.create({
+      _id: otherRoom,
+      code: 'BE-202',
+      name: 'Defense Room 202',
+      type: 'ROOM',
+      location: 'Beta',
+      capacity: 30,
+      bookableHours: Array.from({ length: 7 }, (_, day) => ({
+        day: day + 1,
+        open: '07:00',
+        close: '21:00',
+      })),
+      isActive: true,
+      createdAt: now,
+    })
+    const eventId = await seedEvent('Concurrent Defense Event')
+    await reviewRepo.claim(eventId, String(officer), now)
+    // Different rooms and slots, so only the proposal itself can serialise the two writes.
+    const results = await Promise.allSettled(
+      [roomId, otherRoom].map((room, index) =>
+        defenseRepo.schedule(
+          eventId,
+          String(officer),
+          {
+            title: `Parallel Defense ${index}`,
+            startAt: new Date(now.getTime() + (120 + index * 24) * HOUR),
+            durationMinutes: 60,
+            propertyId: String(room),
+          },
+          now,
+        ),
+      ),
+    )
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1)
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({
+      reason: { kind: 'conflict' },
+    })
+    expect(
+      await ucmsModels.eventDefenseSessions!.countDocuments({
+        eventId: new Types.ObjectId(eventId),
+      }),
+    ).toBe(1)
   })
 })

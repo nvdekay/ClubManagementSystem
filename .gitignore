@@ -11,3 +11,9 @@ __pycache__/
 .DS_Store
 docs/07-demo-videos/
 .claude/worktrees/
+
+# Test coverage reports
+coverage/
+
+# Demo videos are too large for git; they are kept outside the repo
+*.mp4

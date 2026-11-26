@@ -18,3 +18,14 @@ sự kiện và ID tài liệu. Khi có file vừa import thì dùng file local 
 `usePageTransition` là hook giao diện thuần (không gọi API): `WorkspaceShell` và `PublicLayout` gắn ref
 của nó vào vùng nội dung để khi đổi đường dẫn thì cuộn về đầu trang và chạy hiệu ứng mờ-trượt nhẹ
 (bỏ qua lần render đầu và khi người dùng bật giảm chuyển động).
+
+`useNow` trả về thời điểm hiện tại (ms) và tự cập nhật theo chu kỳ (mặc định mỗi phút), dùng cho các kiểm tra
+theo khung thời gian (báo trước 24/72 giờ, cửa sổ check-in) để chúng không bị "đóng băng" ở lần render đầu.
+
+`useUnsavedChangesGuard(dirty)` hỏi lại trước khi rời một form còn thay đổi chưa lưu: điều hướng trong ứng dụng đi qua
+`useBlocker` + hộp xác nhận của `useConfirm`, đóng/tải lại tab đi qua `beforeunload` của trình duyệt. Gọi
+`allowNavigation()` ngay trước khi tự điều hướng sau khi lưu thành công. Dùng ở `ClubEventProposalPage` và `PolicyEditor`.
+
+`useWorkspacePermission(clubId, permission)` trả về người dùng có permission đó trong workspace CLB hay không (đọc từ
+`/auth/me`, chỉ để ẩn/hiện giao diện — server vẫn tự kiểm tra); `useClubWorkspace(clubId)` trả về chính workspace CLB
+khi trang cần nhiều permission hoặc tên CLB. Đừng tự viết lại `auth.data?.workspaces.find(...)` ở từng trang.

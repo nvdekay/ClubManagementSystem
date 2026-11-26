@@ -13,6 +13,7 @@ import { isBeforeToday } from '../../domain/membership.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function objectArray(value: unknown): Record<string, unknown>[] {
@@ -89,7 +90,7 @@ function mapRequest(doc: Record<string, unknown>): MembershipWithdrawalRequest {
 
 // Đổi lỗi trùng khoá Mongo (11000) thành DomainError conflict
 function duplicate(error: unknown): never {
-  if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+  if (isDuplicateKey(error)) {
     throw new DomainError('membership conflicts with an existing record', 'conflict')
   }
   throw error
@@ -252,6 +253,7 @@ export function mongoMembershipRepository(): MembershipRepository {
         positions
           .find({ clubId: club, isActive: true })
           .sort({ isLeaderRole: -1, isBoardSeat: -1, name: 1 })
+          .collation({ locale: 'vi' })
           .select('name isLeaderRole')
           .lean(),
       ])
@@ -522,9 +524,13 @@ export function mongoMembershipRepository(): MembershipRepository {
       const userId = new Types.ObjectId(input.userId)
       let requestId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
+        // Ghi __v của membership trước để hai đơn rút đồng thời tuần tự hoá trên cùng document
         const membership = await memberships
-          .findOne({ _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } })
-          .session(session)
+          .findOneAndUpdate(
+            { _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } },
+            { $inc: { __v: 1 } },
+            { session },
+          )
           .lean()
         if (!membership) {
           throw new DomainError('active membership not found', 'not_found')

@@ -6,7 +6,13 @@ import { smtpMailTransport, type SmtpSender } from '../../src/infra/mail/smtp-ma
 import { deliverNotifications } from '../../src/usecase/notification.js'
 
 const now = new Date('2026-11-07T03:00:00Z')
-const base: Config = { NODE_ENV: 'development', PORT: 3000, MONGO_URI: 'mongodb://x' }
+const base: Config = {
+  NODE_ENV: 'development',
+  PORT: 3000,
+  MONGO_URI: 'mongodb://x',
+  TRUST_PROXY: false,
+  API_DOCS: false,
+}
 const smtp = {
   SMTP_HOST: 'smtp.gmail.com',
   SMTP_PORT: '587',

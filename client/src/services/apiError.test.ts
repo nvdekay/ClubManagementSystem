@@ -4,6 +4,7 @@ import { apiErrors } from '@/i18n/apiErrors'
 import { clubEvents } from '@/i18n/clubEvents'
 import { resolveClubEventErrorDescriptor } from '@/pages/club/ClubEventErrorMessage'
 import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiFailure } from '@/services/apiRequest'
 import { actOnClubEvent, ClubEventError } from '@/services/clubEvents'
 
 beforeEach(async () => {
@@ -167,5 +168,105 @@ describe('localized API errors', () => {
       clubEvents.en.errors.manualCheckInOutsideForbidden,
     )
     expect(i18next.t(`clubEvents.errors.${unknown400.key}`)).toBe(clubEvents.en.errors.validation)
+  })
+})
+
+describe('apiRequest', () => {
+  it('sends JSON with the CSRF header and unwraps the data envelope', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ data: { id: 'x' } }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await apiRequest<{ id: string }>('/api/v1/things', {
+      method: 'POST',
+      csrfToken: 'token',
+      body: { name: 'a' },
+    })
+    expect(result).toEqual({ id: 'x' })
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/v1/things')
+    expect(init.method).toBe('POST')
+    expect(init.credentials).toBe('same-origin')
+    expect(init.headers).toEqual({ 'Content-Type': 'application/json', 'X-CSRF-Token': 'token' })
+    expect(init.body).toBe('{"name":"a"}')
+  })
+
+  it('passes file bodies through untouched and lets explicit headers set their type', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: 1 })))
+    vi.stubGlobal('fetch', fetchMock)
+    const file = new Blob(['pdf'], { type: 'application/pdf' })
+    await apiRequest('/api/v1/upload', {
+      method: 'POST',
+      csrfToken: 'token',
+      body: file,
+      headers: { 'Content-Type': 'application/pdf' },
+    })
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(init.body).toBe(file)
+    expect(init.headers).toEqual({ 'Content-Type': 'application/pdf', 'X-CSRF-Token': 'token' })
+  })
+
+  it('resolves empty success bodies to undefined', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })))
+    await expect(apiRequest('/api/v1/things', { method: 'DELETE' })).resolves.toBeUndefined()
+  })
+
+  it('throws ApiError carrying the HTTP status and raw message', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ message: 'policy is not configured' }), { status: 422 }),
+        ),
+    )
+    const error = await apiRequest('/api/v1/things').catch((failure: unknown) => failure)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).status).toBe(422)
+    expect((error as ApiError).rawMessage).toBe('policy is not configured')
+  })
+
+  it('falls back to the HTTP status when the error body is not JSON', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('<html>Bad gateway</html>', { status: 502 })),
+    )
+    const error = (await apiRequest('/api/v1/things').catch(
+      (failure: unknown) => failure,
+    )) as ApiError
+    expect(error.status).toBe(502)
+    expect(error.rawMessage).toBe('HTTP 502')
+    expect(error.message).toBe(apiErrors.vi.unavailable)
+  })
+
+  it('builds domain errors through toError with the parsed details', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: 'conflict', details: { field: 'name' } }), {
+          status: 409,
+        }),
+      ),
+    )
+    const toError = vi.fn((failure: ApiFailure) => new ApiError(failure.message, failure.status))
+    await apiRequest('/api/v1/things', { toError }).catch(() => undefined)
+    expect(toError).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 409, message: 'conflict', details: { field: 'name' } }),
+    )
+  })
+
+  it('keeps the status on specialised error subclasses', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: 'event schedule has blocking conflicts' }), {
+          status: 409,
+        }),
+      ),
+    )
+    const error = await actOnClubEvent('club', 'event', 'publish', {}, 'token').catch(
+      (failure: unknown) => failure,
+    )
+    expect((error as ClubEventError).status).toBe(409)
   })
 })

@@ -15,7 +15,7 @@ import {
 } from '../domain/facility-booking.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import type { PropertyRepository } from '../domain/property.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 export interface BookingDeps {
   repo: FacilityBookingRepository
@@ -23,19 +23,6 @@ export interface BookingDeps {
   auth: Pick<AuthRepository, 'systemRoleCodes'>
   properties: PropertyRepository
   policy: PolicyRepository
-}
-// Kiểm actor là ICPDP officer và trả id
-async function officer(deps: BookingDeps, actor: AccessActor | null) {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError('account locked', 'locked')
-  }
-  if (!(await deps.auth.systemRoleCodes(bookingId(actor.id))).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
 }
 // Kiểm quyền quản lý booking của CLB và trả id actor
 async function member(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
@@ -116,7 +103,7 @@ export async function listBookings(
   if (clubId) {
     await member(deps, actor, clubId, now)
   } else {
-    await officer(deps, actor)
+    await requireIcpdpOfficer(deps.auth, actor)
   }
   return deps.repo.list(clubId ? bookingId(clubId) : undefined)
 }
@@ -132,7 +119,7 @@ export async function getBooking(
     await member(deps, actor, clubId, now)
     return owned(deps, clubId, id, now)
   }
-  await officer(deps, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const detail = await deps.repo.find(bookingId(id), now)
   if (!detail) {
     throw new DomainError('booking not found', 'not_found')
@@ -198,7 +185,7 @@ export async function claimBooking(
   id: string,
   now: Date,
 ) {
-  return deps.repo.claim(bookingId(id), await officer(deps, actor), now)
+  return deps.repo.claim(bookingId(id), await requireIcpdpOfficer(deps.auth, actor), now)
 }
 // ICPDP duyệt, từ chối hoặc yêu cầu sửa booking
 export async function decideBooking(
@@ -208,7 +195,7 @@ export async function decideBooking(
   input: BookingDecisionInput,
   now: Date,
 ) {
-  const actorId = await officer(deps, actor)
+  const actorId = await requireIcpdpOfficer(deps.auth, actor)
   if (!['Approve', 'Reject', 'Request revision'].includes(input.outcome)) {
     throw new DomainError('invalid booking decision', 'validation')
   }
@@ -257,7 +244,7 @@ export async function propertyBookingConflicts(
   id: string,
   now: Date,
 ) {
-  await officer(deps, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   return deps.repo.blackoutConflicts(bookingId(id), now)
 }
 // Giải phóng các booking theo sự kiện hoặc CLB kèm lý do

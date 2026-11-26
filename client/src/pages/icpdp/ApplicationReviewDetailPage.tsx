@@ -26,6 +26,9 @@ import { cn } from '@/utils/cn'
 import { diffFields, type DiffField } from '@/utils/revisionDiff'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { openInNewTab } from '@/utils/openInNewTab'
+import { documentHref } from '@/utils/documentLinks'
+import { formatDate } from '@/utils/formatDate'
 
 const sectionKeys = ['club-information', 'founders', 'documents', 'other']
 const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const
@@ -64,10 +67,7 @@ export function ApplicationReviewDetailPage() {
   )
 
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
 
   function sectionLabel(section: string) {
@@ -148,8 +148,7 @@ export function ApplicationReviewDetailPage() {
       return
     }
     try {
-      const result = await documentAccess.mutateAsync({ id, documentId })
-      window.open(result.url, '_blank', 'noopener,noreferrer')
+      await openInNewTab(async () => (await documentAccess.mutateAsync({ id, documentId })).url)
     } catch {
       // Lỗi của mutation được hiển thị cạnh danh sách tài liệu.
     }
@@ -338,7 +337,7 @@ export function ApplicationReviewDetailPage() {
                   {currentVersion.snapshot.fanpageUrl ? (
                     <a
                       className="font-medium text-primary-app hover:underline"
-                      href={currentVersion.snapshot.fanpageUrl}
+                      href={documentHref(currentVersion.snapshot.fanpageUrl) ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

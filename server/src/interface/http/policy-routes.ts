@@ -1,13 +1,13 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import { DomainError } from '../../domain/errors.js'
 import type { PolicyManagementRepository, PolicySettings } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
 import { createPolicyVersion, listPolicyVersions } from '../../usecase/policy.js'
-import type { AccessActor } from '../../usecase/access.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor } from './request.js'
 
 export interface PolicyRouteDeps {
   repo: PolicyManagementRepository
@@ -85,15 +85,6 @@ export const policyCreateBody = policySettingsBody
     reason: z.string().max(1000).optional(),
   })
   .strict()
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Mount các route chính sách hệ thống của ICPDP
 export function policyRoutes(deps: PolicyRouteDeps): Router {

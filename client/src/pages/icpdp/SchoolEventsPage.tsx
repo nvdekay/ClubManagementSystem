@@ -28,6 +28,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { dateFormatter, formatDate } from '@/utils/formatDate'
 
 // Dịch trạng thái sự kiện cấp trường sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
@@ -215,7 +216,7 @@ function ClubPicker({
 // Danh sách các xung đột lịch của sự kiện
 function ConflictList({ items }: { items: ScheduleConflict[] }) {
   const { t, i18n } = useTranslation()
-  const format = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' })
+  const format = dateFormatter(i18n.language, { dateStyle: 'short', timeStyle: 'short' })
   return (
     <ul className="mt-2 space-y-1 text-sm">
       {items.map((item, index) => (
@@ -498,10 +499,7 @@ function SchoolEventList({ csrfToken }: { csrfToken: string }) {
   const list = useSchoolEvents(true)
   const [creating, setCreating] = useState(false)
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   return (
     <>
@@ -622,10 +620,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
   })
   const skipped = (useLocation().state as { skipped?: number } | null)?.skipped ?? 0
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
+    return formatDate(value, i18n.language)
   }
   const back = { to: '/workspace/school-events', label: t('schoolEvents.back') }
   if (query.isPending) {

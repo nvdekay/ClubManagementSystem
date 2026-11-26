@@ -3,6 +3,7 @@ import {
   MAX_INVOICE_PDF_BYTES,
   type VendorBankInfo,
 } from '@/services/sponsoredItems'
+import { formatDate } from '@/utils/formatDate'
 
 export const EMPTY_VENDOR: VendorBankInfo = {
   vendorName: '',
@@ -71,5 +72,5 @@ export function formatSponsoredMoney(value: number, language: string): string {
 
 // Format an ISO timestamp using the active locale
 export function formatSponsoredDateTime(value: string, language: string): string {
-  return new Date(value).toLocaleString(language)
+  return formatDate(value, language)
 }

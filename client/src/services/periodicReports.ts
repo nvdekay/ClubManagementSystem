@@ -151,6 +151,8 @@ export interface PeriodicReportDetail {
   events?: PeriodicEventEntry[]
   achievements?: PeriodicAchievementEntry[]
   customAnswers?: PeriodicCustomAnswer[]
+  /** Signed URL ngắn hạn cho từng tham chiếu ảnh minh chứng `ucms-evidence:` đã upload. */
+  evidenceUrls?: Record<string, string>
   campaign?: PeriodicCampaign
   systemData?: PeriodicSystemSnapshot
   preloadedFigures: PeriodFigures
@@ -237,4 +239,23 @@ export function recordMissingPeriodicReport(
   csrfToken: string,
 ): Promise<{ violationId: string }> {
   return request('/missing', mutation(csrfToken, input))
+}
+
+/** Tiền tố tham chiếu ảnh minh chứng đã upload lên kho file của hệ thống. */
+export const EVIDENCE_REFERENCE_PREFIX = 'ucms-evidence:'
+
+// Kiểm giá trị minh chứng là tham chiếu ảnh đã upload (không phải link ngoài)
+export function isEvidenceReference(value: string | undefined): boolean {
+  return Boolean(value?.startsWith(EVIDENCE_REFERENCE_PREFIX))
+}
+
+// URL để hiển thị minh chứng: tham chiếu đổi sang signed URL, link ngoài và data: URL cũ giữ nguyên
+export function evidenceDisplayUrl(
+  value: string | undefined,
+  evidenceUrls: Record<string, string> | undefined,
+): string | undefined {
+  if (!value) {
+    return undefined
+  }
+  return isEvidenceReference(value) ? evidenceUrls?.[value] : value
 }

@@ -29,6 +29,7 @@ import {
 } from '@/services/evaluations'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { formatDay } from '@/utils/formatDate'
 
 const metricKeys = [
   'registrations',
@@ -572,7 +573,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
   const editable = ['Draft', 'Data Ready', 'Under Review'].includes(item.state)
   const isLatest = (item.revisions[0]?.revisionNo ?? item.revisionNo) === item.revisionNo
   function date(value: string) {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   // Chạy một bước của đánh giá sau khi xác nhận nếu cần

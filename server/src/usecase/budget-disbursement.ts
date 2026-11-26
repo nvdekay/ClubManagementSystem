@@ -7,37 +7,7 @@ import {
   type NormalizedBudgetFlow,
 } from '../domain/budget-disbursement.js'
 import { DomainError } from '../domain/errors.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng id ngân sách
-function budgetId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid budget id', 'validation')
-  }
-  return value
-}
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // Chuẩn hóa và kiểm khoản giải ngân/hoàn trả (loại, số tiền, ngày, ghi chú)
 export function normalizedBudgetFlow(input: BudgetFlowInput, now: Date): NormalizedBudgetFlow {
@@ -69,7 +39,7 @@ export async function listBudgets(
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.list()
 }
 
@@ -80,8 +50,8 @@ export async function getBudget(
   actor: AccessActor | null,
   id: string,
 ) {
-  await officer(auth, actor)
-  const detail = await repo.find(budgetId(id))
+  await requireIcpdpOfficer(auth, actor)
+  const detail = await repo.find(parseObjectId(id, 'budget id'))
   if (!detail) {
     throw new DomainError('budget not found', 'not_found')
   }
@@ -97,9 +67,9 @@ export async function recordBudgetFlow(
   input: BudgetFlowInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   const flow = normalizedBudgetFlow(input, now)
-  const detail = await repo.find(budgetId(id))
+  const detail = await repo.find(parseObjectId(id, 'budget id'))
   if (!detail) {
     throw new DomainError('budget not found', 'not_found')
   }

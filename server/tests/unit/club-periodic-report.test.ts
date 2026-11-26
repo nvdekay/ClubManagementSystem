@@ -80,8 +80,7 @@ describe('UC38 periodic submission rules', () => {
           {
             title: ' Giải Nhất Hackathon ',
             description: ' Đạt giải nhất toàn trường ',
-            evidenceUrl:
-              'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+            evidenceUrl: `ucms-evidence:${clubId}:0123456789abcdef0123456789abcdef`,
           },
         ],
         customAnswers: [{ fieldId: 'f1', textValue: ' Có nhà tài trợ ' }],

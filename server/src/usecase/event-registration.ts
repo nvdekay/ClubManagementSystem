@@ -6,9 +6,7 @@ import type {
 } from '../domain/event-registration.js'
 import { validateEventRegistrationAnswers } from '../domain/event-registration.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { isObjectId, parseObjectId, type AccessActor } from './access.js'
 
 // Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
 function student(actor: AccessActor | null): string {
@@ -18,25 +16,17 @@ function student(actor: AccessActor | null): string {
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function id(value: string, label: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${label}`, 'validation')
-  }
-  return value
 }
 
 // Kiểm sự kiện đang mở đăng ký và sinh viên thuộc đối tượng được tham gia
 function assertOpen(context: EventRegistrationContext, now: Date): void {
   const event = context.event
   if (
-    !['Upcoming', 'PUBLIC'].includes(event.state) ||
+    event.state !== 'Upcoming' ||
     !event.registrationOpenAt ||
     !event.registrationCloseAt ||
     event.registrationOpenAt > now ||
@@ -57,14 +47,14 @@ export async function getEventRegistrationContext(
   eventId: string,
   now: Date,
 ) {
-  const result = await repo.context(id(eventId, 'event id'), student(actor))
+  const result = await repo.context(parseObjectId(eventId, 'event id'), student(actor))
   if (!result) {
     throw new DomainError('event not found', 'not_found')
   }
   return {
     ...result,
     registrationOpen:
-      ['Upcoming', 'PUBLIC'].includes(result.event.state) &&
+      result.event.state === 'Upcoming' &&
       Boolean(result.event.registrationOpenAt && result.event.registrationCloseAt) &&
       result.event.registrationOpenAt! <= now &&
       now < result.event.registrationCloseAt! &&
@@ -90,7 +80,7 @@ export async function registerForEvent(
   now: Date,
 ) {
   const studentId = student(actor)
-  const validEventId = id(eventId, 'event id')
+  const validEventId = parseObjectId(eventId, 'event id')
   const context = await repo.context(validEventId, studentId)
   if (!context) {
     throw new DomainError('event not found', 'not_found')
@@ -126,7 +116,7 @@ export async function cancelEventRegistration(
   now: Date,
 ) {
   const studentId = student(actor)
-  const validRegistrationId = id(registrationId, 'registration id')
+  const validRegistrationId = parseObjectId(registrationId, 'registration id')
   const registration = await repo.findOwned(validRegistrationId, studentId)
   if (!registration) {
     throw new DomainError('event registration not found', 'not_found')

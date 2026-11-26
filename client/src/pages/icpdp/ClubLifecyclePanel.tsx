@@ -13,6 +13,7 @@ import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { useClubLifecycle, useClubLifecycleAction } from '@/hooks/useClubLifecycle'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { cn } from '@/utils/cn'
+import { formatDay } from '@/utils/formatDate'
 
 type Decision = 'suspend' | 'reactivate' | 'dissolve'
 const choiceClass =
@@ -52,7 +53,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
   )
 
   function date(value: string): string {
-    return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
+    return formatDay(value, i18n.language)
   }
 
   function actionLabel(value: string): string {

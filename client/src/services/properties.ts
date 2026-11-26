@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type PropertyType = 'ROOM' | 'HALL' | 'OUTDOOR' | 'STAGE' | 'EQUIPMENT'
 
 /** `day` 1 = Thứ Hai … 7 = Chủ nhật; ngày không liệt kê thì không thể đặt. */
@@ -42,34 +43,19 @@ export class PropertyRequestError extends ApiError {
   }
 }
 
-// Gọi API /admin/properties và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/properties${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { field?: unknown }
-    } | null
-    throw new PropertyRequestError(
-      body?.message ?? `HTTP ${response.status}`,
-      response.status,
-      typeof body?.details?.field === 'string' ? body.details.field : undefined,
-    )
-  }
-  const body: { data: T } = await response.json()
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/properties${path}`, { ...options, toError: toPropertyError })
 }
 
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toPropertyError(failure: ApiFailure): Error {
+  const field = (failure.details as { field?: unknown } | undefined)?.field
+  return new PropertyRequestError(
+    failure.message,
+    failure.status,
+    typeof field === 'string' ? field : undefined,
+  )
 }
 
 // GET danh sách cơ sở vật chất
@@ -82,7 +68,7 @@ export function createProperty(
   input: PropertyDetails & { type: PropertyType },
   csrfToken: string,
 ): Promise<Property> {
-  return request('', mutation('POST', csrfToken, input))
+  return request('', { method: 'POST', csrfToken, body: input })
 }
 
 // PATCH cập nhật thông tin cơ sở vật chất
@@ -91,7 +77,7 @@ export function updateProperty(
   details: PropertyDetails,
   csrfToken: string,
 ): Promise<Property> {
-  return request(`/${encodeURIComponent(id)}`, mutation('PATCH', csrfToken, details))
+  return request(`/${encodeURIComponent(id)}`, { method: 'PATCH', csrfToken, body: details })
 }
 
 // POST /activation: bật hoặc tắt cơ sở vật chất
@@ -100,10 +86,14 @@ export function setPropertyActive(
   isActive: boolean,
   csrfToken: string,
 ): Promise<Property> {
-  return request(`/${encodeURIComponent(id)}/activation`, mutation('POST', csrfToken, { isActive }))
+  return request(`/${encodeURIComponent(id)}/activation`, {
+    method: 'POST',
+    csrfToken,
+    body: { isActive },
+  })
 }
 
 // DELETE cơ sở vật chất
 export function deleteProperty(id: string, csrfToken: string): Promise<{ deleted: true }> {
-  return request(`/${encodeURIComponent(id)}`, mutation('DELETE', csrfToken))
+  return request(`/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
 }

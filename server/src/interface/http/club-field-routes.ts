@@ -1,10 +1,8 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubFieldRepository } from '../../domain/club-field.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   createClubField,
   listClubFieldCatalog,
@@ -13,6 +11,7 @@ import {
 } from '../../usecase/club-field.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ClubFieldRouteDeps {
   repo: ClubFieldRepository
@@ -27,24 +26,6 @@ export const clubFieldBody = z
     sortOrder: z.number().int().min(0).max(10_000),
   })
   .strict()
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid club field request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Mount các route danh mục lĩnh vực CLB của ICPDP
 export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
@@ -63,7 +44,7 @@ export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(clubFieldBody, req.body),
+        parse(clubFieldBody, req.body, 'club field request'),
         new Date(),
       ),
       201,
@@ -77,8 +58,8 @@ export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(clubFieldBody, req.body),
+        parse(id, req.params.id, 'club field request'),
+        parse(clubFieldBody, req.body, 'club field request'),
         new Date(),
       ),
     )
@@ -91,7 +72,7 @@ export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'club field request'),
         new Date(),
       ),
     )

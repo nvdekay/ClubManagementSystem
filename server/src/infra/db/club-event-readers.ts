@@ -10,12 +10,9 @@ import {
 } from '../../domain/club-event.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Chuyển chuỗi id thành ObjectId
-function oid(id: string) {
-  return new Types.ObjectId(id)
-}
 // Chuyển giá trị tiền (Decimal/chuỗi) sang number
 export function eventMoney(value: unknown): number {
   return Number(String(value ?? 0))
@@ -104,9 +101,10 @@ export async function eventCancellationRequest(
     })
     .sort({ at: -1, _id: -1 })
     .lean()
-  if (!audit) {
-    return undefined
-  }
+  return audit ? cancellationFromAudit(audit) : undefined
+}
+// Dựng yêu cầu hủy từ dòng audit hủy sự kiện gần nhất
+function cancellationFromAudit(audit: Doc): EventCancellationRequest {
   const after = (audit.after as Doc | undefined) ?? {}
   const action = String(audit.action)
   const state =
@@ -122,6 +120,43 @@ export async function eventCancellationRequest(
     ...(after.reviewReason ? { reviewReason: String(after.reviewReason) } : {}),
     ...(state !== 'Pending' ? { decidedAt: audit.at as Date } : {}),
   }
+}
+// Lấy dòng audit mới nhất theo từng sự kiện bằng một aggregation (bản theo lô của các hàm trên)
+async function latestEventAudits(
+  eventIds: Types.ObjectId[],
+  actions: readonly string[],
+  sort: Record<string, 1 | -1>,
+): Promise<Map<string, Doc>> {
+  if (!eventIds.length) {
+    return new Map()
+  }
+  const rows = (await m.auditLogs!.aggregate([
+    { $match: { entityType: 'Event', entityId: { $in: eventIds }, action: { $in: actions } } },
+    { $sort: sort },
+    { $group: { _id: '$entityId', audit: { $first: '$$ROOT' } } },
+  ])) as { _id: unknown; audit: Doc }[]
+  return new Map(rows.map((row) => [String(row._id), row.audit]))
+}
+// Payload bản nháp/đề xuất mới nhất của nhiều sự kiện, giống eventDraftPayload
+export async function eventDraftPayloads(eventIds: Types.ObjectId[]): Promise<Map<string, Doc>> {
+  const audits = await latestEventAudits(eventIds, EVENT_PAYLOAD_ACTIONS, {
+    'after.eventVersion': -1,
+    at: -1,
+    _id: -1,
+  })
+  return new Map(
+    [...audits].map(([id, audit]) => [
+      id,
+      ((audit.after as Doc | undefined)?.payload ?? {}) as Doc,
+    ]),
+  )
+}
+// Yêu cầu hủy gần nhất của nhiều sự kiện, giống eventCancellationRequest
+export async function eventCancellationRequests(
+  eventIds: Types.ObjectId[],
+): Promise<Map<string, EventCancellationRequest>> {
+  const audits = await latestEventAudits(eventIds, EVENT_CANCELLATION_ACTIONS, { at: -1, _id: -1 })
+  return new Map([...audits].map(([id, audit]) => [id, cancellationFromAudit(audit)]))
 }
 // Đọc chi tiết sự kiện CLB gồm phiên bản, quyết định, booking, ngân sách
 export async function readClubEvent(
@@ -288,10 +323,7 @@ export async function readClubFeedback(
   if (events.length !== eventIds.length) {
     throw new DomainError('event not found', 'not_found')
   }
-  const policy = await m
-    .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-    .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-    .lean()
+  const policy = await policyAt(now)
   if (!policy) {
     throw new DomainError('policy is not configured', 'unavailable')
   }
