@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DomainError } from '../../src/domain/errors.js'
-import { errorHandler } from '../../src/interface/http/middleware.js'
+import { errorHandler, requestLogger } from '../../src/interface/http/middleware.js'
 
 function run(err: unknown, path = '/api/v1/users') {
   const out = { status: 0, body: undefined as unknown }
@@ -77,5 +77,61 @@ describe('errorHandler', () => {
       },
     })
     expect(error).toHaveBeenCalledOnce()
+  })
+
+  it('logs only name, message, code and stack of an unexpected error, never its fields', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const err = Object.assign(new Error('write failed'), {
+      code: 'E_WRITE',
+      document: { email: 'student@fpt.edu.vn' },
+    })
+    expect(run(err).status).toBe(500)
+    const logged = String(error.mock.calls[0]?.[0])
+    expect(logged).toContain('Error: write failed')
+    expect(logged).toContain('code=E_WRITE')
+    expect(logged).not.toContain('student@fpt.edu.vn')
+  })
+
+  it('maps an escaped Mongo duplicate key error to 409 conflict', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const err = Object.assign(new Error('E11000 duplicate key error dup key: { email: "x" }'), {
+      code: 11000,
+    })
+    const out = run(err)
+    expect(out).toEqual({
+      status: 409,
+      body: {
+        statusCode: 409,
+        error: 'conflict',
+        message: 'resource already exists',
+        timestamp: expect.any(String),
+        path: '/api/v1/users',
+      },
+    })
+    expect(String(warn.mock.calls[0]?.[0])).not.toContain('email')
+  })
+})
+
+describe('requestLogger', () => {
+  it('logs the path without the query string', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const listeners: Array<() => void> = []
+    const res = {
+      statusCode: 302,
+      on(event: string, listener: () => void) {
+        if (event === 'finish') {
+          listeners.push(listener)
+        }
+      },
+    }
+    requestLogger(
+      { method: 'GET', originalUrl: '/api/v1/auth/callback?code=secret&state=s' } as Request,
+      res as unknown as Response,
+      () => undefined,
+    )
+    listeners.forEach((listener) => listener())
+    const line = JSON.parse(String(log.mock.calls[0]?.[0])) as { path: string }
+    expect(line.path).toBe('/api/v1/auth/callback')
+    log.mockRestore()
   })
 })
