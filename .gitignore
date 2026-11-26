@@ -19,3 +19,8 @@ coverage/
 *.mp4
 # Mongo dumps can contain personal data
 *.archive.gz
+
+# Playwright e2e: minted session cookies, traces and reports
+client/e2e/.auth/
+client/e2e/test-results/
+client/e2e/playwright-report/
