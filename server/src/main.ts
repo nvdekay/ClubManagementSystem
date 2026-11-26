@@ -31,6 +31,7 @@ import {
   mailConfig,
   optionalAuthConfig,
   optionalCloudinaryConfig,
+  requireAuthConfig,
 } from './infra/config/index.js'
 import { ensureUcmsDatabase } from './infra/db/ucms-models.js'
 import {
@@ -87,7 +88,14 @@ import { cloudinaryRecruitmentFiles } from './infra/files/cloudinary-recruitment
 import { cloudinaryEventProposalFiles } from './infra/files/event-proposal-files.js'
 
 const config = loadConfig() // việc đầu tiên — thoát nếu env không hợp lệ
-const authConfig = optionalAuthConfig(config)
+// Production never runs without sign-in: a missing Auth config is a deployment mistake, so fail fast.
+const authConfig =
+  config.NODE_ENV === 'production' ? requireAuthConfig(config) : optionalAuthConfig(config)
+if (!authConfig) {
+  console.warn(
+    'auth configuration is not set: only public routes are mounted (fill every Auth variable in .env to enable sign-in)',
+  )
+}
 // EXT-02: dùng SMTP khi đã cấu hình (bắt buộc ở production); log transport chỉ dành cho môi trường dev.
 const mail = mailConfig(config)
 const mailTransport =
