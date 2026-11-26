@@ -25,6 +25,10 @@ vi phạm, lịch đặt, sự kiện nội bộ và lịch sử cơ cấu/ban �
 
 `PolicyPage` + `PolicyEditor` (UC04) chia chính sách theo luồng nghiệp vụ (Thành lập CLB, Hồ sơ CLB,
 Sự kiện, Năm học, Báo cáo); ICPDP bật/tắt field bắt buộc của form cố định, mỗi lần lưu tạo phiên bản mới.
+`PolicyEditor` giữ state form, menu nhóm và phần lưu; mỗi nhóm là một component riêng (`PolicyFoundingSection`,
+`PolicyProfileSection`, `PolicyEventsSection`, `PolicyCalendarSection`, `PolicyFinanceSection`, `PolicyReportsSection`)
+dùng `PolicyToggleTile`/`PolicyNumberSetting`/`PolicySubHeading`. Kiểu form, khởi tạo, kiểm tra, dựng payload và các key
+nhãn (dùng chung với `PolicyPage`) nằm trong `policyEditorForm.ts`. Rời trang khi còn thay đổi chưa lưu sẽ được hỏi lại.
 
 `ClubFieldsPage` quản lý danh mục lĩnh vực CLB sinh viên chọn khi lập hồ sơ: thêm, đổi tên/thứ tự,
 xoá (chưa ai dùng thì xoá hẳn, đang dùng thì ẩn khỏi danh sách chọn).

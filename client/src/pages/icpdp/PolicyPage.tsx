@@ -17,8 +17,8 @@ import {
   type PolicyVersion,
 } from '@/services/policy'
 import { cn } from '@/utils/cn'
+import { PolicyEditor } from '@/pages/icpdp/PolicyEditor'
 import {
-  PolicyEditor,
   deadlineLabelKey,
   foundingFieldKey,
   profileFieldKey,
@@ -26,7 +26,7 @@ import {
   sectionIcon,
   sectionTitleKey,
   type PolicySection,
-} from './PolicyEditor'
+} from '@/pages/icpdp/policyEditorForm'
 import { formatDate } from '@/utils/formatDate'
 
 const deadlineFields = [
