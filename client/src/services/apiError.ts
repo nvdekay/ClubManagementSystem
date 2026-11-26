@@ -1,5 +1,12 @@
 import i18next from 'i18next'
-import { apiErrorKeys, apiErrors, type ApiErrorKey } from '@/i18n/apiErrors'
+import { apiErrors } from '@/i18n/locales/en/apiErrors'
+
+type ApiErrorKey = keyof typeof apiErrors
+
+// API diagnostics stay in English (the English locale text); only their presentation is translated.
+const apiErrorKeys: Readonly<Record<string, ApiErrorKey>> = Object.fromEntries(
+  Object.entries(apiErrors).map(([key, value]) => [value, key as ApiErrorKey]),
+)
 
 /** Giữ nguyên thông tin chẩn đoán và chọn nội dung hiển thị theo ngôn ngữ hiện tại. */
 export class ApiError extends Error {
@@ -22,52 +29,32 @@ export class ApiError extends Error {
 function localizedApiMessage(message: string): string {
   const vietnamese = (i18next.resolvedLanguage ?? i18next.language)?.split('-')[0] === 'vi'
   if (!vietnamese) {
-    return message || apiErrors.en.unknown!
+    return message || apiErrors.unknown
   }
   const notice = /^submit at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(message)
   if (notice) {
-    return String(
-      i18next.t('apiErrors.eventNotice', {
-        hours: notice[1],
-        defaultValue: apiErrors.vi.eventNotice,
-      }),
-    )
+    return String(i18next.t('apiErrors.eventNotice', { hours: notice[1] }))
   }
   const internalNotice = /^internal event must start at least (\d+(?:\.\d+)?) hours from now$/.exec(
     message,
   )
   if (internalNotice) {
-    return String(
-      i18next.t('apiErrors.internalEventNotice', {
-        hours: internalNotice[1],
-        defaultValue: apiErrors.vi.internalEventNotice,
-      }),
-    )
+    return String(i18next.t('apiErrors.internalEventNotice', { hours: internalNotice[1] }))
   }
   const cancelNotice =
     /^(?:approved event cancellation must be requested|cancellation request must be submitted) at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(
       message,
     )
   if (cancelNotice) {
-    return String(
-      i18next.t('apiErrors.cancelNoticeHours', {
-        hours: cancelNotice[1],
-        defaultValue: apiErrors.vi.cancelNoticeHours,
-      }),
-    )
+    return String(i18next.t('apiErrors.cancelNoticeHours', { hours: cancelNotice[1] }))
   }
   const earlyStart =
     /^defense can only start at most (\d+) minutes before the scheduled start time$/.exec(message)
   if (earlyStart) {
-    return String(
-      i18next.t('apiErrors.defenseEarlyStart', {
-        minutes: earlyStart[1],
-        defaultValue: apiErrors.vi.defenseEarlyStart,
-      }),
-    )
+    return String(i18next.t('apiErrors.defenseEarlyStart', { minutes: earlyStart[1] }))
   }
   const key = Object.hasOwn(apiErrorKeys, message) ? apiErrorKeys[message]! : httpErrorKey(message)
-  return String(i18next.t(`apiErrors.${key}`, { defaultValue: apiErrors.vi[key] }))
+  return String(i18next.t(`apiErrors.${key}`))
 }
 
 // Quy mã trạng thái HTTP trong thông điệp lỗi về key i18n tương ứng
@@ -107,4 +94,9 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
     }
     throw error
   }
+}
+
+/** True when the error only carries the generic "request could not be completed" message. */
+export function isUnknownApiError(error: Error): boolean {
+  return error.message === i18next.t('apiErrors.unknown')
 }

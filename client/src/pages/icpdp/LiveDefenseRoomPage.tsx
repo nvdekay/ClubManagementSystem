@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useEventDefenseActions, useLiveDefenseSession } from '@/hooks/useEventDefense'
 import { useEventProposal } from '@/hooks/useEventProposalReviews'
-import { apiErrors } from '@/i18n/apiErrors'
+import { isUnknownApiError } from '@/services/apiError'
 import { ProposalDecisionPanel } from '@/pages/icpdp/ProposalDecisionPanel'
 import { SubmittedEventProposal } from '@/components/custom/SubmittedEventProposal'
 import { ProposalSectionComments } from '@/components/custom/ProposalSectionComments'
@@ -132,7 +132,7 @@ function resolveProposalError(error: Error | null | undefined, fallback: string)
   if (!error) {
     return fallback
   }
-  if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
+  if (isUnknownApiError(error)) {
     return fallback
   }
   return error.message || fallback

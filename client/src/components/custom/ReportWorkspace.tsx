@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { formatMoney } from '@/utils/formatMoney'
 import { formatDay } from '@/utils/formatDate'
-import type { accountability } from '@/i18n/accountability'
+import type { accountability } from '@/i18n/locales/en/accountability'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
@@ -34,7 +34,7 @@ import type {
 import { useConfirm } from '@/hooks/useConfirm'
 
 // Ánh xạ trạng thái báo cáo sự kiện sang key i18n
-function reportState(state: string): keyof typeof accountability.en {
+function reportState(state: string): keyof typeof accountability {
   return (
     (
       {
@@ -45,7 +45,7 @@ function reportState(state: string): keyof typeof accountability.en {
         Completed: 'completed',
         Closed: 'closed',
         'Report Submitted': 'submitted',
-      } as Record<string, keyof typeof accountability.en>
+      } as Record<string, keyof typeof accountability>
     )[state] ?? 'state'
   )
 }

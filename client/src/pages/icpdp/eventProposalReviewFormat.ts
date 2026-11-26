@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 
 import type { AppBadgeTone } from '@/components/ui/badge/AppBadge'
-import { apiErrors } from '@/i18n/apiErrors'
+import { isUnknownApiError } from '@/services/apiError'
 import type { EventProposalDocumentInfo } from '@/services/clubEvents'
 import type {
   ClubObligation,
@@ -32,7 +32,7 @@ export function resolveI18nError(error: Error | null | undefined, fallback: stri
   if (!error) {
     return fallback
   }
-  if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
+  if (isUnknownApiError(error)) {
     return fallback
   }
   return error.message || fallback

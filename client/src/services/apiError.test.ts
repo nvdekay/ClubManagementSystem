@@ -1,7 +1,9 @@
 import i18next from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiErrors } from '@/i18n/apiErrors'
-import { clubEvents } from '@/i18n/clubEvents'
+import { apiErrors as enApiErrors } from '@/i18n/locales/en/apiErrors'
+import { apiErrors as viApiErrors } from '@/i18n/locales/vi/apiErrors'
+import { clubEvents as enClubEvents } from '@/i18n/locales/en/clubEvents'
+import { clubEvents as viClubEvents } from '@/i18n/locales/vi/clubEvents'
 import { resolveClubEventErrorDescriptor } from '@/pages/club/ClubEventErrorMessage'
 import { ApiError, apiFetch } from '@/services/apiError'
 import { apiRequest, type ApiFailure } from '@/services/apiRequest'
@@ -12,8 +14,8 @@ beforeEach(async () => {
     lng: 'vi',
     fallbackLng: 'en',
     resources: {
-      en: { translation: { apiErrors: apiErrors.en, clubEvents: clubEvents.en } },
-      vi: { translation: { apiErrors: apiErrors.vi, clubEvents: clubEvents.vi } },
+      en: { translation: { apiErrors: enApiErrors, clubEvents: enClubEvents } },
+      vi: { translation: { apiErrors: viApiErrors, clubEvents: viClubEvents } },
     },
   })
 })
@@ -21,7 +23,7 @@ beforeEach(async () => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('localized API errors', () => {
-  it.each([
+  it.each<[string, keyof typeof viApiErrors]>([
     ['invalid check-in window', 'checkInWindow'],
     [
       'registration must open before closing and close no later than the start',
@@ -32,31 +34,31 @@ describe('localized API errors', () => {
     ['finalize the evaluation of every club before publishing', 'finalizeAll'],
   ])('translates %s and retains its diagnostics', (message, key) => {
     const error = new ApiError(message)
-    expect(error.message).toBe(apiErrors.vi[key])
+    expect(error.message).toBe(viApiErrors[key])
     expect(error.rawMessage).toBe(message)
   })
 
   it('updates an existing error when the language is switched', async () => {
     const error = new ApiError('invalid check-in window')
-    expect(error.message).toBe(apiErrors.vi.checkInWindow)
+    expect(error.message).toBe(viApiErrors.checkInWindow)
     await i18next.changeLanguage('en')
     expect(error.message).toBe('invalid check-in window')
     await i18next.changeLanguage('vi')
-    expect(error.message).toBe(apiErrors.vi.checkInWindow)
+    expect(error.message).toBe(viApiErrors.checkInWindow)
   })
 
-  it.each([
+  it.each<[string, keyof typeof viApiErrors]>([
     ['HTTP 401', 'unauthorized'],
     ['HTTP 403', 'forbidden'],
     ['HTTP 503', 'unavailable'],
     ['HTTP 500', 'server'],
   ])('localizes non-JSON HTTP fallback %s', (message, key) => {
-    expect(new ApiError(message).message).toBe(apiErrors.vi[key])
+    expect(new ApiError(message).message).toBe(viApiErrors[key])
   })
 
   it('does not leak unknown English API messages into Vietnamese UI', async () => {
     const error = new ApiError('unmapped server diagnostic')
-    expect(error.message).toBe(apiErrors.vi.unknown)
+    expect(error.message).toBe(viApiErrors.unknown)
     await i18next.changeLanguage('en')
     expect(error.message).toBe('unmapped server diagnostic')
   })
@@ -68,7 +70,7 @@ describe('localized API errors', () => {
   })
 
   it('treats object property names as unknown diagnostics', () => {
-    expect(new ApiError('toString').message).toBe(apiErrors.vi.unknown)
+    expect(new ApiError('toString').message).toBe(viApiErrors.unknown)
   })
 
   it('keeps specialized event errors and structured conflict details', async () => {
@@ -90,12 +92,12 @@ describe('localized API errors', () => {
     expect(error).toBeInstanceOf(ClubEventError)
     expect(error).toBeInstanceOf(Error)
     expect((error as ClubEventError).details.conflicts).toEqual(['event-2'])
-    expect((error as ClubEventError).message).toBe(apiErrors.vi.scheduleConflict)
+    expect((error as ClubEventError).message).toBe(viApiErrors.scheduleConflict)
   })
 
   it('translates browser network failures', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
-    await expect(apiFetch('/api/v1/test')).rejects.toMatchObject({ message: apiErrors.vi.network })
+    await expect(apiFetch('/api/v1/test')).rejects.toMatchObject({ message: viApiErrors.network })
   })
 
   it('preserves aborted requests', async () => {
@@ -133,13 +135,9 @@ describe('localized API errors', () => {
       expect(byDetail.key).toBe(expectedKey)
       const byMessage = resolveClubEventErrorDescriptor(raw, 400)
       expect(byMessage.key).toBe(expectedKey)
-      expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).toBe(
-        clubEvents.vi.errors[expectedKey],
-      )
+      expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).toBe(viClubEvents.errors[expectedKey])
       await i18next.changeLanguage('en')
-      expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).toBe(
-        clubEvents.en.errors[expectedKey],
-      )
+      expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).toBe(enClubEvents.errors[expectedKey])
       expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).not.toBe(raw)
     },
   )
@@ -159,15 +157,15 @@ describe('localized API errors', () => {
     )
     expect(outsideCheckIn).toEqual({ key: 'manualCheckInOutsideForbidden' })
     expect(i18next.t(`clubEvents.errors.${outsideCheckIn.key}`)).toBe(
-      clubEvents.vi.errors.manualCheckInOutsideForbidden,
+      viClubEvents.errors.manualCheckInOutsideForbidden,
     )
     const unknown400 = resolveClubEventErrorDescriptor('some raw backend validation text', 400)
     expect(unknown400.key).toBe('validation')
     await i18next.changeLanguage('en')
     expect(i18next.t(`clubEvents.errors.${outsideCheckIn.key}`)).toBe(
-      clubEvents.en.errors.manualCheckInOutsideForbidden,
+      enClubEvents.errors.manualCheckInOutsideForbidden,
     )
-    expect(i18next.t(`clubEvents.errors.${unknown400.key}`)).toBe(clubEvents.en.errors.validation)
+    expect(i18next.t(`clubEvents.errors.${unknown400.key}`)).toBe(enClubEvents.errors.validation)
   })
 })
 
@@ -236,7 +234,7 @@ describe('apiRequest', () => {
     )) as ApiError
     expect(error.status).toBe(502)
     expect(error.rawMessage).toBe('HTTP 502')
-    expect(error.message).toBe(apiErrors.vi.unavailable)
+    expect(error.message).toBe(viApiErrors.unavailable)
   })
 
   it('builds domain errors through toError with the parsed details', async () => {
