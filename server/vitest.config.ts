@@ -9,6 +9,18 @@ try {
 }
 
 export default defineConfig({
-  // Removes databases left behind by integration runs that were killed before afterAll ran.
-  test: { globalSetup: ['./tests/global-setup.ts'] },
+  test: {
+    // Removes databases left behind by integration runs that were killed before afterAll ran.
+    globalSetup: ['./tests/global-setup.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: [
+        'src/infra/db/ucms-schema.generated.ts',
+        'src/infra/db/seed*.ts',
+        'src/infra/db/*demo*.ts',
+      ],
+      reporter: ['text-summary', 'html'],
+    },
+  },
 })
