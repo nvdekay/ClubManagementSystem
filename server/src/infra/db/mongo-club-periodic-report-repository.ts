@@ -6,7 +6,7 @@ import {
 } from '../../domain/club-periodic-report.js'
 import { DomainError } from '../../domain/errors.js'
 import { openAccountabilityTask } from './accountability-workflow.js'
-import { queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
 import { assertEventWriteAccess } from './club-event-access.js'
 import {
   findPeriodicCampaign,
@@ -332,15 +332,13 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
           .userRoleAssignments!.find({ roleId: { $in: roles }, revokedAt: null })
           .session(session)
           .distinct('userId')
-        await queueNotifications(
-          session,
-          officers,
-          'PERIODIC_REPORT_SUBMITTED',
-          'PeriodicReport',
-          report._id as Types.ObjectId,
-          { clubId, periodCode, versionNo },
+        await queueNotifications(session, officers, {
+          eventCode: 'PERIODIC_REPORT_SUBMITTED',
+          entityType: 'PeriodicReport',
+          entityId: report._id as Types.ObjectId,
+          payload: { clubId, periodCode, versionNo },
           now,
-        )
+        })
       })
       return required(id, clubId)
     },

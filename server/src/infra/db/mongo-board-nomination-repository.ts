@@ -13,6 +13,7 @@ import type {
 import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
 import { MAX_VICE_LEADERS } from '../../domain/club-application.js'
 import { DomainError } from '../../domain/errors.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
 
@@ -85,7 +86,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
   const roleAssignments = ucmsModels.userRoleAssignments!
   const systemRoles = ucmsModels.roles!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
 
   async function detail(
     nominationId: Types.ObjectId,
@@ -525,23 +525,13 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           { session },
         )
         const recipientIds = await officerIds(session)
-        if (recipientIds.length) {
-          await notifications.insertMany(
-            recipientIds.map((recipientUserId) => ({
-              recipientUserId,
-              eventCode: 'BOARD_NOMINATION_SUBMITTED',
-              entityType: 'BoardNomination',
-              entityId: nominationId,
-              channels: ['IN_APP'],
-              payload: { clubId, clubName: String(club.name) },
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            })),
-            { session },
-          )
-        }
+        await queueNotifications(session, recipientIds, {
+          eventCode: 'BOARD_NOMINATION_SUBMITTED',
+          entityType: 'BoardNomination',
+          entityId: nominationId,
+          payload: { clubId, clubName: String(club.name) },
+          now,
+        })
         await audits.create(
           [
             {
@@ -951,36 +941,22 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           { session },
         )
         const recipients = [
-          ...new Set(
-            [
-              String(nomination.submittedBy),
-              ...pendingSeats.map((seat) =>
-                String(
-                  membershipsForSeats.find(
-                    (membership) => String(membership._id) === String(seat.membershipId),
-                  )?.userId ?? '',
-                ),
-              ),
-            ].filter(Boolean),
+          String(nomination.submittedBy),
+          ...pendingSeats.map((seat) =>
+            String(
+              membershipsForSeats.find(
+                (membership) => String(membership._id) === String(seat.membershipId),
+              )?.userId ?? '',
+            ),
           ),
-        ].map((value) => new Types.ObjectId(value))
-        if (recipients.length) {
-          await notifications.insertMany(
-            recipients.map((recipientUserId) => ({
-              recipientUserId,
-              eventCode: 'BOARD_NOMINATION_DECIDED',
-              entityType: 'BoardNomination',
-              entityId: id,
-              channels: ['IN_APP'],
-              payload: { state: nominationState, activatedClub: foundingLeaderConfirmed },
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            })),
-            { session },
-          )
-        }
+        ]
+        await queueNotifications(session, recipients, {
+          eventCode: 'BOARD_NOMINATION_DECIDED',
+          entityType: 'BoardNomination',
+          entityId: id,
+          payload: { state: nominationState, activatedClub: foundingLeaderConfirmed },
+          now,
+        })
       })
       const result = await detail(id)
       if (!result) {

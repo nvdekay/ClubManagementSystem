@@ -1,5 +1,4 @@
 import { Types, type ClientSession } from 'mongoose'
-import { notificationChannels } from '../../domain/notification.js'
 import { ucmsModels } from './ucms-models.js'
 import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
 
@@ -38,38 +37,6 @@ export async function clubBoardUserIds(
     .session(session ?? null)
     .distinct('userId')
   return userIds.map((userId) => new Types.ObjectId(String(userId)))
-}
-
-// Xếp hàng thông báo cho người nhận (không trùng) trong transaction
-/** Xếp hàng một thông báo cho mỗi người nhận (không trùng) trong transaction của bên gọi (kèm email cho các sự kiện SRS §8.2). */
-export async function queueNotifications(
-  session: ClientSession,
-  recipients: readonly unknown[],
-  eventCode: string,
-  entityType: string,
-  entityId: Types.ObjectId,
-  payload: Record<string, unknown>,
-  now: Date,
-): Promise<void> {
-  const unique = [...new Set(recipients.filter(Boolean).map(String))]
-  if (!unique.length) {
-    return
-  }
-  await ucmsModels.notifications!.insertMany(
-    unique.map((userId) => ({
-      recipientUserId: new Types.ObjectId(userId),
-      eventCode,
-      entityType,
-      entityId,
-      channels: notificationChannels(eventCode),
-      payload,
-      state: 'Queued',
-      dueAt: now,
-      attempts: 0,
-      createdAt: now,
-    })),
-    { session },
-  )
 }
 
 // BR06: tìm user đã là Club Leader CLB khác trong nhiệm kỳ chồng lấn

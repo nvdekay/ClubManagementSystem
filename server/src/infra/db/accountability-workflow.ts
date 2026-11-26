@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
-import { clubBoardUserIds, queueNotifications } from './club-board.js'
+import { queueNotifications } from './repo-helpers.js'
+import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels as m } from './ucms-models.js'
 
 // Khóa tài khoản và xác nhận actor là ICPDP officer đang Active
@@ -74,11 +75,7 @@ export async function accountabilityAudit(
   await queueNotifications(
     session,
     [...(await clubBoardUserIds(clubId, session)), submitted?.actorId],
-    action,
-    entityType,
-    entityId,
-    { action, reason },
-    now,
+    { eventCode: action, entityType, entityId, payload: { action, reason }, now },
   )
 }
 // Tìm task review đang Open mới nhất của một đối tượng

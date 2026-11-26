@@ -13,7 +13,7 @@ import type {
 import { validateRecruitmentAnswers } from '../../domain/recruitment-application.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey, queueNotification } from './repo-helpers.js'
+import { isDuplicateKey, queueNotification, queueNotifications } from './repo-helpers.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function records(value: unknown): Record<string, unknown>[] {
@@ -150,7 +150,6 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
   const memberships = ucmsModels.clubMemberships!
   const positions = ucmsModels.clubPositions!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
 
   // Tìm đợt tuyển đang mở nhận đơn tại thời điểm now
   async function openCampaign(campaignId: Types.ObjectId, now: Date, session?: ClientSession) {
@@ -221,28 +220,17 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     session: ClientSession
   }) {
     const recipients = await reviewerIds(input.clubId, input.now, input.session)
-    if (!recipients.length) {
-      return
-    }
-    await notifications.insertMany(
-      recipients.map((recipientUserId) => ({
-        recipientUserId,
-        eventCode: input.eventCode,
-        entityType: 'RecruitmentApplication',
-        entityId: input.applicationId,
-        channels: ['IN_APP'],
-        payload: {
-          applicationId: String(input.applicationId),
-          campaignId: String(input.campaignId),
-          position: input.position,
-        },
-        state: 'Queued',
-        dueAt: input.now,
-        attempts: 0,
-        createdAt: input.now,
-      })),
-      { session: input.session },
-    )
+    await queueNotifications(input.session, recipients, {
+      eventCode: input.eventCode,
+      entityType: 'RecruitmentApplication',
+      entityId: input.applicationId,
+      payload: {
+        applicationId: String(input.applicationId),
+        campaignId: String(input.campaignId),
+        position: input.position,
+      },
+      now: input.now,
+    })
   }
 
   return {

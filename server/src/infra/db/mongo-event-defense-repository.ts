@@ -14,7 +14,6 @@ import {
   type EventDefenseSession,
 } from '../../domain/event-defense.js'
 import type { EventProposalReviewRepository } from '../../domain/event-proposal-review.js'
-import { notificationChannels } from '../../domain/notification.js'
 import { cancelEventInSession } from './event-cancellation.js'
 import {
   applyProposalDecisionInSession,
@@ -24,7 +23,7 @@ import {
   oid,
 } from './event-defense-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { queueNotification } from './repo-helpers.js'
+import { queueNotification, queueNotifications } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ACTIVE_STATES_ARRAY = [...ACTIVE_DEFENSE_STATES]
@@ -135,25 +134,13 @@ async function notifyRecipients(
   now: Date,
   session: ClientSession,
 ): Promise<void> {
-  if (!recipientIds.length) {
-    return
-  }
-  const unique = [...new Map(recipientIds.map((id) => [String(id), id])).values()]
-  await m.notifications!.create(
-    unique.map((recipientUserId) => ({
-      recipientUserId,
-      eventCode,
-      entityType: 'Event',
-      entityId: eventId,
-      channels: notificationChannels(eventCode),
-      payload,
-      state: 'Queued',
-      dueAt: now,
-      attempts: 0,
-      createdAt: now,
-    })),
-    { session, ordered: true },
-  )
+  await queueNotifications(session, recipientIds, {
+    eventCode,
+    entityType: 'Event',
+    entityId: eventId,
+    payload,
+    now,
+  })
 }
 
 // Repository phiên bảo vệ đề xuất sự kiện trước ICPDP

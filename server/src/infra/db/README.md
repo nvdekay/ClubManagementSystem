@@ -115,7 +115,7 @@ xác nhận, kế hoạch UC13 đã xác nhận, hoặc nhiệm kỳ khởi lậ
 `mongo-notification-repository.ts` (19/10/2026, NTF-04/SCH-10): hộp thông báo in-app của người dùng (kèm `clubId`
 suy ra từ payload hoặc thực thể để client dựng link) và outbox cho worker gửi email — claim nguyên tử bằng lease trên
 `dueAt`, mỗi lần thử ghi `emailDeliveryLogs`. Kênh email do `notificationChannels()` của domain quyết định, được
-`queueNotifications` (`club-board.ts`) và các repository hồ sơ thành lập, đề xuất sự kiện, booking dùng. Lọc theo
+`queueNotification`/`queueNotifications` (`repo-helpers.ts`, 26/11/2026 — mọi nơi xếp hàng thông báo đều đi qua hai hàm này) dùng. Lọc theo
 workspace (01/11/2026): `scope` sinh viên/ICPDP/CLB lọc ở DB theo danh sách `eventCode` của domain; `scope=club` kèm
 `clubId` thì trước hết suy CLB cho các dòng CLB chưa có trường `clubId` của người dùng và lưu lại (null = không thuộc
 CLB nào), rồi lọc và phân trang ngay ở DB (index `ix_notification_club`), nên số chưa đọc luôn khớp danh sách. Mã

@@ -10,6 +10,7 @@ import type {
   RecruitmentSelectionStep,
 } from '../../domain/recruitment-campaign.js'
 import { DomainError } from '../../domain/errors.js'
+import { queueNotifications } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
@@ -135,7 +136,6 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
   const applications = ucmsModels.recruitmentApplications!
   const clubs = ucmsModels.clubs!
   const audits = ucmsModels.auditLogs!
-  const notifications = ucmsModels.notifications!
 
   return {
     // Liệt kê đợt tuyển của CLB, mới nhất trước
@@ -388,23 +388,13 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
           ],
           { session },
         )
-        if (recipientIds.length) {
-          await notifications.insertMany(
-            recipientIds.map((recipientUserId) => ({
-              recipientUserId,
-              eventCode: 'RECRUITMENT_CAMPAIGN_CANCELLED',
-              entityType: 'RecruitmentCampaign',
-              entityId: campaignObjectId,
-              channels: ['IN_APP'],
-              payload: { campaignId: String(campaignObjectId), title: String(current.title) },
-              state: 'Queued',
-              dueAt: now,
-              attempts: 0,
-              createdAt: now,
-            })),
-            { session },
-          )
-        }
+        await queueNotifications(session, recipientIds, {
+          eventCode: 'RECRUITMENT_CAMPAIGN_CANCELLED',
+          entityType: 'RecruitmentCampaign',
+          entityId: campaignObjectId,
+          payload: { campaignId: String(campaignObjectId), title: String(current.title) },
+          now,
+        })
       })
       const cancelled = await campaigns.findById(campaignObjectId).lean()
       if (!cancelled) {
