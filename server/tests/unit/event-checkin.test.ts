@@ -200,9 +200,11 @@ describe('event check-in (UC31)', () => {
   })
 
   it("lists the student's check-ins with their feedback windows", async () => {
-    expect(await listMyAttendances(repo(), policy, actor, now)).toEqual([
+    expect(await listMyAttendances(repo(), policy, actor)).toEqual([
       { ...attendance(), feedbackOpensAt: now, feedbackClosesAt: new Date('2026-10-13T12:00:00Z') },
     ])
     expect(feedbackWindow(attendance(), null).feedbackClosesAt).toBeNull()
+    // The window comes from the policy in force at the event's end, not at listing time.
+    expect(policy.findEffective).toHaveBeenLastCalledWith(attendance().eventEndAt)
   })
 })

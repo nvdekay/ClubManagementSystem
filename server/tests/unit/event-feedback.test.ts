@@ -150,4 +150,20 @@ describe('event feedback (UC48)', () => {
       distribution: { 1: 0, 2: 0, 3: 0, 4: 2, 5: 1 },
     })
   })
+
+  it('uses the feedback window of the policy in force when the event ended', async () => {
+    // A later policy shortened the window to 1h; the event ended under the 72h policy.
+    const findEffective = vi.fn(async (at: Date) => ({
+      feedbackWindowHours: at <= eventEndAt ? 72 : 1,
+    }))
+    const versioned = { findEffective } as unknown as PolicyRepository
+    const later = new Date('2026-10-12T12:00:00Z')
+    const context = await getEventFeedbackContext(repo(), versioned, actor, eventId, later)
+    expect(findEffective).toHaveBeenCalledWith(eventEndAt)
+    expect(context).toMatchObject({
+      canSubmit: true,
+      closesAt: new Date('2026-10-13T12:00:00Z'),
+    })
+    await submitEventFeedback(repo(), versioned, actor, eventId, input, later)
+  })
 })

@@ -59,7 +59,7 @@ export function eventCheckInRoutes(deps: EventCheckInRouteDeps): Router {
   })
   // Liệt kê lịch sử điểm danh của tôi
   router.get('/attendances/mine', authGuard(guard, false), async (_req, res) => {
-    ok(res, await listMyAttendances(deps.repo, deps.policy, actor(res), new Date()))
+    ok(res, await listMyAttendances(deps.repo, deps.policy, actor(res)))
   })
   return router
 }

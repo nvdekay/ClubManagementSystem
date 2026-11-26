@@ -32,9 +32,10 @@ function eventId(value: string): string {
   return value
 }
 
-// Lấy số giờ cửa sổ feedback theo chính sách hiện hành
-async function windowHours(policy: PolicyRepository, now: Date): Promise<number | null> {
-  return (await policy.findEffective(now))?.feedbackWindowHours ?? null
+// The window is the policy's in force when the event ended, so a later policy edit cannot
+// reopen or cut short the window of an event that already finished.
+async function windowHours(policy: PolicyRepository, eventEndAt: Date): Promise<number | null> {
+  return (await policy.findEffective(eventEndAt))?.feedbackWindowHours ?? null
 }
 
 // Cho biết sinh viên có thể gửi feedback sự kiện không và feedback đã gửi
@@ -53,7 +54,10 @@ export async function getEventFeedbackContext(
   if (!target.attendance) {
     return { attended: false, canSubmit: false, opensAt: null, closesAt: null, feedback: null }
   }
-  const window = feedbackWindowFor(target.attendance, await windowHours(policy, now))
+  const window = feedbackWindowFor(
+    target.attendance,
+    await windowHours(policy, target.attendance.eventEndAt),
+  )
   return {
     attended: true,
     canSubmit: !target.feedback && isFeedbackWindowOpen(window, now),
@@ -91,7 +95,10 @@ export async function submitEventFeedback(
     throw new DomainError('feedback was already submitted for this event', 'conflict')
   }
   if (
-    !isFeedbackWindowOpen(feedbackWindowFor(target.attendance, await windowHours(policy, now)), now)
+    !isFeedbackWindowOpen(
+      feedbackWindowFor(target.attendance, await windowHours(policy, target.attendance.eventEndAt)),
+      now,
+    )
   ) {
     throw new DomainError('the feedback window for this event has closed', 'conflict')
   }

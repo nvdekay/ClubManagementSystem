@@ -26,9 +26,9 @@ function student(actor: AccessActor | null): string {
   return actor.id
 }
 
-// Lấy số giờ mở cửa sổ feedback theo chính sách hiện hành
-async function feedbackHours(policy: PolicyRepository, now: Date): Promise<number | null> {
-  return (await policy.findEffective(now))?.feedbackWindowHours ?? null
+// The feedback window comes from the policy in force when the event ended, not the current one.
+async function feedbackHours(policy: PolicyRepository, eventEndAt: Date): Promise<number | null> {
+  return (await policy.findEffective(eventEndAt))?.feedbackWindowHours ?? null
 }
 
 // Gắn thông tin cửa sổ feedback vào bản ghi điểm danh
@@ -55,7 +55,10 @@ export async function checkInToEvent(
   }
   // E1: check-in lặp lại trả về bản ghi đầu tiên không đổi (BR18), kể cả sau khung giờ.
   if (target.attendance) {
-    return { ...view(target.attendance, await feedbackHours(policy, now)), alreadyCheckedIn: true }
+    return {
+      ...view(target.attendance, await feedbackHours(policy, target.attendance.eventEndAt)),
+      alreadyCheckedIn: true,
+    }
   }
   const { event } = target
   if (!event.published || !(checkInStates as readonly string[]).includes(event.state)) {
@@ -82,7 +85,7 @@ export async function checkInToEvent(
   }
   const result = await repo.checkIn({ eventId, studentId, method, now })
   return {
-    ...view(result.attendance, await feedbackHours(policy, now)),
+    ...view(result.attendance, await feedbackHours(policy, result.attendance.eventEndAt)),
     alreadyCheckedIn: !result.created,
   }
 }
@@ -92,9 +95,18 @@ export async function listMyAttendances(
   repo: EventCheckInRepository,
   policy: PolicyRepository,
   actor: AccessActor | null,
-  now: Date,
 ) {
   const studentId = student(actor)
-  const [items, hours] = await Promise.all([repo.listMine(studentId), feedbackHours(policy, now)])
-  return items.map((item) => view(item, hours))
+  const items = await repo.listMine(studentId)
+  // One policy lookup per distinct event end time.
+  const hoursByEnd = new Map<number, Promise<number | null>>()
+  return Promise.all(
+    items.map(async (item) => {
+      const key = item.eventEndAt.getTime()
+      if (!hoursByEnd.has(key)) {
+        hoursByEnd.set(key, feedbackHours(policy, item.eventEndAt))
+      }
+      return view(item, await hoursByEnd.get(key)!)
+    }),
+  )
 }
