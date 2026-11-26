@@ -17,7 +17,6 @@ export function useEvaluationSchemes(enabled: boolean) {
     queryKey: [...schemesKeyRoot, 'catalogue'],
     queryFn: ({ signal }) => fetchSchemes(signal),
     enabled,
-    retry: false,
   })
 }
 

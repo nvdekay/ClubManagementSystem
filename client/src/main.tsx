@@ -1,9 +1,11 @@
 import './index.css'
 import './i18n' // khởi tạo i18next trước lần render đầu tiên
 import { applyInitialTheme } from './hooks/useTheme.js'
+import { markSignedOut } from './hooks/useAuth.js'
+import { isUnauthorized, shouldRetryQuery } from './utils/queryRetry.js'
 import { lazy, StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router'
 import { App } from './App.js'
 import { AppConfirmProvider } from './components/ui/dialog/AppConfirmProvider.js'
@@ -255,9 +257,21 @@ const StudentHomePage = lazy(() =>
   import('@/pages/student/StudentHomePage').then((m) => ({ default: m.StudentHomePage })),
 )
 
+// Any request answered 401 means the session is gone: drop it so the shell redirects to /login.
+function handleUnauthorized(error: unknown) {
+  if (isUnauthorized(error)) {
+    markSignedOut(queryClient)
+  }
+}
+
 const queryClient = new QueryClient({
-  // Dữ liệu trang được coi là mới trong 30 giây — quay lại trang trong khoảng này sẽ dùng cache, không tải lại.
-  defaultOptions: { queries: { staleTime: 30_000 } },
+  queryCache: new QueryCache({ onError: handleUnauthorized }),
+  mutationCache: new MutationCache({ onError: handleUnauthorized }),
+  defaultOptions: {
+    // Dữ liệu trang được coi là mới trong 30 giây — quay lại trang trong khoảng này sẽ dùng cache, không tải lại.
+    // 4xx never retries; 5xx and network failures retry at most twice (utils/queryRetry).
+    queries: { staleTime: 30_000, retry: shouldRetryQuery },
+  },
 })
 
 applyInitialTheme()

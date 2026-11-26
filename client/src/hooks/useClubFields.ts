@@ -16,7 +16,6 @@ export function useClubFields(enabled: boolean) {
     queryKey: [...clubFieldsKeyRoot, 'catalog'],
     queryFn: ({ signal }) => fetchClubFields(signal),
     enabled,
-    retry: false,
   })
 }
 

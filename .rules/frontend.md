@@ -103,6 +103,10 @@ component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → servic
 2. Dùng `try`/`catch` hoặc `.catch()` thuần. Dự án không cài thư viện xử lý lỗi nào; đừng thêm (`neverthrow`, …) cho nhu cầu ở quy mô này.
 3. Hiển thị lỗi ngay trong component như `App.tsx` đang làm; dùng `appToast` (`@/components/ui/toast/AppToast`, chạy trên sonner) cho các thông báo thoáng qua mang tính xuyên suốt.
 4. Giao diện lúc tải: chỉ dùng skeleton cho lần tải *đầu tiên* của dữ liệu bất đồng bộ (`isPending`), ghép từ `AppSkeleton` với kích thước khớp bố cục thật (xem prop `loading` của `AppTable` và thẻ demo AppSkeleton trong `App.tsx`) — không tạo file `*Skeleton` cho từng component, và không đặt skeleton ở nơi nội dung thật vốn tĩnh hoặc nơi `keepPreviousData` đã giữ dữ liệu cũ trên màn hình. Không bao giờ hiển thị thông điệp trạng thái rỗng khi lần tải đầu còn đang chạy.
+5. Chính sách lỗi chung nằm ở `QueryClient` trong `main.tsx`, đừng lặp lại ở từng hook: query không retry lỗi 4xx
+   (`ApiError.status`), lỗi 5xx/mạng retry tối đa 2 lần (`utils/queryRetry.ts`) — không viết `retry: false` trong hook.
+   Mọi query/mutation nhận 401 đều đặt phiên `['auth','me']` về `null` (`markSignedOut`), nên `WorkspaceShell` tự chuyển
+   về `/login?returnTo=…`; lỗi 5xx/mạng khi tải phiên hiện thông báo kèm nút thử lại thay vì coi như đã đăng xuất.
 
 ## Quy tắc về styling
 

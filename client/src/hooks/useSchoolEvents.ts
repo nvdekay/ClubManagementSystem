@@ -20,7 +20,6 @@ export function useSchoolEvents(enabled: boolean) {
     queryKey: [...schoolEventKey, 'list'],
     queryFn: ({ signal }) => fetchSchoolEvents(signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -30,7 +29,6 @@ export function useSchoolEvent(id: string | undefined, enabled: boolean) {
     queryKey: [...schoolEventKey, 'detail', id],
     queryFn: ({ signal }) => fetchSchoolEvent(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 
@@ -43,7 +41,6 @@ export function useScheduleConflicts(
     queryKey: [...schoolEventKey, 'conflicts', input],
     queryFn: ({ signal }) => fetchScheduleConflicts(input!, signal),
     enabled: Boolean(input),
-    retry: false,
   })
 }
 

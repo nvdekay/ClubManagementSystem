@@ -18,7 +18,6 @@ export function usePeriodicOverview(period: string | undefined, enabled: boolean
     queryKey: [...periodicKey, 'overview', period ?? ''],
     queryFn: ({ signal }) => fetchPeriodicOverview(period, signal),
     enabled,
-    retry: false,
   })
 }
 
@@ -40,7 +39,6 @@ export function usePeriodicReport(id: string | undefined, enabled: boolean) {
     queryKey: [...periodicKey, 'detail', id],
     queryFn: ({ signal }) => fetchPeriodicReport(id!, signal),
     enabled: enabled && Boolean(id),
-    retry: false,
   })
 }
 

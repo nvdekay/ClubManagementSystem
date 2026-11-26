@@ -228,11 +228,11 @@ export async function fetchReviewProposalPreviewFile(
     throw new ApiError(`HTTP ${response.status}`, response.status)
   }
   if (Number(response.headers.get('content-length')) > proposalDocumentMaxBytes) {
-    throw new ApiError('Document too large')
+    throw new ApiError('Document too large', 413)
   }
   const blob = await response.blob()
   if (blob.size > proposalDocumentMaxBytes) {
-    throw new ApiError('Document too large')
+    throw new ApiError('Document too large', 413)
   }
   return new File([blob], access.fileName, { type: access.mimeType })
 }

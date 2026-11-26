@@ -26,7 +26,6 @@ export function useMyComplaints(enabled: boolean) {
     queryKey: complaintsKey.mine(),
     queryFn: ({ signal }) => fetchMyComplaints(signal),
     enabled,
-    retry: false,
   })
 }
 // Query hàng đợi khiếu nại của ICPDP theo trạng thái
@@ -35,7 +34,6 @@ export function useComplaintQueue(state: ComplaintState | '', enabled: boolean) 
     queryKey: complaintsKey.queue(state),
     queryFn: ({ signal }) => fetchComplaintQueue(state, signal),
     enabled,
-    retry: false,
   })
 }
 // Query khiếu nại liên quan tới CLB
@@ -44,7 +42,6 @@ export function useClubComplaints(clubId: string, enabled: boolean) {
     queryKey: complaintsKey.club(clubId),
     queryFn: ({ signal }) => fetchClubComplaints(clubId, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 

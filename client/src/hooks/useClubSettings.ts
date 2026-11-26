@@ -30,7 +30,6 @@ export function useClubSettings(clubId: string | undefined, enabled: boolean) {
     queryKey: [...settingsKey, clubId],
     queryFn: ({ signal }) => fetchClubSettings(clubId!, signal),
     enabled: enabled && Boolean(clubId),
-    retry: false,
   })
 }
 

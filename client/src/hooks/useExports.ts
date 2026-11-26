@@ -20,7 +20,6 @@ export function useExportOptions(enabled: boolean) {
     queryKey: [...exportsKeyRoot, 'options'],
     queryFn: ({ signal }) => fetchExportOptions(signal),
     enabled,
-    retry: false,
   })
 }
 

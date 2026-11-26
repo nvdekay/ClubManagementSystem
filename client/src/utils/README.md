@@ -31,3 +31,6 @@ không phải styling của ứng dụng: giữ font/bảng/ảnh nguồn, trang
 
 `openInNewTab(resolveUrl)` mở tab mới ngay trong lúc người dùng bấm (để trình duyệt không chặn popup), rồi chuyển tab đó tới
 URL khi lời gọi API trả về; nếu lời gọi lỗi thì đóng tab trống và ném lại lỗi. Dùng cho link truy cập tài liệu có thời hạn.
+
+`queryRetry` — `shouldRetryQuery` là chính sách retry mặc định của `QueryClient` (không retry `ApiError` 4xx, lỗi 5xx/mạng
+tối đa 2 lần); `isUnauthorized` nhận ra lỗi 401 để `main.tsx` xoá phiên đăng nhập.
