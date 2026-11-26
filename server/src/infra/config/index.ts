@@ -27,6 +27,9 @@ const schema = z.object({
     .enum(['true', 'false', ''])
     .optional()
     .transform((value) => value === 'true'),
+  // Folder of the built client (client/dist). When set, the server also serves the SPA (one-container
+  // deployment); empty or unset leaves the client to Vite in development or to another web server.
+  CLIENT_DIST_DIR: z.string().trim().optional(),
   // Express `trust proxy`: 'false' (default), 'true', or the number of reverse-proxy hops in front.
   TRUST_PROXY: z
     .string()

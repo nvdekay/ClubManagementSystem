@@ -124,6 +124,9 @@ const commonDeps = {
   trustProxy: config.TRUST_PROXY,
   // The API map is not advertised in production unless API_DOCS=true.
   apiDocs: config.NODE_ENV !== 'production' || config.API_DOCS,
+  hsts: config.NODE_ENV === 'production',
+  // One-container deployment: the API also serves the built client (see Dockerfile).
+  clientDistDir: config.CLIENT_DIST_DIR || undefined,
   // Per client IP: strict on the sign-in flow (brute force, OAuth callback spam), loose elsewhere.
   rateLimits: {
     auth: { limit: 20, windowMs: 60_000 },
