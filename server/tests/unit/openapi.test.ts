@@ -330,7 +330,22 @@ const stubPostReports: PostEventReportRepository = {
   },
 }
 const stubBudgets: BudgetDisbursementRepository = {
-  list: async () => [],
+  list: async () => ({
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    counts: {
+      all: 0,
+      awaitingAdvance: 0,
+      awaitingReview: 0,
+      awaitingVendorPay: 0,
+      awaitingRefundConfirm: 0,
+      inProgress: 0,
+      closed: 0,
+    },
+    clubs: [],
+  }),
   find: async () => null,
   record: async () => {
     throw new Error('unused')

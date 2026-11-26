@@ -33,7 +33,7 @@ import {
   eventReviewDecisionBody,
 } from './event-proposal-review-routes.js'
 import { sponsoredItemOpenApiPaths } from './openapi-sponsored-items.js'
-import { budgetFlowBody } from './budget-disbursement-routes.js'
+import { budgetFlowBody, budgetListQuery } from './budget-disbursement-routes.js'
 import {
   periodicCampaignBody,
   periodicDecisionBody,
@@ -86,6 +86,7 @@ import {
 } from './complaint-routes.js'
 import { COMPLAINT_STATES } from '../../domain/complaint.js'
 import { VIOLATION_FILTERS } from '../../domain/violation.js'
+import { BUDGET_FILTERS } from '../../domain/budget-disbursement.js'
 import { routingRulesBody, routingSimulationQuery } from './approval-routing-routes.js'
 import { recruitmentCampaignBody } from './recruitment-campaign-routes.js'
 import {
@@ -609,6 +610,10 @@ function pageOf<T extends z.ZodTypeAny>(item: T) {
     pageSize: z.number().int(),
   })
 }
+const BudgetPage = pageOf(BudgetSummary).extend({
+  counts: z.record(z.enum(BUDGET_FILTERS), z.number().int()),
+  clubs: z.array(z.object({ id: z.string(), name: z.string() })),
+})
 const ViolationPage = pageOf(ViolationSummary).extend({
   counts: z.record(z.enum(VIOLATION_FILTERS), z.number().int()),
 })
@@ -3685,11 +3690,12 @@ export const openApiDocument = createDocument({
     '/admin/budgets': {
       get: {
         summary:
-          'List approved event budgets with what has been disbursed (UC35, ICPDP Officer only)',
+          'One page of approved event budgets matching a tab and club, newest first, with per-tab counts and the clubs that have budgets (UC35, ICPDP Officer only)',
+        requestParams: { query: budgetListQuery },
         responses: {
           '200': {
             description: 'Budgets',
-            content: { 'application/json': { schema: envelope(z.array(BudgetSummary)) } },
+            content: { 'application/json': { schema: envelope(BudgetPage) } },
           },
           '403': {
             description: 'ICPDP Officer role required',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { pageSkip } from '../../src/domain/paging.js'
+import { budgetListQuery } from '../../src/interface/http/budget-disbursement-routes.js'
 import { pageQuery } from '../../src/interface/http/request.js'
 import { violationListQuery } from '../../src/interface/http/violation-routes.js'
 
@@ -31,5 +32,15 @@ describe('server-side paging query', () => {
     })
     expect(violationListQuery.safeParse({ filter: 'bogus' }).success).toBe(false)
     expect(violationListQuery.safeParse({ state: { $ne: 'x' } }).success).toBe(false)
+  })
+
+  it('validates the budget queue tab and optional club id', () => {
+    expect(budgetListQuery.parse({})).toEqual({ filter: 'all', page: 1, pageSize: 20 })
+    expect(
+      budgetListQuery.parse({ filter: 'awaitingVendorPay', clubId: '0123456789abcdef01234567' }),
+    ).toMatchObject({ filter: 'awaitingVendorPay', clubId: '0123456789abcdef01234567' })
+    expect(budgetListQuery.safeParse({ clubId: 'not-an-id' }).success).toBe(false)
+    expect(budgetListQuery.safeParse({ clubId: { $ne: null } }).success).toBe(false)
+    expect(budgetListQuery.safeParse({ filter: 'pending' }).success).toBe(false)
   })
 })

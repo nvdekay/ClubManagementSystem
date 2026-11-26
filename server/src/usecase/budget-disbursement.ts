@@ -4,6 +4,7 @@ import {
   checkFlow,
   type BudgetDisbursementRepository,
   type BudgetFlowInput,
+  type BudgetListQuery,
   type NormalizedBudgetFlow,
 } from '../domain/budget-disbursement.js'
 import { DomainError } from '../domain/errors.js'
@@ -33,14 +34,15 @@ export function normalizedBudgetFlow(input: BudgetFlowInput, now: Date): Normali
   return { kind: input.kind, amount: input.amount, disbursedAt, paymentReference, note }
 }
 
-// ICPDP xem danh sách ngân sách được duyệt của các CLB
+// ICPDP xem một trang ngân sách được duyệt của các CLB theo bộ lọc
 export async function listBudgets(
   repo: BudgetDisbursementRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
+  query: BudgetListQuery,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  return repo.list()
+  return repo.list(query)
 }
 
 // ICPDP xem chi tiết một ngân sách và các khoản đã ghi

@@ -9,47 +9,21 @@ import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useBudget, useBudgets } from '@/hooks/useBudgets'
 import { useSponsoredItems } from '@/hooks/useSponsoredItems'
-import type { BudgetSummary } from '@/services/budgets'
+import { BUDGET_FILTERS, type BudgetFilter } from '@/services/budgets'
 import { cn } from '@/utils/cn'
 import { formatMoney } from '@/utils/formatMoney'
 import { formatDay } from '@/utils/formatDate'
 
-const filters = [
-  'all',
-  'awaitingAdvance',
-  'awaitingReview',
-  'awaitingVendorPay',
-  'awaitingRefundConfirm',
-  'inProgress',
-  'closed',
-] as const
-type Filter = (typeof filters)[number]
-
-// Kiểm tra ngân sách có thuộc bộ lọc trạng thái đang chọn không
-function matches(filter: Filter, budget: BudgetSummary): boolean {
-  const counts = budget.itemCounts
-  switch (filter) {
-    case 'awaitingAdvance':
-      return (counts?.awaitingAdvance ?? 0) > 0
-    case 'awaitingReview':
-      return (counts?.awaitingReview ?? 0) > 0
-    case 'awaitingVendorPay':
-      return (counts?.awaitingVendorPay ?? 0) > 0
-    case 'awaitingRefundConfirm':
-      return (counts?.awaitingRefundConfirm ?? 0) > 0
-    case 'inProgress':
-      return budget.state !== 'Closed' && budget.state !== 'Cancelled'
-    case 'closed':
-      return budget.state === 'Closed' || budget.state === 'Cancelled'
-    default:
-      return true
-  }
-}
+const PAGE_SIZE = 20
+// Tab order on screen; the server owns which budgets each tab holds.
+const filters = BUDGET_FILTERS
+type Filter = BudgetFilter
 
 // Dịch trạng thái ngân sách sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
@@ -129,9 +103,16 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
 // Danh sách ngân sách sự kiện kèm bộ lọc theo trạng thái và câu lạc bộ
 function BudgetList() {
   const { t, i18n } = useTranslation()
-  const list = useBudgets(true)
   const [filter, setFilter] = useState<Filter>('all')
   const [clubId, setClubId] = useState('')
+  const [pageIndex, setPageIndex] = useState(0)
+  // The server filters by tab and club and pages; the tab badges come from its counts.
+  const list = useBudgets(filter, clubId, pageIndex + 1, PAGE_SIZE, true)
+  const pageCount = Math.ceil((list.data?.total ?? 0) / PAGE_SIZE)
+  // Step back after the list shrinks (e.g. the last budget of the last page left this tab).
+  if (list.data && !list.isPlaceholderData && pageIndex > 0 && pageIndex >= pageCount) {
+    setPageIndex(Math.max(pageCount - 1, 0))
+  }
   function money(value: number) {
     return formatMoney(value, i18n.language)
   }
@@ -158,15 +139,11 @@ function BudgetList() {
     )
   }
 
-  const clubs = [
-    ...new Map(list.data.map((budget) => [budget.clubId, budget.clubName])).entries(),
-  ].sort(([, a], [, b]) => a.localeCompare(b, i18n.language))
   const clubOptions = [
     { value: '', label: t('budgets.allClubs') },
-    ...clubs.map(([id, name]) => ({ value: id, label: name })),
+    ...list.data.clubs.map((club) => ({ value: club.id, label: club.name })),
   ]
-  const byClub = clubId ? list.data.filter((budget) => budget.clubId === clubId) : list.data
-  const shown = byClub.filter((budget) => matches(filter, budget))
+  const shown = list.data.items
 
   return (
     <>
@@ -177,13 +154,16 @@ function BudgetList() {
           className="inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1"
         >
           {filters.map((value) => {
-            const count = byClub.filter((budget) => matches(value, budget)).length
+            const count = list.data.counts[value]
             return (
               <button
                 key={value}
                 type="button"
                 aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
+                onClick={() => {
+                  setFilter(value)
+                  setPageIndex(0)
+                }}
                 className={cn(
                   'inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9',
                   { 'bg-segment-app text-text-app shadow-xs': filter === value },
@@ -198,102 +178,124 @@ function BudgetList() {
           className="w-full sm:w-64"
           label={t('budgets.filterClub')}
           value={clubId}
-          onChange={setClubId}
+          onChange={(value) => {
+            setClubId(value)
+            setPageIndex(0)
+          }}
           options={clubOptions}
         />
       </div>
 
       {shown.length ? (
-        <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
-          {shown.map((budget) => {
-            const remaining = Math.max(budget.approvedTotal - budget.disbursedTotal, 0)
-            const counts = budget.itemCounts
-            const pendingBadges = [
-              counts?.awaitingAdvance
-                ? {
-                    tone: 'warning' as const,
-                    text: t('budgets.countAdvance', { count: counts.awaitingAdvance }),
-                  }
-                : null,
-              counts?.awaitingReview
-                ? {
-                    tone: 'warning' as const,
-                    text: t('budgets.countReview', { count: counts.awaitingReview }),
-                  }
-                : null,
-              counts?.awaitingVendorPay
-                ? {
-                    tone: 'warning' as const,
-                    text: t('budgets.countVendorPay', { count: counts.awaitingVendorPay }),
-                  }
-                : null,
-              counts?.awaitingRefundConfirm
-                ? {
-                    tone: 'warning' as const,
-                    text: t('budgets.countRefundConfirm', { count: counts.awaitingRefundConfirm }),
-                  }
-                : null,
-              counts?.awaitingClubRefund
-                ? {
-                    tone: 'neutral' as const,
-                    text: t('budgets.countClubRefund', { count: counts.awaitingClubRefund }),
-                  }
-                : null,
-              counts?.awaitingClubConfirm
-                ? {
-                    tone: 'neutral' as const,
-                    text: t('budgets.countClubConfirm', { count: counts.awaitingClubConfirm }),
-                  }
-                : null,
-            ].filter((badge): badge is NonNullable<typeof badge> => badge !== null)
+        <>
+          <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+            {shown.map((budget) => {
+              const remaining = Math.max(budget.approvedTotal - budget.disbursedTotal, 0)
+              const counts = budget.itemCounts
+              const pendingBadges = [
+                counts?.awaitingAdvance
+                  ? {
+                      tone: 'warning' as const,
+                      text: t('budgets.countAdvance', { count: counts.awaitingAdvance }),
+                    }
+                  : null,
+                counts?.awaitingReview
+                  ? {
+                      tone: 'warning' as const,
+                      text: t('budgets.countReview', { count: counts.awaitingReview }),
+                    }
+                  : null,
+                counts?.awaitingVendorPay
+                  ? {
+                      tone: 'warning' as const,
+                      text: t('budgets.countVendorPay', { count: counts.awaitingVendorPay }),
+                    }
+                  : null,
+                counts?.awaitingRefundConfirm
+                  ? {
+                      tone: 'warning' as const,
+                      text: t('budgets.countRefundConfirm', {
+                        count: counts.awaitingRefundConfirm,
+                      }),
+                    }
+                  : null,
+                counts?.awaitingClubRefund
+                  ? {
+                      tone: 'neutral' as const,
+                      text: t('budgets.countClubRefund', { count: counts.awaitingClubRefund }),
+                    }
+                  : null,
+                counts?.awaitingClubConfirm
+                  ? {
+                      tone: 'neutral' as const,
+                      text: t('budgets.countClubConfirm', { count: counts.awaitingClubConfirm }),
+                    }
+                  : null,
+              ].filter((badge): badge is NonNullable<typeof badge> => badge !== null)
 
-            return (
-              <li key={budget.id}>
-                <Link
-                  to={`/workspace/budgets/${budget.id}`}
-                  className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app"
+              return (
+                <li key={budget.id}>
+                  <Link
+                    to={`/workspace/budgets/${budget.id}`}
+                    className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app"
                   >
-                    <AppIcon name="file" />
-                  </span>
-                  <span className="min-w-0 flex-1 basis-64">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="font-heading text-base font-semibold break-words">
-                        {budget.eventTitle}
-                      </span>
-                      <AppBadge tone={stateTone(budget.state)}>
-                        {stateLabel(t, budget.state)}
-                      </AppBadge>
-                      {pendingBadges.map((badge) => (
-                        <AppBadge key={badge.text} tone={badge.tone}>
-                          {badge.text}
+                    <span
+                      aria-hidden="true"
+                      className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app"
+                    >
+                      <AppIcon name="file" />
+                    </span>
+                    <span className="min-w-0 flex-1 basis-64">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="font-heading text-base font-semibold break-words">
+                          {budget.eventTitle}
+                        </span>
+                        <AppBadge tone={stateTone(budget.state)}>
+                          {stateLabel(t, budget.state)}
                         </AppBadge>
-                      ))}
+                        {pendingBadges.map((badge) => (
+                          <AppBadge key={badge.text} tone={badge.tone}>
+                            {badge.text}
+                          </AppBadge>
+                        ))}
+                      </span>
+                      <span className="mt-1 block text-sm text-muted-app">
+                        {budget.clubName} ·{' '}
+                        {t('budgets.eventOn', { date: day(budget.eventStartAt) })}
+                      </span>
                     </span>
-                    <span className="mt-1 block text-sm text-muted-app">
-                      {budget.clubName} · {t('budgets.eventOn', { date: day(budget.eventStartAt) })}
+                    <span className="grid w-full grid-cols-[1fr_auto] gap-x-6 text-sm tabular-nums sm:w-auto sm:min-w-72">
+                      <span className="text-muted-app">{t('budgets.approved')}</span>
+                      <span className="text-right font-semibold">
+                        {money(budget.approvedTotal)}
+                      </span>
+                      <span className="text-muted-app">{t('budgets.transferred')}</span>
+                      <span className="text-right">{money(budget.disbursedTotal)}</span>
+                      {remaining > 0 &&
+                        budget.state !== 'Closed' &&
+                        budget.state !== 'Cancelled' && (
+                          <>
+                            <span className="text-muted-app">{t('budgets.remaining')}</span>
+                            <span className="text-right">{money(remaining)}</span>
+                          </>
+                        )}
                     </span>
-                  </span>
-                  <span className="grid w-full grid-cols-[1fr_auto] gap-x-6 text-sm tabular-nums sm:w-auto sm:min-w-72">
-                    <span className="text-muted-app">{t('budgets.approved')}</span>
-                    <span className="text-right font-semibold">{money(budget.approvedTotal)}</span>
-                    <span className="text-muted-app">{t('budgets.transferred')}</span>
-                    <span className="text-right">{money(budget.disbursedTotal)}</span>
-                    {remaining > 0 && budget.state !== 'Closed' && budget.state !== 'Cancelled' && (
-                      <>
-                        <span className="text-muted-app">{t('budgets.remaining')}</span>
-                        <span className="text-right">{money(remaining)}</span>
-                      </>
-                    )}
-                  </span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+          <AppPagination
+            className="mt-4"
+            pageIndex={pageIndex}
+            pageCount={pageCount}
+            onPageChange={setPageIndex}
+            prevLabel={t('budgets.previousPage')}
+            nextLabel={t('budgets.nextPage')}
+            pageLabel={(value) => t('budgets.pageNumber', { page: value })}
+            navLabel={t('budgets.pagination')}
+          />
+        </>
       ) : (
         <AppEmptyState
           variant="boxed"
