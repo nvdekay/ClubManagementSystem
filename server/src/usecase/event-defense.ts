@@ -111,7 +111,7 @@ export async function cancelEventDefense(
   return repo.cancel(id, officerId, cleanReason, now)
 }
 
-// ICPDP chấp nhận (đặt lịch mới) hoặc từ chối yêu cầu dời lịch bảo vệ của CLB
+// ICPDP chấp nhận (đặt lịch mới, vào thẳng CONFIRMED — BR63) hoặc từ chối yêu cầu dời lịch bảo vệ của CLB
 export async function respondDefenseReschedule(
   repo: EventDefenseRepository,
   events: Pick<EventProposalReviewRepository, 'find'>,

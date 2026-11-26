@@ -544,6 +544,18 @@ export function mongoEventDefenseRepository(
             /^ - | - $/g,
             '',
           )
+          // BR63 (26/11/2026): CLB tự đề xuất giờ mới nên chấp nhận dời lịch coi như CLB đã xác nhận;
+          // người xác nhận là người đã gửi yêu cầu dời lịch gần nhất.
+          const request = await audits
+            .findOne({
+              entityType: 'Event',
+              entityId: id,
+              action: 'EVENT_DEFENSE_RESCHEDULE_REQUESTED',
+            })
+            .sort({ at: -1 })
+            .select({ actorId: 1 })
+            .session(session)
+            .lean()
           await sessions.updateOne(
             { _id: updatedId, state: 'RESCHEDULE_REQUESTED' },
             {
@@ -553,11 +565,16 @@ export function mongoEventDefenseRepository(
                 durationMinutes,
                 propertyId: propId,
                 propertyName,
-                state: 'SCHEDULED',
+                state: 'CONFIRMED',
+                confirmedAt: now,
+                ...(request?.actorId ? { confirmedBy: request.actorId } : {}),
                 ...(input.note ? { note: input.note } : {}),
                 updatedAt: now,
               },
-              $unset: { rescheduleReason: '', confirmedAt: '', confirmedBy: '' },
+              $unset: {
+                rescheduleReason: '',
+                ...(request?.actorId ? {} : { confirmedBy: '' }),
+              },
             },
             { session },
           )
@@ -569,7 +586,13 @@ export function mongoEventDefenseRepository(
                 action: 'EVENT_DEFENSE_RESCHEDULE_ACCEPTED',
                 actorId,
                 actorRole: 'ICPDP_OFFICER',
-                after: { defenseId: updatedId, startAt: input.startAt, endAt, propertyName },
+                after: {
+                  defenseId: updatedId,
+                  state: 'CONFIRMED',
+                  startAt: input.startAt,
+                  endAt,
+                  propertyName,
+                },
                 correlationId: randomUUID(),
                 at: now,
               },
