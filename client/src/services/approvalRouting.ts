@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type RoutedRequestType = 'CLUB_APPLICATION' | 'EVENT_PROPOSAL' | 'PROPERTY_BOOKING'
 export type RiskCategory = 'LOW' | 'MEDIUM' | 'HIGH'
 export type RoutedPropertyType = 'HALL' | 'OUTDOOR' | 'STAGE' | 'EQUIPMENT'
@@ -37,31 +38,34 @@ export interface RoutingSimulation {
   }>
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { overlaps?: string[][] }
-    } | null
-    const overlaps = body?.details?.overlaps?.map((pair) => pair.join(' ↔ ')).join(', ')
-    throw new ApiError(
-      overlaps
-        ? `${body?.message ?? 'error'}: ${overlaps}`
-        : (body?.message ?? `HTTP ${response.status}`),
-    )
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRoutingError })
+}
+
+// Maps a failed response to this module's error type
+function toRoutingError(failure: ApiFailure): Error {
+  const overlaps = (failure.details as { overlaps?: string[][] } | undefined)?.overlaps
+    ?.map((pair) => pair.join(' ↔ '))
+    .join(', ')
+  if (!overlaps) {
+    return new ApiError(failure.message, failure.status)
   }
-  const body = (await response.json()) as { data: T }
-  return body.data
+  const message = typeof failure.body?.message === 'string' ? failure.body.message : 'error'
+  return new ApiError(`${message}: ${overlaps}`, failure.status)
 }
 
 // Gửi request có phương thức, CSRF và body JSON
-function send<T>(method: string, path: string, csrfToken: string, body?: unknown) {
+function send<T>(
+  method: ApiRequestOptions['method'],
+  path: string,
+  csrfToken: string,
+  body?: unknown,
+) {
   return request<T>(path, {
     method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body ?? {}),
+    csrfToken,
+    body: body ?? {},
   })
 }
 

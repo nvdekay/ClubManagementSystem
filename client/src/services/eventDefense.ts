@@ -1,6 +1,7 @@
 import i18next from 'i18next'
 import { eventDefense } from '@/i18n/eventDefense'
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type { EventProposalDetail, EventReviewDecisionInput } from '@/services/eventProposalReviews'
 
 export type EventDefenseState =
@@ -251,7 +252,7 @@ export class EventDefenseError extends ApiError {
   readonly statusCode?: number
 
   constructor(rawMessage: string, statusCode?: number) {
-    super(rawMessage)
+    super(rawMessage, statusCode)
     this.name = 'EventDefenseError'
     this.statusCode = statusCode
     const descriptor = resolveDefenseErrorDescriptor(rawMessage, statusCode)
@@ -277,47 +278,31 @@ export class EventDefenseError extends ApiError {
   }
 }
 
-// Gọi API /api/v1 của buổi bảo vệ, ném lỗi đã chuẩn hoá nếu thất bại
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  let response: Response
+// Calls the defense API through the shared helper; failures are logged and normalised to EventDefenseError
+async function request<T>(url: string, options: ApiRequestOptions = {}): Promise<T> {
+  const method = options.method ?? 'GET'
   try {
-    response = await apiFetch(`/api/v1${url}`, { credentials: 'same-origin', ...init })
+    return await apiRequest<T>(`/api/v1${url}`, {
+      ...options,
+      toError: (failure) => {
+        const message = typeof failure.body?.message === 'string' ? failure.body.message.trim() : ''
+        const error = typeof failure.body?.error === 'string' ? failure.body.error.trim() : ''
+        const rawDiagnostic = message || error || `HTTP ${failure.status}`
+        console.error(
+          `[eventDefense] ${method} ${url} failed:`,
+          failure.status,
+          failure.body ?? rawDiagnostic,
+        )
+        return new EventDefenseError(rawDiagnostic, failure.status)
+      },
+    })
   } catch (error) {
-    if (error instanceof ApiError) {
-      console.error(
-        `[eventDefense] ${init?.method ?? 'GET'} ${url} network error:`,
-        error.rawMessage,
-      )
+    // Network failures arrive as a status-less ApiError from apiFetch.
+    if (error instanceof ApiError && !(error instanceof EventDefenseError)) {
+      console.error(`[eventDefense] ${method} ${url} network error:`, error.rawMessage)
       throw new EventDefenseError(error.rawMessage)
     }
     throw error
-  }
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      error?: string
-    } | null
-    const rawDiagnostic =
-      (typeof body?.message === 'string' && body.message.trim()) ||
-      (typeof body?.error === 'string' && body.error.trim()) ||
-      `HTTP ${response.status}`
-    console.error(
-      `[eventDefense] ${init?.method ?? 'GET'} ${url} failed:`,
-      response.status,
-      body ?? rawDiagnostic,
-    )
-    throw new EventDefenseError(rawDiagnostic, response.status)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit JSON có CSRF cho phương thức cho trước
-function jsonMutation(method: 'POST' | 'PUT', csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
   }
 }
 
@@ -342,10 +327,11 @@ export function scheduleEventDefense(
   input: ScheduleDefenseInput,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/schedule`,
-    jsonMutation('POST', csrfToken, input),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/schedule`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // POST /defense/cancel: huỷ lịch bảo vệ
@@ -354,10 +340,11 @@ export function cancelEventDefense(
   reason: string,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/cancel`,
-    jsonMutation('POST', csrfToken, { reason }),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/cancel`, {
+    method: 'POST',
+    csrfToken,
+    body: { reason },
+  })
 }
 
 // POST /defense/respond-reschedule: ICPDP phản hồi yêu cầu đổi lịch của CLB
@@ -368,7 +355,7 @@ export function respondDefenseReschedule(
 ): Promise<EventDefenseSession> {
   return request(
     `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/respond-reschedule`,
-    jsonMutation('POST', csrfToken, input),
+    { method: 'POST', csrfToken, body: input },
   )
 }
 
@@ -377,10 +364,11 @@ export function startEventDefense(
   eventId: string,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/start`,
-    jsonMutation('POST', csrfToken, {}),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/start`, {
+    method: 'POST',
+    csrfToken,
+    body: {},
+  })
 }
 
 // GET /defense/session: phiên bảo vệ đang diễn ra
@@ -399,18 +387,20 @@ export function saveDefenseNote(
   content: string,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/notes`,
-    jsonMutation('PUT', csrfToken, { content }),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/notes`, {
+    method: 'PUT',
+    csrfToken,
+    body: { content },
+  })
 }
 
 // POST /defense/end: kết thúc buổi bảo vệ
 export function endEventDefense(eventId: string, csrfToken: string): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/end`,
-    jsonMutation('POST', csrfToken, {}),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/end`, {
+    method: 'POST',
+    csrfToken,
+    body: {},
+  })
 }
 
 // POST /defense/no-show: ghi nhận CLB vắng mặt
@@ -419,10 +409,11 @@ export function markDefenseNoShow(
   reason: string | undefined,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/no-show`,
-    jsonMutation('POST', csrfToken, reason ? { reason } : {}),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/no-show`, {
+    method: 'POST',
+    csrfToken,
+    body: reason ? { reason } : {},
+  })
 }
 
 // POST /defense/decision: quyết định đề xuất sau bảo vệ
@@ -431,10 +422,11 @@ export function decideAfterDefense(
   input: EventReviewDecisionInput,
   csrfToken: string,
 ): Promise<EventProposalDetail> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/decision`,
-    jsonMutation('POST', csrfToken, input),
-  )
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/decision`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // GET thông tin buổi bảo vệ của sự kiện phía CLB
@@ -457,7 +449,7 @@ export function confirmClubEventDefense(
 ): Promise<EventDefenseSession> {
   return request(
     `/clubs/${encodeURIComponent(clubId)}/events/${encodeURIComponent(eventId)}/defense/confirm`,
-    jsonMutation('POST', csrfToken, {}),
+    { method: 'POST', csrfToken, body: {} },
   )
 }
 
@@ -470,6 +462,6 @@ export function requestClubDefenseReschedule(
 ): Promise<EventDefenseSession> {
   return request(
     `/clubs/${encodeURIComponent(clubId)}/events/${encodeURIComponent(eventId)}/defense/reschedule-request`,
-    jsonMutation('POST', csrfToken, { reason }),
+    { method: 'POST', csrfToken, body: { reason } },
   )
 }

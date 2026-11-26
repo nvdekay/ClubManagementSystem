@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type EvaluationState = 'Draft' | 'Data Ready' | 'Under Review' | 'Finalized' | 'Published'
 export type Classification = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'NEEDS_IMPROVEMENT'
 
@@ -79,34 +80,22 @@ export class EvaluationRequestError extends ApiError {
   }
 }
 
-// Gọi API /admin/evaluations và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/evaluations${path}`, {
-    credentials: 'same-origin',
-    ...init,
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/evaluations${path}`, {
+    ...options,
+    toError: toEvaluationError,
   })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { field?: unknown; clubs?: unknown }
-    } | null
-    const clubs =
-      body?.details?.field === 'periodicReports' && Array.isArray(body.details.clubs)
-        ? body.details.clubs.map(String)
-        : []
-    throw new EvaluationRequestError(body?.message ?? `HTTP ${response.status}`, clubs)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
 }
 
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function post(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toEvaluationError(failure: ApiFailure): Error {
+  const details = failure.details as { field?: unknown; clubs?: unknown } | undefined
+  const clubs =
+    details?.field === 'periodicReports' && Array.isArray(details.clubs)
+      ? details.clubs.map(String)
+      : []
+  return new EvaluationRequestError(failure.message, clubs)
 }
 
 // GET tổng quan đánh giá CLB theo kỳ
@@ -127,7 +116,7 @@ export function generateEvaluations(
   periodCode: string,
   csrfToken: string,
 ): Promise<EvaluationOverview> {
-  return request('/generate', post(csrfToken, { periodCode }))
+  return request('/generate', { method: 'POST', csrfToken, body: { periodCode } })
 }
 
 // POST /publish: công bố kết quả đánh giá của kỳ
@@ -135,7 +124,7 @@ export function publishEvaluations(
   periodCode: string,
   csrfToken: string,
 ): Promise<EvaluationOverview> {
-  return request('/publish', post(csrfToken, { periodCode }))
+  return request('/publish', { method: 'POST', csrfToken, body: { periodCode } })
 }
 
 export type EvaluationAction =
@@ -153,13 +142,12 @@ export function runEvaluationAction(
   csrfToken: string,
 ): Promise<EvaluationDetail> {
   const path = `/${encodeURIComponent(id)}/${action.kind}`
-  return request(
-    path,
-    post(
-      csrfToken,
+  return request(path, {
+    method: 'POST',
+    csrfToken,
+    body:
       action.kind === 'manual'
         ? { dimensionCode: action.dimensionCode, manual: action.manual }
         : undefined,
-    ),
-  )
+  })
 }

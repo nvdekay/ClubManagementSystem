@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type DimensionCode = 'D1' | 'D2' | 'D3' | 'D4' | 'D5' | 'D6' | 'D7' | 'D8'
 export type SchemeState = 'Draft' | 'Active' | 'Superseded'
 export type ActivationIssue = 'totalWeight' | 'coreWeight'
@@ -57,35 +58,23 @@ export class SchemeRequestError extends ApiError {
   }
 }
 
-// Gọi API /admin/evaluation-schemes và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/evaluation-schemes${path}`, {
-    credentials: 'same-origin',
-    ...init,
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/evaluation-schemes${path}`, {
+    ...options,
+    toError: toSchemeError,
   })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { field?: unknown; issues?: unknown }
-    } | null
-    throw new SchemeRequestError(
-      body?.message ?? `HTTP ${response.status}`,
-      response.status,
-      typeof body?.details?.field === 'string' ? body.details.field : undefined,
-      Array.isArray(body?.details?.issues) ? (body.details.issues as ActivationIssue[]) : [],
-    )
-  }
-  const body: { data: T } = await response.json()
-  return body.data
 }
 
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toSchemeError(failure: ApiFailure): Error {
+  const details = failure.details as { field?: unknown; issues?: unknown } | undefined
+  return new SchemeRequestError(
+    failure.message,
+    failure.status,
+    typeof details?.field === 'string' ? details.field : undefined,
+    Array.isArray(details?.issues) ? (details.issues as ActivationIssue[]) : [],
+  )
 }
 
 // GET danh mục thang đánh giá CLB
@@ -98,7 +87,7 @@ export function createScheme(
   input: { periodCode: string; copyFromId?: string },
   csrfToken: string,
 ): Promise<EvaluationScheme> {
-  return request('', mutation('POST', csrfToken, input))
+  return request('', { method: 'POST', csrfToken, body: input })
 }
 
 // PATCH cập nhật thiết lập thang đánh giá
@@ -107,15 +96,15 @@ export function updateScheme(
   settings: SchemeSettings,
   csrfToken: string,
 ): Promise<EvaluationScheme> {
-  return request(`/${encodeURIComponent(id)}`, mutation('PATCH', csrfToken, settings))
+  return request(`/${encodeURIComponent(id)}`, { method: 'PATCH', csrfToken, body: settings })
 }
 
 // POST /activate: kích hoạt thang đánh giá
 export function activateScheme(id: string, csrfToken: string): Promise<EvaluationScheme> {
-  return request(`/${encodeURIComponent(id)}/activate`, mutation('POST', csrfToken))
+  return request(`/${encodeURIComponent(id)}/activate`, { method: 'POST', csrfToken })
 }
 
 // DELETE thang đánh giá
 export function deleteScheme(id: string, csrfToken: string): Promise<{ deleted: true }> {
-  return request(`/${encodeURIComponent(id)}`, mutation('DELETE', csrfToken))
+  return request(`/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
 }

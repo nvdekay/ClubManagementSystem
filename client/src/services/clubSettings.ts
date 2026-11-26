@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 import type { ClubProfileFormField } from '@/services/policy'
 
 export interface ClubChannel {
@@ -66,31 +67,17 @@ export class MissingProfileFieldsError extends ApiError {
   }
 }
 
-// Gọi API /clubs và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/clubs${path}`, { credentials: 'same-origin', ...init })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: { missing?: ClubProfileFormField[] }
-    } | null
-    const message = body?.message ?? `HTTP ${response.status}`
-    if (Array.isArray(body?.details?.missing)) {
-      throw new MissingProfileFieldsError(message, body.details.missing)
-    }
-    throw new ApiError(message)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/clubs${path}`, { ...options, toError: toSettingsError })
 }
 
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toSettingsError(failure: ApiFailure): Error {
+  const missing = (failure.details as { missing?: ClubProfileFormField[] } | undefined)?.missing
+  return Array.isArray(missing)
+    ? new MissingProfileFieldsError(failure.message, missing)
+    : new ApiError(failure.message, failure.status)
 }
 
 // GET /settings: hồ sơ và phòng ban của CLB
@@ -104,7 +91,11 @@ export function saveClubProfile(
   input: ClubProfileInput,
   csrfToken: string,
 ): Promise<ClubProfile> {
-  return request(`/${encodeURIComponent(clubId)}/profile`, mutation('PATCH', csrfToken, input))
+  return request(`/${encodeURIComponent(clubId)}/profile`, {
+    method: 'PATCH',
+    csrfToken,
+    body: input,
+  })
 }
 
 // POST /departments/template: áp mẫu phòng ban mặc định
@@ -112,7 +103,10 @@ export function applyDepartmentTemplate(
   clubId: string,
   csrfToken: string,
 ): Promise<ClubDepartment[]> {
-  return request(`/${encodeURIComponent(clubId)}/departments/template`, mutation('POST', csrfToken))
+  return request(`/${encodeURIComponent(clubId)}/departments/template`, {
+    method: 'POST',
+    csrfToken,
+  })
 }
 
 // POST tạo phòng ban của CLB
@@ -121,7 +115,11 @@ export function createDepartment(
   input: ClubDepartmentInput,
   csrfToken: string,
 ): Promise<ClubDepartment> {
-  return request(`/${encodeURIComponent(clubId)}/departments`, mutation('POST', csrfToken, input))
+  return request(`/${encodeURIComponent(clubId)}/departments`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // Cập nhật phòng ban của CLB
@@ -131,10 +129,11 @@ export function updateDepartment(
   input: ClubDepartmentInput,
   csrfToken: string,
 ): Promise<ClubDepartment> {
-  return request(
-    `/${encodeURIComponent(clubId)}/departments/${encodeURIComponent(departmentId)}`,
-    mutation('PATCH', csrfToken, input),
-  )
+  return request(`/${encodeURIComponent(clubId)}/departments/${encodeURIComponent(departmentId)}`, {
+    method: 'PATCH',
+    csrfToken,
+    body: input,
+  })
 }
 
 // Ngưng hoạt động một phòng ban của CLB
@@ -143,8 +142,8 @@ export function deactivateDepartment(
   departmentId: string,
   csrfToken: string,
 ): Promise<ClubDepartment> {
-  return request(
-    `/${encodeURIComponent(clubId)}/departments/${encodeURIComponent(departmentId)}`,
-    mutation('DELETE', csrfToken),
-  )
+  return request(`/${encodeURIComponent(clubId)}/departments/${encodeURIComponent(departmentId)}`, {
+    method: 'DELETE',
+    csrfToken,
+  })
 }

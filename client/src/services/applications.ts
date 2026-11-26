@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type FounderRole = 'LEADER' | 'VICE_LEADER' | 'MEMBER'
 export type ApplicationDocumentType = 'PROPOSAL' | 'LOGO'
 
@@ -132,34 +133,18 @@ export interface ApplicationDetail {
   founders: FounderProfile[]
 }
 
-// Gọi API /applications và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/applications${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      message?: string
-      details?: unknown
-    } | null
-    // Giữ status để nơi gọi phân biệt "không tìm thấy" với các lỗi khác.
-    throw Object.assign(new ApiError(body?.message ?? `HTTP ${response.status}`), {
-      status: response.status,
-      ...(body?.details && typeof body.details === 'object' ? { details: body.details } : {}),
-    })
-  }
-  const body: { data: T } = await response.json()
-  return body.data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/applications${path}`, { ...options, toError: toApplicationError })
 }
 
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
-function mutation(method: string, csrfToken: string, body?: object): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Maps a failed response to this module's error type
+function toApplicationError(failure: ApiFailure): Error {
+  // Keeps the status and details so callers can tell "not found" apart from other failures.
+  return Object.assign(
+    new ApiError(failure.message, failure.status),
+    failure.details && typeof failure.details === 'object' ? { details: failure.details } : {},
+  )
 }
 
 // GET /applications/config: cấu hình form hồ sơ thành lập CLB
@@ -192,7 +177,7 @@ export function previewApplication(
 
 // POST tạo bản nháp hồ sơ thành lập CLB
 export function createDraft(input: DraftInput, csrfToken: string): Promise<ApplicationRecord> {
-  return request('', mutation('POST', csrfToken, input))
+  return request('', { method: 'POST', csrfToken, body: input })
 }
 
 // PATCH /draft: lưu bản nháp hồ sơ theo draftRevision
@@ -202,10 +187,11 @@ export function saveDraft(
   draftRevision: number,
   csrfToken: string,
 ): Promise<ApplicationRecord> {
-  return request(
-    `/${encodeURIComponent(id)}/draft`,
-    mutation('PATCH', csrfToken, { ...input, draftRevision }),
-  )
+  return request(`/${encodeURIComponent(id)}/draft`, {
+    method: 'PATCH',
+    csrfToken,
+    body: { ...input, draftRevision },
+  })
 }
 
 // POST /submit: nộp hồ sơ để ICPDP xét duyệt
@@ -217,12 +203,12 @@ export function submitDraft(
   activeNameConflict: boolean
   similarClubs: SimilarClubHint[]
 }> {
-  return request(`/${encodeURIComponent(id)}/submit`, mutation('POST', csrfToken))
+  return request(`/${encodeURIComponent(id)}/submit`, { method: 'POST', csrfToken })
 }
 
 // POST /withdraw: rút hồ sơ đã tạo
 export function withdrawDraft(id: string, csrfToken: string): Promise<ApplicationRecord> {
-  return request(`/${encodeURIComponent(id)}/withdraw`, mutation('POST', csrfToken))
+  return request(`/${encodeURIComponent(id)}/withdraw`, { method: 'POST', csrfToken })
 }
 
 // POST /documents: tải tài liệu đính kèm lên hồ sơ
@@ -234,9 +220,9 @@ export function uploadDocument(
 ): Promise<ApplicationDocument> {
   return request(`/${encodeURIComponent(id)}/documents`, {
     method: 'POST',
+    csrfToken,
     headers: {
       'Content-Type': file.type,
-      'X-CSRF-Token': csrfToken,
       'X-Document-Type': encodeURIComponent(documentType),
       'X-Filename': encodeURIComponent(file.name),
     },
@@ -250,10 +236,10 @@ export function removeDocument(
   documentId: string,
   csrfToken: string,
 ): Promise<ApplicationRecord> {
-  return request(
-    `/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}`,
-    mutation('DELETE', csrfToken),
-  )
+  return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}`, {
+    method: 'DELETE',
+    csrfToken,
+  })
 }
 
 // GET /founder-lookup: tra cứu thành viên sáng lập theo email

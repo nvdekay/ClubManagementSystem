@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest } from '@/services/apiRequest'
 export type DashboardKind = 'student' | 'club' | 'icpdp'
 
 export const dashboardPanelKeys = [
@@ -139,23 +140,17 @@ export class DashboardRequestError extends ApiError {
     message: string,
     readonly status: number,
   ) {
-    super(message)
+    super(message, status)
     this.name = 'DashboardRequestError'
   }
 }
 
-// GET /dashboard và trả về data, ném lỗi kèm status nếu thất bại
-async function get<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await apiFetch(`/api/v1/dashboard${path}`, {
+// GET /dashboard through the shared helper, failing with DashboardRequestError
+function get<T>(path: string, signal: AbortSignal): Promise<T> {
+  return apiRequest<T>(`/api/v1/dashboard${path}`, {
     signal,
-    credentials: 'same-origin',
+    toError: (failure) => new DashboardRequestError(failure.message, failure.status),
   })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new DashboardRequestError(body?.message ?? `HTTP ${response.status}`, response.status)
-  }
-  const body = (await response.json()) as { data: T }
-  return body.data
 }
 
 // GET /dashboard: số liệu dashboard theo ngữ cảnh

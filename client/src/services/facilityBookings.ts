@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type { Property } from './properties'
 
 export interface BookingInput {
@@ -51,14 +51,9 @@ export interface BookingDetail {
     BookingDecisionInput & { id: string; taskId: string; actorId: string; at: string }
   >
 }
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1${path}`, { credentials: 'same-origin', ...init })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
-  }
-  return ((await res.json()) as { data: T }).data
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1${path}`, options)
 }
 // Chọn đường dẫn booking của CLB hoặc của admin
 function base(clubId: string | null) {
@@ -136,8 +131,8 @@ export function changeBooking(action: BookingAction, csrfToken: string): Promise
             : {}
   return request(`${path}${suffix}`, {
     method: action.kind === 'save' && action.id ? 'PATCH' : 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
+    csrfToken,
+    body,
   })
 }
 

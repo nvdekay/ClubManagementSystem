@@ -1,4 +1,5 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import { proposalDocumentMaxBytes } from '@/utils/proposalFile'
 import type { EventProposalTemplateInfo, FileAccess } from '@/services/clubEvents'
 import type { EventDefenseSession } from '@/services/eventDefense'
@@ -141,27 +142,9 @@ export interface EventReviewDecisionInput {
   }[]
 }
 
-// Gọi API /admin/event-proposals và trả về data, ném ApiError nếu lỗi
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/event-proposals${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function mutation(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/event-proposals${path}`, options)
 }
 
 // GET hàng đợi đề xuất sự kiện chờ ICPDP
@@ -179,7 +162,7 @@ export function fetchEventProposal(id: string, signal: AbortSignal): Promise<Eve
 
 // POST /claim: ICPDP nhận xử lý đề xuất
 export function claimEventProposal(id: string, csrfToken: string): Promise<EventProposalDetail> {
-  return request(`/${encodeURIComponent(id)}/claim`, mutation(csrfToken))
+  return request(`/${encodeURIComponent(id)}/claim`, { method: 'POST', csrfToken })
 }
 
 // POST /decision: ICPDP ghi quyết định đề xuất
@@ -188,7 +171,7 @@ export function decideEventProposal(
   input: EventReviewDecisionInput,
   csrfToken: string,
 ): Promise<EventProposalDetail> {
-  return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input))
+  return request(`/${encodeURIComponent(id)}/decision`, { method: 'POST', csrfToken, body: input })
 }
 
 // POST /cancellation-decision: duyệt hoặc từ chối yêu cầu huỷ sự kiện
@@ -197,7 +180,11 @@ export function decideEventCancellation(
   input: { approve: boolean; reason?: string },
   csrfToken: string,
 ): Promise<EventProposalDetail> {
-  return request(`/${encodeURIComponent(id)}/cancellation-decision`, mutation(csrfToken, input))
+  return request(`/${encodeURIComponent(id)}/cancellation-decision`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // POST /template: tải mẫu đề xuất sự kiện mới
@@ -210,11 +197,8 @@ export function uploadProposalTemplate(
   return request('/template', {
     method: 'POST',
     body: file,
-    headers: {
-      'Content-Type': mimeType,
-      'X-CSRF-Token': csrfToken,
-      'X-Filename': encodeURIComponent(file.name),
-    },
+    csrfToken,
+    headers: { 'Content-Type': mimeType, 'X-Filename': encodeURIComponent(file.name) },
   })
 }
 
@@ -241,7 +225,7 @@ export async function fetchReviewProposalPreviewFile(
   const access = await accessReviewProposalDocument(id, revisionNo)
   const response = await fetch(access.url, { signal, credentials: 'omit' })
   if (!response.ok) {
-    throw new ApiError(`HTTP ${response.status}`)
+    throw new ApiError(`HTTP ${response.status}`, response.status)
   }
   if (Number(response.headers.get('content-length')) > proposalDocumentMaxBytes) {
     throw new ApiError('Document too large')

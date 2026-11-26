@@ -88,14 +88,14 @@ Có hai tầng giữa một component và mạng — component không bao giờ 
 component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → services/<domain>.ts (fetch, sở hữu endpoint)
 ```
 
-1. `services/<domain>.ts` — mỗi endpoint một hàm async được export, request/response có kiểu, kiểu thực thể (`AdminUserPage`, …) khai báo tại đây. Không bao giờ import React; test được mà không cần render. Dùng `fetch` gốc — không dùng axios (ở đây không có gì cần interceptor hay refresh token; nếu sau này xuất hiện một header xác thực dùng chung thì thêm đúng một helper `apiFetch` trong `services/`, không phải một class client).
+1. `services/<domain>.ts` — mỗi endpoint một hàm async được export, request/response có kiểu, kiểu thực thể (`AdminUserPage`, …) khai báo tại đây. Không bao giờ import React; test được mà không cần render. Dùng `fetch` gốc — không dùng axios (ở đây không có gì cần interceptor hay refresh token; mọi lời gọi JSON đi qua đúng một helper `apiRequest` trong `services/apiRequest.ts` — gắn header JSON/CSRF, mở phong bì `{ data }`, ném `ApiError` kèm `status` — không phải một class client).
 2. `hooks/use<Domain>.ts` — các lớp bọc `useQuery`/`useMutation` quanh hàm service (`useAccounts()`, `useAccountAction()`). `queryKey` của miền được khai báo đúng một lần ở đây — một gốc để thao tác cache theo tiền tố, cộng một factory nhúng mọi input của queryFn (`accountsKeyRoot` cộng `search`/`page`/`pageSize` trong `useAccounts.ts`); không bao giờ viết chuỗi `["accounts"]` rải rác nơi khác. Mọi biến mà queryFn dùng đều phải xuất hiện trong key (nó chính là mảng phụ thuộc). Chuyển tiếp `signal` của queryFn vào `fetch`.
 3. Các component chia sẻ server state qua cache của React Query, không qua props/context: hai component bất kỳ cùng gọi `useAccounts()` đọc cùng một mục cache, và mutation cập nhật nó cho tất cả. Server state sống trong React Query; client state (theme, ngôn ngữ, ô nhập liệu) ở lại trong `useState`.
 4. Sau một mutation: nếu riêng response đã quyết định được giá trị cache mới (danh sách không lọc, response chứa thực thể), dùng `cancelQueries` + `setQueryData` để khỏi phải gọi lại; nếu danh sách được lọc/sắp xếp/phân trang ở phía server nên response không cho biết thực thể rơi vào đâu (hay có rơi vào không), thì `invalidateQueries` trên key gốc của miền (xem `useAccountAction`).
 5. Phong bì của server (`server/src/interface/http/response.ts`) — hãy khai kiểu theo nó, đừng tự chế hình dạng riêng:
    - thành công: `{ statusCode, message, data, timestamp }`
    - lỗi: `{ statusCode, error, message, details?, timestamp, path }`
-6. Luôn kiểm tra `res.ok` trước khi đọc body. Body lỗi không chắc chắn là JSON (lỗi proxy, trang 404 dạng HTML) — dùng `res.json().catch(() => null)` ở nhánh lỗi.
+6. Luôn kiểm tra `res.ok` trước khi đọc body. Body lỗi không chắc chắn là JSON (lỗi proxy, trang 404 dạng HTML) — `apiRequest`/`readApiFailure` đã xử lý việc này; chỉ khi buộc phải gọi `apiFetch` trực tiếp (tải file thô) mới tự kiểm tra.
 
 ## Quy tắc về lỗi & trạng thái tải
 

@@ -1,4 +1,5 @@
-import { apiFetch } from '@/services/apiError'
+import { ApiError } from '@/services/apiError'
+import { apiRequest } from '@/services/apiRequest'
 
 export type FundingDecision = 'NOT_SPONSORED' | 'BEFORE_EVENT' | 'AFTER_EVENT'
 export type PaymentChannel = 'VIA_OFFICER_ADVANCE' | 'VIA_OFFICER_REIMBURSE' | 'DIRECT_VENDOR'
@@ -135,26 +136,20 @@ function base(id: string, clubId?: string): string {
   return `/api/v1/${clubId ? `clubs/${clubId}` : 'admin'}/budgets/${id}/items`
 }
 
-// Đọc trường data của response, ném lỗi nếu thất bại
-async function data<T>(response: Response): Promise<T> {
-  const body = (await response.json().catch(() => null)) as { data?: T; message?: string } | null
-  if (!response.ok || !body || body.data === undefined) {
-    throw new Error(body?.message ?? 'Unable to process invoice request')
-  }
-  return body.data
-}
-
 // GET các mục tài trợ của ngân sách; null nếu không có
 export async function fetchSponsoredBudget(
   id: string,
   clubId?: string,
   signal?: AbortSignal,
 ): Promise<SponsoredBudget | null> {
-  const response = await apiFetch(base(id, clubId), { credentials: 'include', signal })
-  if (response.status === 404) {
-    return null
+  try {
+    return await apiRequest<SponsoredBudget>(base(id, clubId), { signal })
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null
+    }
+    throw error
   }
-  return data<SponsoredBudget>(response)
 }
 
 // POST /actions: thao tác trên một mục hoá đơn tài trợ
@@ -166,14 +161,11 @@ export async function changeSponsoredItem(
   action: ItemAction,
   csrfToken: string,
 ): Promise<SponsoredBudget> {
-  return data(
-    await apiFetch(`${base(id, clubId)}/${itemId}/actions`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-      body: JSON.stringify({ revision, action }),
-    }),
-  )
+  return apiRequest<SponsoredBudget>(`${base(id, clubId)}/${itemId}/actions`, {
+    method: 'POST',
+    csrfToken,
+    body: { revision, action },
+  })
 }
 
 // POST /images: tải tệp chứng từ (JPG/PNG/PDF) của một mục (hóa đơn hoặc biên lai hoàn trả)
@@ -191,14 +183,12 @@ export async function uploadInvoiceImage(
     fileName: file.name,
     ...(target === 'refund' ? { target: 'refund' } : {}),
   })
-  return data(
-    await apiFetch(`${base(id, clubId)}/${itemId}/images?${query}`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': file.type, 'X-CSRF-Token': csrfToken },
-      body: file,
-    }),
-  )
+  return apiRequest<SponsoredBudget>(`${base(id, clubId)}/${itemId}/images?${query}`, {
+    method: 'POST',
+    csrfToken,
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
 }
 
 // GET /refund-account: lấy thông tin tài khoản hoàn trả của nhà trường (chỉ cấp khi CLB thực hiện hoàn trả)
@@ -208,12 +198,7 @@ export async function fetchRefundAccount(
   itemId: string,
   signal?: AbortSignal,
 ): Promise<RefundAccountInfo> {
-  return data<RefundAccountInfo>(
-    await apiFetch(`${base(id, clubId)}/${itemId}/refund-account`, {
-      credentials: 'include',
-      signal,
-    }),
-  )
+  return apiRequest<RefundAccountInfo>(`${base(id, clubId)}/${itemId}/refund-account`, { signal })
 }
 
 // GET link xem hoặc tải xuống tệp chứng từ
@@ -226,10 +211,5 @@ export async function fetchInvoiceImageUrl(
   download = false,
 ): Promise<{ url: string; fileName?: string; mimeType?: string }> {
   const suffix = download ? '?download=1' : ''
-  return data(
-    await apiFetch(`${base(id, clubId)}/${itemId}/images/${imageId}${suffix}`, {
-      credentials: 'include',
-      signal,
-    }),
-  )
+  return apiRequest(`${base(id, clubId)}/${itemId}/images/${imageId}${suffix}`, { signal })
 }

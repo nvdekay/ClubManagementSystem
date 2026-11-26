@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 export type InvitationStatus = 'Pending' | 'Accepted' | 'Declined' | 'Expired' | 'Withdrawn'
 
 export interface InvitationCounts {
@@ -79,27 +79,9 @@ export interface InviteInput {
   deadline?: string
 }
 
-// Gọi API /admin/school-events và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/school-events${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
-function post(csrfToken: string, body?: object): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  }
+// Calls the API through the shared helper
+function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(`/api/v1/admin/school-events${path}`, options)
 }
 
 // GET danh sách sự kiện do trường tổ chức
@@ -125,7 +107,7 @@ export function createSchoolEvent(
   input: SchoolEventInput,
   csrfToken: string,
 ): Promise<{ detail: SchoolEventDetail; outcome: InvitationOutcome }> {
-  return request('', post(csrfToken, input))
+  return request('', { method: 'POST', csrfToken, body: input })
 }
 
 // POST /invitations: mời CLB tham gia sự kiện trường
@@ -134,7 +116,11 @@ export function inviteClubs(
   input: InviteInput,
   csrfToken: string,
 ): Promise<{ detail: SchoolEventDetail; outcome: InvitationOutcome }> {
-  return request(`/${encodeURIComponent(id)}/invitations`, post(csrfToken, input))
+  return request(`/${encodeURIComponent(id)}/invitations`, {
+    method: 'POST',
+    csrfToken,
+    body: input,
+  })
 }
 
 // POST /withdraw: thu hồi lời mời CLB
@@ -145,11 +131,11 @@ export function withdrawInvitation(
 ): Promise<SchoolEventDetail> {
   return request(
     `/${encodeURIComponent(id)}/invitations/${encodeURIComponent(invitationId)}/withdraw`,
-    post(csrfToken),
+    { method: 'POST', csrfToken },
   )
 }
 
 // POST /publish: công khai sự kiện trường
 export function publishSchoolEvent(id: string, csrfToken: string): Promise<SchoolEventDetail> {
-  return request(`/${encodeURIComponent(id)}/publish`, post(csrfToken))
+  return request(`/${encodeURIComponent(id)}/publish`, { method: 'POST', csrfToken })
 }
