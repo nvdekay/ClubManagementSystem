@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { MembershipRepository } from '../../domain/membership.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   changeMembershipState,
   executeMembershipWithdrawal,
@@ -18,6 +16,7 @@ import {
 } from '../../usecase/membership.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface MembershipRouteDeps {
   repo: MembershipRepository
@@ -27,31 +26,6 @@ export interface MembershipRouteDeps {
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i)
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(
-  schema: {
-    safeParse(
-      input: unknown,
-    ): { success: true; data: T } | { success: false; error: { issues: unknown } }
-  },
-  input: unknown,
-): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid membership request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Mount các route thành viên CLB và yêu cầu rút khỏi CLB
 export function membershipRoutes(deps: MembershipRouteDeps): Router {
@@ -75,7 +49,7 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
     '/memberships/:membershipId/withdrawal-requests',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(
+      const body = parse(
         z
           .object({
             reason: z.string().min(1).max(2000),
@@ -83,11 +57,12 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
           })
           .strict(),
         req.body,
+        'membership request',
       )
       ok(
         res,
         await requestMembershipWithdrawal(deps.repo, actor(res), {
-          membershipId: parsed(id, req.params.membershipId),
+          membershipId: parse(id, req.params.membershipId, 'membership request'),
           reason: body.reason,
           requestedEffectiveDate: new Date(body.requestedEffectiveDate),
         }),
@@ -103,20 +78,21 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'membership request'),
       ),
     )
   })
   // Thêm thành viên thủ công vào CLB
   router.post('/clubs/:clubId/memberships', authGuard(guard), async (req, res) => {
-    const body = parsed(
+    const body = parse(
       z.object({ email: z.string().min(3).max(320), reason: z.string().min(1).max(2000) }).strict(),
       req.body,
+      'membership request',
     )
     ok(
       res,
       await onboardMemberManually(deps.repo, deps.accessRepo, actor(res), {
-        clubId: parsed(id, req.params.clubId),
+        clubId: parse(id, req.params.clubId, 'membership request'),
         email: body.email,
         reason: body.reason,
       }),
@@ -128,7 +104,7 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
     '/clubs/:clubId/memberships/:membershipId/state',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(
+      const body = parse(
         z
           .object({
             state: z.enum(['Active', 'Inactive', 'Banned']),
@@ -137,12 +113,13 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
           })
           .strict(),
         req.body,
+        'membership request',
       )
       ok(
         res,
         await changeMembershipState(deps.repo, deps.accessRepo, actor(res), {
-          clubId: parsed(id, req.params.clubId),
-          membershipId: parsed(id, req.params.membershipId),
+          clubId: parse(id, req.params.clubId, 'membership request'),
+          membershipId: parse(id, req.params.membershipId, 'membership request'),
           state: body.state,
           effectiveDate: new Date(body.effectiveDate),
           ...(body.reason ? { reason: body.reason } : {}),
@@ -158,7 +135,7 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'membership request'),
       ),
     )
   })
@@ -170,8 +147,8 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
       ok(
         res,
         await executeMembershipWithdrawal(deps.repo, deps.accessRepo, actor(res), {
-          clubId: parsed(id, req.params.clubId),
-          requestId: parsed(id, req.params.requestId),
+          clubId: parse(id, req.params.clubId, 'membership request'),
+          requestId: parse(id, req.params.requestId, 'membership request'),
         }),
       )
     },

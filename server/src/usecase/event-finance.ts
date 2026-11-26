@@ -7,7 +7,7 @@ import {
   validateFinancialEvidence,
 } from '../domain/event-finance.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 export interface EventFinanceDeps {
   repo: EventFinanceRepository
@@ -21,22 +21,6 @@ export function financeId(value: string): string {
   }
   return value
 }
-// Kiểm actor là ICPDP officer phụ trách tài chính sự kiện
-export async function assertFinanceOfficer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState !== 'Active') {
-    throw new DomainError('account locked', 'locked')
-  }
-  if (!(await auth.systemRoleCodes(financeId(actor.id))).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
 // Liệt kê ngân sách sự kiện, theo CLB hoặc cho ICPDP
 export async function listEventFinances(
   deps: EventFinanceDeps,
@@ -47,7 +31,7 @@ export async function listEventFinances(
   if (clubId) {
     await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
   } else {
-    await assertFinanceOfficer(deps.auth, actor)
+    await requireIcpdpOfficer(deps.auth, actor)
   }
   return deps.repo.list(clubId)
 }
@@ -62,7 +46,7 @@ export async function getEventFinance(
   if (clubId) {
     await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
   } else {
-    await assertFinanceOfficer(deps.auth, actor)
+    await requireIcpdpOfficer(deps.auth, actor)
   }
   const result = await deps.repo.find(financeId(id), clubId)
   if (!result) {
@@ -85,7 +69,7 @@ export async function actOnEventFinance(
       throw new DomainError('officer action required', 'forbidden')
     }
   } else {
-    await assertFinanceOfficer(deps.auth, actor)
+    await requireIcpdpOfficer(deps.auth, actor)
     if (!['claim', 'return', 'finalize'].includes(action.kind)) {
       throw new DomainError('club action required', 'forbidden')
     }

@@ -4,38 +4,7 @@ import {
   type ClubFieldInput,
   type ClubFieldRepository,
 } from '../domain/club-field.js'
-import { DomainError } from '../domain/errors.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng id lĩnh vực CLB
-function fieldId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid club field id', 'validation')
-  }
-  return value
-}
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // ICPDP xem danh mục lĩnh vực CLB kèm mức độ sử dụng
 export async function listClubFieldCatalog(
@@ -43,7 +12,7 @@ export async function listClubFieldCatalog(
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.listWithUsage()
 }
 
@@ -55,7 +24,7 @@ export async function createClubField(
   input: ClubFieldInput,
   now: Date,
 ) {
-  return repo.create(validateClubFieldInput(input), await officer(auth, actor), now)
+  return repo.create(validateClubFieldInput(input), await requireIcpdpOfficer(auth, actor), now)
 }
 
 // ICPDP sửa một lĩnh vực CLB
@@ -67,8 +36,13 @@ export async function updateClubField(
   input: ClubFieldInput,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
-  return repo.update(fieldId(id), validateClubFieldInput(input), actorId, now)
+  const actorId = await requireIcpdpOfficer(auth, actor)
+  return repo.update(
+    parseObjectId(id, 'club field id'),
+    validateClubFieldInput(input),
+    actorId,
+    now,
+  )
 }
 
 // ICPDP xóa hoặc ẩn một lĩnh vực CLB khỏi danh mục
@@ -79,6 +53,6 @@ export async function removeClubField(
   id: string,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
-  return { result: await repo.remove(fieldId(id), actorId, now) }
+  const actorId = await requireIcpdpOfficer(auth, actor)
+  return { result: await repo.remove(parseObjectId(id, 'club field id'), actorId, now) }
 }

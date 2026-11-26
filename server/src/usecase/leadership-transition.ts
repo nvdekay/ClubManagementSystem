@@ -4,32 +4,7 @@ import type {
   LeadershipTransitionRepository,
   TransitionDecisionInput,
 } from '../domain/leadership-transition.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm định dạng ObjectId
-function validId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid identifier', 'validation')
-  }
-  return value
-}
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(auth: AuthRepository, actor: AccessActor | null): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  const actorId = validId(actor.id)
-  if (!(await auth.systemRoleCodes(actorId)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actorId
-}
+import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // ICPDP xem các kế hoạch bàn giao lãnh đạo đang chờ xử lý
 export async function listLeadershipTransitions(
@@ -37,7 +12,7 @@ export async function listLeadershipTransitions(
   auth: AuthRepository,
   actor: AccessActor | null,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return repo.listOpen()
 }
 
@@ -48,8 +23,8 @@ export async function getLeadershipTransition(
   actor: AccessActor | null,
   planId: string,
 ) {
-  await officer(auth, actor)
-  const result = await repo.find(validId(planId))
+  await requireIcpdpOfficer(auth, actor)
+  const result = await repo.find(parseObjectId(planId, 'identifier'))
   if (!result) {
     throw new DomainError('transition plan not found', 'not_found')
   }
@@ -64,7 +39,11 @@ export async function claimLeadershipTransition(
   planId: string,
   now: Date,
 ) {
-  return repo.claim(validId(planId), await officer(auth, actor), now)
+  return repo.claim(
+    parseObjectId(planId, 'identifier'),
+    await requireIcpdpOfficer(auth, actor),
+    now,
+  )
 }
 
 // ICPDP duyệt hoặc trả lại kế hoạch bàn giao kèm nghĩa vụ theo dõi
@@ -76,8 +55,8 @@ export async function decideLeadershipTransition(
   input: TransitionDecisionInput,
   now: Date,
 ) {
-  const officerId = await officer(auth, actor)
-  const detail = await repo.find(validId(planId))
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const detail = await repo.find(parseObjectId(planId, 'identifier'))
   if (!detail) {
     throw new DomainError('transition plan not found', 'not_found')
   }
@@ -100,7 +79,7 @@ export async function decideLeadershipTransition(
     throw new DomainError('unknown follow-up obligation', 'validation')
   }
   return repo.decide(
-    validId(planId),
+    parseObjectId(planId, 'identifier'),
     officerId,
     {
       outcome: input.outcome,

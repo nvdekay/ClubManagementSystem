@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { PostEventReportRepository } from '../../domain/post-event-report.js'
 import type { SessionService } from '../../domain/session.js'
-import { DomainError } from '../../domain/errors.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   actOnPostEventReport,
   getPostEventReport,
@@ -13,6 +11,7 @@ import {
 } from '../../usecase/post-event-report.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 export const reportPath = z.object({
   clubId: z.string().regex(/^[0-9a-f]{24}$/i),
   id: z.string().regex(/^[0-9a-f]{24}$/i),
@@ -64,18 +63,6 @@ export const reportActionBody = z.discriminatedUnion('kind', [
     })
     .strict(),
 ])
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
-  const result = schema.safeParse(value)
-  if (!result.success) {
-    throw new DomainError('invalid report request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-// Lấy actor đã xác thực từ res.locals
-function actor(res: Response) {
-  return res.locals.actor as AccessActor
-}
 // Mount các route báo cáo sau sự kiện của CLB và ICPDP
 export function postEventReportRoutes(deps: {
   repo: PostEventReportRepository
@@ -98,7 +85,9 @@ export function postEventReportRoutes(deps: {
         await listPostEventReports(
           usecaseDeps,
           actor(res),
-          req.params.clubId ? parsed(reportPath.shape.clubId, req.params.clubId) : undefined,
+          req.params.clubId
+            ? parse(reportPath.shape.clubId, req.params.clubId, 'report request')
+            : undefined,
           new Date(),
         ),
       )
@@ -110,8 +99,10 @@ export function postEventReportRoutes(deps: {
         await getPostEventReport(
           usecaseDeps,
           actor(res),
-          parsed(reportPath.shape.id, req.params.id),
-          req.params.clubId ? parsed(reportPath.shape.clubId, req.params.clubId) : undefined,
+          parse(reportPath.shape.id, req.params.id, 'report request'),
+          req.params.clubId
+            ? parse(reportPath.shape.clubId, req.params.clubId, 'report request')
+            : undefined,
           new Date(),
         ),
       )
@@ -123,9 +114,11 @@ export function postEventReportRoutes(deps: {
         await actOnPostEventReport(
           usecaseDeps,
           actor(res),
-          parsed(reportPath.shape.id, req.params.id),
-          req.params.clubId ? parsed(reportPath.shape.clubId, req.params.clubId) : undefined,
-          parsed(reportActionBody, req.body),
+          parse(reportPath.shape.id, req.params.id, 'report request'),
+          req.params.clubId
+            ? parse(reportPath.shape.clubId, req.params.clubId, 'report request')
+            : undefined,
+          parse(reportActionBody, req.body, 'report request'),
           new Date(),
         ),
       )

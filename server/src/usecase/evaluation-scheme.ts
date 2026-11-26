@@ -9,33 +9,11 @@ import {
   type SchemeSettings,
 } from '../domain/evaluation-scheme.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
-
-// Kiểm actor là ICPDP officer và trả id
-async function officer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
+import { isObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // Lấy khung đánh giá theo id, không có thì báo not_found
 async function existing(repo: EvaluationSchemeRepository, id: string) {
-  if (!objectId.test(id)) {
+  if (!isObjectId(id)) {
     throw new DomainError('invalid evaluation scheme id', 'validation')
   }
   const scheme = await repo.find(id)
@@ -70,7 +48,7 @@ export async function listEvaluationSchemes(
   actor: AccessActor | null,
   now: Date,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   const [schemes, semesters, evaluated] = await Promise.all([
     repo.list(),
     periods(policy, now),
@@ -94,7 +72,7 @@ export async function createEvaluationScheme(
   input: { periodCode: string; copyFromId?: string },
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const periodCode = input.periodCode.trim()
   if (!(await periods(policy, now)).some((semester) => semester.code === periodCode)) {
     throw new DomainError('evaluation period is not in the academic calendar', 'validation', {
@@ -117,7 +95,7 @@ export async function updateEvaluationScheme(
   settings: SchemeSettings,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const scheme = await existing(repo, id)
   draftOnly(scheme.state)
   return repo.updateDraft(scheme.id, validateSchemeSettings(settings), actorId, now)
@@ -131,7 +109,7 @@ export async function activateEvaluationScheme(
   id: string,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const scheme = await existing(repo, id)
   draftOnly(scheme.state)
   const issues = schemeActivationIssues(scheme)
@@ -149,7 +127,7 @@ export async function deleteEvaluationScheme(
   id: string,
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const scheme = await existing(repo, id)
   draftOnly(scheme.state)
   await repo.deleteDraft(scheme.id, actorId, now)

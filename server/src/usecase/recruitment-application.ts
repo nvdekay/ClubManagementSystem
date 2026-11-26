@@ -6,9 +6,8 @@ import type {
   RecruitmentAttachmentStorage,
 } from '../domain/recruitment-application.js'
 import { validateRecruitmentAnswers } from '../domain/recruitment-application.js'
-import type { AccessActor } from './access.js'
+import { isObjectId, parseObjectId, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 const allowedMimeTypes = new Set([
   'application/pdf',
   'image/png',
@@ -25,21 +24,13 @@ function owner(actor: AccessActor | null): string {
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
 }
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-// Kiểm định dạng ObjectId của một định danh
-function validId(value: string, field: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError(`invalid ${field}`, 'validation')
-  }
-  return value
-}
 
 // Kiểm định dạng UUID của file đính kèm
 function validAttachmentId(value: string): string {
@@ -86,7 +77,7 @@ function editable(application: RecruitmentApplication): void {
 
 // Lấy đợt tuyển đang mở, không có hoặc đã đóng thì báo not_found
 async function openCampaign(repo: RecruitmentApplicationRepository, campaignId: string, now: Date) {
-  const id = validId(campaignId, 'campaign id')
+  const id = parseObjectId(campaignId, 'campaign id')
   const campaign = await repo.campaign(id, now)
   if (!campaign || !campaign.clubId) {
     throw new DomainError('recruitment campaign not found or closed', 'not_found')
@@ -159,7 +150,7 @@ export async function getMyRecruitmentApplication(
   applicationId: string,
 ) {
   return ownedApplication(
-    await repo.findOwned(validId(applicationId, 'application id'), owner(actor)),
+    await repo.findOwned(parseObjectId(applicationId, 'application id'), owner(actor)),
   )
 }
 
@@ -169,7 +160,7 @@ export async function getMyCampaignApplication(
   actor: AccessActor | null,
   campaignId: string,
 ) {
-  const campaign = validId(campaignId, 'campaign id')
+  const campaign = parseObjectId(campaignId, 'campaign id')
   return repo.findMineForCampaign(campaign, owner(actor))
 }
 
@@ -205,7 +196,7 @@ export async function saveRecruitmentApplicationDraft(
 ) {
   const userId = owner(actor)
   const application = ownedApplication(
-    await repo.findOwned(validId(applicationId, 'application id'), userId),
+    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
   )
   editable(application)
   const campaign = await openCampaign(repo, application.campaignId, now)
@@ -241,7 +232,7 @@ export async function uploadRecruitmentAttachment(
 ) {
   const userId = owner(actor)
   const application = ownedApplication(
-    await repo.findOwned(validId(applicationId, 'application id'), userId),
+    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
   )
   editable(application)
   const campaign = await openCampaign(repo, application.campaignId, now)
@@ -289,7 +280,7 @@ export async function recruitmentAttachmentAccess(
   attachmentId: string,
 ) {
   const attachment = await repo.attachmentAccess(
-    validId(applicationId, 'application id'),
+    parseObjectId(applicationId, 'application id'),
     owner(actor),
     validAttachmentId(attachmentId),
   )
@@ -311,7 +302,7 @@ export async function submitRecruitmentApplication(
 ) {
   const userId = owner(actor)
   const application = ownedApplication(
-    await repo.findOwned(validId(applicationId, 'application id'), userId),
+    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
   )
   editable(application)
   const campaign = await openCampaign(repo, application.campaignId, now)
@@ -334,7 +325,7 @@ export async function withdrawRecruitmentApplication(
 ) {
   const userId = owner(actor)
   const application = ownedApplication(
-    await repo.findOwned(validId(applicationId, 'application id'), userId),
+    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
   )
   if (!['Submitted', 'Screening', 'Shortlisted'].includes(application.state)) {
     throw new DomainError('recruitment application cannot be withdrawn in this state', 'conflict')

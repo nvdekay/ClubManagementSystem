@@ -1,16 +1,15 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import {
   BUDGET_FLOW_KINDS,
   type BudgetDisbursementRepository,
 } from '../../domain/budget-disbursement.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import { getBudget, listBudgets, recordBudgetFlow } from '../../usecase/budget-disbursement.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface BudgetDisbursementRouteDeps {
   repo: BudgetDisbursementRepository
@@ -29,24 +28,6 @@ export const budgetFlowBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid budget request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route ngân sách và giải ngân của ICPDP
 export function budgetDisbursementRoutes(deps: BudgetDisbursementRouteDeps): Router {
   const router = Router()
@@ -58,18 +39,26 @@ export function budgetDisbursementRoutes(deps: BudgetDisbursementRouteDeps): Rou
   })
   // Xem chi tiết một ngân sách
   router.get('/admin/budgets/:id', authGuard(guard, false), async (req, res) => {
-    ok(res, await getBudget(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)))
+    ok(
+      res,
+      await getBudget(
+        deps.repo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'budget request'),
+      ),
+    )
   })
   // Ghi nhận một dòng thu/chi (flow) vào ngân sách
   router.post('/admin/budgets/:id/flows', authGuard(guard), async (req, res) => {
-    const body = parsed(budgetFlowBody, req.body)
+    const body = parse(budgetFlowBody, req.body, 'budget request')
     ok(
       res,
       await recordBudgetFlow(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'budget request'),
         {
           ...body,
           disbursedAt: body.disbursedAt ? new Date(body.disbursedAt) : undefined,

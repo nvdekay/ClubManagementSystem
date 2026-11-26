@@ -12,10 +12,8 @@ import {
   type ComplaintDecision,
   type ComplaintRepository,
 } from '../../domain/complaint.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
 import { VIOLATION_SEVERITIES } from '../../domain/violation.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   decideComplaint,
   getComplaintForIcpdp,
@@ -28,6 +26,7 @@ import {
 } from '../../usecase/complaint.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ComplaintRouteDeps {
   repo: ComplaintRepository
@@ -72,24 +71,6 @@ export const complaintResponseBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid complaint request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route khiếu nại của sinh viên, ICPDP và CLB
 export function complaintRoutes(deps: ComplaintRouteDeps): Router {
   const router = Router()
@@ -99,7 +80,7 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
       deps.repo,
       deps.authRepo,
       actor(res),
-      parsed(id, complaintId),
+      parse(id, complaintId, 'complaint request'),
       decision,
       new Date(),
     )
@@ -108,7 +89,7 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
   // Sinh viên gửi khiếu nại
   // UC50 — Student
   router.post('/complaints', authGuard(guard), async (req, res) => {
-    const body = parsed(complaintBody, req.body)
+    const body = parse(complaintBody, req.body, 'complaint request')
     ok(
       res,
       await submitComplaint(
@@ -126,7 +107,15 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
   })
   // Sinh viên rút khiếu nại
   router.post('/complaints/:id/withdraw', authGuard(guard), async (req, res) => {
-    ok(res, await withdrawComplaint(deps.repo, actor(res), parsed(id, req.params.id), new Date()))
+    ok(
+      res,
+      await withdrawComplaint(
+        deps.repo,
+        actor(res),
+        parse(id, req.params.id, 'complaint request'),
+        new Date(),
+      ),
+    )
   })
 
   // ICPDP liệt kê hàng đợi khiếu nại
@@ -138,7 +127,7 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(complaintQuery, req.query).state,
+        parse(complaintQuery, req.query, 'complaint request').state,
       ),
     )
   })
@@ -146,7 +135,12 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
   router.get('/admin/complaints/:id', authGuard(guard, false), async (req, res) => {
     ok(
       res,
-      await getComplaintForIcpdp(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)),
+      await getComplaintForIcpdp(
+        deps.repo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'complaint request'),
+      ),
     )
   })
   // ICPDP mở xử lý khiếu nại
@@ -155,7 +149,7 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
   })
   // ICPDP phân loại (triage) khiếu nại
   router.post('/admin/complaints/:id/triage', authGuard(guard), async (req, res) => {
-    const body = parsed(complaintTriageBody, req.body)
+    const body = parse(complaintTriageBody, req.body, 'complaint request')
     ok(
       res,
       await decide(res, req.params.id, {
@@ -169,14 +163,20 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
   router.post('/admin/complaints/:id/link', authGuard(guard), async (req, res) => {
     ok(
       res,
-      await decide(res, req.params.id, { kind: 'link', ...parsed(complaintLinkBody, req.body) }),
+      await decide(res, req.params.id, {
+        kind: 'link',
+        ...parse(complaintLinkBody, req.body, 'complaint request'),
+      }),
     )
   })
   // ICPDP đóng khiếu nại
   router.post('/admin/complaints/:id/close', authGuard(guard), async (req, res) => {
     ok(
       res,
-      await decide(res, req.params.id, { kind: 'close', ...parsed(complaintCloseBody, req.body) }),
+      await decide(res, req.params.id, {
+        kind: 'close',
+        ...parse(complaintCloseBody, req.body, 'complaint request'),
+      }),
     )
   })
   // ICPDP chuyển khiếu nại lên cấp xử lý cao hơn
@@ -185,7 +185,7 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
       res,
       await decide(res, req.params.id, {
         kind: 'escalate',
-        ...parsed(complaintEscalateBody, req.body),
+        ...parse(complaintEscalateBody, req.body, 'complaint request'),
       }),
     )
   })
@@ -199,22 +199,22 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'complaint request'),
         new Date(),
       ),
     )
   })
   // CLB phản hồi khiếu nại
   router.post('/clubs/:clubId/complaints/:id/response', authGuard(guard), async (req, res) => {
-    const body = parsed(complaintResponseBody, req.body)
+    const body = parse(complaintResponseBody, req.body, 'complaint request')
     ok(
       res,
       await respondToComplaint(
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(id, req.params.id),
+        parse(id, req.params.clubId, 'complaint request'),
+        parse(id, req.params.id, 'complaint request'),
         { ...body, evidence: body.evidence ?? [] },
         new Date(),
       ),

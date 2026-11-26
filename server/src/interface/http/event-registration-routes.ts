@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { EventRegistrationRepository } from '../../domain/event-registration.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   cancelEventRegistration,
   getEventRegistrationContext,
@@ -14,6 +12,7 @@ import {
 } from '../../usecase/event-registration.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface EventRegistrationRouteDeps {
   repo: EventRegistrationRepository
@@ -30,24 +29,6 @@ export const eventRegistrationBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid event registration request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route đăng ký tham gia sự kiện của sinh viên
 export function eventRegistrationRoutes(deps: EventRegistrationRouteDeps): Router {
   const router = Router()
@@ -59,21 +40,21 @@ export function eventRegistrationRoutes(deps: EventRegistrationRouteDeps): Route
       await getEventRegistrationContext(
         deps.repo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event registration request'),
         new Date(),
       ),
     )
   })
   // Sinh viên đăng ký tham gia sự kiện
   router.post('/events/:id/registrations', authGuard(guard), async (req, res) => {
-    const body = parsed(eventRegistrationBody, req.body)
+    const body = parse(eventRegistrationBody, req.body, 'event registration request')
     ok(
       res,
       await registerForEvent(
         deps.repo,
         deps.policy,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event registration request'),
         body.answers ?? {},
         new Date(),
       ),
@@ -88,7 +69,12 @@ export function eventRegistrationRoutes(deps: EventRegistrationRouteDeps): Route
   router.post('/event-registrations/:id/cancel', authGuard(guard), async (req, res) => {
     ok(
       res,
-      await cancelEventRegistration(deps.repo, actor(res), parsed(id, req.params.id), new Date()),
+      await cancelEventRegistration(
+        deps.repo,
+        actor(res),
+        parse(id, req.params.id, 'event registration request'),
+        new Date(),
+      ),
     )
   })
   return router

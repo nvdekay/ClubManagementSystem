@@ -1,11 +1,9 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { EvaluationSchemeRepository } from '../../domain/evaluation-scheme.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   activateEvaluationScheme,
   createEvaluationScheme,
@@ -15,6 +13,7 @@ import {
 } from '../../usecase/evaluation-scheme.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface EvaluationSchemeRouteDeps {
   repo: EvaluationSchemeRepository
@@ -47,24 +46,6 @@ export const evaluationSchemeSettingsBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid evaluation scheme request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route bộ tiêu chí đánh giá CLB của ICPDP
 export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router {
   const router = Router()
@@ -86,7 +67,7 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
         deps.policy,
         deps.authRepo,
         actor(res),
-        parsed(evaluationSchemeCreateBody, req.body),
+        parse(evaluationSchemeCreateBody, req.body, 'evaluation scheme request'),
         new Date(),
       ),
       201,
@@ -100,8 +81,8 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(evaluationSchemeSettingsBody, req.body),
+        parse(id, req.params.id, 'evaluation scheme request'),
+        parse(evaluationSchemeSettingsBody, req.body, 'evaluation scheme request'),
         new Date(),
       ),
     )
@@ -114,7 +95,7 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'evaluation scheme request'),
         new Date(),
       ),
     )
@@ -127,7 +108,7 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'evaluation scheme request'),
         new Date(),
       ),
     )

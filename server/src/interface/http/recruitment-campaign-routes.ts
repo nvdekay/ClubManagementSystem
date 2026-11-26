@@ -1,12 +1,10 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { RecruitmentCampaignRepository } from '../../domain/recruitment-campaign.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   cancelRecruitmentCampaign,
   createRecruitmentCampaignDraft,
@@ -17,6 +15,7 @@ import {
 } from '../../usecase/recruitment-campaign.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface RecruitmentCampaignRouteDeps {
   repo: RecruitmentCampaignRepository
@@ -79,31 +78,6 @@ export const recruitmentCampaignBody = z
   }))
 const confirmOverlapBody = z.object({ confirmOverlap: z.boolean().default(false) }).strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(
-  schema: {
-    safeParse(
-      input: unknown,
-    ): { success: true; data: T } | { success: false; error: { issues: unknown } }
-  },
-  input: unknown,
-): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid recruitment campaign request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route đợt tuyển thành viên của CLB
 export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): Router {
   const router = Router()
@@ -117,7 +91,7 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'recruitment campaign request'),
       ),
     )
   })
@@ -129,8 +103,8 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(recruitmentCampaignBody, req.body),
+        parse(id, req.params.clubId, 'recruitment campaign request'),
+        parse(recruitmentCampaignBody, req.body, 'recruitment campaign request'),
         new Date(),
       ),
       201,
@@ -147,8 +121,8 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
           deps.repo,
           deps.accessRepo,
           actor(res),
-          parsed(id, req.params.clubId),
-          parsed(id, req.params.campaignId),
+          parse(id, req.params.clubId, 'recruitment campaign request'),
+          parse(id, req.params.campaignId, 'recruitment campaign request'),
         ),
       )
     },
@@ -164,9 +138,9 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
           deps.repo,
           deps.accessRepo,
           actor(res),
-          parsed(id, req.params.clubId),
-          parsed(id, req.params.campaignId),
-          parsed(recruitmentCampaignBody, req.body),
+          parse(id, req.params.clubId, 'recruitment campaign request'),
+          parse(id, req.params.campaignId, 'recruitment campaign request'),
+          parse(recruitmentCampaignBody, req.body, 'recruitment campaign request'),
           new Date(),
         ),
       )
@@ -177,7 +151,7 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
     '/clubs/:clubId/recruitment/campaigns/:campaignId/publish',
     authGuard(guard),
     async (req, res) => {
-      const confirmation = parsed(confirmOverlapBody, req.body ?? {})
+      const confirmation = parse(confirmOverlapBody, req.body ?? {}, 'recruitment campaign request')
       ok(
         res,
         await publishRecruitmentCampaign(
@@ -185,8 +159,8 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
           deps.accessRepo,
           deps.policy,
           actor(res),
-          parsed(id, req.params.clubId),
-          parsed(id, req.params.campaignId),
+          parse(id, req.params.clubId, 'recruitment campaign request'),
+          parse(id, req.params.campaignId, 'recruitment campaign request'),
           confirmation.confirmOverlap ?? false,
           new Date(),
         ),
@@ -204,8 +178,8 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
           deps.repo,
           deps.accessRepo,
           actor(res),
-          parsed(id, req.params.clubId),
-          parsed(id, req.params.campaignId),
+          parse(id, req.params.clubId, 'recruitment campaign request'),
+          parse(id, req.params.campaignId, 'recruitment campaign request'),
           new Date(),
         ),
       )

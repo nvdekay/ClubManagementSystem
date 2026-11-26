@@ -22,8 +22,7 @@ import {
   validateEventProposalFile,
 } from '../domain/club-event-rules.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-import { officer } from './event-proposal-review.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 export interface ClubEventDeps {
   repo: ClubEventRepository
@@ -318,7 +317,7 @@ export async function uploadEventProposalTemplate(
   bytes: Buffer,
   now: Date,
 ): Promise<EventProposalTemplateInfo> {
-  const officerId = await officer(deps.auth, actor)
+  const officerId = await requireIcpdpOfficer(deps.auth, actor)
   const name = validateEventProposalFile(
     fileName,
     mimeType,
@@ -344,7 +343,7 @@ export async function reviewEventProposalDocumentAccess(
   revisionNo: number | undefined,
   inline: boolean,
 ) {
-  await officer(deps.auth, actor)
+  await requireIcpdpOfficer(deps.auth, actor)
   const found = await deps.repo.proposalDocument(clubEventId(eventId), revisionNo ?? 'latest')
   if (!found) {
     throw new DomainError('event proposal not found', 'not_found')

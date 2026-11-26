@@ -1,10 +1,8 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PropertyDetails, PropertyRepository } from '../../domain/property.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   createProperty,
   deleteProperty,
@@ -14,6 +12,7 @@ import {
 } from '../../usecase/property.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface PropertyRouteDeps {
   repo: PropertyRepository
@@ -53,24 +52,6 @@ export const propertyCreateBody = propertyDetailsBody
   .strict()
 export const propertyActivationBody = z.object({ isActive: z.boolean() }).strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid property request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Chuyển body chi tiết tài sản sang PropertyDetails
 function details(body: z.infer<typeof propertyDetailsBody>): PropertyDetails {
   return {
@@ -94,7 +75,7 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
   })
   // Tạo tài sản mới
   router.post('/admin/properties', authGuard(guard), async (req, res) => {
-    const body = parsed(propertyCreateBody, req.body)
+    const body = parse(propertyCreateBody, req.body, 'property request')
     ok(
       res,
       await createProperty(
@@ -115,8 +96,8 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        details(parsed(propertyDetailsBody, req.body)),
+        parse(id, req.params.id, 'property request'),
+        details(parse(propertyDetailsBody, req.body, 'property request')),
         new Date(),
       ),
     )
@@ -129,8 +110,8 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(propertyActivationBody, req.body).isActive,
+        parse(id, req.params.id, 'property request'),
+        parse(propertyActivationBody, req.body, 'property request').isActive,
         new Date(),
       ),
     )
@@ -143,7 +124,7 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'property request'),
         new Date(),
       ),
     )

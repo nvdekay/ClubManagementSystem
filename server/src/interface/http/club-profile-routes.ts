@@ -1,12 +1,10 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubProfileRepository } from '../../domain/club-profile.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   applyClubDepartmentTemplate,
   createClubDepartment,
@@ -17,6 +15,7 @@ import {
 } from '../../usecase/club-profile.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ClubProfileRouteDeps {
   repo: ClubProfileRepository
@@ -51,24 +50,6 @@ export const clubDepartmentBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid club settings request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route hồ sơ và phòng ban của CLB
 export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
   const router = Router()
@@ -83,7 +64,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
         deps.accessRepo,
         deps.policy,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'club settings request'),
       ),
     )
   })
@@ -96,8 +77,8 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
         deps.accessRepo,
         deps.policy,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(clubProfileBody, req.body),
+        parse(id, req.params.clubId, 'club settings request'),
+        parse(clubProfileBody, req.body, 'club settings request'),
         new Date(),
       ),
     )
@@ -110,7 +91,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
+        parse(id, req.params.clubId, 'club settings request'),
         new Date(),
       ),
     )
@@ -123,8 +104,8 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(clubDepartmentBody, req.body),
+        parse(id, req.params.clubId, 'club settings request'),
+        parse(clubDepartmentBody, req.body, 'club settings request'),
         new Date(),
       ),
       201,
@@ -138,9 +119,9 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(id, req.params.departmentId),
-        parsed(clubDepartmentBody, req.body),
+        parse(id, req.params.clubId, 'club settings request'),
+        parse(id, req.params.departmentId, 'club settings request'),
+        parse(clubDepartmentBody, req.body, 'club settings request'),
         new Date(),
       ),
     )
@@ -153,8 +134,8 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(id, req.params.departmentId),
+        parse(id, req.params.clubId, 'club settings request'),
+        parse(id, req.params.departmentId, 'club settings request'),
         new Date(),
       ),
     )

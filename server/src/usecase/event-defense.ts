@@ -15,39 +15,10 @@ import {
   type EventProposalReviewRepository,
   type EventReviewDecisionInput,
 } from '../domain/event-proposal-review.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 import { normalizedEventDecision } from './event-proposal-review.js'
 
-const OBJECT_ID = /^[0-9a-f]{24}$/i
 const MINUTE_MS = 60 * 1000
-
-// Kiểm actor là ICPDP officer và trả id
-async function requireOfficer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!OBJECT_ID.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm định dạng ObjectId của một định danh
-function validObjectId(value: string, label: string): string {
-  if (!OBJECT_ID.test(value)) {
-    throw new DomainError(`invalid ${label}`, 'validation')
-  }
-  return value
-}
 
 // Cắt khoảng trắng và bắt buộc có giá trị, không quá độ dài tối đa
 function trimmedRequired(value: string | undefined, label: string, maxLength: number): string {
@@ -82,7 +53,7 @@ export async function listAvailableDefenseRooms(
   durationMinutes: number,
   excludeDefenseId?: string,
 ) {
-  await requireOfficer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   if (!(startAt instanceof Date) || Number.isNaN(startAt.getTime())) {
     throw new DomainError('valid start time is required', 'validation', { field: 'startAt' })
   }
@@ -98,7 +69,7 @@ export async function listAvailableDefenseRooms(
     )
   }
   const endAt = new Date(startAt.getTime() + durationMinutes * MINUTE_MS)
-  const excludeId = excludeDefenseId ? validObjectId(excludeDefenseId, 'defense id') : undefined
+  const excludeId = excludeDefenseId ? parseObjectId(excludeDefenseId, 'defense id') : undefined
   return repo.listAvailableRooms(startAt, endAt, excludeId)
 }
 
@@ -111,9 +82,9 @@ export async function scheduleEventDefense(
   input: ScheduleDefenseInput,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
-  const id = validObjectId(eventId, 'event id')
-  const propertyId = validObjectId(input.propertyId, 'property id')
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const id = parseObjectId(eventId, 'event id')
+  const propertyId = parseObjectId(input.propertyId, 'property id')
   const title = trimmedRequired(input.title, 'defense title', 200)
   const note = trimmedOptional(input.note, 2000)
   const slot = validateDefenseScheduleSlot(input.startAt, input.durationMinutes, now)
@@ -134,8 +105,8 @@ export async function cancelEventDefense(
   reason: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
-  const id = validObjectId(eventId, 'event id')
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const id = parseObjectId(eventId, 'event id')
   const cleanReason = trimmedRequired(reason, 'cancellation reason', 2000)
   return repo.cancel(id, officerId, cleanReason, now)
 }
@@ -150,8 +121,8 @@ export async function respondDefenseReschedule(
   input: RespondRescheduleInput,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
-  const id = validObjectId(eventId, 'event id')
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const id = parseObjectId(eventId, 'event id')
   if (input.accept) {
     if (
       !(input.startAt instanceof Date) ||
@@ -174,7 +145,7 @@ export async function respondDefenseReschedule(
         { field: 'durationMinutes' },
       )
     }
-    const propertyId = validObjectId(input.propertyId ?? '', 'property id')
+    const propertyId = parseObjectId(input.propertyId ?? '', 'property id')
     const note = trimmedOptional(input.note, 2000)
     // BR63: an open revision deadline must stay at least 12h before the defense, also when it moves.
     // FR-UC26-20: the accepted start only has to be in the future (the 48h notice is for first scheduling).
@@ -207,8 +178,8 @@ export async function startEventDefense(
   eventId: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
-  return repo.start(validObjectId(eventId, 'event id'), officerId, now)
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  return repo.start(parseObjectId(eventId, 'event id'), officerId, now)
 }
 
 // ICPDP xem phiên bảo vệ đang diễn ra
@@ -218,8 +189,8 @@ export async function getLiveDefenseSession(
   actor: AccessActor | null,
   eventId: string,
 ) {
-  await requireOfficer(auth, actor)
-  const session = await repo.getLiveSession(validObjectId(eventId, 'event id'))
+  await requireIcpdpOfficer(auth, actor)
+  const session = await repo.getLiveSession(parseObjectId(eventId, 'event id'))
   if (!session) {
     throw new DomainError('defense session not found', 'not_found')
   }
@@ -235,13 +206,13 @@ export async function saveDefenseNote(
   content: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   if (typeof content !== 'string' || content.length > 50_000) {
     throw new DomainError('defense note cannot exceed 50000 characters', 'validation', {
       field: 'content',
     })
   }
-  return repo.saveNote(validObjectId(eventId, 'event id'), officerId, content, now)
+  return repo.saveNote(parseObjectId(eventId, 'event id'), officerId, content, now)
 }
 
 // ICPDP kết thúc buổi bảo vệ đề án
@@ -252,8 +223,8 @@ export async function endEventDefense(
   eventId: string,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
-  return repo.end(validObjectId(eventId, 'event id'), officerId, now)
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  return repo.end(parseObjectId(eventId, 'event id'), officerId, now)
 }
 
 // ICPDP ghi nhận CLB vắng mặt buổi bảo vệ
@@ -265,10 +236,10 @@ export async function markDefenseNoShow(
   reason: string | undefined,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
+  const officerId = await requireIcpdpOfficer(auth, actor)
   const cleanReason =
     trimmedOptional(reason, 2000) ?? 'Club did not attend the scheduled defense session'
-  return repo.markNoShow(validObjectId(eventId, 'event id'), officerId, cleanReason, now)
+  return repo.markNoShow(parseObjectId(eventId, 'event id'), officerId, cleanReason, now)
 }
 
 // ICPDP ghi quyết định đề án sau buổi bảo vệ (duyệt, sửa, từ chối)
@@ -281,8 +252,8 @@ export async function decideAfterDefense(
   input: EventReviewDecisionInput,
   now: Date,
 ) {
-  const officerId = await requireOfficer(auth, actor)
-  const id = validObjectId(eventId, 'event id')
+  const officerId = await requireIcpdpOfficer(auth, actor)
+  const id = parseObjectId(eventId, 'event id')
   const decision = normalizedEventDecision(input, now)
   const detail = await reviewRepo.find(id, now)
   if (!detail) {
@@ -308,8 +279,8 @@ export async function getClubEventDefense(
 ) {
   await assertClubAccess(access, actor, clubId, 'club.event.manage', now)
   const view = await repo.getClubDefense(
-    validObjectId(clubId, 'club id'),
-    validObjectId(eventId, 'event id'),
+    parseObjectId(clubId, 'club id'),
+    parseObjectId(eventId, 'event id'),
   )
   if (!view) {
     throw new DomainError('event proposal not found', 'not_found')
@@ -328,8 +299,8 @@ export async function confirmClubEventDefense(
 ) {
   await assertClubAccess(access, actor, clubId, 'club.event.manage', now)
   return repo.confirmByClub(
-    validObjectId(clubId, 'club id'),
-    validObjectId(eventId, 'event id'),
+    parseObjectId(clubId, 'club id'),
+    parseObjectId(eventId, 'event id'),
     actor!.id,
     now,
   )
@@ -348,8 +319,8 @@ export async function requestClubDefenseReschedule(
   await assertClubAccess(access, actor, clubId, 'club.event.manage', now)
   const cleanReason = trimmedRequired(reason, 'reschedule reason', 2000)
   return repo.requestRescheduleByClub(
-    validObjectId(clubId, 'club id'),
-    validObjectId(eventId, 'event id'),
+    parseObjectId(clubId, 'club id'),
+    parseObjectId(eventId, 'event id'),
     actor!.id,
     cleanReason,
     now,

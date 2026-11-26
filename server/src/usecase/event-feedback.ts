@@ -6,9 +6,7 @@ import {
   type EventFeedbackRepository,
 } from '../domain/event-feedback.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { isObjectId, parseObjectId, type AccessActor } from './access.js'
 
 // Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
 function student(actor: AccessActor | null): string {
@@ -18,18 +16,10 @@ function student(actor: AccessActor | null): string {
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
-}
-
-// Kiểm định dạng id sự kiện
-function eventId(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid event id', 'validation')
-  }
-  return value
 }
 
 // The window is the policy's in force when the event ended, so a later policy edit cannot
@@ -47,7 +37,7 @@ export async function getEventFeedbackContext(
   id: string,
   now: Date,
 ) {
-  const target = await repo.target(eventId(id), student(actor))
+  const target = await repo.target(parseObjectId(id, 'event id'), student(actor))
   if (!target) {
     throw new DomainError('event not found', 'not_found')
   }
@@ -77,7 +67,7 @@ export async function submitEventFeedback(
   now: Date,
 ) {
   const studentId = student(actor)
-  const validEventId = eventId(id)
+  const validEventId = parseObjectId(id, 'event id')
   let valid: { rating: number; comment: string }
   try {
     valid = validateFeedback(input)

@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import {
@@ -7,10 +7,8 @@ import {
   type ExportFilter,
   type ExportRepository,
 } from '../../domain/data-export.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   exportAnnualReport,
   exportData,
@@ -20,6 +18,7 @@ import {
 } from '../../usecase/data-export.js'
 import { authGuard } from './auth-routes.js'
 import { download, ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ExportRouteDeps {
   repo: ExportRepository
@@ -62,24 +61,6 @@ export const annualExportBody = annualPreviewBody
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid export request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Chuyển body bộ lọc xuất dữ liệu sang ExportFilter
 function filter(body: z.infer<typeof filterBody>): ExportFilter {
   const { from, to, ...rest } = body
@@ -97,7 +78,7 @@ export function exportRoutes(deps: ExportRouteDeps): Router {
   })
   // Xem trước dữ liệu sẽ xuất
   router.post('/admin/exports/preview', authGuard(guard), async (req, res) => {
-    const body = parsed(exportPreviewBody, req.body)
+    const body = parse(exportPreviewBody, req.body, 'export request')
     ok(
       res,
       await previewExport(
@@ -112,7 +93,7 @@ export function exportRoutes(deps: ExportRouteDeps): Router {
   })
   // Xuất dữ liệu ra file tải về
   router.post('/admin/exports', authGuard(guard), async (req, res) => {
-    const body = parsed(exportBody, req.body)
+    const body = parse(exportBody, req.body, 'export request')
     const result = await exportData(
       deps.repo,
       deps.writer,
@@ -126,12 +107,12 @@ export function exportRoutes(deps: ExportRouteDeps): Router {
   })
   // Xem trước báo cáo năm
   router.post('/admin/exports/annual-report/preview', authGuard(guard), async (req, res) => {
-    const body = parsed(annualPreviewBody, req.body)
+    const body = parse(annualPreviewBody, req.body, 'export request')
     ok(res, await previewAnnualReport(deps.repo, deps.authRepo, actor(res), body))
   })
   // Xuất báo cáo năm ra file tải về
   router.post('/admin/exports/annual-report', authGuard(guard), async (req, res) => {
-    const body = parsed(annualExportBody, req.body)
+    const body = parse(annualExportBody, req.body, 'export request')
     const result = await exportAnnualReport(
       deps.repo,
       deps.writer,

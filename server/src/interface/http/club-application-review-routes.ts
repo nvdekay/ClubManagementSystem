@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type {
@@ -8,9 +8,7 @@ import type {
 } from '../../domain/club-application-review.js'
 import type { ClubApplicationDraft } from '../../domain/club-application.js'
 import type { ApplicationFileStorage } from '../../domain/club-application.js'
-import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   claimApplicationReview,
   applicationReviewDocumentAccess,
@@ -20,6 +18,7 @@ import {
 } from '../../usecase/club-application-review.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ClubApplicationReviewRouteDeps {
   repo: ClubApplicationReviewRepository
@@ -41,24 +40,6 @@ export const applicationReviewDecisionBody = z
     revisionDeadlineAt: z.string().datetime().optional(),
   })
   .strict()
-
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid application review request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 
 // Chuẩn hoá bản nháp đơn để trả về client
 function publicDraft(draft: ClubApplicationDraft) {
@@ -106,7 +87,12 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
     ok(
       res,
       publicDetail(
-        await getApplicationReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)),
+        await getApplicationReview(
+          deps.repo,
+          deps.authRepo,
+          actor(res),
+          parse(id, req.params.id, 'application review request'),
+        ),
       ),
     )
   })
@@ -119,7 +105,7 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
           deps.repo,
           deps.authRepo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'application review request'),
           new Date(),
         ),
       ),
@@ -127,7 +113,7 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
   })
   // ICPDP ghi quyết định duyệt đơn
   router.post('/admin/application-reviews/:id/decision', authGuard(guard), async (req, res) => {
-    const body = parsed(applicationReviewDecisionBody, req.body)
+    const body = parse(applicationReviewDecisionBody, req.body, 'application review request')
     ok(
       res,
       publicDetail(
@@ -135,7 +121,7 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
           deps.repo,
           deps.authRepo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'application review request'),
           {
             ...body,
             revisionDeadlineAt: body.revisionDeadlineAt
@@ -159,8 +145,8 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
           deps.authRepo,
           deps.files,
           actor(res),
-          parsed(id, req.params.id),
-          parsed(z.string().uuid(), req.params.documentId),
+          parse(id, req.params.id, 'application review request'),
+          parse(z.string().uuid(), req.params.documentId, 'application review request'),
         ),
       )
     },

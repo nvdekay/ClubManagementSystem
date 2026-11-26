@@ -23,28 +23,9 @@ import {
 } from '../domain/data-export.js'
 import { DomainError } from '../domain/errors.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
+import { requireIcpdpOfficer, type AccessActor } from './access.js'
 
-const objectId = /^[0-9a-f]{24}$/i
 type ExportAuth = Pick<AuthRepository, 'systemRoleCodes' | 'findUserById'>
-
-// Kiểm actor là ICPDP officer được phép xuất dữ liệu
-/** BR61: chỉ ICPDP officer được xuất. */
-async function officer(auth: ExportAuth, actor: AccessActor | null): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.test(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
-  return actor.id
-}
 
 // Kiểm danh sách loại dữ liệu xuất phải hợp lệ và không trùng
 /** FR-UC55-12: một hoặc nhiều loại khác nhau; bộ lọc trạng thái thuộc về vòng đời của một loại duy nhất. */
@@ -103,7 +84,7 @@ export async function exportOptions(
   actor: AccessActor | null,
   now: Date,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   const [periods, clubs, codes] = await Promise.all([
     semesters(policy, now),
     repo.clubs(),
@@ -136,7 +117,7 @@ export async function previewExport(
   input: { types: string[]; filter: ExportFilter },
   now: Date,
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   const types = exportTypes(input.types, input.filter)
   const filter = await resolved(policy, types[0]!, input.filter, now)
   const counts = await Promise.all(
@@ -164,7 +145,7 @@ export async function exportData(
   input: { types: string[]; filter: ExportFilter; format: string },
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const types = exportTypes(input.types, input.filter)
   const format = EXPORT_FORMATS.find((item) => item === input.format)
   if (!format) {
@@ -257,7 +238,7 @@ export async function previewAnnualReport(
   actor: AccessActor | null,
   input: { year: unknown },
 ) {
-  await officer(auth, actor)
+  await requireIcpdpOfficer(auth, actor)
   return annualReport(repo, input.year)
 }
 
@@ -275,7 +256,7 @@ export async function exportAnnualReport(
   input: { year: unknown; format: string; remarks?: string; achievementKeys?: string[] },
   now: Date,
 ) {
-  const actorId = await officer(auth, actor)
+  const actorId = await requireIcpdpOfficer(auth, actor)
   const format = ANNUAL_FORMATS.find((item) => item === input.format)
   if (!format) {
     throw new DomainError('invalid export format', 'validation', { field: 'format' })

@@ -1,7 +1,6 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import {
   MAX_COMMENT_LENGTH,
   MAX_RATING,
@@ -10,7 +9,6 @@ import {
 } from '../../domain/event-feedback.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   getEventFeedbackContext,
   listMyEventFeedback,
@@ -18,6 +16,7 @@ import {
 } from '../../usecase/event-feedback.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface EventFeedbackRouteDeps {
   repo: EventFeedbackRepository
@@ -35,24 +34,6 @@ export const eventFeedbackBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid feedback request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route phản hồi sự kiện của sinh viên
 export function eventFeedbackRoutes(deps: EventFeedbackRouteDeps): Router {
   const router = Router()
@@ -65,21 +46,21 @@ export function eventFeedbackRoutes(deps: EventFeedbackRouteDeps): Router {
         deps.repo,
         deps.policy,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'feedback request'),
         new Date(),
       ),
     )
   })
   // Sinh viên gửi phản hồi sự kiện
   router.post('/events/:id/feedback', authGuard(guard), async (req, res) => {
-    const body = parsed(eventFeedbackBody, req.body)
+    const body = parse(eventFeedbackBody, req.body, 'feedback request')
     ok(
       res,
       await submitEventFeedback(
         deps.repo,
         deps.policy,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'feedback request'),
         { ...body, isAnonymous: body.isAnonymous ?? false },
         new Date(),
       ),

@@ -1,9 +1,7 @@
 import { DomainError } from '../domain/errors.js'
 import { canUseMemberSpace, type MemberSpaceRepository } from '../domain/member-space.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { isObjectId, type AccessActor } from './access.js'
 
 // UC24: không gian thành viên của một CLB kèm các feedback còn phải gửi
 /** UC24: không gian thành viên của một CLB, kèm feedback còn nợ (FR-05) suy ra từ khung BR36. */
@@ -20,7 +18,7 @@ export async function getMemberSpace(
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id) || !objectId.test(clubId)) {
+  if (!isObjectId(actor.id) || !isObjectId(clubId)) {
     throw new DomainError('invalid identifier', 'validation')
   }
   const space = await repo.find(actor.id, clubId, now)

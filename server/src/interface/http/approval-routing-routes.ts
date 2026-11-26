@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import {
   MAX_ROUTING_RULES,
@@ -9,10 +9,8 @@ import {
   type RoutingRule,
 } from '../../domain/approval-routing.js'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PropertyType } from '../../domain/property.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   activateRoutingRuleSet,
   createRoutingDraft,
@@ -22,6 +20,7 @@ import {
 } from '../../usecase/approval-routing.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface ApprovalRoutingRouteDeps {
   repo: ApprovalRoutingRepository
@@ -54,25 +53,9 @@ export const routingSimulationQuery = z
   .object({ limit: z.coerce.number().int().min(1).max(200).default(50) })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid routing request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
 // Parse body thành danh sách rule định tuyến phê duyệt
 function rules(body: unknown): RoutingRule[] {
-  return parsed(routingRulesBody, body).rules as RoutingRule[]
+  return parse(routingRulesBody, body, 'routing request').rules as RoutingRule[]
 }
 
 // Mount các route cấu hình định tuyến phê duyệt của ICPDP
@@ -99,7 +82,7 @@ export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'routing request'),
         rules(req.body),
         new Date(),
       ),
@@ -113,7 +96,7 @@ export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'routing request'),
         new Date(),
       ),
     )
@@ -126,8 +109,8 @@ export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
-        parsed(routingSimulationQuery, req.query).limit ?? 50,
+        parse(id, req.params.id, 'routing request'),
+        parse(routingSimulationQuery, req.query, 'routing request').limit ?? 50,
       ),
     )
   })

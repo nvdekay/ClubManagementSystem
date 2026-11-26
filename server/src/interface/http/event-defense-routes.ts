@@ -1,8 +1,7 @@
-import { Router, type Response } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import {
   MAX_DEFENSE_DURATION_MINUTES,
   MIN_DEFENSE_DURATION_MINUTES,
@@ -10,7 +9,6 @@ import {
 } from '../../domain/event-defense.js'
 import type { EventProposalReviewRepository } from '../../domain/event-proposal-review.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   cancelEventDefense,
   confirmClubEventDefense,
@@ -29,6 +27,7 @@ import {
 import { authGuard } from './auth-routes.js'
 import { eventReviewDecisionBody } from './event-proposal-review-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 export interface EventDefenseRouteDeps {
   repo: EventDefenseRepository
@@ -100,24 +99,6 @@ export const defenseNoteBody = z
   })
   .strict()
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input)
-  if (!result.success) {
-    throw new DomainError('invalid event defense request', 'validation', result.error.issues)
-  }
-  return result.data
-}
-
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
-function actor(res: Response): AccessActor {
-  const value = res.locals.actor as AccessActor | undefined
-  if (!value) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return value
-}
-
 // Mount các route phiên bảo vệ đề xuất sự kiện của ICPDP và CLB
 export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   const router = Router()
@@ -125,7 +106,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
 
   // Liệt kê phòng còn trống cho phiên bảo vệ
   router.get('/admin/event-defense/rooms', authGuard(guard, false), async (req, res) => {
-    const query = parsed(defenseRoomsQuery, req.query)
+    const query = parse(defenseRoomsQuery, req.query, 'event defense request')
     ok(
       res,
       await listAvailableDefenseRooms(
@@ -141,14 +122,14 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
 
   // ICPDP lên lịch phiên bảo vệ đề xuất sự kiện
   router.post('/admin/event-proposals/:id/defense/schedule', authGuard(guard), async (req, res) => {
-    const body = parsed(defenseScheduleBody, req.body)
+    const body = parse(defenseScheduleBody, req.body, 'event defense request')
     ok(
       res,
       await scheduleEventDefense(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         {
           title: body.title,
           startAt: new Date(body.startAt),
@@ -163,14 +144,14 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
 
   // ICPDP huỷ phiên bảo vệ kèm lý do
   router.post('/admin/event-proposals/:id/defense/cancel', authGuard(guard), async (req, res) => {
-    const body = parsed(defenseReasonBody, req.body)
+    const body = parse(defenseReasonBody, req.body, 'event defense request')
     ok(
       res,
       await cancelEventDefense(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         body.reason,
         new Date(),
       ),
@@ -182,7 +163,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     '/admin/event-proposals/:id/defense/respond-reschedule',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(defenseRespondRescheduleBody, req.body)
+      const body = parse(defenseRespondRescheduleBody, req.body, 'event defense request')
       ok(
         res,
         await respondDefenseReschedule(
@@ -190,7 +171,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
           deps.reviewRepo,
           deps.authRepo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'event defense request'),
           {
             accept: body.accept,
             ...(body.startAt ? { startAt: new Date(body.startAt) } : {}),
@@ -215,7 +196,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         new Date(),
       ),
     )
@@ -232,7 +213,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
           deps.repo,
           deps.authRepo,
           actor(res),
-          parsed(id, req.params.id),
+          parse(id, req.params.id, 'event defense request'),
         ),
       )
     },
@@ -240,14 +221,14 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
 
   // Lưu ghi chú của phiên bảo vệ
   router.put('/admin/event-proposals/:id/defense/notes', authGuard(guard), async (req, res) => {
-    const body = parsed(defenseNoteBody, req.body)
+    const body = parse(defenseNoteBody, req.body, 'event defense request')
     ok(
       res,
       await saveDefenseNote(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         body.content,
         new Date(),
       ),
@@ -262,7 +243,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         new Date(),
       ),
     )
@@ -270,14 +251,14 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
 
   // Đánh dấu CLB vắng mặt tại phiên bảo vệ
   router.post('/admin/event-proposals/:id/defense/no-show', authGuard(guard), async (req, res) => {
-    const body = parsed(defenseOptionalReasonBody, req.body)
+    const body = parse(defenseOptionalReasonBody, req.body, 'event defense request')
     ok(
       res,
       await markDefenseNoShow(
         deps.repo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         body.reason,
         new Date(),
       ),
@@ -286,7 +267,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
 
   // ICPDP ghi quyết định sau phiên bảo vệ
   router.post('/admin/event-proposals/:id/defense/decision', authGuard(guard), async (req, res) => {
-    const body = parsed(eventReviewDecisionBody, req.body)
+    const body = parse(eventReviewDecisionBody, req.body, 'event defense request')
     ok(
       res,
       await decideAfterDefense(
@@ -294,7 +275,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
         deps.reviewRepo,
         deps.authRepo,
         actor(res),
-        parsed(id, req.params.id),
+        parse(id, req.params.id, 'event defense request'),
         {
           ...body,
           revisionDeadlineAt: body.revisionDeadlineAt
@@ -314,8 +295,8 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(id, req.params.id),
+        parse(id, req.params.clubId, 'event defense request'),
+        parse(id, req.params.id, 'event defense request'),
         new Date(),
       ),
     )
@@ -329,8 +310,8 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
         deps.repo,
         deps.accessRepo,
         actor(res),
-        parsed(id, req.params.clubId),
-        parsed(id, req.params.id),
+        parse(id, req.params.clubId, 'event defense request'),
+        parse(id, req.params.id, 'event defense request'),
         new Date(),
       ),
     )
@@ -341,15 +322,15 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     '/clubs/:clubId/events/:id/defense/reschedule-request',
     authGuard(guard),
     async (req, res) => {
-      const body = parsed(defenseReasonBody, req.body)
+      const body = parse(defenseReasonBody, req.body, 'event defense request')
       ok(
         res,
         await requestClubDefenseReschedule(
           deps.repo,
           deps.accessRepo,
           actor(res),
-          parsed(id, req.params.clubId),
-          parsed(id, req.params.id),
+          parse(id, req.params.clubId, 'event defense request'),
+          parse(id, req.params.id, 'event defense request'),
           body.reason,
           new Date(),
         ),

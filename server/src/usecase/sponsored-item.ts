@@ -12,8 +12,8 @@ import {
   type SponsoredItemAction,
   type SponsoredItemRepository,
 } from '../domain/sponsored-item.js'
-import { assertClubAccess, type AccessActor } from './access.js'
-import { assertFinanceOfficer, financeId, type EventFinanceDeps } from './event-finance.js'
+import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { financeId, type EventFinanceDeps } from './event-finance.js'
 
 export interface SponsoredItemDeps {
   repo: SponsoredItemRepository
@@ -34,7 +34,7 @@ export async function getSponsoredBudget(
   if (clubId) {
     await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
   } else {
-    await assertFinanceOfficer(deps.auth, actor)
+    await requireIcpdpOfficer(deps.auth, actor)
   }
   const budget = await deps.repo.find(financeId(id), clubId)
   if (!budget) {

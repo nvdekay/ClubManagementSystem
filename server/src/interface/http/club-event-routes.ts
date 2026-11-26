@@ -1,4 +1,4 @@
-import { raw, Router, type Request, type Response } from 'express'
+import { raw, Router, type Request } from 'express'
 import { z } from 'zod'
 import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
@@ -12,7 +12,6 @@ import type {
 import { PROPOSAL_DOCUMENT_MAX_BYTES } from '../../domain/club-event-rules.js'
 import { DomainError } from '../../domain/errors.js'
 import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   actOnClubEvent,
   clubEventOptions,
@@ -30,6 +29,7 @@ import {
 } from '../../usecase/club-event.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor } from './request.js'
 
 export const eventObjectId = z.string().regex(/^[0-9a-f]{24}$/i)
 const date = z.string().datetime()
@@ -141,10 +141,6 @@ function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
     throw new DomainError('invalid event request', 'validation', result.error.issues)
   }
   return result.data
-}
-// Lấy actor đã xác thực từ res.locals
-function actor(res: Response): AccessActor {
-  return res.locals.actor as AccessActor
 }
 // Chuyển body sự kiện sang input với các trường ngày dạng Date
 function input(body: z.input<typeof clubEventBody>): ClubEventInput {

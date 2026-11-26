@@ -8,9 +8,7 @@ import {
   type EventCheckInRepository,
 } from '../domain/event-checkin.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { isObjectId, type AccessActor } from './access.js'
 
 // Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
 function student(actor: AccessActor | null): string {
@@ -20,7 +18,7 @@ function student(actor: AccessActor | null): string {
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  if (!objectId.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
   return actor.id
@@ -46,7 +44,7 @@ export async function checkInToEvent(
   now: Date,
 ) {
   const studentId = student(actor)
-  if (!objectId.test(eventId)) {
+  if (!isObjectId(eventId)) {
     throw new DomainError('invalid event id', 'validation')
   }
   const target = await repo.target(eventId, studentId)

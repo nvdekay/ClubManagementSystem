@@ -6,9 +6,7 @@ import {
 } from '../domain/approval-routing.js'
 import type { AuthRepository } from '../domain/auth.js'
 import { DomainError } from '../domain/errors.js'
-import type { AccessActor } from './access.js'
-
-const objectId = /^[0-9a-f]{24}$/i
+import { parseObjectId, type AccessActor } from './access.js'
 
 // Kiểm actor là ICPDP officer và có role yêu cầu
 async function holder(
@@ -27,14 +25,6 @@ async function holder(
     throw new DomainError(`${role} role required`, 'forbidden')
   }
   return actor.id
-}
-
-// Kiểm id rule set có đúng định dạng ObjectId
-function id(value: string): string {
-  if (!objectId.test(value)) {
-    throw new DomainError('invalid rule set id', 'validation')
-  }
-  return value
 }
 
 // UC05: liệt kê các bộ quy tắc định tuyến phê duyệt
@@ -70,7 +60,12 @@ export async function saveRoutingDraft(
   now: Date,
 ) {
   const actorId = await holder(auth, actor, 'ICPDP_OFFICER')
-  return repo.saveDraft(id(ruleSetId), validateRoutingRules(rules), actorId, now)
+  return repo.saveDraft(
+    parseObjectId(ruleSetId, 'rule set id'),
+    validateRoutingRules(rules),
+    actorId,
+    now,
+  )
 }
 
 // UC05: kích hoạt bản nháp bộ quy tắc sau khi kiểm chồng chéo
@@ -83,7 +78,7 @@ export async function activateRoutingRuleSet(
   now: Date,
 ) {
   const actorId = await holder(auth, actor, 'ICPDP_OFFICER')
-  const draft = await repo.find(id(ruleSetId))
+  const draft = await repo.find(parseObjectId(ruleSetId, 'rule set id'))
   if (!draft) {
     throw new DomainError('routing rule set not found', 'not_found')
   }
@@ -107,7 +102,7 @@ export async function simulateRoutingRuleSet(
   if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
     throw new DomainError('choose between 1 and 200 requests', 'validation')
   }
-  const set = await repo.find(id(ruleSetId))
+  const set = await repo.find(parseObjectId(ruleSetId, 'rule set id'))
   if (!set) {
     throw new DomainError('routing rule set not found', 'not_found')
   }
