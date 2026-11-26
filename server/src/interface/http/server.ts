@@ -24,7 +24,7 @@ import type { FacilityBookingRepository } from '../../domain/facility-booking.js
 import { facilityBookingRoutes } from './facility-booking-routes.js'
 import type { RoomAllocationRepository } from '../../domain/room-allocation.js'
 import { roomAllocationRoutes } from './room-allocation-routes.js'
-import express from 'express'
+import express, { type Router } from 'express'
 import { authRoutes, type AuthRouteDeps } from './auth-routes.js'
 import { accountAdminRoutes } from './account-admin-routes.js'
 import type { AccountAdminRepository } from '../../domain/account-admin.js'
@@ -122,6 +122,42 @@ const docsHtml = `<!doctype html>
 </body>
 </html>`
 
+const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']
+
+/** Minimal view of an Express 5 router layer: enough to list the routes a router serves. */
+interface RouterLayer {
+  route?: { path: unknown; methods: Record<string, boolean> }
+}
+
+/**
+ * The OpenAPI paths of the operations the mounted /api/v1 routers actually serve. Documentation
+ * follows the mounts themselves, so a route is documented exactly when it is reachable and there
+ * is no second, hand-kept list of conditions that can drift from the mount conditions.
+ */
+function servedPaths(routers: Router[]) {
+  const served = new Set(['get /health'])
+  for (const router of routers) {
+    for (const layer of (router as unknown as { stack: RouterLayer[] }).stack) {
+      if (layer.route && typeof layer.route.path === 'string') {
+        const path = layer.route.path.replace(/:(\w+)/g, '{$1}')
+        for (const method of Object.keys(layer.route.methods)) {
+          served.add(`${method} ${path}`)
+        }
+      }
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(openApiDocument.paths ?? {}).flatMap(([path, item]) => {
+      const entries = Object.entries(item ?? {}).filter(
+        ([key]) => !HTTP_METHODS.includes(key) || served.has(`${key} ${path}`),
+      )
+      return entries.some(([key]) => HTTP_METHODS.includes(key))
+        ? [[path, Object.fromEntries(entries)]]
+        : []
+    }),
+  )
+}
+
 // Dựng ứng dụng Express, chỉ mount route khi đủ dependency và lọc OpenAPI theo route đã mount
 export function buildApp(deps: {
   auth?: AuthRouteDeps
@@ -184,6 +220,12 @@ export function buildApp(deps: {
   apiDocs?: boolean
 }) {
   const app = express()
+  const apiRouters: Router[] = []
+  // Mounts an /api/v1 router and records it for the served OpenAPI document.
+  function mount(router: Router) {
+    apiRouters.push(router)
+    app.use('/api/v1', router)
+  }
   app.disable('x-powered-by')
   app.set('trust proxy', deps.trustProxy ?? false)
   app.use((_req, res, next) => {
@@ -205,11 +247,10 @@ export function buildApp(deps: {
     const ok = deps.dbReady() // 503 khi DB sập, để orchestrator ngừng định tuyến tới đây
     res.status(ok ? 200 : 503).json({ ok })
   })
-  app.use('/api/v1', publicDiscoveryRoutes(deps.publicRepo))
+  mount(publicDiscoveryRoutes(deps.publicRepo))
   if (deps.auth && deps.adminRepo) {
-    app.use('/api/v1', authRoutes(deps.auth))
-    app.use(
-      '/api/v1',
+    mount(authRoutes(deps.auth))
+    mount(
       accountAdminRoutes({
         adminRepo: deps.adminRepo,
         authRepo: deps.auth.repo,
@@ -217,8 +258,7 @@ export function buildApp(deps: {
       }),
     )
     if (deps.clubTransitionPlanRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         clubTransitionPlanRoutes({
           repo: deps.clubTransitionPlanRepo,
           access: deps.auth.accessRepo,
@@ -228,8 +268,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.suspensionRequestRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         suspensionRequestRoutes({
           repo: deps.suspensionRequestRepo,
           access: deps.auth.accessRepo,
@@ -239,8 +278,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.membershipReconfirmationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         membershipReconfirmationRoutes({
           repo: deps.membershipReconfirmationRepo,
           authRepo: deps.auth.repo,
@@ -249,8 +287,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.clubViolationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         clubViolationRoutes({
           repo: deps.clubViolationRepo,
           access: deps.auth.accessRepo,
@@ -260,8 +297,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.clubEvaluationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         clubEvaluationRoutes({
           repo: deps.clubEvaluationRepo,
           access: deps.auth.accessRepo,
@@ -271,8 +307,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.clubInvitationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         clubInvitationRoutes({
           repo: deps.clubInvitationRepo,
           access: deps.auth.accessRepo,
@@ -282,8 +317,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.clubProfileRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         clubProfileRoutes({
           repo: deps.clubProfileRepo,
           accessRepo: deps.auth.accessRepo,
@@ -294,8 +328,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         facilityBookingRoutes({
           repo: deps.facilityBookingRepo,
           properties: deps.propertyRepo,
@@ -308,8 +341,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.roomAllocationRepo && deps.propertyRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         roomAllocationRoutes({
           repo: deps.roomAllocationRepo,
           properties: deps.propertyRepo,
@@ -322,8 +354,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.propertyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         propertyRoutes({
           repo: deps.propertyRepo,
           authRepo: deps.auth.repo,
@@ -332,8 +363,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.boardNominationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         boardNominationRoutes({
           repo: deps.boardNominationRepo,
           accessRepo: deps.auth.accessRepo,
@@ -343,8 +373,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.leadershipTransitionRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         leadershipTransitionRoutes({
           repo: deps.leadershipTransitionRepo,
           authRepo: deps.auth.repo,
@@ -353,8 +382,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.recruitmentCampaignRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         recruitmentCampaignRoutes({
           repo: deps.recruitmentCampaignRepo,
           accessRepo: deps.auth.accessRepo,
@@ -365,8 +393,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.recruitmentApplicationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         recruitmentApplicationRoutes({
           repo: deps.recruitmentApplicationRepo,
           files: deps.recruitmentAttachmentStorage ?? null,
@@ -377,8 +404,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.candidateEvaluationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         candidateEvaluationRoutes({
           repo: deps.candidateEvaluationRepo,
           accessRepo: deps.auth.accessRepo,
@@ -388,8 +414,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.membershipRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         membershipRoutes({
           repo: deps.membershipRepo,
           accessRepo: deps.auth.accessRepo,
@@ -399,8 +424,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.dashboardRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         dashboardRoutes({
           repo: deps.dashboardRepo,
           accessRepo: deps.auth.accessRepo,
@@ -410,8 +434,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.eventRegistrationRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         eventRegistrationRoutes({
           repo: deps.eventRegistrationRepo,
           policy: deps.policyRepo,
@@ -421,8 +444,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.eventCheckInRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         eventCheckInRoutes({
           repo: deps.eventCheckInRepo,
           policy: deps.policyRepo,
@@ -432,8 +454,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.memberSpaceRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         memberSpaceRoutes({
           repo: deps.memberSpaceRepo,
           policy: deps.policyRepo,
@@ -443,8 +464,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.notificationRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         notificationRoutes({
           repo: deps.notificationRepo,
           authRepo: deps.auth.repo,
@@ -453,8 +473,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.approvalRoutingRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         approvalRoutingRoutes({
           repo: deps.approvalRoutingRepo,
           authRepo: deps.auth.repo,
@@ -463,8 +482,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.complaintRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         complaintRoutes({
           repo: deps.complaintRepo,
           accessRepo: deps.auth.accessRepo,
@@ -474,8 +492,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.eventFeedbackRepo && deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         eventFeedbackRoutes({
           repo: deps.eventFeedbackRepo,
           policy: deps.policyRepo,
@@ -485,8 +502,7 @@ export function buildApp(deps: {
       )
     }
     if (deps.policyRepo) {
-      app.use(
-        '/api/v1',
+      mount(
         policyRoutes({
           repo: deps.policyRepo,
           authRepo: deps.auth.repo,
@@ -494,8 +510,7 @@ export function buildApp(deps: {
         }),
       )
       if (deps.eventProposalReviewRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           eventProposalReviewRoutes({
             repo: deps.eventProposalReviewRepo,
             authRepo: deps.auth.repo,
@@ -503,8 +518,7 @@ export function buildApp(deps: {
           }),
         )
         if (deps.eventDefenseRepo) {
-          app.use(
-            '/api/v1',
+          mount(
             eventDefenseRoutes({
               repo: deps.eventDefenseRepo,
               reviewRepo: deps.eventProposalReviewRepo,
@@ -516,8 +530,7 @@ export function buildApp(deps: {
         }
       }
       if (deps.eventFinanceRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           eventFinanceRoutes({
             repo: deps.eventFinanceRepo,
             access: deps.auth.accessRepo,
@@ -527,8 +540,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.sponsoredItemRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           sponsoredItemRoutes({
             repo: deps.sponsoredItemRepo,
             access: deps.auth.accessRepo,
@@ -541,8 +553,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.postEventReportRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           postEventReportRoutes({
             repo: deps.postEventReportRepo,
             access: deps.auth.accessRepo,
@@ -552,8 +563,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.budgetDisbursementRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           budgetDisbursementRoutes({
             repo: deps.budgetDisbursementRepo,
             authRepo: deps.auth.repo,
@@ -562,8 +572,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.violationRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           violationRoutes({
             repo: deps.violationRepo,
             authRepo: deps.auth.repo,
@@ -572,8 +581,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.clubPeriodicReportRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           clubPeriodicReportRoutes({
             repo: deps.clubPeriodicReportRepo,
             policy: deps.policyRepo,
@@ -584,8 +592,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.periodicReportRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           periodicReportRoutes({
             repo: deps.periodicReportRepo,
             policy: deps.policyRepo,
@@ -597,8 +604,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.clubEventRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           clubEventRoutes({
             repo: deps.clubEventRepo,
             access: deps.auth.accessRepo,
@@ -609,8 +615,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.schoolEventRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           schoolEventRoutes({
             repo: deps.schoolEventRepo,
             policy: deps.policyRepo,
@@ -620,8 +625,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.clubLifecycleRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           clubLifecycleRoutes({
             repo: deps.clubLifecycleRepo,
             policy: deps.policyRepo,
@@ -631,8 +635,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.exportRepo && deps.exportWriter) {
-        app.use(
-          '/api/v1',
+        mount(
           exportRoutes({
             repo: deps.exportRepo,
             writer: deps.exportWriter,
@@ -643,8 +646,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.evaluationSchemeRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           evaluationSchemeRoutes({
             repo: deps.evaluationSchemeRepo,
             policy: deps.policyRepo,
@@ -654,8 +656,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.evaluationRepo && deps.evaluationSchemeRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           evaluationRoutes({
             repo: deps.evaluationRepo,
             schemes: deps.evaluationSchemeRepo,
@@ -666,8 +667,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.clubFieldRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           clubFieldRoutes({
             repo: deps.clubFieldRepo,
             authRepo: deps.auth.repo,
@@ -676,8 +676,7 @@ export function buildApp(deps: {
         )
       }
       if (deps.applicationRepo && deps.clubFieldRepo) {
-        app.use(
-          '/api/v1',
+        mount(
           clubApplicationRoutes({
             repo: deps.applicationRepo,
             policy: deps.policyRepo,
@@ -688,8 +687,7 @@ export function buildApp(deps: {
           }),
         )
         if (deps.applicationReviewRepo) {
-          app.use(
-            '/api/v1',
+          mount(
             clubApplicationReviewRoutes({
               repo: deps.applicationReviewRepo,
               authRepo: deps.auth.repo,
@@ -701,209 +699,11 @@ export function buildApp(deps: {
       }
     }
   }
-  const hasAdmin = Boolean(deps.auth && deps.adminRepo)
-  const hasPolicy = Boolean(hasAdmin && deps.policyRepo)
-  const hasClubFields = Boolean(hasPolicy && deps.clubFieldRepo)
-  const hasApplications = Boolean(hasClubFields && deps.applicationRepo)
-  const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo)
-  const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo)
-  const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo)
-  const hasBookings = Boolean(
-    deps.auth && deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo,
-  )
-  const hasProperties = Boolean(hasAdmin && deps.propertyRepo)
-  const hasRoomAllocations = Boolean(
-    deps.auth && deps.roomAllocationRepo && deps.propertyRepo && deps.policyRepo,
-  )
-  const hasEvaluationSchemes = Boolean(hasPolicy && deps.evaluationSchemeRepo)
-  const hasExports = Boolean(hasPolicy && deps.exportRepo && deps.exportWriter)
-  const hasClubLifecycle = Boolean(hasPolicy && deps.clubLifecycleRepo)
-  const hasEventProposalReviews = Boolean(hasPolicy && deps.eventProposalReviewRepo)
-  const hasEventDefenses = Boolean(hasEventProposalReviews && deps.eventDefenseRepo)
-  const hasBudgets = Boolean(hasPolicy && deps.budgetDisbursementRepo)
-  const hasViolations = Boolean(hasPolicy && deps.violationRepo)
-  const hasPeriodicReports = Boolean(hasPolicy && deps.periodicReportRepo)
-  const hasSchoolEvents = Boolean(hasPolicy && deps.schoolEventRepo)
-  const hasEvaluations = Boolean(hasEvaluationSchemes && deps.evaluationRepo)
-  const hasRecruitmentCampaigns = Boolean(
-    hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo,
-  )
-  const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo)
-  const hasCandidateEvaluations = Boolean(hasAdmin && deps.candidateEvaluationRepo)
-  const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo)
-  const hasLeadershipTransitions = Boolean(hasAdmin && deps.leadershipTransitionRepo)
-  const hasEventRegistrations = Boolean(hasPolicy && deps.eventRegistrationRepo)
-  const hasEventCheckIns = Boolean(hasPolicy && deps.eventCheckInRepo)
-  const hasEventFeedback = Boolean(hasPolicy && deps.eventFeedbackRepo)
-  const hasComplaints = Boolean(hasAdmin && deps.complaintRepo)
-  const hasRouting = Boolean(deps.auth && deps.approvalRoutingRepo)
-  const hasMemberSpace = Boolean(hasPolicy && deps.memberSpaceRepo)
-  const availablePaths = Object.fromEntries(
-    Object.entries(openApiDocument.paths ?? {}).filter(([path]) => {
-      if (path.startsWith('/clubs/{clubId}/transition-plans')) {
-        return Boolean(hasAdmin && deps.clubTransitionPlanRepo)
-      }
-      if (
-        path.startsWith('/clubs/{clubId}/suspension-requests') ||
-        path.startsWith('/admin/suspension-requests')
-      ) {
-        return Boolean(hasAdmin && deps.suspensionRequestRepo)
-      }
-      if (path.startsWith('/memberships/reconfirmations')) {
-        return Boolean(hasAdmin && deps.membershipReconfirmationRepo)
-      }
-      if (path.startsWith('/clubs/{clubId}/violations')) {
-        return Boolean(hasAdmin && deps.clubViolationRepo)
-      }
-      if (path.startsWith('/clubs/{clubId}/evaluations')) {
-        return Boolean(hasAdmin && deps.clubEvaluationRepo)
-      }
-      if (path.startsWith('/clubs/{clubId}/invitations')) {
-        return Boolean(hasAdmin && deps.clubInvitationRepo)
-      }
-      if (path.startsWith('/clubs/{clubId}/periodic-reports')) {
-        return Boolean(hasPolicy && deps.clubPeriodicReportRepo)
-      }
-      if (path.startsWith('/auth/')) {
-        return hasAdmin
-      }
-      if (path.startsWith('/admin/policies')) {
-        return hasPolicy
-      }
-      if (path.startsWith('/admin/club-fields')) {
-        return hasClubFields
-      }
-      if (
-        path === '/booking-slots' ||
-        path.startsWith('/admin/bookings') ||
-        path.includes('/booking-properties') ||
-        path.includes('/booking-events') ||
-        path.startsWith('/clubs/{clubId}/bookings') ||
-        path.endsWith('/booking-conflicts')
-      ) {
-        return hasBookings
-      }
-      if (path.startsWith('/admin/properties')) {
-        return hasProperties
-      }
-      if (path.includes('/room-allocations')) {
-        return hasRoomAllocations
-      }
-      if (path.startsWith('/admin/evaluation-schemes')) {
-        return hasEvaluationSchemes
-      }
-      if (path.startsWith('/admin/evaluations')) {
-        return hasEvaluations
-      }
-      if (path.startsWith('/admin/exports')) {
-        return hasExports
-      }
-      if (path.startsWith('/admin/clubs')) {
-        return hasClubLifecycle
-      }
-      if (path.startsWith('/admin/application-reviews')) {
-        return hasApplicationReviews
-      }
-      if (path.startsWith('/admin/event-defense') || path.includes('/defense')) {
-        return hasEventDefenses
-      }
-      if (
-        path.startsWith('/events/proposal-template') ||
-        path === '/admin/event-proposals/template' ||
-        path === '/admin/event-proposals/{id}/document/access'
-      ) {
-        return Boolean(hasPolicy && deps.clubEventRepo)
-      }
-      if (path.startsWith('/admin/event-proposals')) {
-        return hasEventProposalReviews
-      }
-      if (path.includes('/event-reports')) {
-        return Boolean(hasPolicy && deps.postEventReportRepo)
-      }
-      if (path.includes('/budgets/{id}/items')) {
-        return Boolean(hasPolicy && deps.sponsoredItemRepo)
-      }
-      if (path.startsWith('/clubs/{clubId}/budgets') || path.includes('/reconciliation')) {
-        return Boolean(hasPolicy && deps.eventFinanceRepo)
-      }
-      if (path.startsWith('/admin/budgets')) {
-        return hasBudgets
-      }
-      if (path.startsWith('/admin/violations')) {
-        return hasViolations
-      }
-      if (path.startsWith('/admin/periodic-reports')) {
-        return hasPeriodicReports
-      }
-      if (path.startsWith('/admin/school-events')) {
-        return hasSchoolEvents
-      }
-      if (path.startsWith('/admin/board-nominations')) {
-        return hasBoardNominations
-      }
-      if (path.startsWith('/admin/leadership-transitions')) {
-        return hasLeadershipTransitions
-      }
-      if (path.startsWith('/admin/complaints')) {
-        return hasComplaints
-      }
-      if (path.startsWith('/admin/routing-rules')) {
-        return hasRouting
-      }
-      if (path.startsWith('/admin/')) {
-        return hasAdmin
-      }
-      if (path.startsWith('/applications/recruitment')) {
-        return hasRecruitmentApplications
-      }
-      if (path.startsWith('/dashboard')) {
-        return hasDashboard
-      }
-      if (path.startsWith('/notifications')) {
-        return Boolean(hasAdmin && deps.notificationRepo)
-      }
-      if (path.startsWith('/events/{id}/registration') || path.startsWith('/event-registrations')) {
-        return hasEventRegistrations
-      }
-      if (path.startsWith('/events/{id}/check-in') || path.startsWith('/attendances')) {
-        return hasEventCheckIns
-      }
-      if (path.startsWith('/events/{id}/feedback') || path.startsWith('/event-feedbacks')) {
-        return hasEventFeedback
-      }
-      if (path.startsWith('/complaints') || /^\/clubs\/\{clubId\}\/complaints/.test(path)) {
-        return hasComplaints
-      }
-      if (path.startsWith('/clubs/{clubId}/events')) {
-        return Boolean(hasPolicy && deps.clubEventRepo)
-      }
-      if (path.startsWith('/clubs/{clubId}/member-space')) {
-        return hasMemberSpace
-      }
-      if (path.startsWith('/applications')) {
-        return hasApplications
-      }
-      if (
-        path.startsWith('/clubs/{clubId}/settings') ||
-        path.startsWith('/clubs/{clubId}/profile') ||
-        path.startsWith('/clubs/{clubId}/departments')
-      ) {
-        return hasClubProfiles
-      }
-      if (path.startsWith('/clubs/{clubId}/board-nomination')) {
-        return hasBoardNominations
-      }
-      if (/\/evaluations?$/.test(path)) {
-        return hasCandidateEvaluations
-      }
-      if (path.startsWith('/clubs/{clubId}/recruitment/campaigns')) {
-        return hasRecruitmentCampaigns
-      }
-      return true
-    }),
-  )
   if (deps.apiDocs ?? true) {
-    const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths })
+    const availableDocumentJson = JSON.stringify({
+      ...openApiDocument,
+      paths: servedPaths(apiRouters),
+    })
     // Phục vụ tài liệu OpenAPI JSON của các route đang mount
     app.get('/docs/openapi.json', (_req, res) => {
       res.type('json').send(availableDocumentJson)

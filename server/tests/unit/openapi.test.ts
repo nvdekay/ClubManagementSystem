@@ -876,4 +876,51 @@ describe('openapi document', () => {
     expect(paths).not.toContain('/docs')
     expect(paths).not.toContain('/docs/openapi.json')
   })
+
+  it('documents a route exactly when its router is mounted', () => {
+    function servedDocument(app: ReturnType<typeof buildApp>) {
+      const stack = (
+        app as unknown as {
+          router: {
+            stack: Array<{
+              route?: {
+                path: string
+                stack: Array<{ handle: (req: unknown, res: unknown) => void }>
+              }
+            }>
+          }
+        }
+      ).router.stack
+      const handler = stack.find((layer) => layer.route?.path === '/docs/openapi.json')?.route
+        ?.stack[0]?.handle
+      if (!handler) {
+        throw new Error('OpenAPI route missing')
+      }
+      const send = vi.fn()
+      handler({}, { type: vi.fn().mockReturnThis(), send })
+      return JSON.parse(String(send.mock.calls[0]?.[0])) as { paths: Record<string, unknown> }
+    }
+    // Routing rules mount only with auth and the admin repository; documentation must agree.
+    const withoutAdmin = servedDocument(
+      buildApp({
+        auth: stubAuth,
+        approvalRoutingRepo: stubRouting,
+        publicRepo: stubPublic,
+        dbReady: () => true,
+      }),
+    )
+    expect(withoutAdmin.paths).not.toHaveProperty('/admin/routing-rules')
+    expect(withoutAdmin.paths).toHaveProperty('/health')
+    const withAdmin = servedDocument(
+      buildApp({
+        auth: stubAuth,
+        adminRepo: stubAdmin,
+        approvalRoutingRepo: stubRouting,
+        publicRepo: stubPublic,
+        dbReady: () => true,
+      }),
+    )
+    expect(withAdmin.paths).toHaveProperty('/admin/routing-rules')
+    expect(withAdmin.paths).toHaveProperty('/auth/login')
+  })
 })
