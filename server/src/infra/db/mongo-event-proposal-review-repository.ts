@@ -28,6 +28,7 @@ import {
 } from './event-defense-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
+import { queueNotification } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK_TYPE = 'EVENT_PROPOSAL'
@@ -120,7 +121,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   const decisions = m.approvalDecisions!
   const budgets = m.eventBudgets!
   const audits = m.auditLogs!
-  const notifications = m.notifications!
 
   async function obligations(clubId: Types.ObjectId, now: Date): Promise<ClubObligation[]> {
     const [settlement, refund, report, postReports] = await Promise.all([
@@ -657,23 +657,14 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
             .session(session)
             .lean()
           if (version) {
-            await notifications.create(
-              [
-                {
-                  recipientUserId: version.submittedBy,
-                  eventCode: 'EVENT_PROPOSAL_EXPIRED',
-                  entityType: 'Event',
-                  entityId: event._id,
-                  channels: ['IN_APP'],
-                  payload: { title: event.title },
-                  state: 'Queued',
-                  dueAt: now,
-                  attempts: 0,
-                  createdAt: now,
-                },
-              ],
-              { session },
-            )
+            await queueNotification(session, {
+              recipientUserId: version.submittedBy,
+              eventCode: 'EVENT_PROPOSAL_EXPIRED',
+              entityType: 'Event',
+              entityId: event._id,
+              payload: { title: event.title },
+              now,
+            })
           }
           return true
         })

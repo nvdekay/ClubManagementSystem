@@ -15,15 +15,12 @@ import { DomainError } from '../../domain/errors.js'
 import { queueNotifications } from './club-board.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { oid } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK = 'COMPLAINT'
 const ENTITY = 'Complaint'
 
-// Chuyển chuỗi id thành ObjectId (giữ nguyên nếu đã là ObjectId)
-function oid(value: string | Types.ObjectId): Types.ObjectId {
-  return value instanceof Types.ObjectId ? value : new Types.ObjectId(value)
-}
 // Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, 'conflict')

@@ -9,6 +9,7 @@ import type {
 import type { AuthUser } from '../../domain/auth.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
+import { escapeRegex } from './repo-helpers.js'
 
 // Ánh xạ document user thành AuthUser
 function mapUser(doc: Record<string, unknown>): AuthUser {
@@ -24,7 +25,7 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
 
 // Tạo regex không phân biệt hoa thường từ chuỗi tìm kiếm đã escape
 function escapedRegex(value: string): RegExp {
-  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+  return new RegExp(escapeRegex(value), 'i')
 }
 
 // Repository quản trị tài khoản: tìm user, cấp/thu hồi role hệ thống, khóa tài khoản

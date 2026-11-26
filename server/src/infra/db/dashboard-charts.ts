@@ -8,6 +8,7 @@ import {
 import { FEEDBACK_CRITERION } from '../../domain/event-feedback.js'
 import type { AcademicSemester } from '../../domain/policy.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { money, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const VN_OFFSET = 7 * 3600_000
@@ -33,11 +34,6 @@ function months(now: Date, from: number, to: number): { key: string; start: Date
   }
   return out
 }
-// Chuyển giá trị tiền (Decimal/chuỗi) sang number
-function money(value: unknown): number {
-  return value === null || value === undefined ? 0 : Number(String(value))
-}
-
 // Dựng dữ liệu biểu đồ dashboard ICPDP (task, sự kiện, lĩnh vực CLB)
 export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
   const window = months(now, -5, 2)
@@ -63,10 +59,7 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
       { $match: { state: { $ne: 'Dissolved' } } },
       { $group: { _id: '$state', count: { $sum: 1 } } },
     ]),
-    m
-      .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-      .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-      .lean(),
+    policyAt(now),
   ])
   const queues = new Map<string, { onTime: number; overdue: number }>()
   for (const task of tasks) {

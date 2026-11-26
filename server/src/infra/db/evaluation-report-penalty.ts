@@ -4,6 +4,7 @@ import type { AcademicSemester, ReportDeadline } from '../../domain/policy.js'
 import { periodicDueAt, periodicDueDays } from '../../domain/periodic-report.js'
 import { findPeriodicCampaign } from './mongo-periodic-report-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { policyAt } from './repo-helpers.js'
 
 // Tính điểm trừ nộp báo cáo định kỳ trễ hạn cho đánh giá CLB
 /** Hạn nộp báo cáo vẫn áp dụng sau khi ICPDP đóng nộp cho kỳ đó. */
@@ -16,10 +17,7 @@ export async function evaluationReportPenalty(
   const [report, campaign, policy, clubDoc] = await Promise.all([
     m.periodicReports!.findOne({ clubId: club, periodCode }).lean(),
     findPeriodicCampaign(periodCode),
-    m
-      .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-      .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-      .lean(),
+    policyAt(now),
     m.clubs!.findById(club).select({ createdAt: 1 }).lean(),
   ])
   const period = ((policy?.academicCalendar ?? []) as AcademicSemester[]).find(

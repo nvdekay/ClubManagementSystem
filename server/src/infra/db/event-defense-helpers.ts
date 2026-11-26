@@ -17,11 +17,11 @@ import {
   type NormalizedEventDecision,
   type RequestedBudgetLine,
 } from '../../domain/event-proposal-review.js'
-import { notificationChannels } from '../../domain/notification.js'
 import { initialPaymentChannel, initialSponsoredItemStatus } from '../../domain/sponsored-item.js'
 import { cancelEventInSession } from './event-cancellation.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { queueNotification } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
@@ -214,7 +214,6 @@ export async function applyProposalDecisionInSession(
   const decisions = m.approvalDecisions!
   const budgets = m.eventBudgets!
   const audits = m.auditLogs!
-  const notifications = m.notifications!
   const defenseSessions = m.eventDefenseSessions!
 
   const actorId = oid(officerId)
@@ -613,30 +612,21 @@ export async function applyProposalDecisionInSession(
     { session },
   )
 
-  await notifications.create(
-    [
-      {
-        recipientUserId: version.submittedBy,
-        eventCode: action,
-        entityType: 'Event',
-        entityId: eventId,
-        channels: notificationChannels(action),
-        payload: {
-          title: event.title,
-          outcome: input.outcome,
-          reason: input.reason,
-          sections: input.sections,
-          revisionDeadlineAt: input.revisionDeadlineAt,
-          conditions: input.conditions,
-          fundingItems: lines,
-          invoiceDueAt: settlementDueAt(event.endAt as Date),
-        },
-        state: 'Queued',
-        dueAt: now,
-        attempts: 0,
-        createdAt: now,
-      },
-    ],
-    { session },
-  )
+  await queueNotification(session, {
+    recipientUserId: version.submittedBy,
+    eventCode: action,
+    entityType: 'Event',
+    entityId: eventId,
+    payload: {
+      title: event.title,
+      outcome: input.outcome,
+      reason: input.reason,
+      sections: input.sections,
+      revisionDeadlineAt: input.revisionDeadlineAt,
+      conditions: input.conditions,
+      fundingItems: lines,
+      invoiceDueAt: settlementDueAt(event.endAt as Date),
+    },
+    now,
+  })
 }

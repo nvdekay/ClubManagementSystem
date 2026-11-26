@@ -12,6 +12,7 @@ import {
 } from '../../domain/room-allocation.js'
 import { clubBoardUserIds, queueNotifications } from './club-board.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { oid } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ALLOCATED = 'ROOM_ALLOCATED'
@@ -28,10 +29,6 @@ interface AllocationRecord {
   bookingIds: string[]
 }
 
-// Chuyển chuỗi id thành ObjectId
-function oid(id: string) {
-  return new Types.ObjectId(id)
-}
 // Ném DomainError loại conflict kèm chi tiết xung đột
 function conflict(message: string, details?: unknown): never {
   throw new DomainError(message, 'conflict', details)

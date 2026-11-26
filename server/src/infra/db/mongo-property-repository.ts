@@ -11,6 +11,7 @@ import {
   type PropertyType,
 } from '../../domain/property.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 // Ánh xạ document sang Property
 function propertyFrom(doc: Record<string, unknown>): Property {
@@ -34,11 +35,6 @@ function propertyFrom(doc: Record<string, unknown>): Property {
       : [],
     isActive: doc.isActive !== false,
   }
-}
-
-// Kiểm tra lỗi trùng khoá Mongo (mã tài sản trùng)
-function duplicateCode(error: unknown): boolean {
-  return error instanceof mongoose.mongo.MongoServerError && error.code === 11000
 }
 
 // Repository danh mục tài sản (phòng, thiết bị) do ICPDP quản lý
@@ -121,7 +117,7 @@ export function mongoPropertyRepository(): PropertyRepository {
           })
         } catch (error) {
           // Cán bộ khác lấy mã này cùng lúc: tính lại và thử lại.
-          if (!duplicateCode(error)) {
+          if (!isDuplicateKey(error)) {
             throw error
           }
         }

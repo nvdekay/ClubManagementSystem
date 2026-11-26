@@ -45,6 +45,7 @@ import { promoteEventWaitlist } from './event-waitlist.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
+import { oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 /** Entity audit cố định cho mẫu đề xuất sự kiện của ICPDP: chỉ có một mẫu và chỉ được thay thế. */
@@ -52,10 +53,6 @@ const PROPOSAL_TEMPLATE_ENTITY = new Types.ObjectId('000000000000000000000e01')
 export interface ClubEventRules {
   proposalNoticeHours: number
   cancellationNoticeHours: number
-}
-// Chuyển chuỗi id thành ObjectId
-function oid(id: string) {
-  return new Types.ObjectId(id)
 }
 // Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
@@ -133,11 +130,7 @@ async function payloadInSession(session: ClientSession, id: Types.ObjectId): Pro
 }
 // Lấy policy đang hiệu lực, báo lỗi nếu chưa cấu hình
 async function currentPolicy(session: ClientSession, now: Date) {
-  const policy = await m
-    .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-    .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-    .session(session)
-    .lean()
+  const policy = await policyAt(now, session)
   if (!policy) {
     throw new DomainError('policy is not configured', 'unavailable')
   }

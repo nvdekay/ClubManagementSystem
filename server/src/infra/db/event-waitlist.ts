@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { queueNotification } from './repo-helpers.js'
 
 // Chuyển người đầu danh sách chờ thành đăng ký Confirmed khi có chỗ trống
 /** UC30 A1: chỉ người đứng đầu mới được nhận chỗ vừa nhả; mọi bên ghi đều giữ document sự kiện. */
@@ -101,23 +102,14 @@ export async function promoteEventWaitlist(
       ],
       { session },
     )
-    await m.notifications!.create(
-      [
-        {
-          recipientUserId: head.studentId,
-          eventCode: 'EVENT_REGISTRATION_PROMOTED',
-          entityType: 'EventRegistration',
-          entityId: head._id,
-          channels: ['IN_APP'],
-          payload: { eventId: String(eventId), title: event.title },
-          state: 'Queued',
-          dueAt: now,
-          attempts: 0,
-          createdAt: now,
-        },
-      ],
-      { session },
-    )
+    await queueNotification(session, {
+      recipientUserId: head.studentId,
+      eventCode: 'EVENT_REGISTRATION_PROMOTED',
+      entityType: 'EventRegistration',
+      entityId: head._id,
+      payload: { eventId: String(eventId), title: event.title },
+      now,
+    })
     promoted += 1
     if (requestedRegistrationId) {
       return promoted

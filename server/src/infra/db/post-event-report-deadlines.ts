@@ -2,6 +2,7 @@ import { Types, type ClientSession } from 'mongoose'
 import type { ReportDeadline } from '../../domain/policy.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { policyAt } from './repo-helpers.js'
 type Doc = Record<string, unknown>
 type FrozenDeadline = { dueAt?: Date | null; policyVersionId?: string | null }
 export interface PostEventDeadline {
@@ -47,11 +48,7 @@ export async function postEventDeadline(
         .policyVersions!.findById(frozen.policyVersionId)
         .session(session ?? null)
         .lean()
-    : await m
-        .policyVersions!.findOne({ effectiveFrom: { $lte: event.endAt } })
-        .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-        .session(session ?? null)
-        .lean()
+    : await policyAt(event.endAt as Date, session)
   return deadlineFromPolicy(event.endAt as Date, frozen, policy)
 }
 export interface PolicyCatalog {

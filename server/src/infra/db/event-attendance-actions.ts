@@ -2,6 +2,7 @@ import { Types, type ClientSession } from 'mongoose'
 import type { ClubEventAction } from '../../domain/club-event.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 // Ném lỗi conflict với thông báo cho trước
@@ -150,11 +151,7 @@ export async function applyEventAttendanceAction(
       if (!event.allowWalkIn) {
         conflict('confirmed registration is required')
       }
-      const policy = await m
-        .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-        .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-        .session(session)
-        .lean()
+      const policy = await policyAt(now, session)
       if (!policy) {
         throw new DomainError('policy is not configured', 'unavailable')
       }

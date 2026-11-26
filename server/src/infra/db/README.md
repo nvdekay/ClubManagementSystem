@@ -12,6 +12,10 @@ Bản cài bằng Mongoose cho các repository port của domain — mỗi port 
 `mongo-<entity>-repository.ts` — cộng các tiện ích DB (seed). Không gì ngoài `infra/` được đụng
 tới Mongoose.
 
+`repo-helpers.ts` gom các tiện ích nhỏ dùng chung của repository: `oid`, `money`, `isDuplicateKey`,
+`escapeRegex`, `policyAt` (policy hiệu lực tại một thời điểm) và `queueNotification` (kênh luôn lấy từ
+`notificationChannels()` của domain). Dùng chúng thay vì chép thêm một bản trong file repository.
+
 Danh sách UC26 hỗ trợ `pending` (task Open) và `approved` (task đề án Decided, sự kiện đã duyệt hoặc
 đã chuyển sang vận hành/hoàn thành). Mỗi sự kiện đã duyệt chỉ hiện một lần, theo task mới nhất.
 

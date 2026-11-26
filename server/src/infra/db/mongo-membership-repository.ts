@@ -13,6 +13,7 @@ import { isBeforeToday } from '../../domain/membership.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function objectArray(value: unknown): Record<string, unknown>[] {
@@ -89,7 +90,7 @@ function mapRequest(doc: Record<string, unknown>): MembershipWithdrawalRequest {
 
 // Đổi lỗi trùng khoá Mongo (11000) thành DomainError conflict
 function duplicate(error: unknown): never {
-  if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+  if (isDuplicateKey(error)) {
     throw new DomainError('membership conflicts with an existing record', 'conflict')
   }
   throw error

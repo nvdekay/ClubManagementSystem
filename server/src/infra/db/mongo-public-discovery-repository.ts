@@ -10,6 +10,7 @@ import type {
 } from '../../domain/public-discovery.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
+import { escapeRegex } from './repo-helpers.js'
 
 const clubStates = ['Active', 'Suspended']
 const campaignStates = ['Published', 'Accepting Applications']
@@ -33,10 +34,6 @@ function optionalString(value: unknown): string | undefined {
 // Lấy giá trị nếu là Date, ngược lại undefined
 function optionalDate(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined
-}
-// Escape ký tự đặc biệt của regex trong từ khoá tìm kiếm
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^$()|[\]\\{}]/g, '\\$&')
 }
 // Ánh xạ document CLB sang PublicClub
 function mapClub(doc: Record<string, unknown>): PublicClub {

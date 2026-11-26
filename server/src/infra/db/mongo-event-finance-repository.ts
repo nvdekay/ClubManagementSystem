@@ -19,16 +19,9 @@ import {
   openAccountabilityTask,
 } from './accountability-workflow.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { money, oid } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Chuyển chuỗi id thành ObjectId
-function oid(value: string) {
-  return new Types.ObjectId(value)
-}
-// Chuyển giá trị tiền sang number
-function money(value: unknown) {
-  return Number(String(value ?? 0))
-}
 // Chuyển number thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value))

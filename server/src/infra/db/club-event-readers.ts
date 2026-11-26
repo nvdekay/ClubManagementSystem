@@ -10,12 +10,9 @@ import {
 } from '../../domain/club-event.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Chuyển chuỗi id thành ObjectId
-function oid(id: string) {
-  return new Types.ObjectId(id)
-}
 // Chuyển giá trị tiền (Decimal/chuỗi) sang number
 export function eventMoney(value: unknown): number {
   return Number(String(value ?? 0))
@@ -326,10 +323,7 @@ export async function readClubFeedback(
   if (events.length !== eventIds.length) {
     throw new DomainError('event not found', 'not_found')
   }
-  const policy = await m
-    .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-    .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-    .lean()
+  const policy = await policyAt(now)
   if (!policy) {
     throw new DomainError('policy is not configured', 'unavailable')
   }

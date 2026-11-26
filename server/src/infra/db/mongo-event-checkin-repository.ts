@@ -9,6 +9,7 @@ import type {
 import { checkInStates } from '../../domain/event-checkin.js'
 import type { EventRegistrationState } from '../../domain/event-registration.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey, policyAt, queueNotification } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
@@ -31,7 +32,6 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
   const registrations = ucmsModels.eventRegistrations!
   const attendances = ucmsModels.attendances!
   const memberships = ucmsModels.clubMemberships!
-  const notifications = ucmsModels.notifications!
   const audits = ucmsModels.auditLogs!
 
   function map(attendance: Doc, event: Doc): Attendance {
@@ -171,11 +171,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
             if (!event.allowWalkIn) {
               throw new DomainError('walk-ins are disabled', 'conflict')
             }
-            const policy = await ucmsModels
-              .policyVersions!.findOne({ effectiveFrom: { $lte: input.now } })
-              .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-              .session(session)
-              .lean()
+            const policy = await policyAt(input.now, session)
             if (
               Number(event.confirmedRegistrationCount) >= Number(event.capacity) &&
               policy?.allowOverbooking !== true
@@ -248,28 +244,19 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
             ],
             { session },
           )
-          await notifications.create(
-            [
-              {
-                recipientUserId: studentId,
-                eventCode: 'EVENT_CHECKED_IN',
-                entityType: 'Attendance',
-                entityId: attendance!._id,
-                channels: ['IN_APP'],
-                payload: { eventId: input.eventId, method: input.method },
-                state: 'Queued',
-                dueAt: input.now,
-                attempts: 0,
-                createdAt: input.now,
-              },
-            ],
-            { session },
-          )
+          await queueNotification(session, {
+            recipientUserId: studentId,
+            eventCode: 'EVENT_CHECKED_IN',
+            entityType: 'Attendance',
+            entityId: attendance!._id,
+            payload: { eventId: input.eventId, method: input.method },
+            now: input.now,
+          })
           created = true
         })
       } catch (error) {
         // Một check-in đồng thời đã thắng unique index (BR18): bỏ qua và trả về bản ghi của nó.
-        if (!(error instanceof mongoose.mongo.MongoServerError && error.code === 11000)) {
+        if (!isDuplicateKey(error)) {
           throw error
         }
         created = false

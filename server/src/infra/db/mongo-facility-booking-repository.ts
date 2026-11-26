@@ -25,15 +25,12 @@ import type { Property } from '../../domain/property.js'
 import { openViolationCount, routedTaskFields } from './approval-routing.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
+import { oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const taskType = 'PROPERTY_BOOKING'
 const editableStates = ['Draft', 'Revision Requested']
 const pendingStates = ['Requested', 'Under Review', 'Revision Requested']
-// Chuyển chuỗi id thành ObjectId
-function oid(id: string) {
-  return new Types.ObjectId(id)
-}
 // Ném DomainError loại conflict với thông điệp cho trước
 function conflict(message: string): never {
   throw new DomainError(message, 'conflict')
@@ -248,14 +245,11 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     )
   }
   // Lấy policy version đang hiệu lực tại thời điểm now
-  async function policyAt(now: Date, session?: ClientSession): Promise<PolicyVersion | null> {
-    const query = m
-      .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-      .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-    if (session) {
-      query.session(session)
-    }
-    const doc = await query.lean()
+  async function policyVersionAt(
+    now: Date,
+    session?: ClientSession,
+  ): Promise<PolicyVersion | null> {
+    const doc = await policyAt(now, session)
     return doc
       ? ({
           ...doc,
@@ -349,7 +343,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     }
     const property = await propertyQuery.lean()
     const club = await clubQuery.lean()
-    const policy = await policyAt(now, session)
+    const policy = await policyVersionAt(now, session)
     if (!property || !club) {
       throw new DomainError('club or property not found', 'not_found')
     }

@@ -13,6 +13,7 @@ import type {
 import { validateRecruitmentAnswers } from '../../domain/recruitment-application.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey, queueNotification } from './repo-helpers.js'
 
 // Lọc mảng, chỉ giữ phần tử là object
 function records(value: unknown): Record<string, unknown>[] {
@@ -134,7 +135,7 @@ function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
 
 // Đổi lỗi trùng khoá (đã có đơn cho đợt tuyển) thành DomainError conflict
 function duplicate(error: unknown): never {
-  if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+  if (isDuplicateKey(error)) {
     throw new DomainError('an application already exists for this campaign', 'conflict')
   }
   throw error
@@ -374,28 +375,19 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
             { session },
           )
           if (['Accepted', 'Rejected', 'Waitlisted'].includes(nextState)) {
-            await notifications.create(
-              [
-                {
-                  recipientUserId: app.userId,
-                  eventCode: `RECRUITMENT_APPLICATION_${nextState.toUpperCase()}`,
-                  entityType: 'RecruitmentApplication',
-                  entityId: app._id,
-                  channels: ['IN_APP'],
-                  payload: {
-                    campaignId: String(campaignId),
-                    applicationId: String(app._id),
-                    outcome: nextState,
-                    ...(input.reason ? { reason: input.reason } : {}),
-                  },
-                  state: 'Queued',
-                  dueAt: input.now,
-                  attempts: 0,
-                  createdAt: input.now,
-                },
-              ],
-              { session },
-            )
+            await queueNotification(session, {
+              recipientUserId: app.userId,
+              eventCode: `RECRUITMENT_APPLICATION_${nextState.toUpperCase()}`,
+              entityType: 'RecruitmentApplication',
+              entityId: app._id,
+              payload: {
+                campaignId: String(campaignId),
+                applicationId: String(app._id),
+                outcome: nextState,
+                ...(input.reason ? { reason: input.reason } : {}),
+              },
+              now: input.now,
+            })
           }
         }
         const all = await applications.find({ campaignId }).select('state').session(session).lean()
@@ -508,7 +500,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           )
           membershipId = new Types.ObjectId(String(membership!._id))
         } catch (error) {
-          if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+          if (isDuplicateKey(error)) {
             throw new DomainError(
               'student already has a membership record in this club',
               'conflict',
@@ -541,27 +533,18 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           ],
           { session },
         )
-        await notifications.create(
-          [
-            {
-              recipientUserId: current.userId,
-              eventCode: 'RECRUITMENT_APPLICATION_ONBOARDED',
-              entityType: 'RecruitmentApplication',
-              entityId: applicationId,
-              channels: ['IN_APP'],
-              payload: {
-                campaignId: String(campaignId),
-                applicationId: String(applicationId),
-                membershipId: String(membershipId),
-              },
-              state: 'Queued',
-              dueAt: input.now,
-              attempts: 0,
-              createdAt: input.now,
-            },
-          ],
-          { session },
-        )
+        await queueNotification(session, {
+          recipientUserId: current.userId,
+          eventCode: 'RECRUITMENT_APPLICATION_ONBOARDED',
+          entityType: 'RecruitmentApplication',
+          entityId: applicationId,
+          payload: {
+            campaignId: String(campaignId),
+            applicationId: String(applicationId),
+            membershipId: String(membershipId),
+          },
+          now: input.now,
+        })
       })
       const updated = await applications.findById(applicationId).lean()
       if (!updated) {
@@ -614,27 +597,18 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           ],
           { session },
         )
-        await notifications.create(
-          [
-            {
-              recipientUserId: current.userId,
-              eventCode: 'RECRUITMENT_APPLICATION_DECLINED',
-              entityType: 'RecruitmentApplication',
-              entityId: applicationId,
-              channels: ['IN_APP'],
-              payload: {
-                campaignId: String(campaignId),
-                applicationId: String(applicationId),
-                ...(input.reason ? { reason: input.reason } : {}),
-              },
-              state: 'Queued',
-              dueAt: input.now,
-              attempts: 0,
-              createdAt: input.now,
-            },
-          ],
-          { session },
-        )
+        await queueNotification(session, {
+          recipientUserId: current.userId,
+          eventCode: 'RECRUITMENT_APPLICATION_DECLINED',
+          entityType: 'RecruitmentApplication',
+          entityId: applicationId,
+          payload: {
+            campaignId: String(campaignId),
+            applicationId: String(applicationId),
+            ...(input.reason ? { reason: input.reason } : {}),
+          },
+          now: input.now,
+        })
       })
       const updated = await applications.findById(applicationId).lean()
       if (!updated) {

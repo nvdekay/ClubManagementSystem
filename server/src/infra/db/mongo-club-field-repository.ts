@@ -8,6 +8,7 @@ import {
 } from '../../domain/club-field.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
+import { isDuplicateKey } from './repo-helpers.js'
 
 // Ánh xạ document thành ClubField
 function fieldFrom(doc: Record<string, unknown>): ClubField {
@@ -17,11 +18,6 @@ function fieldFrom(doc: Record<string, unknown>): ClubField {
     sortOrder: Number(doc.sortOrder ?? 0),
     isActive: doc.isActive !== false,
   }
-}
-
-// Kiểm tra lỗi trùng khóa duy nhất (mã 11000)
-function duplicate(error: unknown): boolean {
-  return error instanceof mongoose.mongo.MongoServerError && error.code === 11000
 }
 
 // Repository danh mục lĩnh vực hoạt động của CLB
@@ -162,7 +158,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
           return fieldFrom(created!.toObject())
         })
       } catch (error) {
-        if (duplicate(error)) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('club field name already exists', 'conflict')
         }
         throw error
@@ -222,7 +218,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
           return fieldFrom(updated)
         })
       } catch (error) {
-        if (duplicate(error)) {
+        if (isDuplicateKey(error)) {
           throw new DomainError('club field name already exists', 'conflict')
         }
         throw error

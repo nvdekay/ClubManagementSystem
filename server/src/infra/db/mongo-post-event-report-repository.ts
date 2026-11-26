@@ -26,16 +26,9 @@ import {
   openAccountabilityTask,
 } from './accountability-workflow.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { money, oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Chuyển chuỗi id thành ObjectId
-function oid(value: string) {
-  return new Types.ObjectId(value)
-}
-// Chuyển giá trị tiền thành số, mặc định 0
-function money(value: unknown) {
-  return Number(String(value ?? 0))
-}
 // Chuyển một bản báo cáo trong DB thành phiên bản trả về cho client
 function toVersion(d: Doc, event: Doc, eventId: string, task: Doc | undefined): PostEventReport {
   return {
@@ -70,11 +63,7 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
   // Dựng snapshot số liệu của sự kiện để lập báo cáo
   async function snapshot(event: Doc, now: Date, session?: ClientSession): Promise<ReportSnapshot> {
     const eventId = event._id
-    const policy = await m
-      .policyVersions!.findOne({ effectiveFrom: { $lte: now } })
-      .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 })
-      .session(session ?? null)
-      .lean()
+    const policy = await policyAt(now, session)
     if (!policy) {
       throw new DomainError('policy is not configured', 'unavailable')
     }
