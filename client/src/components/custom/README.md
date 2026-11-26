@@ -1,7 +1,10 @@
 # components/custom/
 
 `BookingWorkspace` dùng chung cho UC45/UC47 phía CLB và UC46 phía ICPDP; hai ngữ cảnh dùng
-cùng API booking, lịch sử version và quyết định.
+cùng API booking, lịch sử version và quyết định. Workspace giữ danh sách, lựa chọn và mutation dùng chung; các phần
+con chỉ nó dùng: `BookingRequestDialog` (form yêu cầu của CLB, mount lại mỗi lần mở), `BookingCancelForm`,
+`BookingDecisionForm` (quyết định của ICPDP) và `BookingHistory`. Hai form huỷ/quyết định được mount lại khi đổi booking
+hoặc sau một thao tác thành công. Helper ca/giờ và màu trạng thái nằm ở `utils/facilityBooking.ts`.
 
 Component dùng ở nhiều trang, có hiểu biết nghiệp vụ (không nguyên tử). Không có tiền tố `App`.
 Chỉ chuyển một component vào đây khi nó đã được render bởi từ 2 trang trở lên.

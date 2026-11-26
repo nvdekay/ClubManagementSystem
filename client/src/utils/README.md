@@ -40,3 +40,6 @@ URL khi lời gọi API trả về; nếu lời gọi lỗi thì đóng tab tr�
 
 `queryRetry` — `shouldRetryQuery` là chính sách retry mặc định của `QueryClient` (không retry `ApiError` 4xx, lỗi 5xx/mạng
 tối đa 2 lần); `isUnauthorized` nhận ra lỗi 401 để `main.tsx` xoá phiên đăng nhập.
+
+`facilityBooking` — `BOOKING_STATES`, `bookingTone`, `bookingLocalTime` (ISO → giá trị ô ngày giờ theo giờ Việt Nam),
+`slotNumber`/`slotInterval` (đổi qua lại giữa khoảng thời gian và số ca) cho `BookingWorkspace` và các form con của nó.

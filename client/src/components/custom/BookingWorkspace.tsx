@@ -1,43 +1,35 @@
-import { useCallback, useId, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 
+import { BookingCancelForm } from '@/components/custom/BookingCancelForm'
+import { BookingDecisionForm } from '@/components/custom/BookingDecisionForm'
+import { BookingHistory } from '@/components/custom/BookingHistory'
+import { BookingRequestDialog } from '@/components/custom/BookingRequestDialog'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppConfirmDialog } from '@/components/ui/dialog/AppConfirmDialog'
-import { AppDialog } from '@/components/ui/dialog/AppDialog'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
+import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppSelect } from '@/components/ui/select/AppSelect'
+import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTable, appTableFeatures, type AppTableFeatures } from '@/components/ui/table/AppTable'
 import { AppTableLimitSelect } from '@/components/ui/table/AppTableLimitSelect'
-import { AppInput } from '@/components/ui/input/AppInput'
-import { AppNotice } from '@/components/ui/notice/AppNotice'
-import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { appToast } from '@/components/ui/toast/AppToast'
 import { useAuth } from '@/hooks/useAuth'
-import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
-import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
-  useBookingEvents,
   useBooking,
   useBookingAction,
-  useBookingAvailability,
-  useBookingSlots,
   useBookingProperties,
+  useBookingSlots,
   useBookings,
 } from '@/hooks/useFacilityBookings'
-import type {
-  Booking,
-  BookingAction,
-  BookingDecisionInput,
-  BookingInput,
-  BookingSlot,
-} from '@/services/facilityBookings'
+import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
+import type { Booking, BookingAction } from '@/services/facilityBookings'
 import { cn } from '@/utils/cn'
+import { BOOKING_STATES, bookingTone, slotNumber } from '@/utils/facilityBooking'
 import { formatDate } from '@/utils/formatDate'
 
 interface BookingWorkspaceProps {
@@ -45,65 +37,10 @@ interface BookingWorkspaceProps {
 }
 const emptyBookings: Booking[] = []
 const column = createColumnHelper<AppTableFeatures, Booking>()
-const emptyInput: BookingInput = {
-  propertyId: '',
-  purpose: '',
-  startAt: '',
-  endAt: '',
-  headcount: 1,
-  equipment: [],
-}
-// Đổi thời điểm ISO sang chuỗi ngày giờ theo giờ Việt Nam (UTC+7)
-function localTime(value: string) {
-  return value ? new Date(new Date(value).getTime() + 7 * 3600000).toISOString().slice(0, 16) : ''
-}
-// Tìm số ca đặt phòng khớp với khoảng thời gian của booking
-function slotNumber(value: { startAt: string; endAt: string }, slots: BookingSlot[]): string {
-  return String(
-    slots.find(
-      (slot) =>
-        localTime(value.startAt).slice(11) === slot.start &&
-        localTime(value.endAt).slice(11) === slot.end &&
-        localTime(value.startAt).slice(0, 10) === localTime(value.endAt).slice(0, 10),
-    )?.number ?? '',
-  )
-}
-// Đổi ngày và số ca thành thời điểm bắt đầu, kết thúc ISO
-function slotInterval(day: string, number: string, slots: BookingSlot[]) {
-  const slot = slots.find((item) => String(item.number) === number)
-  if (!day || !slot) {
-    return { startAt: '', endAt: '' }
-  }
-  return {
-    startAt: new Date(`${day}T${slot.start}:00+07:00`).toISOString(),
-    endAt: new Date(`${day}T${slot.end}:00+07:00`).toISOString(),
-  }
-}
-
-// Chọn màu badge theo trạng thái booking
-/** Workspace dùng chung cho CLB và ICPDP trên cùng một vòng đời booking. */
-/** Màu badge theo trạng thái booking; nhãn chữ vẫn là phần truyền đạt ý nghĩa. */
-function bookingTone(state: string): AppBadgeTone {
-  if (state === 'Approved' || state === 'In Use' || state === 'Completed') {
-    return 'success'
-  }
-  if (state === 'Requested' || state === 'Under Review') {
-    return 'info'
-  }
-  if (state === 'Revision Requested') {
-    return 'warning'
-  }
-  if (state === 'Rejected') {
-    return 'danger'
-  }
-  return 'neutral'
-}
 
 // Workspace booking cơ sở vật chất: danh sách, form yêu cầu, huỷ và xét duyệt (CLB hoặc ICPDP)
 export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const { t, i18n } = useTranslation()
-  // Các nút của hộp thoại yêu cầu nằm ở footer cố định, ngoài <form>, liên kết với form qua form={id}.
-  const bookingFormId = useId()
   const auth = useAuth()
   const canManageClubBookings = useWorkspacePermission(clubId, 'club.booking.manage')
   const can = clubId
@@ -123,106 +60,33 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const resetAction = action.reset
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const events = useBookingEvents(clubId, can && editing)
-  const [form, setForm] = useState<BookingInput>(emptyInput)
-  const [reason, setReason] = useState('')
-  const [reviewNote, setReviewNote] = useState('')
-  const [overbookingReason, setOverbookingReason] = useState('')
-  const [permitOverbooking, setPermitOverbooking] = useState(false)
-  const [outcome, setOutcome] = useState<BookingDecisionInput['outcome']>('Approve')
-  const [suggest, setSuggest] = useState(false)
-  const [alternative, setAlternative] = useState({ propertyId: '', startAt: '', endAt: '' })
+  // Booking being edited in the request dialog (undefined: a new request); each open remounts it.
+  const [editingBooking, setEditingBooking] = useState<Booking | undefined>(undefined)
+  const [dialogKey, setDialogKey] = useState(0)
+  // Bumped after a successful action so the cancel/decision forms start empty again.
+  const [formKey, setFormKey] = useState(0)
   const [confirming, setConfirming] = useState<{ message: string; run: () => void } | null>(null)
-  const availability = useBookingAvailability(
-    editing ? clubId : null,
-    form.propertyId,
-    form.startAt,
-    form.endAt,
-  )
   const booking = detail.data?.booking
-  const property = properties.data?.find((item) => item.id === form.propertyId)
   // Phòng do ICPDP phân bổ mỗi học kỳ (UC58); yêu cầu booking áp dụng cho mọi loại cơ sở vật chất còn lại.
   const requestProperties = (properties.data ?? []).filter(
     (item) => item.isActive && item.type !== 'ROOM',
   )
-  const bookingField = useFieldValidation({
-    date: form.startAt ? null : t('common.fieldRequired'),
-    slot: form.startAt && !slotNumber(form, slots.data ?? []) ? t('common.chooseRequired') : null,
-    propertyId: requestProperties.some((item) => item.id === form.propertyId)
-      ? null
-      : t('common.chooseRequired'),
-    purpose: form.purpose.trim() ? null : t('common.fieldRequired'),
-    headcount: !Number.isInteger(form.headcount)
-      ? t('common.invalidNumber')
-      : form.headcount < 1
-        ? t('common.numberMin', { min: 1 })
-        : form.headcount > 10000
-          ? t('common.numberMax', { max: 10000 })
-          : null,
-  })
-  const cancelField = useFieldValidation({
-    reason: reason.trim() ? null : t('common.fieldRequired'),
-  })
-  const alternativeNeeded = outcome === 'Request revision' && suggest
-  const decisionField = useFieldValidation({
-    reason: reason.trim() ? null : t('common.fieldRequired'),
-    overbookingReason:
-      outcome === 'Approve' && permitOverbooking && !overbookingReason.trim()
-        ? t('common.fieldRequired')
-        : null,
-    altPropertyId: alternativeNeeded && !alternative.propertyId ? t('common.chooseRequired') : null,
-    altDate: alternativeNeeded && !alternative.startAt ? t('common.fieldRequired') : null,
-    altSlot:
-      alternativeNeeded && alternative.startAt && !slotNumber(alternative, slots.data ?? [])
-        ? t('common.chooseRequired')
-        : null,
-  })
-  // Chọn booking khác thì các form huỷ/quyết định bắt đầu lại từ trạng thái trống.
-  const [reviewedId, setReviewedId] = useState(selected)
-  if (reviewedId !== selected) {
-    setReviewedId(selected)
-    cancelField.reset()
-    decisionField.reset()
-  }
   // Mở form tạo hoặc sửa booking, nạp sẵn các trường được phép sửa
   function openForm(current?: Booking) {
-    setEditingId(current?.id ?? null)
-    // Chỉ lấy các trường được phép sửa: schema lưu của server là strict và sẽ từ chối các trường vốn có của booking.
-    setForm(
-      current
-        ? {
-            propertyId: current.propertyId,
-            purpose: current.purpose,
-            startAt: current.startAt,
-            endAt: current.endAt,
-            headcount: current.headcount,
-            equipment: current.equipment,
-            ...(current.eventId ? { eventId: current.eventId } : {}),
-          }
-        : emptyInput,
-    )
+    setEditingBooking(current)
+    setDialogKey((key) => key + 1)
     if (!current) {
       setSelected(null)
     }
     setEditing(true)
-    bookingField.reset()
     action.reset()
   }
-  const states = [
-    'Draft',
-    'Requested',
-    'Under Review',
-    'Revision Requested',
-    'Approved',
-    'Rejected',
-    'In Use',
-    'Completed',
-    'Cancelled',
-    'Released',
-  ] as const
+  // Hỏi xác nhận trước khi chạy một thao tác booking
+  function confirm(message: string, run: () => void) {
+    setConfirming({ message, run })
+  }
   const stateLabel = useCallback(
-    (state: string) => t(`facilityBookings.states.${state as (typeof states)[number]}`),
+    (state: string) => t(`facilityBookings.states.${state as (typeof BOOKING_STATES)[number]}`),
     [t],
   )
   const date = useCallback((value: string) => formatDate(value, i18n.language), [i18n.language])
@@ -239,64 +103,17 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
       const result = await action.mutateAsync(value)
       setSelected(result.booking.id)
       setEditing(false)
-      setReason('')
-      setOverbookingReason('')
-      setPermitOverbooking(false)
-      cancelField.reset()
-      decisionField.reset()
+      setFormKey((key) => key + 1)
       appToast.success(t('facilityBookings.changed'))
     } catch {
       /* action.error được hiển thị bên dưới. */
     }
-  }
-  // Kiểm tra hợp lệ và lưu booking của CLB
-  function save(event: FormEvent) {
-    event.preventDefault()
-    if (!bookingField.touchAll() || !clubId) {
-      return
-    }
-    void mutate({
-      kind: 'save',
-      clubId,
-      ...(editingId ? { id: editingId } : {}),
-      input: form,
-      expectedVersion: booking?.currentVersionNo ?? 0,
-    })
-  }
-  // Kiểm tra hợp lệ và xin xác nhận trước khi ICPDP quyết định booking
-  function decide(event: FormEvent) {
-    event.preventDefault()
-    if (!decisionField.touchAll() || !selected) {
-      return
-    }
-    setConfirming({
-      message: t('facilityBookings.confirmDecision'),
-      run: () =>
-        void mutate({
-          kind: 'decision',
-          id: selected,
-          input: {
-            outcome,
-            reason,
-            reviewNote,
-            ...(outcome === 'Approve' && permitOverbooking ? { overbookingReason } : {}),
-            ...(outcome === 'Request revision' && suggest ? { alternative } : {}),
-          },
-        }),
-    })
   }
   const propertyOptions = [
     { value: '', label: t('facilityBookings.select') },
     ...requestProperties.map((item) => ({
       value: item.id,
       label: `${item.name} · ${item.location}`,
-    })),
-  ]
-  const slotOptions = [
-    { value: '', label: t('facilityBookings.selectSlot') },
-    ...(slots.data ?? []).map((slot) => ({
-      value: String(slot.number),
-      label: `${t('facilityBookings.slot', { number: slot.number })} · ${slot.start}–${slot.end}`,
     })),
   ]
   const filteredBookings = useMemo(
@@ -321,10 +138,6 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
               onClick={() => {
                 setSearchParams({ id: cell.row.original.id }, { replace: true })
                 setEditing(false)
-                setReason('')
-                setSuggest(false)
-                setPermitOverbooking(false)
-                setOverbookingReason('')
                 resetAction()
               }}
             >
@@ -415,7 +228,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
               }}
               options={[
                 { value: '', label: t('facilityBookings.all') },
-                ...states.map((state) => ({ value: state, label: stateLabel(state) })),
+                ...BOOKING_STATES.map((state) => ({ value: state, label: stateLabel(state) })),
               ]}
             />
             <AppTable table={table} emptyMessage={t('facilityBookings.empty')} />
@@ -449,231 +262,19 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
               </AppNotice>
             )}
             {editing && clubId ? (
-              <AppDialog
-                open
-                title={t(editingId ? 'facilityBookings.edit' : 'facilityBookings.newRequest')}
-                closeLabel={t('facilityBookings.close')}
+              <BookingRequestDialog
+                key={dialogKey}
+                clubId={clubId}
+                current={editingBooking}
+                expectedVersion={booking?.currentVersionNo ?? 0}
+                slots={slots.data ?? []}
+                properties={properties.data}
+                pending={action.isPending}
+                error={action.error}
+                interval={interval}
+                onSubmit={(value) => void mutate(value)}
                 onClose={() => setEditing(false)}
-                footer={
-                  <>
-                    <AppButton type="submit" form={bookingFormId} disabled={action.isPending}>
-                      {t('facilityBookings.save')}
-                    </AppButton>
-                    <AppButton type="button" variant="secondary" onClick={() => setEditing(false)}>
-                      {t('facilityBookings.close')}
-                    </AppButton>
-                  </>
-                }
-              >
-                <form id={bookingFormId} noValidate onSubmit={save} className="space-y-4">
-                  {action.isError && (
-                    <AppNotice tone="danger" role="alert">
-                      {action.error.message}
-                    </AppNotice>
-                  )}
-                  {!requestProperties.length && (
-                    <AppNotice>{t('facilityBookings.noProperties')}</AppNotice>
-                  )}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm font-medium text-text-app">
-                      {t('facilityBookings.bookingDate')}
-                      <AppRequiredMark />
-                      <AppInput
-                        type="date"
-                        className="mt-1.5 block w-full min-w-0 font-normal"
-                        {...bookingField.control('date')}
-                        value={localTime(form.startAt).slice(0, 10)}
-                        onChange={(event) =>
-                          setForm({
-                            ...form,
-                            propertyId: '',
-                            equipment: [],
-                            ...slotInterval(
-                              event.target.value,
-                              slotNumber(form, slots.data ?? []) || '1',
-                              slots.data ?? [],
-                            ),
-                          })
-                        }
-                      />
-                      <AppFieldError message={bookingField.error('date')} />
-                    </label>
-                    <div className="block text-sm font-medium text-text-app">
-                      <span>
-                        {t('facilityBookings.slotLabel')}
-                        <AppRequiredMark />
-                      </span>
-                      <AppSelect
-                        className="mt-1.5 block w-full font-normal"
-                        label={t('facilityBookings.slotLabel')}
-                        value={slotNumber(form, slots.data ?? [])}
-                        required
-                        invalid={Boolean(bookingField.error('slot'))}
-                        disabled={!form.startAt}
-                        onChange={(value) => {
-                          setForm({
-                            ...form,
-                            propertyId: '',
-                            equipment: [],
-                            ...slotInterval(
-                              localTime(form.startAt).slice(0, 10),
-                              value,
-                              slots.data ?? [],
-                            ),
-                          })
-                          bookingField.touch('slot')
-                        }}
-                        options={slotOptions}
-                      />
-                      <AppFieldError message={bookingField.error('slot')} />
-                    </div>
-                  </div>
-                  <div className="block text-sm font-medium text-text-app">
-                    <span>
-                      {t('facilityBookings.property')}
-                      <AppRequiredMark />
-                    </span>
-                    <AppSelect
-                      className="mt-1.5 block w-full font-normal"
-                      label={t('facilityBookings.property')}
-                      value={form.propertyId}
-                      required
-                      invalid={Boolean(bookingField.error('propertyId'))}
-                      onChange={(value) => {
-                        setForm({ ...form, propertyId: value, equipment: [] })
-                        bookingField.touch('propertyId')
-                      }}
-                      disabled={!form.startAt || !form.endAt}
-                      options={propertyOptions}
-                    />
-                    <AppFieldError message={bookingField.error('propertyId')} />
-                  </div>
-                  {property && (
-                    <div className="space-y-2 text-sm text-muted-app">
-                      <p>{property.location}</p>
-                      <details>
-                        <summary>{t('facilityBookings.hours')}</summary>
-                        <p>
-                          {t('facilityBookings.hours')}:{' '}
-                          {property.bookableHours
-                            .map(
-                              (item) =>
-                                `${t(`properties.day${item.day as 1 | 2 | 3 | 4 | 5 | 6 | 7}`)}: ${item.open}–${item.close}`,
-                            )
-                            .join('; ')}
-                        </p>
-                        {property.blackouts.map((item, index) => (
-                          <p key={index}>
-                            {t('facilityBookings.blackout')}: {interval(item)} · {item.reason}
-                          </p>
-                        ))}
-                      </details>
-                    </div>
-                  )}
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('facilityBookings.purpose')}
-                    <AppRequiredMark />
-                    <AppInput
-                      {...bookingField.control('purpose')}
-                      maxLength={2000}
-                      className="mt-1.5 block w-full font-normal"
-                      value={form.purpose}
-                      onChange={(event) => setForm({ ...form, purpose: event.target.value })}
-                    />
-                    <AppFieldError message={bookingField.error('purpose')} />
-                  </label>
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('facilityBookings.headcount')}
-                    <AppRequiredMark />
-                    <AppInput
-                      {...bookingField.control('headcount')}
-                      type="number"
-                      min={1}
-                      max={10000}
-                      className="mt-1.5 block w-full font-normal"
-                      value={form.headcount}
-                      onChange={(event) =>
-                        setForm({ ...form, headcount: Number(event.target.value) })
-                      }
-                    />
-                    <AppFieldError message={bookingField.error('headcount')} />
-                  </label>
-                  <details>
-                    <summary>{t('facilityBookings.optionalFields')}</summary>
-                    <div className="mt-3 space-y-3">
-                      {property?.equipment.map((item) => (
-                        <label key={item} className="flex flex-wrap items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={form.equipment.includes(item)}
-                            onChange={(event) =>
-                              setForm({
-                                ...form,
-                                equipment: event.target.checked
-                                  ? [...form.equipment, item]
-                                  : form.equipment.filter((value) => value !== item),
-                              })
-                            }
-                          />
-                          {item}
-                        </label>
-                      ))}
-                      {events.isPending ? (
-                        <AppSkeleton className="h-12" />
-                      ) : events.isError ? (
-                        <AppNotice tone="danger">
-                          {events.error.message}
-                          <AppButton type="button" onClick={() => void events.refetch()}>
-                            {t('facilityBookings.retry')}
-                          </AppButton>
-                        </AppNotice>
-                      ) : (
-                        <AppSelect
-                          label={t('facilityBookings.eventId')}
-                          value={form.eventId ?? ''}
-                          onChange={(value) => setForm({ ...form, eventId: value || undefined })}
-                          options={[
-                            { value: '', label: t('facilityBookings.noEvent') },
-                            ...(events.data ?? []).map((item) => ({
-                              value: item.id,
-                              label: item.title,
-                            })),
-                          ]}
-                        />
-                      )}
-                    </div>
-                  </details>
-                  {property?.capacity !== undefined && form.headcount > property.capacity && (
-                    <AppNotice tone="warning">{t('facilityBookings.capacityWarning')}</AppNotice>
-                  )}
-                  <p className="text-sm text-muted-app">{t('facilityBookings.requestRule')}</p>
-                  <p className="text-sm text-muted-app">{t('facilityBookings.noticeRule')}</p>
-                  {form.propertyId && form.startAt && form.endAt && (
-                    <div role="status">
-                      {availability.isFetching ? (
-                        <p>{t('facilityBookings.checking')}</p>
-                      ) : availability.isError ? (
-                        <AppNotice tone="danger">{availability.error.message}</AppNotice>
-                      ) : (
-                        availability.data && (
-                          <AppNotice
-                            tone={availability.data.conflicts.length ? 'danger' : 'success'}
-                          >
-                            {t(
-                              availability.data.conflicts.length
-                                ? 'facilityBookings.blocking'
-                                : 'facilityBookings.available',
-                            )}
-                            {availability.data.conflicts.map((item) => (
-                              <p key={item.id}>{interval(item)}</p>
-                            ))}
-                          </AppNotice>
-                        )
-                      )}
-                    </div>
-                  )}
-                </form>
-              </AppDialog>
+              />
             ) : selected && detail.isPending ? (
               <AppSkeleton className="h-64 w-full" />
             ) : detail.isError ? (
@@ -763,16 +364,16 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                       <AppButton
                         disabled={action.isPending}
                         onClick={() =>
-                          setConfirming({
-                            message: t('facilityBookings.confirmSubmit'),
-                            run: () =>
+                          confirm(
+                            t('facilityBookings.confirmSubmit'),
+                            () =>
                               void mutate({
                                 kind: 'submit',
                                 clubId,
                                 id: booking.id,
                                 expectedVersion: booking.currentVersionNo,
                               }),
-                          })
+                          )
                         }
                       >
                         {t('facilityBookings.submit')}
@@ -780,38 +381,14 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                     </div>
                   )}
                   {clubId && ['Requested', 'Approved'].includes(booking.state) && (
-                    <form
-                      noValidate
-                      className="space-y-3"
-                      onSubmit={(event) => {
-                        event.preventDefault()
-                        if (!cancelField.touchAll()) {
-                          return
-                        }
-                        setConfirming({
-                          message: t('facilityBookings.confirmCancel'),
-                          run: () =>
-                            void mutate({ kind: 'cancel', clubId, id: booking.id, reason }),
-                        })
-                      }}
-                    >
-                      <p className="text-sm text-muted-app">{t('facilityBookings.cancelNotice')}</p>
-                      <label className="block text-sm font-medium text-text-app">
-                        {t('facilityBookings.cancelReason')}
-                        <AppRequiredMark />
-                        <AppInput
-                          className="mt-1.5 block w-full font-normal"
-                          {...cancelField.control('reason')}
-                          maxLength={2000}
-                          value={reason}
-                          onChange={(event) => setReason(event.target.value)}
-                        />
-                        <AppFieldError message={cancelField.error('reason')} />
-                      </label>
-                      <AppButton type="submit" variant="secondary" disabled={action.isPending}>
-                        {t('facilityBookings.cancel')}
-                      </AppButton>
-                    </form>
+                    <BookingCancelForm
+                      key={`${booking.id}:${formKey}`}
+                      clubId={clubId}
+                      bookingId={booking.id}
+                      pending={action.isPending}
+                      onConfirm={confirm}
+                      onSubmit={(value) => void mutate(value)}
+                    />
                   )}
                   {!clubId &&
                     (booking.state === 'Requested' ||
@@ -834,243 +411,23 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   {!clubId &&
                     booking.state === 'Under Review' &&
                     detail.data.task?.assigneeId === auth.data?.user.id && (
-                      <form
-                        noValidate
-                        onSubmit={decide}
-                        className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"
-                      >
-                        <div className="block text-sm font-medium text-text-app">
-                          <span>{t('facilityBookings.outcome')}</span>
-                          <AppSelect<BookingDecisionInput['outcome']>
-                            className="mt-1.5 block w-full font-normal"
-                            label={t('facilityBookings.outcome')}
-                            value={outcome}
-                            onChange={setOutcome}
-                            options={[
-                              { value: 'Approve', label: t('facilityBookings.approve') },
-                              { value: 'Reject', label: t('facilityBookings.reject') },
-                              { value: 'Request revision', label: t('facilityBookings.revision') },
-                            ]}
-                          />
-                        </div>
-                        <label className="block text-sm font-medium text-text-app">
-                          {t('facilityBookings.reason')}
-                          <AppRequiredMark />
-                          <AppInput
-                            className="mt-1.5 block w-full font-normal"
-                            {...decisionField.control('reason')}
-                            maxLength={2000}
-                            value={reason}
-                            onChange={(event) => setReason(event.target.value)}
-                          />
-                          <AppFieldError message={decisionField.error('reason')} />
-                        </label>
-                        <label className="block text-sm font-medium text-text-app">
-                          {t('facilityBookings.reviewNote')}
-                          <AppInput
-                            className="mt-1.5 block w-full font-normal"
-                            maxLength={2000}
-                            value={reviewNote}
-                            onChange={(event) => setReviewNote(event.target.value)}
-                          />
-                        </label>
-                        {outcome === 'Approve' &&
-                          !!detail.data.check?.conflicts.length &&
-                          detail.data.check.conflictResult === 'Warning' && (
-                            <div className="space-y-3">
-                              <label className="flex flex-wrap items-center gap-2 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={permitOverbooking}
-                                  onChange={(event) => setPermitOverbooking(event.target.checked)}
-                                />
-                                {t('facilityBookings.permitOverbooking')}
-                              </label>
-                              {permitOverbooking && (
-                                <label className="block text-sm font-medium text-text-app">
-                                  {t('facilityBookings.overbookingReason')}
-                                  <AppRequiredMark />
-                                  <AppInput
-                                    {...decisionField.control('overbookingReason')}
-                                    maxLength={2000}
-                                    className="mt-1.5 block w-full font-normal"
-                                    value={overbookingReason}
-                                    onChange={(event) => setOverbookingReason(event.target.value)}
-                                  />
-                                  <AppFieldError
-                                    message={decisionField.error('overbookingReason')}
-                                  />
-                                </label>
-                              )}
-                            </div>
-                          )}
-                        {outcome === 'Request revision' && (
-                          <>
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={suggest}
-                                onChange={(event) => setSuggest(event.target.checked)}
-                              />
-                              {t('facilityBookings.alternative')}
-                            </label>
-                            {suggest && (
-                              <div className="space-y-3">
-                                <div className="block text-sm font-medium text-text-app">
-                                  <span>
-                                    {t('facilityBookings.property')}
-                                    <AppRequiredMark />
-                                  </span>
-                                  <AppSelect
-                                    className="mt-1.5 block w-full font-normal"
-                                    label={t('facilityBookings.property')}
-                                    required
-                                    invalid={Boolean(decisionField.error('altPropertyId'))}
-                                    value={alternative.propertyId}
-                                    onChange={(value) => {
-                                      setAlternative({ ...alternative, propertyId: value })
-                                      decisionField.touch('altPropertyId')
-                                    }}
-                                    options={propertyOptions}
-                                  />
-                                  <AppFieldError message={decisionField.error('altPropertyId')} />
-                                </div>
-                                <label className="block text-sm font-medium text-text-app">
-                                  {t('facilityBookings.bookingDate')}
-                                  <AppRequiredMark />
-                                  <AppInput
-                                    type="date"
-                                    className="mt-1.5 block w-full font-normal"
-                                    {...decisionField.control('altDate')}
-                                    value={localTime(alternative.startAt).slice(0, 10)}
-                                    onChange={(event) =>
-                                      setAlternative({
-                                        ...alternative,
-                                        ...slotInterval(
-                                          event.target.value,
-                                          slotNumber(alternative, slots.data ?? []) || '1',
-                                          slots.data ?? [],
-                                        ),
-                                      })
-                                    }
-                                  />
-                                  <AppFieldError message={decisionField.error('altDate')} />
-                                </label>
-                                <div className="block text-sm font-medium text-text-app">
-                                  <span>
-                                    {t('facilityBookings.slotLabel')}
-                                    <AppRequiredMark />
-                                  </span>
-                                  <AppSelect
-                                    className="mt-1.5 block w-full font-normal"
-                                    label={t('facilityBookings.slotLabel')}
-                                    required
-                                    invalid={Boolean(decisionField.error('altSlot'))}
-                                    value={slotNumber(alternative, slots.data ?? [])}
-                                    disabled={!alternative.startAt}
-                                    onChange={(value) => {
-                                      setAlternative({
-                                        ...alternative,
-                                        ...slotInterval(
-                                          localTime(alternative.startAt).slice(0, 10),
-                                          value,
-                                          slots.data ?? [],
-                                        ),
-                                      })
-                                      decisionField.touch('altSlot')
-                                    }}
-                                    options={slotOptions}
-                                  />
-                                  <AppFieldError message={decisionField.error('altSlot')} />
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-                        <AppButton type="submit" disabled={action.isPending}>
-                          {t('facilityBookings.decide')}
-                        </AppButton>
-                      </form>
+                      <BookingDecisionForm
+                        key={`${booking.id}:${formKey}`}
+                        bookingId={booking.id}
+                        check={detail.data.check}
+                        slots={slots.data ?? []}
+                        propertyOptions={propertyOptions}
+                        pending={action.isPending}
+                        onConfirm={confirm}
+                        onSubmit={(value) => void mutate(value)}
+                      />
                     )}
-                  {!!detail.data.decisions.length && (
-                    <section className="space-y-3">
-                      <h3 className="text-sm font-semibold">{t('facilityBookings.decisions')}</h3>
-                      {detail.data.decisions.map((item) => (
-                        <div
-                          key={item.id}
-                          className="space-y-2 rounded-xl border border-border-app bg-bg-app p-4 text-sm"
-                        >
-                          <p>
-                            {t(
-                              item.outcome === 'Approve'
-                                ? 'facilityBookings.approve'
-                                : item.outcome === 'Reject'
-                                  ? 'facilityBookings.reject'
-                                  : 'facilityBookings.revision',
-                            )}{' '}
-                            · {date(item.at)}
-                          </p>
-                          <p className="break-words">{item.reason}</p>
-                          {item.reviewNote && <p className="break-words">{item.reviewNote}</p>}
-                          {item.overbookingReason && (
-                            <p className="break-words">
-                              {t('facilityBookings.overbookingReason')}: {item.overbookingReason}
-                            </p>
-                          )}
-                          {item.alternative && (
-                            <>
-                              <p>
-                                {t('facilityBookings.alternative')}:{' '}
-                                {
-                                  properties.data?.find(
-                                    (value) => value.id === item.alternative?.propertyId,
-                                  )?.name
-                                }
-                                · {interval(item.alternative)}
-                              </p>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </section>
-                  )}
-                  {!!detail.data.versions.length && (
-                    <section className="space-y-3">
-                      <h3 className="text-sm font-semibold">{t('facilityBookings.history')}</h3>
-                      {detail.data.versions.map((item) => (
-                        <details
-                          key={item.versionNo}
-                          className="rounded-xl border border-border-app bg-bg-app p-4 text-sm"
-                        >
-                          <summary>
-                            {t('facilityBookings.version', { number: item.versionNo })} ·{' '}
-                            {date(item.submittedAt)}
-                          </summary>
-                          <div className="mt-3 space-y-2 text-sm">
-                            <p className="break-words">{item.payload.purpose}</p>
-                            <p>
-                              {properties.data?.find(
-                                (value) => value.id === item.payload.propertyId,
-                              )?.name ?? item.payload.propertyId}
-                            </p>
-                            <p>{interval(item.payload)}</p>
-                            <p>
-                              {t('facilityBookings.headcount')}: {item.payload.headcount}
-                            </p>
-                            <p>{item.payload.equipment.join(', ')}</p>
-                            {item.payload.eventId && (
-                              <Link
-                                className="text-primary-app hover:underline"
-                                to={`/events/${item.payload.eventId}`}
-                              >
-                                {t('facilityBookings.eventId')}
-                              </Link>
-                            )}
-                          </div>
-                        </details>
-                      ))}
-                    </section>
-                  )}
+                  <BookingHistory
+                    decisions={detail.data.decisions}
+                    versions={detail.data.versions}
+                    properties={properties.data}
+                    interval={interval}
+                  />
                 </div>
               )
             )}
