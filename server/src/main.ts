@@ -243,21 +243,24 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       process.exit(1)
     } // tín hiệu thứ hai = ngừng chờ, thoát ngay
     shuttingDown = true
-    stopApplicationExpiryJob()
-    stopComplaintResponseJob()
-    stopReconfirmationJob()
-    stopLifecycleJob()
-    stopBookingJob()
-    stopAccountabilityJob()
-    stopEventLifecycleJob()
-    stopNotificationJob()
+    // Timers stop now; each promise settles once that job's in-flight tick has finished.
+    const jobsStopped = Promise.all([
+      stopApplicationExpiryJob(),
+      stopComplaintResponseJob(),
+      stopReconfirmationJob(),
+      stopLifecycleJob(),
+      stopBookingJob(),
+      stopAccountabilityJob(),
+      stopEventLifecycleJob(),
+      stopNotificationJob(),
+    ])
     // Hạn xả — một request đang xử lý bị treo không được chặn SIGTERM cho tới khi nền tảng SIGKILL.
     setTimeout(() => {
       console.error('shutdown deadline hit — forcing exit')
       process.exit(1)
     }, 10_000)
     server.close(() => {
-      mongoose.disconnect().finally(() => process.exit(0))
+      jobsStopped.then(() => mongoose.disconnect()).finally(() => process.exit(0))
     })
     server.closeIdleConnections()
   })

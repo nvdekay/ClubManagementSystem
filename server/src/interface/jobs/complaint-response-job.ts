@@ -1,36 +1,17 @@
 import type { ComplaintRepository } from '../../domain/complaint.js'
 import { flagOverdueComplaintResponses } from '../../usecase/complaint.js'
+import { scheduleJob, type StopJob } from './schedule.js'
 
 // Hẹn giờ quét khiếu nại quá hạn phản hồi mỗi giờ
 /** UC52 E1: mỗi giờ, phát tín hiệu compliance một lần cho mỗi khiếu nại đã chuyển tiếp quá hạn. */
 export function startComplaintResponseJob(
   repo: ComplaintRepository,
   intervalMs = 3600000,
-): () => void {
-  let running = false
-  async function tick() {
-    if (running) {
-      return
+): StopJob {
+  return scheduleJob('complaint-response', intervalMs, async () => {
+    const flagged = await flagOverdueComplaintResponses(repo, new Date())
+    if (flagged) {
+      console.log(JSON.stringify({ job: 'complaint-response', flagged }))
     }
-    running = true
-    try {
-      const flagged = await flagOverdueComplaintResponses(repo, new Date())
-      if (flagged) {
-        console.log(JSON.stringify({ job: 'complaint-response', flagged }))
-      }
-    } catch (e) {
-      console.error(
-        JSON.stringify({
-          job: 'complaint-response',
-          error: e instanceof Error ? e.message : String(e),
-        }),
-      )
-    } finally {
-      running = false
-    }
-  }
-  void tick()
-  const timer = setInterval(() => void tick(), intervalMs)
-  timer.unref()
-  return () => clearInterval(timer)
+  })
 }
