@@ -63,6 +63,14 @@ export const clubPeriodicReports = {
     saveImage: 'Save image',
     evidenceUrlPlaceholder: 'Paste image link (https://...) or press Ctrl+V to paste image',
     uploadedImageReady: 'Image uploaded to system',
+    uploadingImage: 'Uploading…',
+    uploadingImageHint: 'Uploading image, please wait before saving.',
+    uploadFailed: 'Could not upload the image. Please try again.',
+    imageTypeInvalid: 'Only PNG, JPEG or WebP images can be uploaded.',
+    imageTooLarge: 'The image must be 5 MB or smaller.',
+    imageUnavailable: 'Image preview is not available right now.',
+    legacyImageNotice:
+      'This image was saved in an old format that can no longer be stored. Upload it again or paste a link before saving.',
     achievementsTitle: '3. Club achievements in period',
     achievementsHint:
       'Add awards, recognitions or notable achievements of the club during this semester.',
@@ -144,6 +152,14 @@ export const clubPeriodicReports = {
     saveImage: 'Lưu ảnh',
     evidenceUrlPlaceholder: 'Dán link ảnh (https://...) hoặc nhấn Ctrl+V để dán ảnh trực tiếp',
     uploadedImageReady: 'Đã tải ảnh lên hệ thống',
+    uploadingImage: 'Đang tải lên…',
+    uploadingImageHint: 'Đang tải ảnh lên, vui lòng chờ xong rồi mới lưu.',
+    uploadFailed: 'Không tải được ảnh lên. Vui lòng thử lại.',
+    imageTypeInvalid: 'Chỉ tải lên được ảnh PNG, JPEG hoặc WebP.',
+    imageTooLarge: 'Ảnh phải có dung lượng tối đa 5 MB.',
+    imageUnavailable: 'Hiện chưa xem trước được ảnh này.',
+    legacyImageNotice:
+      'Ảnh này được lưu theo định dạng cũ, không còn lưu lại được. Hãy tải ảnh lên lại hoặc dán link trước khi lưu.',
     achievementsTitle: '3. Thành tích trong kỳ',
     achievementsHint:
       'Kê khai các giải thưởng, giấy khen hoặc thành tích nổi bật của CLB trong học kỳ.',

@@ -7,6 +7,7 @@ import type { EvaluationSchemeRepository } from '../../domain/evaluation-scheme.
 import {
   CUSTOM_FIELD_TYPES,
   RETURN_SECTIONS,
+  type PeriodicEvidenceStorage,
   type PeriodicReportRepository,
 } from '../../domain/periodic-report.js'
 import type { PolicyRepository } from '../../domain/policy.js'
@@ -31,6 +32,7 @@ export interface PeriodicReportRouteDeps {
   sessions: SessionService
   evaluationRepo?: EvaluationRepository
   evaluationSchemeRepo?: EvaluationSchemeRepository
+  files?: PeriodicEvidenceStorage | null
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i)
@@ -97,6 +99,7 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
     repo: deps.repo,
     policy: deps.policy,
     auth: deps.authRepo,
+    files: deps.files ?? null,
     ...(deps.evaluationRepo && deps.evaluationSchemeRepo
       ? {
           evaluation: {

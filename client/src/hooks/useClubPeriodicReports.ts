@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { changePeriodicReport, fetchClubPeriodicReports } from '@/services/clubPeriodicReports'
+import {
+  changePeriodicReport,
+  fetchClubPeriodicReports,
+  uploadPeriodicEvidenceImage,
+} from '@/services/clubPeriodicReports'
 const key = ['club-periodic-reports'] as const
 // Query báo cáo định kỳ của CLB
 export function useClubPeriodicReports(clubId: string, enabled: boolean) {
@@ -18,5 +22,12 @@ export function useChangePeriodicReport(clubId: string) {
       csrfToken: string
     }) => changePeriodicReport(clubId, input.action, input.csrfToken),
     onSuccess: () => client.invalidateQueries({ queryKey: [...key, clubId] }),
+  })
+}
+// Mutation tải ảnh minh chứng; chưa đổi báo cáo nên không làm mới cache
+export function useUploadPeriodicEvidence(clubId: string) {
+  return useMutation({
+    mutationFn: (input: { file: Blob; csrfToken: string }) =>
+      uploadPeriodicEvidenceImage(clubId, input.file, input.csrfToken),
   })
 }

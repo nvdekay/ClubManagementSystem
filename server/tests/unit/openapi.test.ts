@@ -347,6 +347,22 @@ const stubViolations: ViolationRepository = {
     throw new Error('unused')
   },
 }
+const stubPeriodicEvidenceFiles = {
+  upload: async () => ({ assetId: '0123456789abcdef0123456789abcdef' }),
+  accessUrl: async () => 'https://files.example/evidence',
+}
+const stubClubPeriodicReports = {
+  list: async () => [],
+  create: async () => {
+    throw new Error('unused')
+  },
+  save: async () => {
+    throw new Error('unused')
+  },
+  submit: async () => {
+    throw new Error('unused')
+  },
+}
 const stubPeriodicReports: PeriodicReportRepository = {
   overview: async () => [],
   find: async () => null,
@@ -648,18 +664,8 @@ describe('openapi document', () => {
         run: async () => ({ opened: 0, expired: 0, exempt: 0 }),
         expireOverdue: async () => ({ expired: 0, exempt: 0 }),
       },
-      clubPeriodicReportRepo: {
-        list: async () => [],
-        create: async () => {
-          throw new Error('unused')
-        },
-        save: async () => {
-          throw new Error('unused')
-        },
-        submit: async () => {
-          throw new Error('unused')
-        },
-      },
+      clubPeriodicReportRepo: stubClubPeriodicReports,
+      periodicEvidenceFiles: stubPeriodicEvidenceFiles,
       clubInvitationRepo: {
         list: async () => [],
         respond: async () => {
@@ -788,6 +794,8 @@ describe('openapi document', () => {
       postEventReportRepo: stubPostReports,
       violationRepo: stubViolations,
       periodicReportRepo: stubPeriodicReports,
+      clubPeriodicReportRepo: stubClubPeriodicReports,
+      periodicEvidenceFiles: stubPeriodicEvidenceFiles,
       clubEventRepo: stubClubEvents,
       schoolEventRepo: stubSchoolEvents,
       evaluationRepo: stubEvaluations,

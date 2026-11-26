@@ -44,7 +44,10 @@ import type { EventProposalReviewRepository } from '../../domain/event-proposal-
 import type { EventDefenseRepository } from '../../domain/event-defense.js'
 import type { BudgetDisbursementRepository } from '../../domain/budget-disbursement.js'
 import type { ViolationRepository } from '../../domain/violation.js'
-import type { PeriodicReportRepository } from '../../domain/periodic-report.js'
+import type {
+  PeriodicEvidenceStorage,
+  PeriodicReportRepository,
+} from '../../domain/periodic-report.js'
 import type { SchoolEventRepository } from '../../domain/school-event.js'
 import type { EvaluationRepository } from '../../domain/evaluation.js'
 import type { ClubProfileRepository } from '../../domain/club-profile.js'
@@ -121,6 +124,16 @@ const docsHtml = `<!doctype html>
 </body>
 </html>`
 
+/** Route tự parse body JSON lớn hơn 100kb sau authGuard (xem từng file route). */
+const LARGE_JSON_ROUTES: readonly { method: string; path: RegExp }[] = [
+  // Lưu nháp báo cáo định kỳ: tới 500 thành viên và 200 sự kiện (2mb).
+  { method: 'PUT', path: /^\/api\/v1\/clubs\/[^/]+\/periodic-reports\/[^/]+\/?$/i },
+  // Lưu nháp đơn ứng tuyển: tới 30 câu trả lời x 10.000 ký tự (1mb).
+  { method: 'PATCH', path: /^\/api\/v1\/applications\/recruitment\/[^/]+\/draft\/?$/i },
+  // Ghi chú phiên bảo vệ: tới 50.000 ký tự (256kb).
+  { method: 'PUT', path: /^\/api\/v1\/admin\/event-proposals\/[^/]+\/defense\/notes\/?$/i },
+]
+
 // Dựng ứng dụng Express, chỉ mount route khi đủ dependency và lọc OpenAPI theo route đã mount
 export function buildApp(deps: {
   auth?: AuthRouteDeps
@@ -167,6 +180,7 @@ export function buildApp(deps: {
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null
   applicationFiles?: ApplicationFileStorage | null
   eventProposalFiles?: EventProposalFileStorage | null
+  periodicEvidenceFiles?: PeriodicEvidenceStorage | null
   clubTransitionPlanRepo?: ClubTransitionPlanRepository
   suspensionRequestRepo?: SuspensionRequestRepository
   membershipReconfirmationRepo?: MembershipReconfirmationRepository
@@ -186,7 +200,18 @@ export function buildApp(deps: {
     next()
   })
   app.use(requestLogger) // đặt trước body parsing, để request bị parser từ chối vẫn có dòng log
-  app.use(express.json({ limit: '15mb' }))
+  // Body JSON mặc định tối đa 100kb. Vài route cần body lớn hơn tự gắn express.json({ limit })
+  // sau authGuard; parser chung bỏ qua chúng để không đọc body lớn trước khi xác thực.
+  const jsonBody = express.json({ limit: '100kb' })
+  app.use((req, res, next) => {
+    if (
+      LARGE_JSON_ROUTES.some((route) => route.method === req.method && route.path.test(req.path))
+    ) {
+      next()
+      return
+    }
+    jsonBody(req, res, next)
+  })
   // Endpoint health check, trả 503 khi database chưa sẵn sàng
   app.get('/api/v1/health', (_req, res) => {
     const ok = deps.dbReady() // 503 khi DB sập, để orchestrator ngừng định tuyến tới đây
@@ -567,6 +592,7 @@ export function buildApp(deps: {
             access: deps.auth.accessRepo,
             authRepo: deps.auth.repo,
             sessions: deps.auth.sessions,
+            files: deps.periodicEvidenceFiles ?? null,
           }),
         )
       }
@@ -580,6 +606,7 @@ export function buildApp(deps: {
             sessions: deps.auth.sessions,
             evaluationRepo: deps.evaluationRepo,
             evaluationSchemeRepo: deps.evaluationSchemeRepo,
+            files: deps.periodicEvidenceFiles ?? null,
           }),
         )
       }

@@ -77,3 +77,27 @@ export function changePeriodicReport(
     body: JSON.stringify(body),
   })
 }
+
+/** Ảnh minh chứng server nhận: PNG, JPEG, WebP, tối đa 5 MB. */
+export const EVIDENCE_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
+export const EVIDENCE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+
+export interface UploadedEvidenceImage {
+  reference: string
+  url: string
+  mimeType: string
+  bytes: number
+}
+
+// POST ảnh minh chứng dạng byte thô, trả tham chiếu để lưu vào báo cáo và signed URL để xem trước
+export function uploadPeriodicEvidenceImage(
+  clubId: string,
+  file: Blob,
+  csrfToken: string,
+): Promise<UploadedEvidenceImage> {
+  return request(clubId, '/evidence-images', {
+    method: 'POST',
+    headers: { 'Content-Type': file.type, 'X-CSRF-Token': csrfToken },
+    body: file,
+  })
+}

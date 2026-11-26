@@ -26,6 +26,8 @@ import {
   useSavePeriodicCampaign,
 } from '@/hooks/usePeriodicReports'
 import {
+  evidenceDisplayUrl,
+  isEvidenceReference,
   RETURN_SECTIONS,
   type CustomFieldType,
   type PeriodicCampaign,
@@ -671,19 +673,31 @@ async function saveEvidenceImage(url: string, title: string) {
 }
 
 // Hiển thị một minh chứng dạng ảnh kèm xem trước và tải về
+/** `value` là giá trị lưu trong báo cáo; ảnh đã upload hiển thị qua signed URL trong `evidenceUrls`. */
 function EvidenceDisplay({
-  url,
+  value,
+  evidenceUrls,
   title,
   onPreview,
 }: {
-  url: string
+  value: string
+  evidenceUrls: Record<string, string> | undefined
   title: string
   onPreview: (url: string, title: string) => void
 }) {
   const { t } = useTranslation()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
-  const isUploaded = url.startsWith('data:image/')
+  const url = evidenceDisplayUrl(value, evidenceUrls)
+  const isUploaded = isEvidenceReference(value) || value.startsWith('data:image/')
   const imgFailed = failedUrl === url
+
+  if (!url) {
+    return (
+      <div className="mt-2 rounded-xl border border-border-app bg-bg-app p-3 text-xs text-muted-app">
+        {t('periodicReports.imageUnavailable')}
+      </div>
+    )
+  }
 
   return (
     <div className="mt-2 flex flex-wrap items-start gap-3 rounded-xl border border-border-app bg-bg-app p-3">
@@ -1078,7 +1092,8 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                     <p className="whitespace-pre-wrap break-words text-sm">{ev.description}</p>
                     {ev.evidenceUrl && (
                       <EvidenceDisplay
-                        url={ev.evidenceUrl}
+                        value={ev.evidenceUrl}
+                        evidenceUrls={data.evidenceUrls}
                         title={ev.title}
                         onPreview={(url, title) => setPreviewImage({ url, title })}
                       />
@@ -1122,7 +1137,8 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                     <p className="whitespace-pre-wrap break-words text-sm">{ach.description}</p>
                     {ach.evidenceUrl && (
                       <EvidenceDisplay
-                        url={ach.evidenceUrl}
+                        value={ach.evidenceUrl}
+                        evidenceUrls={data.evidenceUrls}
                         title={ach.title}
                         onPreview={(url, title) => setPreviewImage({ url, title })}
                       />
@@ -1170,7 +1186,8 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                       )}
                       {item.answer?.evidenceUrl && (
                         <EvidenceDisplay
-                          url={item.answer.evidenceUrl}
+                          value={item.answer.evidenceUrl}
+                          evidenceUrls={data.evidenceUrls}
                           title={item.label}
                           onPreview={(url, title) => setPreviewImage({ url, title })}
                         />
@@ -1213,14 +1230,17 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                       <ul className="space-y-1">
                         {data.evidence.map((item, index) => (
                           <li key={index} className="break-words">
-                            {item.url ? (
+                            {evidenceDisplayUrl(item.url, data.evidenceUrls) ? (
                               <a
                                 className="font-semibold text-primary-app hover:underline"
-                                href={item.url}
+                                href={evidenceDisplayUrl(item.url, data.evidenceUrls)}
                                 target="_blank"
                                 rel="noreferrer"
                               >
-                                {item.note || item.url}
+                                {item.note ||
+                                  (isEvidenceReference(item.url)
+                                    ? t('periodicReports.uploadedImageBadge')
+                                    : item.url)}
                               </a>
                             ) : (
                               item.note

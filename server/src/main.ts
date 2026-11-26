@@ -85,6 +85,7 @@ import { cloudinaryApplicationFiles } from './infra/files/cloudinary-application
 import { mongoSponsoredItemRepository } from './infra/db/mongo-sponsored-item-repository.js'
 import { cloudinaryRecruitmentFiles } from './infra/files/cloudinary-recruitment-files.js'
 import { cloudinaryEventProposalFiles } from './infra/files/event-proposal-files.js'
+import { cloudinaryPeriodicEvidenceFiles } from './infra/files/cloudinary-periodic-evidence-files.js'
 
 const config = loadConfig() // việc đầu tiên — thoát nếu env không hợp lệ
 const authConfig = optionalAuthConfig(config)
@@ -178,6 +179,9 @@ const app = authConfig
         : null,
       applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
       eventProposalFiles: cloudinaryConfig ? cloudinaryEventProposalFiles(cloudinaryConfig) : null,
+      periodicEvidenceFiles: cloudinaryConfig
+        ? cloudinaryPeriodicEvidenceFiles(cloudinaryConfig)
+        : null,
       auth: {
         repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
         accessRepo: mongoAccessRepository(),

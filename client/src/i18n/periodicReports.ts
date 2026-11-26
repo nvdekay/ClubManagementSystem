@@ -141,6 +141,7 @@ const en = {
   openOriginalLink: 'Open link',
   closeImagePreview: 'Close image preview',
   uploadedImageBadge: 'Uploaded image',
+  imageUnavailable: 'Image preview is not available right now.',
   linkedEvidenceBadge: 'External link',
 }
 
@@ -286,6 +287,7 @@ const vi: typeof en = {
   openOriginalLink: 'Mở liên kết',
   closeImagePreview: 'Đóng xem ảnh',
   uploadedImageBadge: 'Ảnh tải lên hệ thống',
+  imageUnavailable: 'Hiện chưa xem trước được ảnh này.',
   linkedEvidenceBadge: 'Liên kết ngoài',
 }
 
