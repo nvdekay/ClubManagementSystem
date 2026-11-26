@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { pageSkip } from '../../src/domain/paging.js'
 import { budgetListQuery } from '../../src/interface/http/budget-disbursement-routes.js'
+import { complaintQuery } from '../../src/interface/http/complaint-routes.js'
 import { pageQuery } from '../../src/interface/http/request.js'
 import { suspensionListQuery } from '../../src/interface/http/suspension-request-routes.js'
 import { violationListQuery } from '../../src/interface/http/violation-routes.js'
@@ -48,5 +49,16 @@ describe('server-side paging query', () => {
   it('accepts only paging keys on the suspension request queue', () => {
     expect(suspensionListQuery.parse({ page: '2' })).toEqual({ page: 2, pageSize: 20 })
     expect(suspensionListQuery.safeParse({ state: 'Pending' }).success).toBe(false)
+  })
+
+  it('keeps the optional complaint state filter next to the paging keys', () => {
+    expect(complaintQuery.parse({})).toEqual({ page: 1, pageSize: 20 })
+    expect(complaintQuery.parse({ state: 'Under Triage', pageSize: '100' })).toEqual({
+      state: 'Under Triage',
+      page: 1,
+      pageSize: 100,
+    })
+    expect(complaintQuery.safeParse({ state: 'Open' }).success).toBe(false)
+    expect(complaintQuery.safeParse({ pageSize: '500' }).success).toBe(false)
   })
 })

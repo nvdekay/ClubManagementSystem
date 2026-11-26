@@ -26,7 +26,7 @@ import {
 } from '../../usecase/complaint.js'
 import { authGuard } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, pageQuery, parse } from './request.js'
 
 export interface ComplaintRouteDeps {
   repo: ComplaintRepository
@@ -48,7 +48,9 @@ export const complaintBody = z
     evidence: evidence.optional(),
   })
   .strict()
-export const complaintQuery = z.object({ state: z.enum(COMPLAINT_STATES).optional() }).strict()
+export const complaintQuery = pageQuery
+  .extend({ state: z.enum(COMPLAINT_STATES).optional() })
+  .strict()
 export const complaintTriageBody = z
   .object({
     outcome: z.enum(TRIAGE_OUTCOMES),
@@ -127,7 +129,7 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
         deps.repo,
         deps.authRepo,
         actor(res),
-        parse(complaintQuery, req.query, 'complaint request').state,
+        parse(complaintQuery, req.query, 'complaint request'),
       ),
     )
   })

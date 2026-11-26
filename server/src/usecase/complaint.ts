@@ -13,6 +13,7 @@ import {
   type ComplaintState,
 } from '../domain/complaint.js'
 import { DomainError } from '../domain/errors.js'
+import type { PageRequest } from '../domain/paging.js'
 import {
   assertClubAccess,
   isObjectId,
@@ -91,18 +92,19 @@ export async function withdrawComplaint(
   return withdrawn
 }
 
-// ICPDP xem hàng đợi khiếu nại, lọc theo trạng thái
+// ICPDP xem một trang hàng đợi khiếu nại, lọc theo trạng thái
 export async function listComplaintQueue(
   repo: ComplaintRepository,
   auth: Pick<AuthRepository, 'systemRoleCodes'>,
   actor: AccessActor | null,
-  state?: string,
+  query: PageRequest & { state?: string },
 ) {
   await requireIcpdpOfficer(auth, actor)
+  const { state, page, pageSize } = query
   if (state && !COMPLAINT_STATES.includes(state as ComplaintState)) {
     throw new DomainError('invalid state', 'validation')
   }
-  return repo.queue(state ? { state: state as ComplaintState } : {})
+  return repo.queue({ page, pageSize, ...(state ? { state: state as ComplaintState } : {}) })
 }
 
 // ICPDP xem chi tiết một khiếu nại

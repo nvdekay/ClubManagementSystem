@@ -1381,6 +1381,11 @@ const ComplaintForIcpdp = Complaint.extend({
   complainant: z.object({ id: z.string(), displayName: z.string(), email: z.string() }),
   linkedComplaintIds: z.array(z.string()),
 })
+const ComplaintQueuePage = pageOf(
+  ComplaintForIcpdp.extend({
+    linkCandidates: z.array(z.object({ id: z.string(), description: z.string() })),
+  }),
+)
 // D5: những gì CLB nhận được không có trường người khiếu nại.
 const ComplaintForClub = z.object({
   id: z.string(),
@@ -4528,13 +4533,14 @@ export const openApiDocument = createDocument({
     },
     '/admin/complaints': {
       get: {
-        summary: 'UC51: ICPDP complaint queue (ICPDP officer only)',
+        summary:
+          'UC51: one page of the ICPDP complaint queue, newest first, optionally by state (ICPDP officer only)',
         requestParams: { query: complaintQuery },
         responses: {
           '200': {
-            description: 'Complaints with complainant',
+            description: 'Complaints with complainant and the complaints each can be linked to',
             content: {
-              'application/json': { schema: envelope(z.array(ComplaintForIcpdp)) },
+              'application/json': { schema: envelope(ComplaintQueuePage) },
             },
           },
           '403': {

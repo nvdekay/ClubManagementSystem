@@ -1,4 +1,5 @@
 import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import type { Page } from '@/services/discovery'
 export const COMPLAINT_TYPES = ['CONDUCT', 'EVENT', 'FINANCE', 'SAFETY', 'OTHER'] as const
 export type ComplaintType = (typeof COMPLAINT_TYPES)[number]
 export type ComplaintState =
@@ -60,6 +61,11 @@ export interface ComplaintForIcpdp extends Complaint {
   linkedComplaintIds: string[]
 }
 
+/** Một dòng hàng đợi ICPDP, kèm các khiếu nại cùng sự việc có thể liên kết (UC50 E1). */
+export interface ComplaintQueueItem extends ComplaintForIcpdp {
+  linkCandidates: { id: string; description: string }[]
+}
+
 /** Nội dung CLB nhận được: không bao giờ kèm người khiếu nại (D5). */
 export interface ComplaintForClub {
   id: string
@@ -118,12 +124,18 @@ export function withdrawComplaint(id: string, csrfToken: string) {
     body: {},
   })
 }
-// GET /admin/complaints: hàng đợi khiếu nại của ICPDP, lọc theo trạng thái
-export function fetchComplaintQueue(state: ComplaintState | '', signal: AbortSignal) {
-  return request<ComplaintForIcpdp[]>(
-    `/admin/complaints${state ? `?state=${encodeURIComponent(state)}` : ''}`,
-    { signal },
-  )
+// GET /admin/complaints: một trang hàng đợi khiếu nại của ICPDP, lọc theo trạng thái
+export function fetchComplaintQueue(
+  state: ComplaintState | '',
+  page: number,
+  pageSize: number,
+  signal: AbortSignal,
+) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  if (state) {
+    params.set('state', state)
+  }
+  return request<Page<ComplaintQueueItem>>(`/admin/complaints?${params}`, { signal })
 }
 // POST /admin/complaints/:id: ICPDP mở hoặc ra quyết định khiếu nại
 export function decideComplaint(id: string, decision: ComplaintDecisionInput, csrfToken: string) {

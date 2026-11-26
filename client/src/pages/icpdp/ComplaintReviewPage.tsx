@@ -8,6 +8,7 @@ import { AppButton } from '@/components/ui/button/AppButton'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
+import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
@@ -17,7 +18,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useComplaintQueue, useDecideComplaint } from '@/hooks/useComplaints'
 import type {
   ComplaintDecisionInput,
-  ComplaintForIcpdp,
+  ComplaintQueueItem,
   ComplaintState,
   Severity,
   TriageOutcome,
@@ -34,6 +35,7 @@ const STATES: ComplaintState[] = [
   'Closed',
   'Withdrawn',
 ]
+const PAGE_SIZE = 20
 const OUTCOMES: TriageOutcome[] = ['Dismissed', 'Forwarded', 'Escalated']
 const SEVERITIES: Severity[] = ['MINOR', 'MODERATE', 'SERIOUS']
 const VALIDITIES: Validity[] = ['VALID', 'PARTLY_VALID', 'UNFOUNDED']
@@ -78,7 +80,13 @@ export function ComplaintReviewPage() {
   const { t } = useTranslation()
   const auth = useAuth()
   const [state, setState] = useState<ComplaintState | ''>('')
-  const queue = useComplaintQueue(state, Boolean(auth.data))
+  const [pageIndex, setPageIndex] = useState(0)
+  const queue = useComplaintQueue(state, pageIndex + 1, PAGE_SIZE, Boolean(auth.data))
+  const pageCount = Math.ceil((queue.data?.total ?? 0) / PAGE_SIZE)
+  // Step back after the queue shrinks (e.g. the last complaint of the last page left this state).
+  if (queue.data && !queue.isPlaceholderData && pageIndex > 0 && pageIndex >= pageCount) {
+    setPageIndex(Math.max(pageCount - 1, 0))
+  }
   return (
     <>
       <PageHeader
@@ -92,7 +100,10 @@ export function ComplaintReviewPage() {
             label={t('complaints.filterState')}
             value={state}
             className="mt-1.5 block w-full font-normal"
-            onChange={(value) => setState(value as ComplaintState | '')}
+            onChange={(value) => {
+              setState(value as ComplaintState | '')
+              setPageIndex(0)
+            }}
             options={[
               { value: '', label: t('complaints.filterAll') },
               ...STATES.map((value) => ({ value, label: t(complaintStateKey(value)) })),
@@ -109,25 +120,29 @@ export function ComplaintReviewPage() {
             {t('complaints.retry')}
           </AppButton>
         </AppNotice>
-      ) : queue.data.length === 0 ? (
+      ) : queue.data.items.length === 0 ? (
         <AppEmptyState variant="boxed" message={t('complaints.queueEmpty')} />
       ) : (
-        <ul className="space-y-3">
-          {queue.data.map((item) => (
-            <li key={item.id}>
-              <ReviewItem
-                item={item}
-                candidates={queue.data.filter(
-                  (other) =>
-                    other.id !== item.id &&
-                    other.complainant.id === item.complainant.id &&
-                    other.clubId === item.clubId &&
-                    ['Submitted', 'Under Triage'].includes(other.state),
-                )}
-              />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="space-y-3">
+            {queue.data.items.map((item) => (
+              <li key={item.id}>
+                {/* The server lists link candidates across the whole queue, not just this page. */}
+                <ReviewItem item={item} candidates={item.linkCandidates} />
+              </li>
+            ))}
+          </ul>
+          <AppPagination
+            className="mt-4"
+            pageIndex={pageIndex}
+            pageCount={pageCount}
+            onPageChange={setPageIndex}
+            prevLabel={t('complaints.previousPage')}
+            nextLabel={t('complaints.nextPage')}
+            pageLabel={(value) => t('complaints.pageNumber', { page: value })}
+            navLabel={t('complaints.pagination')}
+          />
+        </>
       )}
     </>
   )
@@ -138,8 +153,8 @@ function ReviewItem({
   item,
   candidates,
 }: {
-  item: ComplaintForIcpdp
-  candidates: ComplaintForIcpdp[]
+  item: ComplaintQueueItem
+  candidates: ComplaintQueueItem['linkCandidates']
 }) {
   const { t } = useTranslation()
   const auth = useAuth()
