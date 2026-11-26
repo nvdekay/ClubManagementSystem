@@ -17,3 +17,5 @@ coverage/
 
 # Demo videos are too large for git; they are kept outside the repo
 *.mp4
+# Mongo dumps can contain personal data
+*.archive.gz
