@@ -11,7 +11,15 @@ export const authDir = path.resolve(clientDir, 'e2e/.auth')
 
 export const serverPort = Number(process.env.E2E_SERVER_PORT ?? 3300)
 export const clientPort = Number(process.env.E2E_CLIENT_PORT ?? 5300)
-export const clientUrl = `http://localhost:${clientPort}`
+/**
+ * E2E_SERVE_BUILD=1 lets the API server serve client/dist itself (CLIENT_DIST_DIR), as the
+ * production image does, so the browser runs under the real CSP and cache headers instead of
+ * `vite preview`. Any CSP violation then fails the test through the console-error guard.
+ */
+export const serveBuild = Boolean(process.env.E2E_SERVE_BUILD)
+export const clientUrl = serveBuild
+  ? `http://localhost:${serverPort}`
+  : `http://localhost:${clientPort}`
 
 const mongoBase = process.env.E2E_MONGO_BASE ?? 'mongodb://127.0.0.1:27017'
 export const databaseName = process.env.E2E_DB_NAME ?? 'ucms-e2e'
@@ -72,6 +80,7 @@ export function serverEnv(): Record<string, string> {
     SMTP_USER: '',
     SMTP_PASSWORD: '',
     MAIL_FROM: '',
+    ...(serveBuild ? { CLIENT_DIST_DIR: path.resolve(clientDir, 'dist') } : {}),
   }
 }
 

@@ -25,6 +25,10 @@ Không đọc `.env` của bạn: mọi biến server nằm trong `setup/env.ts`
 | API | `:3300` | `E2E_SERVER_PORT` |
 | Client | `:5300` (bản build production qua `vite preview`, proxy `/api` như dev) | `E2E_CLIENT_PORT` |
 
+`E2E_SERVE_BUILD=1` bỏ `vite preview`: server tự build client rồi phục vụ `client/dist` qua
+`CLIENT_DIST_DIR` như image production, nên trình duyệt chạy dưới CSP và header cache thật. Vi phạm
+CSP hiện ra thành `console.error` và làm test fail. CI chạy ở chế độ này.
+
 Khi đang viết test, giữ sẵn một stack đang chạy rồi đặt `E2E_REUSE_SERVERS=1`: Playwright dùng
 lại server ở hai cổng trên và **không** xoá database khi xong.
 

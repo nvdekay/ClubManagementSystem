@@ -1,6 +1,14 @@
 import { defineConfig, devices } from '@playwright/test'
 
-import { clientDir, clientPort, clientUrl, serverDir, serverEnv, serverPort } from './e2e/setup/env'
+import {
+  clientDir,
+  clientPort,
+  clientUrl,
+  serveBuild,
+  serverDir,
+  serverEnv,
+  serverPort,
+} from './e2e/setup/env'
 
 // E2E_REUSE_SERVERS=1 runs against a stack that is already up (e.g. while writing tests) and
 // keeps its database; see e2e/README.md.
@@ -32,8 +40,9 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      // Rebuild and seed the e2e database, then start the API against it.
-      command: `node --import tsx ${clientDir}/e2e/setup/prepare-db.ts && node --import tsx src/main.ts`,
+      // Rebuild and seed the e2e database, then start the API against it. With E2E_SERVE_BUILD the
+      // client is built first and served by the API itself (real CSP), so no vite preview runs.
+      command: `${serveBuild ? `npm run build -w client --silent && ` : ''}node --import tsx ${clientDir}/e2e/setup/prepare-db.ts && node --import tsx src/main.ts`,
       cwd: serverDir,
       env: serverEnv(),
       url: `http://localhost:${serverPort}/api/v1/health`,
@@ -42,17 +51,21 @@ export default defineConfig({
       stdout: 'ignore',
       stderr: 'pipe',
     },
-    {
-      // The production build, served by vite preview with the same /api proxy as the dev server
-      // (vite.config.ts reads PORT, and a process env value wins over the root .env).
-      command: `npx vite build --logLevel warn && npx vite preview --port ${clientPort} --strictPort`,
-      cwd: clientDir,
-      env: { PORT: String(serverPort) },
-      url: clientUrl,
-      timeout: 180_000,
-      reuseExistingServer: reuseServers,
-      stdout: 'ignore',
-      stderr: 'pipe',
-    },
+    ...(serveBuild
+      ? []
+      : [
+          {
+            // The production build, served by vite preview with the same /api proxy as the dev server
+            // (vite.config.ts reads PORT, and a process env value wins over the root .env).
+            command: `npx vite build --logLevel warn && npx vite preview --port ${clientPort} --strictPort`,
+            cwd: clientDir,
+            env: { PORT: String(serverPort) },
+            url: clientUrl,
+            timeout: 180_000,
+            reuseExistingServer: reuseServers,
+            stdout: 'ignore' as const,
+            stderr: 'pipe' as const,
+          },
+        ]),
   ],
 })
