@@ -31,8 +31,9 @@ import { assertEventWriteAccess } from './club-event-access.js'
 import {
   clubEventFrom,
   EVENT_PAYLOAD_ACTIONS,
-  eventCancellationRequest,
+  eventCancellationRequests,
   eventDraftPayload,
+  eventDraftPayloads,
   readClubEvent,
   readClubFeedback,
   readEventParticipants,
@@ -705,14 +706,13 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
         .events!.find({ clubId: oid(clubId), organizerType: 'CLUB', audienceScope: 'PUBLIC' })
         .sort({ startAt: -1, _id: -1 })
         .lean()
-      return Promise.all(
-        docs.map(async (doc) =>
-          clubEventFrom(
-            doc,
-            await eventDraftPayload(doc._id as Types.ObjectId),
-            await eventCancellationRequest(doc._id as Types.ObjectId),
-          ),
-        ),
+      const ids = docs.map((doc) => doc._id as Types.ObjectId)
+      const [payloads, cancellations] = await Promise.all([
+        eventDraftPayloads(ids),
+        eventCancellationRequests(ids),
+      ])
+      return docs.map((doc) =>
+        clubEventFrom(doc, payloads.get(String(doc._id)), cancellations.get(String(doc._id))),
       )
     },
     // Đọc chi tiết sự kiện, danh sách người tham gia và feedback
