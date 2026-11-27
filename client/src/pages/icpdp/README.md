@@ -19,7 +19,7 @@ hàng đợi, nhận task, đọc snapshot bất biến và ghi đúng một quy
 task và ghi đúng một quyết định xác nhận toàn phần hoặc một phần cho các ghế ban điều hành.
 
 `IcpdpHomePage` triển khai dashboard UC02: hàng đợi, SLA, trạng thái CLB, báo cáo, tài chính,
-vi phạm, lịch đặt, sự kiện nội bộ và lịch sử cơ cấu/ban điều hành.
+vi phạm, lịch đặt và lịch sử cơ cấu/ban điều hành.
 
 `ComplaintReviewPage` (UC51, `/workspace/complaint-review`) là hàng đợi khiếu nại của ICPDP: mở xem xét, quyết định Dismissed / Forwarded / Escalated có lý do, rồi đóng hoặc leo thang sau khi CLB trả lời.
 
@@ -53,17 +53,14 @@ mở `ClubManageDialog` (dialog gốc của trình duyệt) chứa `ClubLifecycl
 tạm ngừng/kích hoạt lại/giải thể — mọi quyết định bắt buộc lý do. Dưới panel là `ClubBoardHistory` (UC02, BR56):
 các phiên bản cơ cấu và ban chủ nhiệm theo nhiệm kỳ.
 
-`InternalEventsPage` + `InternalEventDetailPage` (UC02 FR-UC02-02, BR53, route `/workspace/internal-events`)
-liệt kê sự kiện `MEMBERS_ONLY` CLB đã ghi nhận, lọc theo CLB/học kỳ; trang chi tiết hiện điểm danh chỉ đọc.
-
 `EventProposalQueuePage` + `EventProposalReviewPage` (UC26) duyệt đề xuất sự kiện CLB gửi lên: hàng đợi kèm
-tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính
+tổng tiền xin; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính
 kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
 duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
 Trang chi tiết ghép các khối chỉ trang này dùng: `ProposalDocumentsSection`, `ProposalOverviewSection`,
 `ProposalBudgetSection`, `ProposalClubBookingsSection`, `ProposalSubmissionHistory` (cột nội dung) và
-`ProposalDefensePanel` (buổi bảo vệ + hộp thoại đặt lịch/lý do), `ProposalCancellationPanel`, `ProposalDecisionHistory`
-(cột thao tác); nhãn, màu và các trường so sánh phiên bản nằm trong `eventProposalReviewFormat.ts`.
+`ProposalDecisionPanel` (form quyết định), `ProposalDefensePanel` (buổi bảo vệ, mở `ScheduleDefenseDialog` để
+đặt/dời lịch), `ProposalCancellationPanel`, `ProposalDecisionHistory` (cột thao tác); nhãn, màu và các trường so sánh phiên bản nằm trong `eventProposalReviewFormat.ts`.
 
 Trang chi tiết dùng cùng trình xem toàn văn và hồ sơ trích xuất với CLB, tải tài liệu của phiên bản đã nộp
 qua API ICPDP; có trạng thái tải, lỗi và thử lại, vẫn giữ tải file và lịch sử các lần nộp.
@@ -80,8 +77,8 @@ CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên
 cứ, giải trình của CLB, quyết định, biện pháp khắc phục, lịch sử, và khung "Bước tiếp theo" chỉ hiện những bước
 hợp lệ ở trạng thái hiện tại.
 Hai route này dùng chung `ViolationGate` (đăng nhập + quyền ICPDP). Danh sách (`ViolationList`, kèm
-`ViolationOpenCaseForm`) đếm số hồ sơ của mọi tab trong một lượt, lọc bằng `useMemo` và phân trang 20 hồ sơ/trang
-bằng `AppPagination`. Chi tiết (`ViolationDetailView`) ghép `ViolationEvidenceList`, `ViolationActionsSection` và
+`ViolationOpenCaseForm`) phân trang ở server (20 hồ sơ/trang, `AppPagination`); số trên từng tab lấy từ số đếm theo
+bộ lọc mà server trả về. Chi tiết (`ViolationDetailView`) ghép `ViolationEvidenceList`, `ViolationActionsSection` và
 `ViolationNextSteps` (mỗi bước dùng `ViolationStep`, tự giữ state form); nhãn/màu/ngày nằm trong `violationFormat.ts`.
 
 `SchoolEventsPage` (UC53) gồm `SchoolEventsPage` (danh sách sự kiện cấp trường kèm số CLB nhận lời/chưa trả
@@ -96,13 +93,15 @@ công bố, các bản và xu hướng các học kỳ trước.
 
 `PeriodicReportsPage` (UC39) cho tình trạng báo cáo định kỳ của mọi CLB theo học kỳ (lọc chờ thẩm định, quá hạn,
 đã chấp nhận; ghi nhận không nộp mở hồ sơ UC40); trang thẩm định đặt số liệu CLB cạnh số liệu hệ thống, cho chấp
-nhận kèm ghi nhận hoặc trả về với phần cần sửa.
+nhận kèm ghi nhận hoặc trả về với phần cần sửa (`PeriodicReportReviewPage`, cùng file).
 
 `SuspensionRequestsPage` (UC15) là hàng đợi yêu cầu tạm ngừng do CLB gửi (UC14), dùng chung
 `SuspensionRequestWorkspace` với trang CLB; ICPDP xem ảnh hưởng tới lịch rồi phê duyệt hoặc từ chối kèm lý do.
+Hàng đợi này, hàng đợi khiếu nại (`ComplaintReviewPage`) và danh sách vi phạm đều phân trang ở server.
 
-Các trang khác (đối chiếu 17/10/2026):
-`AccountsPage` (UC03, route `/icpdp/accounts`): tìm tài khoản, khoá/mở khoá, gán/thu hồi vai trò hệ thống.
+Các trang khác (đối chiếu 27/11/2026):
+`AccountsPage` (UC03, route `/icpdp/accounts`): tìm tài khoản (phân trang); khoá/mở khoá, gán/thu hồi vai trò hệ
+thống nằm trong `AccountManageDialog`.
 `LeadershipTransitionQueuePage` + `LeadershipTransitionDetailPage` (UC13, `/workspace/leadership-transitions`):
 hàng đợi và xác nhận chuyển giao nhiệm kỳ.
 `EventReportsPage` (UC34, `/workspace/event-reports`, dùng `ReportWorkspace`): thẩm định và đóng báo cáo sau sự kiện.

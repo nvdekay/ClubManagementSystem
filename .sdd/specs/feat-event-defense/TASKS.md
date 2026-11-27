@@ -1,5 +1,7 @@
 # TASKS: feat-event-defense
 
+> Ghi chú (27/11/2026): theo BR63, khi ICPDP chấp thuận yêu cầu dời lịch thì buổi bảo vệ tự chuyển `CONFIRMED`, CLB không phải xác nhận lại.
+
 - [x] 1. Schema & Migration: Bổ sung collection `eventDefenseSessions` và enum `eventDefenseState`, cập nhật `eventState` thêm `Re-defense Pending`.
 - [x] 2. Domain & Rules: Triển khai các hàm validation lịch bảo vệ, kiểm tra xung đột phòng học (gộp UC58 và các buổi bảo vệ khác), kiểm tra thời hạn (48h đặt lịch, 24h confirm, 12h deadline sửa), kiểm tra quyền thao tác.
 - [x] 3. Repository & Data Access: Triển khai các phương thức tạo lịch, khóa phòng, xác nhận, xin dời lịch, hủy lịch, bắt đầu bảo vệ, auto-save note cá nhân, kết thúc bảo vệ, ghi nhận no-show và ra quyết định sau bảo vệ.

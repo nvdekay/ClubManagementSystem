@@ -11,17 +11,19 @@ trống theo yêu cầu của người dùng; điền giá trị thật vào `.e
 | `BOOTSTRAP_ICPDP_EMAIL` | Email officer đầu tiên, thuộc `ALLOWED_DOMAIN` (với `*` thì là bất kỳ email nào) |
 | `APP_BASE_URL` | Origin backend, ví dụ `http://localhost:3055` nếu dùng `PORT=3055` |
 | `CLIENT_BASE_URL` | Origin Vite client, thường `http://localhost:5173` |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Bộ API credentials của Cloudinary; chỉ cần khi bật tải tài liệu UC07. Điền `.env`, không gửi secret qua chat hoặc commit. |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Bộ API credentials của Cloudinary; cần cho mọi chức năng tải tệp (tài liệu hồ sơ UC07, file đề án UC25/UC26, ảnh minh chứng UC38, chứng từ UC36). Để trống thì các chức năng này tắt. Điền `.env`, không gửi secret qua chat hoặc commit. |
 
 Trong Google Cloud Console, thêm **Authorized redirect URI** là
 `<APP_BASE_URL>/api/v1/auth/callback`. Hai origin cục bộ nên dùng cùng hostname (`localhost`
-hoặc `127.0.0.1`) để cookie phiên được gửi đúng. Cổng `3000` hiện có một ứng dụng khác chiếm;
-nếu vẫn vậy, đặt `PORT=3055` và `APP_BASE_URL=http://localhost:3055`.
+hoặc `127.0.0.1`) để cookie phiên được gửi đúng. Nếu cổng `3000` trên máy bị ứng dụng khác chiếm,
+đặt `PORT=3055` và `APP_BASE_URL=http://localhost:3055`.
 
 Khi toàn bộ biến Auth còn trống, server chỉ mở khu công khai UC06 và không gắn route
 `/auth/*` hoặc `/admin/*`; `/docs/openapi.json` cũng chỉ liệt kê route đang phục vụ.
 Khi bắt đầu điền bất kỳ biến Auth nào, server kiểm tra đủ bộ lúc khởi động và fail-fast nếu
-cấu hình chưa hoàn chỉnh. `db:init`/`db:verify` chỉ cần `MONGO_URI`.
+cấu hình chưa hoàn chỉnh. Ở production (`NODE_ENV=production`, image Docker) bộ Auth là bắt buộc:
+thiếu là server dừng ngay, và `/docs` tắt trừ khi đặt `API_DOCS=true`. `db:init`/`db:verify` chỉ cần
+`MONGO_URI`.
 Đăng nhập lần đầu tạo User và StudentProfile trong một MongoDB transaction; policy và hồ sơ
 UC07–UC09 cũng ghi bằng transaction, nên `mongod` phải chạy ở chế độ replica set. Bộ 55 collection
 nghiệp vụ DBML vẫn giữ nguyên; server tạo thêm `authSessions` với TTL index cho phiên.
@@ -58,7 +60,8 @@ ICPDP có thể đổi sang danh sách domain hoặc `*` ở trang chính sách 
 Muốn mọi tài khoản Google đăng nhập được (không chỉ danh sách test users), trong Google Cloud
 Console mở **Google Auth Platform → Audience** và bấm **Publish app** để chuyển từ *Testing* sang
 *In production*. UCMS chỉ xin scope cơ bản `openid email profile`, nên không cần Google xét duyệt.
-Các giá trị khởi tạo khác của UC04 chưa được chốt trong SRS, nên chưa seed policy version.
+Các giá trị khởi tạo khác của UC04 chưa được chốt trong SRS, nên server không tự tạo policy version;
+dữ liệu demo (`npm run seed:demo`) có tạo sẵn một bản để thử.
 
 Tệp hồ sơ UC07 được backend tải lên dưới dạng `authenticated` asset. Client không nhận API
 secret hoặc Cloudinary asset ID; route kiểm tra chủ hồ sơ rồi trả URL tải có chữ ký hết hạn sau

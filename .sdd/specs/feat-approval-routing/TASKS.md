@@ -1,5 +1,7 @@
 # TASKS: feat-approval-routing
 
+> Ghi chú (27/11/2026): duyệt hai cấp đã bỏ ngày 09/11/2026 (mục cuối file); vai trò `ICPDP_HEAD` đã gộp vào `ICPDP_OFFICER` ngày 25/11/2026.
+
 - [x] DBML: bảng `routingRuleSets`; `approvalTasks.routingRuleSetId|routingRuleId|requiredLevel|currentLevel`; `approvalDecisions.level` + index `(approvalTaskId, level)`; ghi chú `ICPDP_HEAD`; sinh lại schema, guard 53 bảng; đổi index cũ lúc khởi động.
 - [x] Domain `approval-routing.ts`: chuẩn hoá rule, chồng nhau, khớp, route, mô phỏng, bước quyết định.
 - [x] `ICPDP_HEAD`: catalogue, bootstrap, UC03 cấp kèm Officer / thu hồi theo Officer.

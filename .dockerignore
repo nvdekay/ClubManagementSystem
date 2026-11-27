@@ -16,13 +16,11 @@
 docs/*
 !docs/Template Đề án sự kiện.docx
 docs-qa
-outputs
-seed-data
 scripts
 server/tests
-client/test-results
-client/playwright-report
-e2e
+client/e2e/.auth
+client/e2e/test-results
+client/e2e/playwright-report
 Dockerfile
 .dockerignore
 docker-compose*.yml

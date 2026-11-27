@@ -1,5 +1,7 @@
 # TASKS
 
+> Ghi chú (27/11/2026): tính năng đã huỷ; quyền CLB hiện theo [feat-fixed-club-roles](../feat-fixed-club-roles/SPEC.md) và [feat-member-default-permissions](../feat-member-default-permissions/SPEC.md).
+
 - [x] API danh mục chỉ đọc, response thu gọn, kiểm thử phân quyền và không trả holder/email/version.
 - [x] Menu Thành viên mở cho thành viên; màn chỉ đọc không gọi API roster/withdrawal nếu không có club.member.manage.
 - [x] Giới hạn menu, route và API đọc Thiết lập theo club.role.manage.

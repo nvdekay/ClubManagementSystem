@@ -93,7 +93,8 @@ Luồng ROOM đặt ngay cũ đã bỏ. UC58 do ICPDP phân phòng; UC45 ngoài 
 copy các collection nghiệp vụ một lần (không copy `authSessions`), rồi thêm dữ liệu wave 4
 qua repository. Database nguồn và policy thật không bị sửa. Bản copy dùng POST_EVENT 7 ngày
 và quy định chứng từ/hoàn trả mẫu; các giá trị này không phải quyết định BR25/BR58 của bản chính.
-Chạy từ gốc repo: `node --env-file=.env --import tsx server/src/infra/db/seed-guide.ts`.
+Chạy từ gốc repo: `node --env-file=.env --import tsx server/src/infra/db/seed-guide.ts`. Phần dữ liệu wave 4
+(báo cáo sau sự kiện, tài chính) nằm ở `seed-wave4.ts`.
 Chạy lại giữ các version báo cáo đã sửa và ngân sách đã được đối soát; không reset thao tác demo.
 Hồ sơ Returned, Submitted, khoản thiếu chứng từ, task, điểm danh và phản hồi phục vụ
 [guide book](../../../../docs/06-user-guide/README.md).
@@ -112,9 +113,13 @@ một snapshot), `mongo-club-invitation-repository.ts` (UC54), `mongo-club-viola
 quá hạn mà CLB chưa mở báo cáo — dùng chung cho đề xuất sự kiện, thẩm định đề xuất, booking và dashboard.
 
 `dashboard-charts.ts` (17/10/2026) tính dữ liệu chart của dashboard ICPDP và Club Leader (UC02).
-`dashboard-drilldown.ts` (19/10/2026) đọc các bản ghi đằng sau số liệu UC02: sự kiện nội bộ đã ghi nhận kèm
-điểm danh, và lịch sử phiên bản cơ cấu/ban chủ nhiệm theo nhiệm kỳ (nguồn xác nhận suy từ ghế đề cử UC11 đã
-xác nhận, kế hoạch UC13 đã xác nhận, hoặc nhiệm kỳ khởi lập UC08).
+`dashboard-drilldown.ts` (19/10/2026) đọc các bản ghi đằng sau số liệu UC02: lịch sử phiên bản cơ cấu/ban chủ nhiệm
+theo nhiệm kỳ (nguồn xác nhận suy từ ghế đề cử UC11 đã xác nhận, kế hoạch UC13 đã xác nhận, hoặc nhiệm kỳ khởi lập
+UC08). Phần sự kiện nội bộ đã bỏ cùng tính năng từ 19/11/2026.
+
+`club-board.ts`: `LEADER_SEAT_FILTER` (BR47/BR55, chỉ ghế Chủ nhiệm và Phó chủ nhiệm) và `clubBoardUserIds` (người
+đang giữ ghế ban chủ nhiệm, dùng làm danh sách người nhận thông báo). Việc xếp hàng thông báo không nằm ở đây mà ở
+`repo-helpers.ts`.
 
 `mongo-notification-repository.ts` (19/10/2026, NTF-04/SCH-10): hộp thông báo in-app của người dùng (kèm `clubId`
 suy ra từ payload hoặc thực thể để client dựng link) và outbox cho worker gửi email — claim nguyên tử bằng lease trên
@@ -145,3 +150,8 @@ giữ `routingRuleSets` (nháp, kích hoạt có audit, mẫu mô phỏng chỉ 
 hạng mục, mỗi hạng mục ở một trạng thái để demo UC36 → UC37 → UC35: `Paid`, `Accepted` (CLB bấm xác nhận đã nhận
 tiền), `Submitted` (ICPDP duyệt đối soát), `Draft` (CLB ghi chi và nộp), và một hạng mục `NOT_SPONSORED`. Dữ liệu đi
 qua repository thật nên có đủ khoản chi, audit và thông báo. Chỉ thêm; chạy lại không tạo trùng.
+
+`seed-defense-p2.ts` … `seed-defense-p5.ts` (`npm run seed:defense:p2` … `seed:defense:p5 -w server`) dựng dữ liệu demo
+theo từng phần trình bày trên một CLB demo dùng chung; dàn nhân vật nằm ở `seed-defense-cast.ts`, mỗi vai mặc định là
+tài khoản demo và có thể trỏ sang tài khoản Google thật bằng `--leader=`, `--officer=`, `--member=` (tài khoản phải đã
+đăng nhập một lần). Chỉ thêm, chạy lại an toàn.

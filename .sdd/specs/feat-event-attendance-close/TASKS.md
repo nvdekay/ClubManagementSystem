@@ -1,5 +1,7 @@
 # TASKS: feat-event-attendance-close
 
+> Ghi chú (27/11/2026): nhánh sự kiện nội bộ đã bị gỡ ([feat-remove-internal-events](../feat-remove-internal-events/SPEC.md)); vai trò `ATTENDANCE_UNLOCK` đã gộp vào `ICPDP_OFFICER` ngày 25/11/2026.
+
 - [x] Đối chiếu SRS/source và tạo SPEC trước khi code.
 - [x] Ghi chính sách triển khai và AC cụ thể theo chỉ dẫn làm theo khuyến nghị.
 - [x] Domain/usecase và unit test quyền/ngoại lệ.

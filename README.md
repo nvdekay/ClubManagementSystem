@@ -10,7 +10,7 @@ Clean architecture ở cả hai phía, ranh giới tầng được CI kiểm tra
 
 | Công cụ | Phiên bản | Ghi chú |
 |---|---|---|
-| Node.js | >= 22.9 | Các script dùng `--env-file`; kiểm tra bằng `node -v` |
+| Node.js | >= 22.12 | Theo `engines` trong `package.json` (vitest cần); kiểm tra bằng `node -v` |
 | Docker Desktop | bản mới | Chạy MongoDB 7 ở chế độ replica set (cần cho transaction) |
 | Git | bất kỳ | |
 
@@ -73,9 +73,12 @@ npm run seed:dashboard                         # ~150 sinh viên demo, 12 tháng
 
 Các lệnh seed chạy lại được, không tạo bản ghi trùng; `seed:dashboard` chỉ ghi vào DB localhost.
 
-> Cách nhanh hơn: nạp thẳng bản dump đầy đủ của nhóm thay cho ba lệnh trên —
-> `docker compose exec -T mongo mongorestore --drop --gzip --archive < seed-data/ucms-seed.archive.gz`
-> (xem [`seed-data/`](seed-data/README.md)).
+Một số bộ dữ liệu bổ sung thêm lên trên database demo (chạy sau ba lệnh trên khi cần), ví dụ
+`npm run seed:periodic-reports -w server -- --officer=<email>` (báo cáo định kỳ Summer 2026) hay
+`npm run seed:sponsored-payments -w server` (thanh toán hạng mục tài trợ); danh sách đủ ở `scripts` trong
+[`server/package.json`](server/package.json), cách dùng ghi ở đầu từng file
+`server/src/infra/db/seed-*.ts`.
+
 Tài khoản demo chỉ là dữ liệu — không đăng nhập Google được.
 
 ### 6. Chạy
@@ -119,8 +122,9 @@ npm run test:e2e                  # cần Mongo đang chạy (docker compose up 
 ```
 
 Mở trang thật trong Chromium trên server thật và một database riêng `ucms-e2e` (seed lại mỗi lần
-chạy, xoá khi xong; không đụng DB `ucms` và không đọc `.env`). Không nằm trong `npm run check`;
-CI chạy nó ở job `e2e` riêng. Cách hoạt động, vai đăng nhập và cách viết test:
+chạy, xoá khi xong; không đụng DB `ucms` và không đọc `.env`). Đặt `E2E_SERVE_BUILD=1` để chạy trên
+bản build của client do API phục vụ, dưới đúng CSP production. Không nằm trong `npm run check`;
+CI chạy nó ở job `e2e` riêng (có `E2E_SERVE_BUILD=1`). Cách hoạt động, vai đăng nhập và cách viết test:
 [`client/e2e/README.md`](client/e2e/README.md).
 
 ### Lint và format
@@ -148,6 +152,22 @@ Hai lệnh format áp dụng cho code, test và cấu hình trong `server/`, `cl
 Trong VS Code, cài hai extension được repo đề xuất: **ESLint** và **Prettier - Code formatter**.
 Workspace đã bật format khi lưu và tự sửa ESLint khi lưu file JavaScript/TypeScript.
 CI gọi `npm run check`, nên code chưa đúng format sẽ làm bước kiểm tra thất bại.
+
+### CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) chạy trên mỗi pull request và mỗi lần push
+lên `main`, gồm năm job:
+
+| Job | Làm gì |
+|---|---|
+| `gitleaks` | Quét secret trên toàn bộ lịch sử Git |
+| `check` | `npm audit --omit=dev --audit-level=high`, `npm run check` (không có Mongo nên test integration bị bỏ qua), rồi `npm run build --workspaces` |
+| `integration` | Bật Mongo replica set bằng `docker compose up -d --wait mongo`, chạy `npm run test:integration -w server` |
+| `docker` | Build image production (không push) để bắt lỗi `Dockerfile` hoặc build context |
+| `e2e` | Playwright trên bản build do API phục vụ (`E2E_SERVE_BUILD=1`); tải lên báo cáo khi fail |
+
+[`.github/dependabot.yml`](.github/dependabot.yml) mở PR cập nhật hằng tuần cho npm (gộp các bản
+minor/patch vào một PR) và cho GitHub Actions.
 
 ## Triển khai (một container)
 

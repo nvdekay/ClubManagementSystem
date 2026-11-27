@@ -6,4 +6,4 @@
 - [x] Server: báo cáo lưu tham chiếu thay cho `data:` URL, đọc báo cáo trả `evidenceUrls` (CLB + ICPDP), siết zod.
 - [x] Server: hạ parser JSON toàn cục xuống `100kb`, parser riêng sau `authGuard` cho route cần body lớn.
 - [x] Client: trình soạn upload ảnh lên endpoint mới (đang tải/lỗi, en/vi), trang ICPDP hiển thị ảnh qua signed URL.
-- [ ] `npm run check` + `npm run build --workspaces` xanh.
+- [x] `npm run check` + `npm run build --workspaces` xanh.

@@ -76,7 +76,7 @@ Cloudinary và SMTP để trống nên không có gì rời khỏi máy (email �
 ## Viết test mới
 
 - Selector theo vai trò và chữ hiển thị tiếng Anh (`getByRole('button', { name: 'Save' })`), không
-  theo class CSS. Lấy chuỗi từ `src/i18n/<module>.ts` (khoá `en`).
+  theo class CSS. Lấy chuỗi từ `src/i18n/locales/en/<module>.ts`.
 - Dữ liệu dùng chung một DB cho mọi worker: test ghi dữ liệu thì chỉ đụng bản ghi của chính nó và
   không giả định danh sách đang rỗng.
 - Thiếu dữ liệu: ưu tiên seed có sẵn; nếu không có, thêm vào `addE2eRecords` trong

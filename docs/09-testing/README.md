@@ -19,3 +19,17 @@ Bảng này đánh số liền mạch `UC01–UC55`, khác với SRS và Final R
 | UC01–UC22 | UC01–UC22 |
 | UC23–UC54 | UC24–UC55 |
 | UC55 | UC58 |
+
+## Kiểm thử tự động
+
+Bảng trên là tài liệu nộp bài; test chạy được nằm trong code (số liệu ngày 27/11/2026):
+
+| Bộ test | Lệnh | Quy mô |
+|---|---|---|
+| Server unit + integration (vitest) | `npm test -w server` (integration cần Mongo và `MONGO_URI`) | 140 file, 1040 test |
+| Client unit (vitest, logic thuần) | `npm test -w client` | 10 file, 110 test |
+| Giao diện end-to-end (Playwright) | `npm run test:e2e` | 5 file, 20 test |
+
+`npm run check` chạy hai bộ vitest; Playwright chạy riêng (job `e2e` trên CI). Cách tổ chức test
+server: [`server/tests/README.md`](../../server/tests/README.md); Playwright:
+[`client/e2e/README.md`](../../client/e2e/README.md).
