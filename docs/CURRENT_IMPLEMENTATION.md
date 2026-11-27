@@ -25,6 +25,11 @@ Thay đổi sau 25/11/2026 cần biết khi đọc các mục dưới:
 - UC25/UC26 (BR63): khi ICPDP chấp nhận yêu cầu dời lịch bảo vệ của CLB, buổi bảo vệ vào thẳng
   `CONFIRMED`, CLB không phải xác nhận lại.
 - UC27: công bố sự kiện không gửi thông báo cho thành viên (nhánh này đã gỡ cùng sự kiện nội bộ).
+- UC27/UC53 (27/11/2026): sự kiện CLB hoặc cấp trường còn `Approved` khi tới giờ bắt đầu mà chưa
+  công bố bị job vòng đời chuyển `Expired` (SCH-15): huỷ dây chuyền như UC28, lời mời cấp trường
+  `Pending` hết hạn, báo ban chủ nhiệm CLB liên quan.
+- UC32: sự kiện nội bộ cũ ở `FINISH` không sửa/chốt/mở khoá điểm danh được nữa nhưng vẫn được tính
+  trong thống kê. UC05: bỏ điều kiện "mức rủi ro" (`riskCategories`) khỏi rule định tuyến.
 - Triển khai một container (`Dockerfile`, `docker-compose.prod.yml`): Express phục vụ cả API lẫn
   bản build client với CSP/HSTS, giới hạn tần suất request và log JSON có `requestId`; xem
   [`README.md`](../README.md) mục Triển khai.

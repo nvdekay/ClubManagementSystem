@@ -477,7 +477,7 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
     expect(queue.map((item) => item.event.id)).toEqual([tied, newest, oldest])
   })
 
-  it('expires approved club events that were never published before they started', async () => {
+  it('expires approved club and school events that were never published before they started', async () => {
     const repo = mongoEventProposalReviewRepository()
     const later = new Date(now.getTime() + 60 * DAY)
     // Flush whatever earlier cases left behind so the counts below are this case's alone.
@@ -557,6 +557,30 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
       periodCode: 'Fall 2026',
       createdAt: now,
     })
+    // A second invited club, so both the pending and the accepted invitation are covered.
+    const otherClubId = new Types.ObjectId()
+    const pendingInvite = await ucmsModels.eventInvitations!.create({
+      eventId: school!._id,
+      clubId: otherClubId,
+      clubName: 'Other',
+      status: 'Pending',
+      deadline: started,
+      invitedAt: now,
+      invitedBy: officer,
+      createdAt: now,
+      updatedAt: now,
+    })
+    const acceptedInvite = await ucmsModels.eventInvitations!.create({
+      eventId: school!._id,
+      clubId,
+      clubName: 'HEBE',
+      status: 'Accepted',
+      deadline: started,
+      invitedAt: now,
+      invitedBy: officer,
+      createdAt: now,
+      updatedAt: now,
+    })
     await ucmsModels.approvalTasks!.create({
       entityType: 'EVENT_CANCELLATION',
       entityId: stale!._id,
@@ -566,7 +590,7 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
       openedAt: now,
     })
 
-    expect(await repo.advanceLifecycle(later)).toMatchObject({ expired: 1, started: 0 })
+    expect(await repo.advanceLifecycle(later)).toMatchObject({ expired: 2, started: 0 })
     const expired = await ucmsModels.events!.findById(stale!._id).lean()
     expect(expired).toMatchObject({ state: 'Expired', cancelSourceType: 'PUBLICATION_EXPIRY' })
     expect((await ucmsModels.propertyBookings!.findById(booking._id).lean())?.state).toBe(
@@ -599,11 +623,26 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
         }),
       ]),
     )
-    // Published, not-yet-started and school-level events are left alone.
+    // A school-level event expires too: pending invitations expire, accepted ones stay, and the
+    // board of every invited club is told.
+    expect((await ucmsModels.events!.findById(school!._id).lean())?.state).toBe('Expired')
+    expect((await ucmsModels.eventInvitations!.findById(pendingInvite._id).lean())?.status).toBe(
+      'Expired',
+    )
+    expect((await ucmsModels.eventInvitations!.findById(acceptedInvite._id).lean())?.status).toBe(
+      'Accepted',
+    )
+    expect(
+      await ucmsModels.notifications!.countDocuments({
+        entityId: school!._id,
+        eventCode: 'EVENT_EXPIRED_UNPUBLISHED',
+        recipientUserId: leader,
+      }),
+    ).toBe(1)
+    // Published and not-yet-started events are left alone.
     for (const [doc, state] of [
       [upcoming, 'Upcoming'],
       [future, 'Approved'],
-      [school, 'Approved'],
     ] as const) {
       expect((await ucmsModels.events!.findById(doc!._id).lean())?.state).toBe(state)
     }

@@ -325,11 +325,8 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   // Chuyển sự kiện CLB đã duyệt nhưng không công bố trước giờ bắt đầu sang Expired
   /** Approved → Expired: giải phóng booking, đóng task, khoá ngân sách như khi huỷ; trả về số sự kiện đã đổi. */
   async function expireUnpublishedEvents(now: Date): Promise<number> {
-    const filter = {
-      state: 'Approved',
-      organizerType: { $ne: 'ICPDP' },
-      startAt: { $lte: now },
-    }
+    // Áp cho cả sự kiện CLB lẫn sự kiện cấp trường (UC53) chưa công bố trước giờ bắt đầu
+    const filter = { state: 'Approved', startAt: { $lte: now } }
     const due = await events.find(filter).select({ _id: 1 }).lean()
     let expired = 0
     for (const { _id } of due) {
@@ -376,7 +373,31 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           ],
           { session },
         )
-        if (event.clubId) {
+        if (event.organizerType === 'ICPDP') {
+          // Sự kiện cấp trường: lời mời chưa trả lời hết hạn, báo mọi CLB đã được mời hoặc đã nhận lời
+          const invitations = await m
+            .eventInvitations!.find({ eventId: _id, status: { $in: ['Pending', 'Accepted'] } })
+            .session(session)
+            .lean()
+          await m.eventInvitations!.updateMany(
+            { eventId: _id, status: 'Pending' },
+            { $set: { status: 'Expired', updatedAt: now } },
+            { session },
+          )
+          for (const invitation of invitations) {
+            await queueNotifications(
+              session,
+              await clubBoardUserIds(invitation.clubId as Types.ObjectId, session),
+              {
+                eventCode: 'EVENT_EXPIRED_UNPUBLISHED',
+                entityType: 'Event',
+                entityId: _id,
+                payload: { title: event.title, clubId: String(invitation.clubId) },
+                now,
+              },
+            )
+          }
+        } else if (event.clubId) {
           await queueNotifications(
             session,
             await clubBoardUserIds(event.clubId as Types.ObjectId, session),

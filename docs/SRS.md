@@ -2522,6 +2522,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | FR-UC53-08 | *(A2)* Cho phép ICPDP công bố sự kiện ra toàn trường để sinh viên đăng ký tham gia (chuyển tiếp sang UC27). *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh viên. |
 | FR-UC53-09 | *(E1)* Từ chối tạo lời mời tới CLB đang ở trạng thái khác `Active` (BR59) |
 | FR-UC53-10 | Ghi nhật ký audit hành động tạo sự kiện và phát hành lời mời |
+| FR-UC53-11 | *(Thêm 27/11/2026)* Sự kiện cấp trường `Approved` không được công bố (A2) trước giờ bắt đầu bị scheduler chuyển `Expired` (SCH-15): lời mời còn `Pending` hết hạn, ban chủ nhiệm các CLB đã được mời hoặc đã nhận lời nhận thông báo |
 
 **Hậu điều kiện** — Sự kiện cấp trường được tạo ở trạng thái `Approved` / `Upcoming`; các bản ghi `EventInvitation` ở trạng thái `Pending` được gửi tới các CLB tương ứng.
 **Đầu ra** — Thực thể `Event`, danh sách `EventInvitation`, thông báo, bản ghi audit.
@@ -2807,7 +2808,7 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 | Pending Approval / Under Review / Revision Requested / Re-defense Pending → Cancelled | UC15 (tạm ngừng, hoặc quyết định giải thể theo BR45), hoặc **Scheduler** khi CLB chuyển `Dissolved` |
 | Draft → Cancelled | UC15 quyết định giải thể (BR45), hoặc **Scheduler** khi CLB chuyển `Dissolved` |
 | Revision Requested → Expired | **Scheduler** (deadline chỉnh sửa đặt ở UC26); là trạng thái cuối — CLB phải nộp đề xuất mới |
-| Approved → Expired | *(Thêm 27/11/2026)* **Scheduler** — sự kiện CLB đã duyệt nhưng không được công bố (UC27) trước giờ bắt đầu; giải phóng booking, huỷ đăng ký và lịch bảo vệ còn mở, đóng yêu cầu huỷ đang chờ, khoá ngân sách như khi huỷ (FR-UC28-03…05) và báo ban chủ nhiệm. Sự kiện cấp trường (UC53) không thuộc chuyển này |
+| Approved → Expired | *(Thêm 27/11/2026)* **Scheduler** — sự kiện CLB đã duyệt nhưng không được công bố (UC27) trước giờ bắt đầu; giải phóng booking, huỷ đăng ký và lịch bảo vệ còn mở, đóng yêu cầu huỷ đang chờ, khoá ngân sách như khi huỷ (FR-UC28-03…05) và báo ban chủ nhiệm. Áp cả cho sự kiện cấp trường (UC53) ICPDP chưa công bố (cập nhật 27/11/2026): lời mời `Pending` chuyển `Expired`, ban chủ nhiệm mọi CLB đã được mời hoặc đã nhận lời được báo |
 
 `Upcoming` bao trùm toàn bộ khoảng từ lúc công bố tới lúc bắt đầu, bất kể đăng ký đang mở, đã
 đóng hay không dùng tới. **`Registration Open` và `Registration Closed` được suy ra từ khung thời
@@ -2971,7 +2972,7 @@ chấm tay (cập nhật 27/11/2026 theo code).
 | — → Pending | UC53 (ICPDP gửi lời mời sự kiện tới CLB) |
 | Pending → Accepted | UC54 (CLB đồng ý tham gia phối hợp) |
 | Pending → Declined | UC54 (CLB từ chối, kèm lý do) |
-| Pending → Expired | Scheduler (quá deadline mà CLB chưa phản hồi, BR59) |
+| Pending → Expired | Scheduler (quá deadline mà CLB chưa phản hồi, BR59), hoặc khi sự kiện cấp trường hết hạn vì không được công bố trước giờ bắt đầu (SCH-15, 27/11/2026) |
 | Pending → Withdrawn | UC53 (ICPDP thu hồi lời mời trước hạn chót) |
 | Withdrawn / Expired → Pending | UC53 (ICPDP mời lại CLB, đặt hạn mới) |
 
@@ -3232,7 +3233,7 @@ Scheduler **không phải actor**. Nó sở hữu đúng các hành vi sau, mỗ
 | SCH-12 | *(Ghi 27/11/2026 theo code)* Lời mời sự kiện cấp trường `Pending → Expired` khi quá hạn phản hồi (§6.13); cảnh báo ICPDP khi CLB chưa xác nhận lịch bảo vệ trước giờ bảo vệ 24 giờ (BR63) | `deadline` của lời mời; giờ bảo vệ |
 | SCH-13 | *(Ghi 27/11/2026 theo code)* Nhắc ICPDP trước khi hết hạn tạm ngừng và tự chuyển CLB `Suspended → Active` khi hết hạn (§6.2); cảnh báo ICPDP khi lượt chạy vòng đời CLB thất bại | hạn tạm ngừng đặt ở UC15 |
 | SCH-14 | *(Ghi 27/11/2026 theo code)* Đánh dấu khiếu nại `Forwarded` quá hạn trả lời là tín hiệu tuân thủ (UC52 E1) | `responseDueAt` của khiếu nại |
-| SCH-15 | *(Thêm 27/11/2026)* Sự kiện CLB `Approved → Expired` khi tới giờ bắt đầu mà chưa công bố (§6.6); xử lý booking, đăng ký, ngân sách như khi huỷ, ghi audit `EVENT_EXPIRED_UNPUBLISHED` và báo ban chủ nhiệm | giờ bắt đầu của chính sự kiện |
+| SCH-15 | *(Thêm 27/11/2026)* Sự kiện CLB và sự kiện cấp trường `Approved → Expired` khi tới giờ bắt đầu mà chưa công bố (§6.6); xử lý booking, đăng ký, ngân sách như khi huỷ, lời mời cấp trường `Pending → Expired`, ghi audit `EVENT_EXPIRED_UNPUBLISHED` và báo ban chủ nhiệm CLB liên quan | giờ bắt đầu của chính sự kiện |
 
 SCH-06 phải là tất-cả-hoặc-không-gì với từng CLB: nếu bất kỳ phần nào thất bại, CLB ở lại
 `Dissolving` và ICPDP được cảnh báo (FR-UC15-11).
