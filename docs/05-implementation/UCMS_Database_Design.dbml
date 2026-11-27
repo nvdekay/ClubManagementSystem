@@ -755,7 +755,7 @@ Table events {
   publishedAt datetime
   cancelReason string
   cancelledBy objectId [note: 'Null với một cascade hệ thống đến từ UC15 hoặc UC40 (UC28 A1).']
-  cancelSourceType string [note: 'CMB | SUSPENSION | DISSOLUTION | CASE — nguyên nhân gây ra việc huỷ.']
+  cancelSourceType string [note: 'CMB | SUSPENSION | DISSOLUTION | CASE | PROPOSAL_REJECTION | PROPOSAL_EXPIRY | PUBLICATION_EXPIRY — nguyên nhân gây ra việc huỷ (cập nhật 27/11/2026).']
   isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước đã cấu hình; là một tín hiệu tuân thủ cho UC40 (UC28 E2).']
   attendanceFinalized bool [not null, default: false]
   createdAt datetime [not null]
