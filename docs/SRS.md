@@ -2,7 +2,7 @@
 
 **Sản phẩm:** University Club Management System (UCMS) — Trường Đại học FPT
 **Tài liệu:** Software Requirements Specification (SRS), phiên bản 1.1
-**Trạng thái:** Baseline để triển khai · **Ngày:** 2026-09-24 · **Cập nhật theo code:** 2026-11-24
+**Trạng thái:** Baseline để triển khai · **Ngày:** 2026-09-24 · **Cập nhật theo code:** 2026-11-27
 **Chủ sở hữu:** Nhóm đồ án WDP301 · **Repository:** `ClubManagementSystem`
 
 > **Tài liệu này là gì.** Baseline yêu cầu hợp nhất duy nhất của UCMS. Nó gộp phần phân tích
@@ -11,8 +11,8 @@
 > nhóm thiết kế, code, test và review dựa vào.
 >
 > **Thẩm quyền.** Khi SRS này và một tài liệu nguồn nói khác nhau về một *yêu cầu*, **lấy theo
-> SRS**, vì SRS đã áp dụng đầy đủ các sửa lỗi ghi trong
-> [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md). Chi tiết nào
+> SRS**, vì SRS đã áp dụng đầy đủ các sửa lỗi ghi trong nhật ký review chéo
+> `02-use-cases/UCMS_Review_Issues.md` (đã xoá khỏi repo ngày 27/11/2026). Chi tiết nào
 > không được nhắc lại ở đây thì vẫn lấy theo tài liệu nguồn được dẫn trong mục tương ứng. Toàn
 > bộ tài liệu v1 (57 use case, đánh số `UC01–UC57`) là lịch sử: mọi mã số trong tài liệu này là
 > **v2** (`UC01–UC55` và `UC58`; `UC56`–`UC57` là mã v1 nên không dùng lại).
@@ -52,6 +52,17 @@
 > sự kiện, buổi bảo vệ, booking, vi phạm, khiếu nại, đánh giá, lời mời). §3.3 và Phụ lục C viết lại
 > theo route thật trong `server/src/interface/http`; Phụ lục B theo các file trong `03-diagrams/`;
 > §12.1 sửa điều kiện cờ `Secure` và kiểm tra tệp tải lên.
+>
+> **Thay đổi 2026-11-26 — đối chiếu với code trên `main`:** ICPDP chấp thuận xin dời lịch bảo vệ thì
+> buổi bảo vệ vào thẳng `CONFIRMED` (BR63, §6.6a); trạng thái cũ của sự kiện nội bộ không còn nhận
+> đăng ký, danh sách chờ hay check-in (§6.6); không được thu hồi vai trò hoặc khoá tài khoản của
+> ICPDP Officer đang hoạt động cuối cùng (FR-UC03-05); feedback window lấy theo chính sách có hiệu
+> lực lúc sự kiện kết thúc (FR-UC48-02); ảnh minh chứng báo cáo định kỳ tải lên Cloudinary, ảnh không
+> được báo cáo nào tham chiếu sau 24 giờ bị dọn (FR-UC38-03, SCH-11); hàng đợi ICPDP của vi phạm,
+> ngân sách, yêu cầu tạm ngừng và khiếu nại phân trang ở server (API-06); §12.1 bổ sung giới hạn tần
+> suất theo IP, body JSON 100 KB, CSP/HSTS, ẩn `/docs` ở production và bắt buộc cấu hình xác thực ở
+> production. Ngày 27/11/2026 xoá các file đã lỗi thời (nhật ký review, kịch bản bảo vệ) nên các
+> liên kết tới chúng được gỡ.
 >
 > **Ngôn ngữ.** Tài liệu này viết bằng tiếng Việt theo yêu cầu của chủ nhiệm đồ án. Đây là
 > **ngoại lệ có chủ đích** so với quy tắc "English only" của
@@ -174,7 +185,7 @@ theo vai trò.
 | R1 | [`01-business-analysis/UCMS_Business_System_Analysis.md`](01-business-analysis/UCMS_Business_System_Analysis.md) | Phân tích nghiệp vụ. Nguồn của §1–§7, §12–§13, §16–§20, §23–§24: vấn đề, actor, phạm vi, module, luồng nghiệp vụ, user story, tiêu chí nghiệm thu, domain model, mô hình đánh giá, dashboard, thông báo, audit, feature nổi bật |
 | R2 | [`02-use-cases/UCMS_UseCase_Model_v2.md`](02-use-cases/UCMS_UseCase_Model_v2.md) | Use case model tham khảo; các đoạn khôi phục UC23 là lịch sử và bị quyết định role cố định ngày 07/11/2026 thay thế |
 | R3 | [`02-use-cases/UCMS_UseCase_Specification_v2.md`](02-use-cases/UCMS_UseCase_Specification_v2.md) | Đặc tả chi tiết tham khảo; UC23 không còn trong phạm vi |
-| R4 | [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
+| R4 | `02-use-cases/UCMS_Review_Issues.md` (đã xoá khỏi repo ngày 27/11/2026) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
 | R5 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) | Biên hệ thống, 45 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
 | R6 | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) | Use case diagram ngày 19/10/2026; các oval quản lý role của UC23 đã cũ. Quyết định mới hơn nằm ở `UCMS_Organization_and_Flows.drawio` ngày 02/11/2026: chỉ hai role cố định, không có custom role |
 | R7 | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
@@ -364,7 +375,7 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 | **ES1** | Google OAuth | UCMS → Google | `Authentication request` |
 | | | Google → UCMS | `Identity data` — email, họ tên, ảnh đại diện |
 | **ES2** | Google SMTP Service | UCMS → Google | `Email message` cho mọi thông báo có kênh email (EXT-02); môi trường phát triển không cấu hình SMTP chỉ ghi log người nhận và tiêu đề |
-| **ES3** | Cloudinary | UCMS → Cloudinary | `Image file` — tài liệu của hồ sơ thành lập CLB (PDF, PNG, JPEG, DOCX) và tệp đính kèm đơn ứng tuyển, lưu dạng tệp riêng tư; logo CLB đề xuất, lưu dạng ảnh công khai |
+| **ES3** | Cloudinary | UCMS → Cloudinary | `Image file` — tài liệu của hồ sơ thành lập CLB (PDF, PNG, JPEG, DOCX) và tệp đính kèm đơn ứng tuyển, lưu dạng tệp riêng tư; ảnh minh chứng báo cáo định kỳ (PNG, JPEG, WebP — từ 26/11/2026); logo CLB đề xuất, lưu dạng ảnh công khai |
 | | | Cloudinary → UCMS | `Image URL` — URL của logo được lưu thay cho file; tệp riêng tư chỉ mở qua link tải có chữ ký, hiệu lực 60 giây |
 
 ### Mô hình RBAC
@@ -655,7 +666,7 @@ ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sa
 |---|---|---|
 | Client | React 19 + Vite, TypeScript, Tailwind v4 (theming theo token), TanStack React Query, TanStack Table, i18next (`en` / `vi`), toast Sonner | SPA build tĩnh, chỉ gọi `/api/v1/*` |
 | Routing | `react-router` | Điều kiện kích hoạt router của ADR-002 ("thêm router khi có màn hình thứ hai") **đã xảy ra**: UCMS có ba workspace theo vai trò |
-| Server | Node ≥ 22.9, Express 5, Mongoose 8, zod (+ `zod-openapi`), clean architecture 4 tầng | Một tiến trình triển khai duy nhất, OpenAPI phục vụ tại `/docs` |
+| Server | Node ≥ 22.12, Express 5, Mongoose 8, zod (+ `zod-openapi`), clean architecture 4 tầng | Một tiến trình triển khai duy nhất, OpenAPI phục vụ tại `/docs` (ở production chỉ khi `API_DOCS=true`) |
 | Cơ sở dữ liệu | MongoDB 7 chạy dạng replica set (bắt buộc — repository dùng transaction đa document) | Lưu dữ liệu nghiệp vụ, hàng đợi thông báo và nhật ký audit |
 | Scheduler | Interval trong tiến trình, bảo vệ bằng một lease document trong Mongo | Không dùng hệ thống queue; chỉ tách ra worker riêng khi API chạy nhiều instance |
 | Xác thực | Google OpenID Connect, Authorization Code flow + PKCE; phiên lưu phía server, cookie được ký, `httpOnly`, `SameSite=Lax`; CSRF token theo phiên | Không lưu bất kỳ mật khẩu nào — xem §12.1 |
@@ -814,8 +825,8 @@ client/src/pages/
 | API-02 | Lỗi ánh xạ `DomainError` kind → HTTP: validation 400, unauthorized 401, forbidden 403, not_found 404, conflict 409, locked 423 (tài khoản bị khoá), unavailable 503; lỗi 4xx của framework (400/413/415) giữ nguyên mã; đường dẫn không tồn tại → 404; lỗi ngoài dự kiến → 500 |
 | API-03 | Mọi body, tham số đường dẫn và query đều được validate bằng zod **trước** mọi truy vấn Mongoose |
 | API-04 | **Sửa 2026-11-24 (theo code)** — Tài nguyên chia theo khu: `/public/*` (khách, chỉ đọc), `/auth/*`, khu người dùng đã đăng nhập (`/applications`, `/memberships`, `/events/:id/registration(s)` / `check-in` / `feedback`, `/event-registrations`, `/attendances`, `/event-feedbacks`, `/complaints`, `/notifications`, `/dashboard`, `/booking-slots`, `/events/proposal-template`), khu CLB `/clubs/:clubId/*` và khu ICPDP `/admin/*`. Phụ lục C liệt kê route đã hiện thực; nguồn chuẩn là OpenAPI tại `/docs` |
-| API-05 | OpenAPI sinh từ schema zod (`zod-openapi`), phục vụ tại `/docs` và `/docs/openapi.json`, chỉ công bố các route thực sự được mount |
-| API-06 | Hiện chỉ `GET /admin/users` (`page`, `pageSize`) và `GET /public/clubs`, `GET /public/events` (`page`) có phân trang; các danh sách khác trả toàn bộ và lọc theo trạng thái ở §6. Phân trang cho các danh sách còn lại là yêu cầu chưa đáp ứng |
+| API-05 | OpenAPI sinh từ schema zod (`zod-openapi`), phục vụ tại `/docs` và `/docs/openapi.json`, chỉ công bố các route thực sự được mount. Từ 26/11/2026 ở production không phục vụ `/docs` trừ khi đặt `API_DOCS=true` |
+| API-06 | Hiện chỉ `GET /admin/users` (`page`, `pageSize`), `GET /public/clubs`, `GET /public/events` (`page`) và, từ 26/11/2026, bốn hàng đợi ICPDP `GET /admin/violations`, `GET /admin/budgets`, `GET /admin/suspension-requests`, `GET /admin/complaints` (`page`, `pageSize` mặc định 20, tối đa 100; vi phạm và ngân sách trả thêm số đếm theo tab) có phân trang; các danh sách khác trả toàn bộ và lọc theo trạng thái ở §6. Phân trang cho các danh sách còn lại là yêu cầu chưa đáp ứng |
 | API-07 | Mọi endpoint làm đổi trạng thái phải idempotent với việc gửi trùng cùng một quyết định — quyết định giống hệt lần hai không tạo thêm `ApprovalDecision` |
 
 ## 3.4 Giao diện truyền thông và phần cứng
@@ -938,10 +949,10 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC03-01 | Cho officer tìm người dùng theo email hoặc tên và hiển thị vai trò hiện tại, ngữ cảnh CLB và trạng thái tài khoản |
-| FR-UC03-02 | Cho officer cấp hoặc thu hồi một vai trò ICPDP hoặc vai trò đặc biệt của BR19; không cho cấp quyền CMB (BR47) |
+| FR-UC03-02 | Cho officer cấp hoặc thu hồi vai trò hệ thống `ICPDP_OFFICER` (từ 25/11/2026 là vai trò hệ thống duy nhất; quyền mở khoá điểm danh của BR19 nằm trong vai trò này); không cho cấp quyền CMB (BR47) |
 | FR-UC03-03 | Cho officer khoá hoặc mở khoá tài khoản, và bắt buộc nhập lý do khi khoá, mở khoá hoặc thu hồi |
 | FR-UC03-04 | Áp dụng thay đổi, vô hiệu hoá ngay các phiên bị ảnh hưởng và ghi bản ghi audit |
-| FR-UC03-05 | *(E1)* Từ chối khi officer tự thu hồi vai trò quản trị cuối cùng của chính mình |
+| FR-UC03-05 | *(E1)* Từ chối khi officer tự thu hồi vai trò quản trị cuối cùng của chính mình. Cập nhật 26/11/2026: từ chối (409) mọi lần thu hồi `ICPDP_OFFICER` hoặc khoá tài khoản khiến hệ thống không còn ICPDP Officer nào đang hoạt động và chưa bị khoá |
 | FR-UC03-06 | *(E2)* Từ chối khi officer cố cấp quyền CLB cho một người dùng; quyền CLB chỉ đến từ membership `Active` (UC20) hoặc ghế được xác nhận ở UC08, UC10 / UC11 hoặc UC12 / UC13 (BR47) |
 | FR-UC03-07 | *(A1)* Hỗ trợ khoá khẩn cấp không kèm thay đổi vai trò khi một hồ sơ vi phạm (UC40) yêu cầu, và liên kết lệnh khoá với hồ sơ đó |
 | FR-UC03-08 | Biểu diễn phân cấp bên trong ICPDP bằng quyền, không bao giờ bằng một actor mới |
@@ -1682,7 +1693,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC27-08 | Để scheduler lo việc chuyển `Upcoming → Ongoing → Completed` theo mốc giờ của chính sự kiện |
 | FR-UC27-09 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.event.manage`) đó (BR54) |
 
-**Hậu điều kiện** — sự kiện đề xuất ở `Upcoming` và hiển thị công khai. **Đầu ra** — `Event` đã công bố, thông báo.
+**Hậu điều kiện** — sự kiện đề xuất ở `Upcoming` và hiển thị công khai. **Đầu ra** — `Event` đã công bố, bản ghi audit (không gửi thông báo, FR-UC27-02).
 
 ### UC28 — Huỷ hoặc đổi lịch sự kiện
 
@@ -1819,7 +1830,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC32-01 | Đánh dấu các bản ghi bất thường — vắng mặt, walk-in, check-in thủ công và check-in ngoài khung giờ |
 | FR-UC32-02 | Cho CMB sửa hoặc xác nhận từng bản ghi bị đánh dấu, kèm lý do |
 | FR-UC32-03 | Khoá bộ dữ liệu khi chốt và từ chối mọi thay đổi sau đó |
-| FR-UC32-04 | *(A1)* Cho người giữ vai trò đặc biệt được cấp ở UC03 mở khoá bộ dữ liệu kèm lý do, và ghi audit lần mở khoá (BR19) |
+| FR-UC32-04 | *(A1)* Cho ICPDP Officer (vai trò `ICPDP_OFFICER` cấp ở UC03) mở khoá bộ dữ liệu kèm lý do, và ghi audit lần mở khoá (BR19) |
 | FR-UC32-05 | *(E1)* Từ chối chốt khi còn bản ghi bị đánh dấu chưa được sửa hoặc xác nhận kèm lý do |
 | FR-UC32-06 | Không điều khiển feedback window tại đây — BR36 đã mở nó từ lúc check-in |
 | FR-UC32-07 | Đưa bộ dữ liệu đã chốt thành đầu vào của UC33 (với sự kiện đề xuất), UC38 (tổng hợp vào Báo cáo định kỳ) và UC42 |
@@ -2012,7 +2023,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 |---|---|
 | FR-UC38-01 | Mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ khác định nghĩa trong tài liệu chính sách |
 | FR-UC38-02 | Nạp sẵn các sự kiện trong kỳ (các sự kiện đề xuất đã hoàn thành/đóng), số liệu thành viên, điểm danh và tình hình tài chính của kỳ đó |
-| FR-UC38-03 | Thu thập phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài |
+| FR-UC38-03 | Thu thập phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài. Cập nhật 26/11/2026: ảnh minh chứng được tải lên Cloudinary (`POST /clubs/:clubId/periodic-reports/evidence-images`; PNG, JPEG hoặc WebP, tối đa 5 MiB, kiểm tra magic bytes, không nhận SVG) và báo cáo chỉ lưu tham chiếu tới ảnh hoặc liên kết `http(s)`; từ chối URL `data:` khi ghi mới. Ảnh tải lên quá 24 giờ mà không báo cáo nào tham chiếu bị xoá (SCH-11) |
 | FR-UC38-04 | Chuyển `Submitted` khi nộp, đóng băng số liệu nạp sẵn và tạo task cho ICPDP |
 | FR-UC38-05 | *(A1)* Cho lưu báo cáo ở `Draft` và hoàn thiện trước deadline |
 | FR-UC38-06 | *(A2)* Cho thành viên xem nhận xét của ICPDP, sửa các phần chưa đúng mẫu hoặc còn thiếu và nộp lại báo cáo bị UC39 trả về như một version mới; giữ lịch sử các version, chuyển về `Submitted` và tạo task thẩm định mới. Lặp lại UC38–UC39 đến khi báo cáo được chấp nhận |
@@ -2366,7 +2377,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC48-01 | Chỉ hiển thị form phản hồi cho người gọi có bản ghi điểm danh của sự kiện đó |
-| FR-UC48-02 | Nhận phản hồi từ thời điểm **check-in** của chính người đó cho tới khi feedback window đóng (BR36) |
+| FR-UC48-02 | Nhận phản hồi từ thời điểm **check-in** của chính người đó cho tới khi feedback window đóng (BR36). Cập nhật 26/11/2026: độ dài window lấy theo phiên bản chính sách có hiệu lực tại giờ kết thúc sự kiện, nên sửa chính sách sau đó không mở lại hay rút ngắn window của sự kiện đã kết thúc |
 | FR-UC48-03 | Nhận đúng một phản hồi cho mỗi người tham dự trên mỗi sự kiện (BR36) |
 | FR-UC48-04 | Lưu phản hồi ở dạng bất biến — không ai được sửa hoặc xoá (BR37) |
 | FR-UC48-05 | Nhận đúng một điểm tổng nguyên từ 1 đến 5 (`FEEDBACK_CRITERION = "overall"`) và nhận xét tối đa 2.000 ký tự; validate khoảng điểm và độ dài nhận xét. Không chấm theo từng tiêu chí (quyết định 17/10/2026) |
@@ -2760,6 +2771,8 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 > **Sự kiện nội bộ CLB đã gỡ (19/11/2026, commit `5efb7fe`).** Enum `DRAFT / CREATED / PUBLIC /
 > ONGOING / FINISH / CANCELLED` chỉ còn để đọc dữ liệu cũ; chuyển trạng thái duy nhất còn lại là
 > `DRAFT / CREATED / PUBLIC / ONGOING → CANCELLED` (UC28). Không có scheduler cho các trạng thái này.
+> Cập nhật 26/11/2026: các trạng thái cũ này không còn nhận đăng ký, danh sách chờ, đổi sức chứa hay
+> check-in; chỉ `Upcoming` mở đăng ký (UC29, UC30) và chỉ `Upcoming` / `Ongoing` nhận check-in (UC31).
 
 | Từ → Đến | Tác nhân |
 |---|---|
@@ -3143,7 +3156,7 @@ usecase commit thay đổi nghiệp vụ
 | AUD-03 | Bắt buộc audit mạnh cho: quyết định hồ sơ thành lập, thay đổi trạng thái CLB, xác nhận ban chủ nhiệm, chuyển giao nhiệm kỳ, duyệt sự kiện, yêu cầu và quyết định huỷ sự kiện, duyệt và giải ngân ngân sách, quyết định booking, phân phòng học và thu hồi (UC58), sửa đổi khoản chi và chứng từ, quyết định vi phạm, công bố đánh giá, thay đổi RBAC, và **các lần đăng nhập Google OAuth bị từ chối** (sai domain, tài khoản bị khoá) |
 | AUD-04 | Bản ghi audit là chỉ-ghi-thêm: không use case hay repository nào sửa hoặc xoá chúng. *Theo code:* đây là quy ước của ứng dụng, database không chặn việc sửa collection |
 | AUD-05 | Một `correlationId` buộc chung mọi bản ghi sinh ra từ một lần ghi, bao gồm cả các cascade UC15 → UC28 A1 / UC47 A1 trong cùng transaction. *Theo code:* id được sinh theo từng lần ghi, chưa truyền xuyên suốt một request |
-| AUD-06 | *Hạn chế đã biết (theo code):* 403 do thiếu quyền ở use case đã được audit `ACCESS_DENIED` (SEC-08); còn chưa audit 403 do thiếu hoặc sai CSRF token, việc scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / thu hồi phiên và cờ đã đọc của thông báo (§12.1) |
+| AUD-06 | *Hạn chế đã biết (theo code):* 403 do thiếu quyền ở use case đã được audit `ACCESS_DENIED` (SEC-08); còn chưa audit 403 do thiếu hoặc sai CSRF token, điểm đánh giá ứng viên (UC19), tạo / thu hồi phiên và cờ đã đọc của thông báo (§12.1). Từ 26/11/2026 scheduler chuyển sự kiện sang `Ongoing` / `Completed` đã ghi audit `EVENT_STARTED` / `EVENT_COMPLETED` |
 
 Ví dụ:
 
@@ -3169,6 +3182,7 @@ Scheduler **không phải actor**. Nó sở hữu đúng các hành vi sau, mỗ
 | SCH-08 | Quét đăng ký lại thành viên theo kỳ (UC21 A2) | lịch học kỳ (UC04) |
 | SCH-09 | Nhắc hạn, đánh dấu quá hạn và leo thang (`T−X / T / T+Y / T+Z`) | các mốc ở UC04 + ngày đến hạn của từng mục |
 | SCH-10 | Rút hàng đợi thông báo và thử lại email thất bại | trạng thái outbox + backoff |
+| SCH-11 | *(Thêm 26/11/2026)* Mỗi 24 giờ xoá ảnh minh chứng báo cáo định kỳ đã tải lên quá 24 giờ mà không báo cáo nào tham chiếu (FR-UC38-03) | collection `uploadedAssets` + nội dung báo cáo định kỳ |
 
 SCH-06 phải là tất-cả-hoặc-không-gì với từng CLB: nếu bất kỳ phần nào thất bại, CLB ở lại
 `Dissolving` và ICPDP được cảnh báo (FR-UC15-11).
@@ -3357,7 +3371,7 @@ Sửa 2026-11-02: các dòng SEC dưới đây được đối chiếu lại v�
 | SEC-11 | Dữ liệu cá nhân UCMS lưu giới hạn ở những gì Google OAuth trả về cộng hồ sơ sinh viên của trường; hệ thống không bao giờ hỏi mật khẩu, thông tin thanh toán hay giấy tờ tuỳ thân |
 | SEC-12 | Bản ghi audit, document version và kỳ đánh giá đã công bố là chỉ-ghi-thêm; không vai trò nào sửa hoặc xoá được qua ứng dụng. *Theo code:* đây là quy ước ở tầng ứng dụng, database không chặn |
 | SEC-13 | Chứng từ và tài liệu hồ sơ được tải lên chỉ truy cập được bởi các vai trò mà use case sở hữu cho phép (CLB đã nộp nó, và ICPDP), qua URL truy cập ngắn hạn; asset id nội bộ bị loại khỏi response. Ngoại lệ: logo CLB đề xuất là upload công khai với URL công khai lâu dài |
-| SEC-14 | Bí mật (`GOOGLE_CLIENT_ID/SECRET`, `SESSION_SECRET` ≥ 32 ký tự, `MONGO_URI`, `CLOUDINARY_*`, `SMTP_*`, `MAIL_FROM`) chỉ đọc từ biến môi trường, chỉ trong `infra/config/`, validate bằng zod lúc khởi động (nhóm xác thực, nhóm Cloudinary và nhóm SMTP: có một biến thì phải đủ cả nhóm); `.env` bị `.gitignore` loại và CI chạy gitleaks. Log truy cập không ghi token phiên, cookie hay body; mail transport không ghi nội dung thư hay mật khẩu SMTP; log transport (chỉ khi phát triển) ghi người nhận và tiêu đề. *Chưa đạt theo code:* log truy cập ghi URL đầy đủ nên mã `code` và `state` một lần của callback OAuth lọt vào log, và error handler ghi `err.message` — với request lỗi định dạng có thể chứa một phần body; cả hai cần che (redact). |
+| SEC-14 | Bí mật (`GOOGLE_CLIENT_ID/SECRET`, `SESSION_SECRET` ≥ 32 ký tự, `MONGO_URI`, `CLOUDINARY_*`, `SMTP_*`, `MAIL_FROM`) chỉ đọc từ biến môi trường, chỉ trong `infra/config/`, validate bằng zod lúc khởi động (nhóm xác thực, nhóm Cloudinary và nhóm SMTP: có một biến thì phải đủ cả nhóm); `.env` bị `.gitignore` loại và CI chạy gitleaks. Log truy cập không ghi token phiên, cookie hay body; mail transport không ghi nội dung thư hay mật khẩu SMTP; log transport (chỉ khi phát triển) ghi người nhận và tiêu đề. Từ 26/11/2026 log truy cập chỉ ghi đường dẫn, không ghi query string (mã `code` và `state` của callback OAuth không còn lọt vào log). *Chưa đạt theo code:* error handler vẫn ghi `err.message` — với request lỗi định dạng có thể chứa một phần body; cần che (redact). |
 | SEC-15 | MongoDB không bao giờ mở ra ngoài; file compose ở môi trường dev bind nó vào `127.0.0.1` |
 
 ## 12.1 Cơ chế bảo mật
@@ -3388,30 +3402,30 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
   - *Vai trò hệ thống* — thao tác ICPDP đòi `ICPDP_OFFICER` (không có → 403 "ICPDP officer role required"); mở lại điểm danh đã chốt cũng đòi `ICPDP_OFFICER` (BR19).
   - *Phạm vi CLB, ghế và nhiệm kỳ* — implementation đích dựng snapshot của người dùng trong đúng CLB: membership `Active` → Club Member với capability cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong nhiệm kỳ `Active` → Club Leader với tập quyền quản lý cố định. Mọi chức danh khác và `permissionCodes` trên position không được tham gia quyết định quyền. Sai phạm vi → 403; `clubId` luôn lấy từ URL nên người của CLB này không thao tác được CLB khác. Code đã theo đúng mô hình này (`resolveClubPermissions` ở `domain/access.ts`); không còn role/permission tuỳ biến.
   - *Quyền sở hữu* — bản ghi cá nhân (hồ sơ thành lập, đơn ứng tuyển, đăng ký sự kiện của chính mình) được tải theo cả id lẫn id người gọi; bản ghi của người khác coi như không tồn tại (404).
-- Officer không tự khoá được tài khoản mình hay tự thu hồi vai trò `ICPDP_OFFICER` cuối cùng của mình.
+- Officer không tự khoá được tài khoản mình hay tự thu hồi vai trò `ICPDP_OFFICER` cuối cùng của mình. Từ 26/11/2026, mọi lần thu hồi `ICPDP_OFFICER` hoặc khoá tài khoản khiến hệ thống không còn ICPDP Officer đang hoạt động, chưa bị khoá đều bị từ chối (409).
 - Với ghi nhạy cảm (đề xuất sự kiện, booking gắn kèm), repository kiểm lại quyền CLB bên trong transaction.
 
 **4. Validate đầu vào và bảo vệ dữ liệu.**
 - Zod validate body, path param và query ở biên HTTP (phần lớn strict, id là ObjectId 24 ký tự hex); domain validate tiếp quy tắc nghiệp vụ.
 - Không bao giờ đưa object request thô vào truy vấn MongoDB (chặn `{"$gt": ""}`); constitution check làm hỏng build nếu `req.body` / `req.query` / `req.params` xuất hiện trong lời gọi truy vấn, và Mongoose chỉ được import ở tầng `infra` và ở `main.ts` (mở và đóng kết nối).
-- Body JSON tối đa 15 MB; mọi route upload nhận raw body tối đa 10 MB. Mỗi loại tệp được kiểm danh sách MIME, dung lượng và chữ ký magic byte: hồ sơ thành lập (đề án PDF/DOCX 10 MB, logo PNG/JPEG 2 MB), tài liệu và mẫu đề xuất sự kiện (PDF/DOCX, mẫu thêm XLSX, 10 MB, kiểm cả phần mở rộng), tệp đính kèm đơn ứng tuyển (10 MB, lưu riêng tư), chứng từ hoá đơn và biên lai hoàn trả (JPG/PNG ≤ 5 MiB, PDF ≤ 10 MiB, chặn trùng SHA-256 trong toàn ngân sách). Tệp riêng tư chỉ đọc qua signed URL ngắn hạn.
+- Body JSON mặc định tối đa 100 KB (sửa 26/11/2026); ba route lưu nháp lớn tự đặt giới hạn sau `authGuard`: báo cáo định kỳ 2 MB, đơn ứng tuyển 1 MB, ghi chú phiên bảo vệ 256 KB. Mọi route upload nhận raw body tối đa 10 MB. Mỗi loại tệp được kiểm danh sách MIME, dung lượng và chữ ký magic byte: hồ sơ thành lập (đề án PDF/DOCX 10 MB, logo PNG/JPEG 2 MB), tài liệu và mẫu đề xuất sự kiện (PDF/DOCX, mẫu thêm XLSX, 10 MB, kiểm cả phần mở rộng), tệp đính kèm đơn ứng tuyển (10 MB, lưu riêng tư), chứng từ hoá đơn và biên lai hoàn trả (JPG/PNG ≤ 5 MiB, PDF ≤ 10 MiB, chặn trùng SHA-256 trong toàn ngân sách), ảnh minh chứng báo cáo định kỳ (PNG/JPEG/WebP ≤ 5 MiB, không nhận SVG, từ 26/11/2026). Tệp riêng tư chỉ đọc qua signed URL ngắn hạn.
 - Mọi ghi nhiều document chạy trong transaction; cập nhật trạng thái có điều kiện, nên xung đột đồng thời trả 409 thay vì hỏng dữ liệu; sức chứa sự kiện dùng tăng có điều kiện nguyên tử.
 - Quyền riêng tư phản hồi: SEC-09, SEC-10.
 - Lỗi nội bộ trả thông điệp chung ("internal server error"); stack trace chỉ ghi ở log server.
 
-**5. Audit.** Phần lớn thay đổi trạng thái nghiệp vụ được repository ghi vào `auditLogs` trong cùng transaction (§8.3). Đăng nhập, khoá / mở khoá tài khoản, cấp / thu hồi vai trò hệ thống và xuất dữ liệu cũng được ghi. Thông báo được đưa vào hàng đợi trong cùng transaction; worker gửi email qua Google SMTP, chỉ khi phát triển không cấu hình SMTP mới dùng log transport ghi người nhận và tiêu đề (EXT-02). Mỗi request HTTP ghi một dòng JSON: method, URL, status, thời gian xử lý.
+**5. Audit.** Phần lớn thay đổi trạng thái nghiệp vụ được repository ghi vào `auditLogs` trong cùng transaction (§8.3). Đăng nhập, khoá / mở khoá tài khoản, cấp / thu hồi vai trò hệ thống và xuất dữ liệu cũng được ghi. Thông báo được đưa vào hàng đợi trong cùng transaction; worker gửi email qua Google SMTP, chỉ khi phát triển không cấu hình SMTP mới dùng log transport ghi người nhận và tiêu đề (EXT-02). Mỗi request HTTP ghi một dòng JSON: request id (trả lại ở header `X-Request-Id`), method, đường dẫn không kèm query string, status, thời gian xử lý (sửa 26/11/2026).
 
-**6. Bí mật và cấu hình.** Biến môi trường chỉ đọc ở `infra/config/` (constitution check chặn `process.env` ở chỗ khác); validate bằng zod lúc khởi động, sai là dừng tiến trình trước khi phục vụ request. Nhóm xác thực là tất cả hoặc không: khi một trong năm biến `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL` được đặt thì bắt buộc đủ cả năm (`SESSION_SECRET` ≥ 32 ký tự) cùng `APP_BASE_URL`, `CLIENT_BASE_URL`, thiếu một biến là server không khởi động; không đặt biến nào trong năm biến đó thì server chỉ phục vụ khu công khai. Cloudinary cũng là nhóm tất cả hoặc không. `.env` bị git bỏ qua, CI chạy gitleaks trên toàn lịch sử. Lỗi validate chỉ in tên biến, không in giá trị.
+**6. Bí mật và cấu hình.** Biến môi trường chỉ đọc ở `infra/config/` (constitution check chặn `process.env` ở chỗ khác); validate bằng zod lúc khởi động, sai là dừng tiến trình trước khi phục vụ request. Nhóm xác thực là tất cả hoặc không: khi một trong năm biến `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL` được đặt thì bắt buộc đủ cả năm (`SESSION_SECRET` ≥ 32 ký tự) cùng `APP_BASE_URL`, `CLIENT_BASE_URL`, thiếu một biến là server không khởi động; không đặt biến nào trong năm biến đó thì server chỉ phục vụ khu công khai — riêng ở production (từ 26/11/2026) thiếu cấu hình xác thực là server không khởi động. Cloudinary cũng là nhóm tất cả hoặc không. `.env` bị git bỏ qua, CI chạy gitleaks trên toàn lịch sử. Lỗi validate chỉ in tên biến, không in giá trị.
 
-**7. Truyền tải và trình duyệt.** Cookie có cờ `Secure` khi `NODE_ENV=production` hoặc khi `APP_BASE_URL` dùng HTTPS; HTTPS do reverse proxy của nơi host đảm nhận. Mọi response có `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, và tắt `X-Powered-By`. SPA gọi API cùng origin (qua proxy Vite khi dev); server không bật CORS. Trang Swagger UI tải script có phiên bản cố định và hash Subresource Integrity.
+**7. Truyền tải và trình duyệt.** Cookie có cờ `Secure` khi `NODE_ENV=production` hoặc khi `APP_BASE_URL` dùng HTTPS; HTTPS do reverse proxy của nơi host đảm nhận. Mọi response có `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, và tắt `X-Powered-By`; từ 26/11/2026 có thêm `Content-Security-Policy` (chỉ script của chính ứng dụng, không inline, không eval), `Permissions-Policy`, và `Strict-Transport-Security` trên request HTTPS ở production. Mỗi IP bị giới hạn tần suất: 20 request/phút với `/api/v1/auth`, 300 request/phút với toàn bộ `/api/v1` (đếm trong bộ nhớ của một tiến trình; `TRUST_PROXY` quyết định lấy IP thật sau proxy). SPA gọi API cùng origin (qua proxy Vite khi dev); server không bật CORS. Trang Swagger UI tải script có phiên bản cố định và hash Subresource Integrity.
 
 **8. Hạn chế đã biết (việc cần làm tiếp).**
-- Chưa có rate limiting hay chống brute-force ở bất kỳ route nào, kể cả login và callback.
-- Không dùng helmet; chỉ có ba header ở mục 7 (cộng việc tắt `X-Powered-By`) — chưa có Content-Security-Policy và HSTS.
+- Giới hạn tần suất chỉ đếm trong bộ nhớ của một tiến trình; chạy nhiều instance thì mỗi instance đếm riêng (rate limiting, CSP và HSTS đã có từ 26/11/2026, xem mục 7).
+- Không dùng helmet; các header ở mục 7 do middleware riêng đặt.
 - Không kiểm tra Origin / Referer; chống cross-site dựa vào cookie `SameSite=Lax`, CSRF token và việc không bật CORS.
-- Chưa audit: scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / đăng xuất / thu hồi phiên, cờ đã đọc của thông báo; lần đăng nhập bị từ chối vì `googleSubject` không khớp cũng không được audit.
+- Chưa audit: điểm đánh giá ứng viên (UC19), tạo / đăng xuất / thu hồi phiên, cờ đã đọc của thông báo; lần đăng nhập bị từ chối vì `googleSubject` không khớp cũng không được audit.
 - Audit chỉ-ghi-thêm theo quy ước, database không chặn sửa.
-- Log truy cập ghi URL đầy đủ nên `code` và `state` của callback OAuth lọt vào log; error handler ghi `err.message`. Cần che.
+- Error handler ghi `err.message` (cùng name, code, stack). Cần che. Log truy cập không còn ghi query string từ 26/11/2026.
 - Phân quyền nằm trong từng use case chứ không ở một middleware theo permission; test tự động chỉ kiểm tra xác thực trên các route ghi của những nhóm route mà nó mount, các nhóm còn lại dựa vào code review; phân quyền không do test đó kiểm tra mà dựa vào code review và unit test.
 
 | Mối đe doạ | Biện pháp | Vị trí trong code (`server/src/`) |
@@ -3435,8 +3449,8 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 | Lộ danh tính người gửi ẩn danh | Không tra người gửi ẩn danh; phản hồi sự kiện chỉ hiện khi đủ số người tối thiểu, không kèm danh tính | `infra/db/mongo-event-feedback-repository.ts`, `domain/event-feedback.ts` |
 | Lộ chi tiết lỗi nội bộ | Thông điệp 500 chung; chi tiết chỉ ở log server | `interface/http/middleware.ts` |
 | Lộ bí mật / cấu hình sai | Env chỉ ở `infra/config`; zod, fail-fast; `SESSION_SECRET` ≥ 32; `.env` bị bỏ qua; gitleaks trong CI | `infra/config/index.ts`, `.gitignore`, `.github/workflows/ci.yml` |
-| Clickjacking, MIME sniffing, lộ referrer | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer` | `interface/http/server.ts` |
-| Brute force / dồn request | **Chưa có** (không có rate limiter) — việc cần làm tiếp | — |
+| Clickjacking, MIME sniffing, lộ referrer, XSS | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, CSP, HSTS ở production | `interface/http/security-headers.ts` |
+| Brute force / dồn request | Giới hạn tần suất theo IP (20/phút cho `/auth`, 300/phút cho `/api/v1`, trả 429), body JSON mặc định 100 KB — có từ 26/11/2026 | `interface/http/rate-limit.ts`, `interface/http/server.ts` |
 
 ---
 
@@ -3633,8 +3647,8 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
 | Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2), qua outbox (EXT-02) |
-| Hệ thống → Cloudinary | Uploaded file | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển) |
-| Cloudinary → Hệ thống | File URL | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển) |
+| Hệ thống → Cloudinary | Uploaded file | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển), UC38 (ảnh minh chứng báo cáo định kỳ, từ 26/11/2026) |
+| Cloudinary → Hệ thống | File URL | UC07 (tài liệu hồ sơ và logo CLB), UC17 (tệp đính kèm đơn ứng tuyển), UC38 (ảnh minh chứng báo cáo định kỳ, từ 26/11/2026) |
 
 ## 14.5 Bản đồ quan hệ use case
 
@@ -3896,7 +3910,7 @@ hình dạng request/response do schema zod định nghĩa và được công b�
 | M05 | `GET /public/events`, `GET /public/events/:id`; `GET\|POST /clubs/:clubId/events`, `GET .../options`, `GET .../:id`, `GET .../:id/participants`, `POST .../:id/save\|submit\|publish\|cancel\|reschedule` (nộp lại → revision mới); mẫu đề xuất: `GET /events/proposal-template`, `GET /events/proposal-template/download`, `POST /admin/event-proposals/template`; tài liệu đề xuất: `POST /clubs/:clubId/events/:id/proposal-document`, `GET .../proposal-document/access`, `GET /admin/event-proposals/:id/document/access`; thẩm định: `GET /admin/event-proposals`, `GET .../:id`, `POST .../:id/claim`, `POST .../:id/decision`, `POST .../:id/cancellation-decision`; phiên bảo vệ: `GET /admin/event-defense/rooms`, `POST /admin/event-proposals/:id/defense/schedule\|cancel\|respond-reschedule\|start\|end\|no-show\|decision`, `GET .../defense/session`, `PUT .../defense/notes`, `GET /clubs/:clubId/events/:id/defense`, `POST .../defense/confirm`, `POST .../defense/reschedule-request`; UC53: `GET\|POST /admin/school-events`, `GET /admin/school-events/conflicts`, `GET .../:id`, `POST .../:id/invitations`, `POST .../:id/invitations/:invitationId/withdraw`, `POST .../:id/publish`; UC54: `GET /clubs/:clubId/invitations`, `POST /clubs/:clubId/invitations/:id/response`. Không có endpoint sự kiện nội bộ (BR53 đã rút) |
 | M06 | `GET /events/:id/registration`, `POST /events/:id/registrations`, `GET /event-registrations/mine`, `POST /event-registrations/:id/cancel`, `POST /events/:id/check-in` (sinh viên tự check-in), `GET /attendances/mine`; phía CLB: `GET /clubs/:clubId/events/:id/participants`, `POST /clubs/:clubId/events/:id/capacity\|promote\|check-ins\|attendance/correct\|attendance/finalize\|attendance/unlock` |
 | M07 | Ngân sách (ICPDP): `GET /admin/budgets`, `GET /admin/budgets/:id`; hạng mục tài trợ (UC26/UC35–UC37): `GET /clubs/:clubId/budgets/:id/items`, `GET /admin/budgets/:id/items`, `POST /clubs/:clubId/budgets/:id/items/:itemId/actions`, `POST /admin/budgets/:id/items/:itemId/actions` (body `{ revision, action: { kind } }`, `kind` ∈ `save`, `removeImage`, `submit`, `return`, `review`, `recordAdvance`, `confirmAdvanceReceived`, `pay`, `confirmVendorPaid`, `removeRefundImage`, `submitRefund`, `returnRefund`, `confirmRefund`), `POST /clubs/:clubId/budgets/:id/items/:itemId/images?revision=&fileName=&target=invoice\|refund`, `GET /clubs/:clubId/budgets/:id/items/:itemId/images/:imageId`, `GET /admin/budgets/:id/items/:itemId/images/:imageId` (`?download=1`), `GET /clubs/:clubId/budgets/:id/items/:itemId/refund-account`; quyết toán/đối soát sự kiện: `GET /clubs/:clubId/budgets`, `GET /clubs/:clubId/budgets/:id`, `POST /clubs/:clubId/budgets/:id/actions`, `GET /admin/budgets/:id/reconciliation`, `POST /admin/budgets/:id/reconciliation/actions` (`kind` ∈ `expense`, `evidence`, `submit`, `claim`, `return`, `finalize`) |
-| M08 | `GET /clubs/:clubId/event-reports`, `GET .../:id`, `POST .../:id/actions`, `GET /admin/event-reports`, `GET .../:id`, `POST .../:id/actions`; `GET\|POST /clubs/:clubId/periodic-reports`, `PUT .../:id`, `POST .../:id/submit`, `GET /admin/periodic-reports`, `PUT /admin/periodic-reports/campaign`, `POST /admin/periodic-reports/missing`, `GET .../:id`, `POST .../:id/decision`; `GET\|POST /admin/violations`, `GET /admin/violations/sources/:clubId`, `GET .../:id`, `POST .../:id/steps`, `GET /clubs/:clubId/violations`, `POST .../:id/response`, `POST .../:id/actions/:actionId/submission` |
+| M08 | `GET /clubs/:clubId/event-reports`, `GET .../:id`, `POST .../:id/actions`, `GET /admin/event-reports`, `GET .../:id`, `POST .../:id/actions`; `GET\|POST /clubs/:clubId/periodic-reports`, `PUT .../:id`, `POST .../:id/submit`, `POST /clubs/:clubId/periodic-reports/evidence-images` (ảnh minh chứng, từ 26/11/2026), `GET /admin/periodic-reports`, `PUT /admin/periodic-reports/campaign`, `POST /admin/periodic-reports/missing`, `GET .../:id`, `POST .../:id/decision`; `GET\|POST /admin/violations`, `GET /admin/violations/sources/:clubId`, `GET .../:id`, `POST .../:id/steps`, `GET /clubs/:clubId/violations`, `POST .../:id/response`, `POST .../:id/actions/:actionId/submission` |
 | M09 | `GET\|POST /admin/evaluation-schemes`, `PATCH\|DELETE .../:id`, `POST .../:id/activate`; `GET /admin/evaluations`, `POST /admin/evaluations/generate`, `POST /admin/evaluations/publish` (công bố theo lô), `GET .../:id`, `POST .../:id/regenerate\|manual\|finalize\|reopen`, `GET /clubs/:clubId/evaluations`; UC55: `GET /admin/exports/options`, `POST /admin/exports/preview`, `POST /admin/exports` (body: `types[]`, `format` xlsx\|csv\|pdf, `periodCode`/`from`/`to`/`clubId`/`status`), `POST /admin/exports/annual-report/preview`, `POST /admin/exports/annual-report` |
 | M10 | `GET /notifications/mine`, `GET /notifications/mine/unread-count`, `POST /notifications/mine/read-all`, `POST /notifications/:id/read`; **chưa có** hộp thư phê duyệt dùng chung (`/approvals`) và API tra cứu audit log — mỗi luồng duyệt dùng hàng đợi riêng `/admin/<tài nguyên>` với `POST …/:id/claim` và `POST …/:id/decision` |
 | M11 | `GET\|POST /admin/properties`, `PATCH\|DELETE /admin/properties/:id`, `POST .../:id/activation`, `GET .../:id/booking-conflicts`; `GET /booking-slots`, `GET /clubs/:clubId/booking-events`, `GET /clubs/:clubId/booking-properties`, `GET .../:id/availability`, `GET\|POST /clubs/:clubId/bookings`, `GET\|PATCH .../:id`, `POST .../:id/submit`, `POST .../:id/cancel`, `GET /admin/bookings`, `GET .../:id`, `POST .../:id/claim`, `POST .../:id/decision`; UC58: `GET /admin/room-allocations?semesterCode=`, `GET /admin/room-allocations/options`, `GET /admin/room-allocations/occupancy`, `POST /admin/room-allocations`, `POST /admin/room-allocations/:id/revoke`, `GET /clubs/:clubId/room-allocations` (chỉ đọc, cần `club.room.view`) |
@@ -3914,4 +3928,4 @@ mới chứ không ghi đè (CON-08); `PATCH …/draft` hoặc `PUT` chỉ lưu 
 
 ---
 
-*Hết tài liệu — UCMS Software Requirements Specification v1.1, cập nhật 2026-11-24.*
+*Hết tài liệu — UCMS Software Requirements Specification v1.1, cập nhật 2026-11-27.*
