@@ -55,8 +55,14 @@ domain; nếu nó chỉ là dịch qua lại HTTP thì giữ ở interface.
 ## `server/src/interface/http/`
 
 **Là gì?** Biên Express: `server.ts` (lắp ráp app), `*-routes.ts` (endpoint dưới `/api/v1`, mỗi module một file),
-`middleware.ts` (log request + xử lý lỗi), `openapi.ts` (tài liệu API phục vụ tại `/docs`). Nó
-chỉ dịch qua lại giữa HTTP và lời gọi usecase, không làm gì hơn.
+`request.ts` (helper parse zod, actor, query phân trang), `response.ts` (phong bì response),
+`middleware.ts` (request id, log request, auth guard phụ trợ, xử lý lỗi), `rate-limit.ts`,
+`security-headers.ts` (CSP và header bảo mật), `static-client.ts` (phục vụ bản build client khi có
+`CLIENT_DIST_DIR`), `openapi.ts` + `openapi-*.ts` (tài liệu API phục vụ tại `/docs`). Nó chỉ dịch
+qua lại giữa HTTP và lời gọi usecase, không làm gì hơn.
+
+`server/src/interface/jobs/` là biên thứ hai: mỗi job chỉ hẹn giờ (qua `schedule.ts`) rồi gọi một
+usecase idempotent; job được start và stop trong `main.ts`.
 
 **Vì sao?** HTTP là chi tiết giao vận. Giữ tầng này mỏng thì lựa chọn Express (hay phiên bản của
 nó, hay chính REST) vẫn thay thế được, và middleware xử lý lỗi cho một hợp đồng thống nhất:
@@ -75,8 +81,11 @@ liệu vào, gọi usecase, gửi response. Nếu nó phình to hơn thế thì 
 
 - `config/` — nơi **duy nhất** được phép đọc `process.env`. Một schema zod validate biến môi
   trường lúc khởi động; env sai → `process.exit(1)`. Mọi nơi khác nhận một `Config` đã có kiểu.
-- `db/` — `mongo-*-repository.ts` hiện thực các port repository của domain bằng Mongoose;
-  `seed.ts` để tạo dữ liệu cục bộ.
+- `db/` — `mongo-*-repository.ts` hiện thực các port repository của domain bằng Mongoose
+  (helper dùng chung ở `repo-helpers.ts`), schema sinh từ DBML (`ucms-schema.generated.ts`), `init.ts`/
+  `verify.ts` và các `seed*.ts` để tạo dữ liệu cục bộ.
+- `auth/` — Google OpenID Connect; `files/` — lưu tệp trên Cloudinary và đọc/ghi file xuất;
+  `mail/` — transport email (Google SMTP hoặc chỉ ghi log).
 
 **Vì sao?** Config: fail-fast lúc khởi động tốt hơn nhiều so với một chuỗi kết nối `undefined`
 nổ lúc 3 giờ sáng, và gom env về một cửa duy nhất (được CI kiểm tra) khiến phần code còn lại
@@ -96,14 +105,15 @@ vào app → lắng nghe.
 mọi file còn lại chỉ nối với nhau qua interface, và thứ tự khởi động (config trước, fail fast)
 là tường minh.
 
-**Khi nào?** Chỉ khi thêm một phụ thuộc cần nối dây (repo mới, client ngoài mới) hoặc đổi thứ tự
-khởi động. File này nên giữ ở mức ~15 dòng.
+**Khi nào?** Chỉ khi thêm một phụ thuộc cần nối dây (repo mới, client ngoài mới, job mới) hoặc đổi
+thứ tự khởi động. File này chỉ chứa việc nối dây — dài lên theo số module, nhưng không có logic nghiệp vụ.
 
 ## `server/tests/`
 
 **Là gì?** `unit/` — test usecase và domain với repository in-memory; không DB, không mạng (CI
-chạy chúng trong một job không có Mongo). `integration/` — test repository Mongo thật, bỏ qua
-khi không có `MONGO_URI`.
+chạy chúng trong một job không có Mongo). `integration/` — test repository Mongo thật và test HTTP
+đầy đủ (`http-*.test.ts` qua `http-harness.ts`), bỏ qua khi không có `MONGO_URI`. Test giao diện
+end-to-end (Playwright) nằm ở `client/e2e/`, không thuộc thư mục này.
 
 **Vì sao?** Việc chia tầng tồn tại chính là để đa số logic test được mà không cần hạ tầng —
 unit test nhờ đó nhanh và chạy được ở bất cứ đâu. Integration test phủ đúng thứ mà bản giả
@@ -153,9 +163,11 @@ một quyết định được đưa ra, sau khi mọi người đã quên.
 
 | Mục | Là gì / Vì sao / Khi nào |
 |---|---|
-| `docker-compose.yml` | MongoDB cục bộ. Để "clone xong là chạy" mà không cần cài Mongo. Chạy `docker compose up -d` trước khi dev. |
+| `docker-compose.yml` | MongoDB cục bộ (replica set `rs0`). Để "clone xong là chạy" mà không cần cài Mongo. Chạy `docker compose up -d --wait` trước khi dev. |
+| `Dockerfile` / `docker-compose.prod.yml` | Image production một container (API phục vụ luôn bản build client) và stack chạy image đó cùng Mongo. Xem mục Triển khai trong `README.md`. |
+| `.github/workflows/ci.yml` | CI: `gitleaks`, `check`, `integration`, `docker`, `e2e`. |
 | `.env.example` / `.env` | Hợp đồng biến môi trường đã ghi rõ / giá trị cục bộ của bạn. Server fail-fast nếu không có `.env`; `.env` luôn bị git bỏ qua. Copy một lần cho mỗi bản clone, sửa khi cấu hình đổi. |
-| `scripts/` | `check-constitution.sh` — grep tìm các vi phạm về tầng và env. Chạy trong `npm run check` và trong CI. |
+| `scripts/` | `check-constitution.sh` — grep tìm các vi phạm về tầng và env; `lint.sh` — chạy ESLint cho cả hai workspace. Cả hai chạy trong `npm run check` và trong CI. |
 
 ---
 

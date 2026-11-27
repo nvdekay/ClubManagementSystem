@@ -7,7 +7,7 @@
 - Không thư viện state — state cục bộ của component (`useState`/`useReducer`) là đủ ở quy mô này.
 - Không thư viện HTTP client — dùng `fetch` gốc, gọi tới `/api/v1/...` (Vite proxy `/api` sang server ở môi trường dev). **TanStack React Query** (`@tanstack/react-query`) quản lý server state: `useQuery`/`useMutation` bọc quanh các hàm fetch đó, `QueryClientProvider` đặt trong `main.tsx`. Truyền `signal` của queryFn vào `fetch`; sau một mutation, cập nhật cache theo quy tắc 4 của mục Fetch/Service (`setQueryData` khi response đã quyết định được giá trị mới, `invalidateQueries` khi danh sách được lọc ở phía server). Truy vấn có phân trang/tìm kiếm dùng `placeholderData: keepPreviousData` để khi key đổi (trang mới, từ khoá mới) các dòng cũ vẫn nằm trên màn hình thay vì chớp trắng (xem `useAccounts`).
 - **Tailwind v4**, CSS-first (plugin `@tailwindcss/vite`, không có `tailwind.config.*`). Token màu khai báo trong `client/src/index.css` bên trong `@theme` dưới dạng `--color-<name>-app`, sinh ra các utility `<name>-app` (`bg-danger-app`, `text-danger-app`, …).
-- Dark mode là thủ công (không chỉ dựa vào `prefers-color-scheme`): một class `.dark` bật/tắt trên `<html>` (xem state `theme` trong `App.tsx`) ghi đè chính các token đó dưới `:root.dark` trong `index.css`. Không dùng variant `dark:` của Tailwind — chỉ riêng lớp gián tiếp token đã đủ để mọi utility `*-app` đổi màu.
+- Dark mode là thủ công (không chỉ dựa vào `prefers-color-scheme`): một class `.dark` bật/tắt trên `<html>` (xem hook `hooks/useTheme.ts`) ghi đè chính các token đó dưới `:root.dark` trong `index.css`. Không dùng variant `dark:` của Tailwind — chỉ riêng lớp gián tiếp token đã đủ để mọi utility `*-app` đổi màu.
 - Ngôn ngữ: **i18next** + `react-i18next`, khởi tạo ở `client/src/i18n/index.ts` (`en`/`vi`, ngôn ngữ được lưu vào `localStorage`, mặc định `en`). Chuỗi tách theo ngôn ngữ rồi theo miền nghiệp vụ: `i18n/locales/en/<module>.ts` là nguồn kiểu, `i18n/locales/vi/<module>.ts` phải `satisfies Messages<typeof en>` nên thiếu hay thừa key đều làm `tsc` fail; `locales/<locale>/index.ts` ghép các module của một ngôn ngữ. Mỗi ngôn ngữ là một chunk nạp lười: `main.tsx` chờ `i18nReady` (chỉ tải ngôn ngữ đang chọn) rồi mới render, `i18n.changeLanguage("vi")` tải chunk còn lại xong mới đổi nên không lộ key thô. Không có `fallbackLng`, nên mọi key phải có ở cả hai ngôn ngữ (kể cả dạng số nhiều `_one`/`_other`). Code ngoài `i18n/` chỉ được `import type` từ `locales/` (lấy kiểu key); import giá trị sẽ kéo chuỗi vào chunk chính. Component đọc chuỗi bằng `const { t } = useTranslation()` và key có namespace (`t("users.title")`). Tính năng mới → thêm `locales/en/<module>.ts` và `locales/vi/<module>.ts`, rồi đăng ký ở cả hai `locales/<locale>/index.ts`.
 - `cn()` ở `client/src/utils/cn.ts` — `twMerge(clsx(inputs))` — dùng cho mọi class có điều kiện.
 - **TanStack Table v9** (`@tanstack/react-table`) cho bảng — headless: người gọi sở hữu instance `useTable` và truyền nó vào bộ kit `ui/table/` (`AppTable`, `AppTableLimitSelect`). Bộ điều khiển phân trang không phụ thuộc bảng — `ui/pagination/AppPagination` nhận props thuần `pageIndex`/`pageCount`/`onPageChange`, không cần instance bảng. v9 ≠ v8: `useTable({ features, columns, data })` với `tableFeatures({...})` (không còn `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` thay cho `table.getState()`. Tập feature dùng chung nằm trong `AppTable.tsx` (`appTableFeatures`); mở rộng ở đó khi một bảng cần sắp xếp/chọn dòng/…. Tài liệu dành cho agent nằm trong `node_modules/@tanstack/react-table/skills/`. Giữ `data`/`columns` ổn định về tham chiếu (mảng rỗng khai báo ở phạm vi module, `useMemo` cho columns).
@@ -22,7 +22,7 @@ Hiện tại (các thư mục liên quan; mỗi thư mục có README mô tả m
 ```
 client/src/
   main.tsx     # điểm vào, QueryClientProvider, router (createBrowserRouter) và routes nạp lười
-  App.tsx      # màn Auth và workspace hiện hành
+  App.tsx      # chỉ render AuthWorkspacePage (route /login, /workspace)
   index.css    # import Tailwind + token màu @theme (nơi duy nhất được phép có mã màu) + ghi đè :root.dark
   i18n/
     index.ts   # khởi tạo i18next + kiểu Locale + i18nReady; nạp lười từng ngôn ngữ
@@ -51,8 +51,8 @@ client/src/
       table/AppTable.tsx               # kit TanStack Table v9 headless: AppTable + AppTableLimitSelect + appTableFeatures dùng chung
       table/AppTableLimitSelect.tsx
       toast/AppToast.tsx
-    custom/    # component dùng nhiều trang, có hiểu biết nghiệp vụ (README giữ chỗ)
-    layout/    # khung Navbar/Sidebar/AuthLayout (README giữ chỗ)
+    custom/    # component dùng nhiều trang, có hiểu biết nghiệp vụ (README liệt kê từng file)
+    layout/    # khung PublicLayout, WorkspaceShell và điều hướng (README liệt kê từng file)
 ```
 
 Bảng quyết định thư mục:
@@ -103,8 +103,8 @@ component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → servic
 
 1. Mọi lời gọi bất đồng bộ đều phải có trạng thái lỗi/đang tải tường minh — không thất bại im lặng.
 2. Dùng `try`/`catch` hoặc `.catch()` thuần. Dự án không cài thư viện xử lý lỗi nào; đừng thêm (`neverthrow`, …) cho nhu cầu ở quy mô này.
-3. Hiển thị lỗi ngay trong component như `App.tsx` đang làm; dùng `appToast` (`@/components/ui/toast/AppToast`, chạy trên sonner) cho các thông báo thoáng qua mang tính xuyên suốt.
-4. Giao diện lúc tải: chỉ dùng skeleton cho lần tải *đầu tiên* của dữ liệu bất đồng bộ (`isPending`), ghép từ `AppSkeleton` với kích thước khớp bố cục thật (xem prop `loading` của `AppTable` và thẻ demo AppSkeleton trong `App.tsx`) — không tạo file `*Skeleton` cho từng component, và không đặt skeleton ở nơi nội dung thật vốn tĩnh hoặc nơi `keepPreviousData` đã giữ dữ liệu cũ trên màn hình. Không bao giờ hiển thị thông điệp trạng thái rỗng khi lần tải đầu còn đang chạy.
+3. Hiển thị lỗi ngay trong component (ví dụ `AppNotice` hay thông báo lỗi cạnh form); dùng `appToast` (`@/components/ui/toast/AppToast`, chạy trên sonner) cho các thông báo thoáng qua mang tính xuyên suốt.
+4. Giao diện lúc tải: chỉ dùng skeleton cho lần tải *đầu tiên* của dữ liệu bất đồng bộ (`isPending`), ghép từ `AppSkeleton` với kích thước khớp bố cục thật (xem prop `loading` của `AppTable`) — không tạo file `*Skeleton` cho từng component, và không đặt skeleton ở nơi nội dung thật vốn tĩnh hoặc nơi `keepPreviousData` đã giữ dữ liệu cũ trên màn hình. Không bao giờ hiển thị thông điệp trạng thái rỗng khi lần tải đầu còn đang chạy.
 5. Chính sách lỗi chung nằm ở `QueryClient` trong `main.tsx`, đừng lặp lại ở từng hook: query không retry lỗi 4xx
    (`ApiError.status`), lỗi 5xx/mạng retry tối đa 2 lần (`utils/queryRetry.ts`) — không viết `retry: false` trong hook.
    Mọi query/mutation nhận 401 đều đặt phiên `['auth','me']` về `null` (`markSignedOut`), nên `WorkspaceShell` tự chuyển
@@ -112,7 +112,7 @@ component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → servic
 
 ## Quy tắc về styling
 
-1. Dùng utility class của Tailwind trên phần tử — đây là cách tạo kiểu mặc định. Chỉ lùi về `style` nội tuyến khi Tailwind thật sự không diễn đạt được giá trị đó (xem `max-w-[480px]` trong `App.tsx`, tức một giá trị tuỳ ý không phải màu và không có utility sẵn).
+1. Dùng utility class của Tailwind trên phần tử — đây là cách tạo kiểu mặc định. Chỉ lùi về `style` nội tuyến khi Tailwind thật sự không diễn đạt được giá trị đó (ví dụ một độ rộng tuỳ ý dạng `max-w-[480px]` — giá trị không phải màu và không có utility sẵn).
 2. Không có mã màu hex/tên màu cứng ở bất kỳ đâu trong `.ts`/`.tsx` — ESLint cưỡng chế (`eslint.config.mjs`), và quy tắc này cũng bắt cả màu dạng giá trị tuỳ ý của Tailwind như `text-[#dc143c]`. Hãy thêm token vào khối `@theme` trong `client/src/index.css` dưới dạng `--color-<name>-app`, rồi dùng utility được sinh ra (`bg-<name>-app`, `text-<name>-app`, `border-<name>-app`, …), kèm một ghi đè `:root.dark` ngay cạnh đó. Các class bảng màu sẵn của Tailwind (`bg-gray-800`, `text-white`, …) không tính là màu cứng và ESLint không chặn, nhưng hãy dành chúng cho những màu cố ý giống hệt nhau ở cả hai theme (ví dụ chữ trắng trên nền primary màu cố định) — còn bất cứ thứ gì nằm trên một bề mặt có theme (chữ nội dung, viền, chữ phụ/mờ) đều phải đi qua token để đổi màu theo `.dark`. `border-app` (viền) và `muted-app` (chữ phụ/bị vô hiệu) đã có sẵn — tái sử dụng trước khi thêm token mới.
 3. Không dùng template literal trong `className` — ESLint cưỡng chế. Class mặc định là chuỗi nền; một điều kiện chỉ được *thêm* class ghi đè cho trường hợp ngoại lệ, không bao giờ bật/tắt hai class đối nhau — luôn đi qua `cn()`:
    ```tsx
@@ -130,7 +130,7 @@ Cả `theme` lẫn `locale` đều là công tắc người dùng bật được
 2. **Ngôn ngữ.** Chuỗi `vi` trong `client/src/i18n/` dài hơn bản `en` tương ứng 30–60% (`"Users"` → `"Người dùng"`, `"Disabled"` → `"Vô hiệu hoá"`). Bất kỳ phần tử nào được căn kích thước vừa khít chuỗi tiếng Anh hôm nay sẽ tràn hoặc bị cắt khi chọn `vi`.
    - Không đặt `whitespace-nowrap` lên phần tử đang hiển thị một giá trị `t()`.
    - Không đặt chiều rộng cố định theo pixel bao quanh một nhãn dịch được — hãy để nó tự co theo nội dung, hoặc cho xuống dòng.
-   - Mọi hàng flex chứa nút/pill/nhãn có chuỗi dịch được đều cần `flex-wrap` (xem các nút điều khiển ở header và các hàng demo `AppButton`/`AppInput` trong `App.tsx`), để nó xếp chồng thay vì tràn ra ngoài cột hẹp `max-w-[480px]` của ứng dụng.
+   - Mọi hàng flex chứa nút/pill/nhãn có chuỗi dịch được đều cần `flex-wrap` (xem các nút điều khiển ở header của `WorkspaceShell`), để nó xếp chồng thay vì tràn ra ngoài cột hẹp trên màn hình nhỏ.
    - Khi thêm một key mới vào `i18n/locales/<locale>/<module>.ts`, hãy thử bố cục với ngôn ngữ dài hơn trong hai ngôn ngữ, không chỉ `en`.
 3. Ưu tiên để Flexbox/Grid tự sắp lại hơn là dùng `truncate` cho chữ dịch được — ứng dụng chưa có primitive tooltip, nên một nhãn bị cắt mà không có cách nào đọc đủ chuỗi là kết cục tệ hơn một hàng cao thêm một chút.
 

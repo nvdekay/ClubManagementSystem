@@ -1,6 +1,6 @@
 # UCMS — Thiết kế mức cao đối chiếu implementation
 
-> Đối chiếu code nhánh `main` ngày 14/11/2026 (bản trước: 15/10/2026, commit `60fc2db`). Mapping UC đầy đủ:
+> Đối chiếu code ngày 27/11/2026 (các bản trước: `main` 14/11/2026; 15/10/2026, commit `60fc2db`). Mapping UC đầy đủ:
 > [`../05-implementation/UC_CODE_MAPPING.md`](../05-implementation/UC_CODE_MAPPING.md).
 > Phạm vi đã có và còn thiếu: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
@@ -11,8 +11,12 @@ React 19/Vite SPA gọi Express 5 API dưới `/api/v1`; API dùng Mongoose/Mong
 `notification-delivery-job` khi đủ biến `SMTP_*`/`MAIL_FROM` (bắt buộc ở production); khi phát triển không
 cấu hình SMTP thì dùng `logMailTransport` chỉ ghi người nhận + tiêu đề (sửa 2026-11-07).
 
-`docker-compose.yml` hiện chỉ khởi động Mongo 7 dạng single-node replica set. Server và client
-chạy bằng npm workspace; không có container server/Nginx trong compose hiện tại.
+Khi phát triển, `docker-compose.yml` chỉ khởi động Mongo 7 dạng single-node replica set; server
+(`:3000`) và client Vite (`:5173`, proxy `/api`) chạy bằng npm workspace. Bản production là một image
+Docker (`Dockerfile`): Express phục vụ cả API lẫn bản build client (`CLIENT_DIST_DIR`,
+`interface/http/static-client.ts`) trên cùng một cổng; `docker-compose.prod.yml` chạy image đó cùng
+Mongo replica set một node. TLS do reverse proxy đặt trước container đảm nhận (`TRUST_PROXY`). Chi tiết:
+mục Triển khai trong [`../../README.md`](../../README.md).
 
 ## 2. Bốn tầng và cấu trúc thật
 
@@ -60,11 +64,12 @@ ICPDP dùng các queue riêng theo nghiệp vụ. Nộp lại hồ sơ/đề xu�
 repository cụ thể nằm trong ma trận UC.
 
 Repository nhận actor/time/reason qua hợp đồng nghiệp vụ và ghi `auditLogs`, `notifications`
-trong cùng transaction với thay đổi dữ liệu. Không có một `AuditPort` hay `NotificationPort`
+trong cùng transaction với thay đổi dữ liệu (thông báo nhiều người nhận đi qua `queueNotifications` ở
+`infra/db/repo-helpers.ts`). Không có một `AuditPort` hay `NotificationPort`
 độc lập được tiêm cho mọi use case trong `main.ts`. Đây là mô tả cách code hiện tại làm; không
 đồng nhất với bản thiết kế port chung trước đây.
 
-Jobs được nối trong `main.ts`:
+Jobs được nối trong `main.ts` (mỗi job hẹn giờ qua `interface/jobs/schedule.ts`):
 
 - `facility-booking-job`: Approved → In Use → Completed.
 - `club-lifecycle-job`: hết hạn tạm ngừng và vòng đời giải thể.
@@ -72,6 +77,9 @@ Jobs được nối trong `main.ts`:
 - `accountability-reminder-job`: nghĩa vụ báo cáo/tài chính và thông báo nhắc hạn.
 - `application-expiry-job`: hồ sơ thành lập quá hạn sửa (UC07/08) chuyển `Expired`.
 - `membership-reconfirmation-job`: mở đợt tái xác nhận đầu kỳ và chuyển `Inactive` khi quá 14 ngày (UC21 A2).
+- `complaint-response-job`: mỗi giờ quét khiếu nại đã chuyển CLB mà quá hạn trả lời (UC52, tín hiệu tuân thủ).
+- `evidence-cleanup-job`: lúc khởi động và mỗi 24 giờ xoá ảnh minh chứng UC38 trên Cloudinary không được báo cáo nào
+  tham chiếu (`uploadedAssets`, `usecase/periodic-evidence-cleanup.ts`).
 - `notification-delivery-job` (SCH-10, từ 19/10/2026): mỗi phút rút outbox `notifications` — dòng chỉ in-app
   `Queued → Sent`; dòng có kênh `EMAIL` được claim nguyên tử (đẩy `dueAt` qua lease 5 phút, tăng `attempts`) nên hai
   instance không gửi trùng (NTF-07), mỗi lần thử ghi một `emailDeliveryLogs`, lỗi thì retry backoff 1/2/4/8 phút, quá
@@ -91,7 +99,7 @@ Auth dùng Google OpenID Connect (Authorization Code + PKCE S256, `state`, `nonc
 kiểm qua JWKS), phiên lưu phía server trong `authSessions` (chỉ hash), cookie phiên ký HMAC,
 `httpOnly`, `SameSite=Lax`, `Secure` khi `NODE_ENV=production`, CSRF token theo phiên cho request
 thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../SRS.md` §12.1](../SRS.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
-không lấy từ policy UC04. System role gồm `ICPDP_OFFICER`, `ICPDP_HEAD` (cấu hình rule định tuyến UC05, chỉ cấp kèm Officer — D1) và quyền đặc biệt attendance unlock. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng rule khớp và SLA lên `approvalTasks` lúc mở task; UC08/UC26/UC46 duyệt một cấp (BR16, BR31).
+không lấy từ policy UC04. System role chỉ còn `ICPDP_OFFICER` (từ 25/11/2026 `ICPDP_HEAD` và `ATTENDANCE_UNLOCK` đã gộp vào đây): mọi ICPDP Officer cấu hình rule định tuyến UC05 và mở khoá điểm danh. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng rule khớp và SLA lên `approvalTasks` lúc mở task; UC08/UC26/UC46 duyệt một cấp (BR16, BR31).
 
 Thiết kế đích theo BR47, BR54, BR55 dùng hai role phía CLB cố định. Membership `Active` tạo
 `Club Member` với capability thành viên cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong
@@ -127,15 +135,21 @@ Route parse zod, gọi use case và trả phong bì từ `response.ts`:
 - DomainError: validation 400, unauthorized 401, forbidden 403, not_found 404, conflict 409,
   locked 423, unavailable 503; lỗi ngoài dự kiến 500 không lộ stack.
 
+Mọi router mount dưới `/api/v1` qua `mount()` trong `buildApp`. Body JSON tối đa 100kb (route cần body
+lớn nằm trong `LARGE_JSON_ROUTES`); mỗi request có `X-Request-Id` và một dòng log JSON; giới hạn tần suất
+theo IP (`rate-limit.ts`: 20/phút cho `/api/v1/auth`, 300/phút cho `/api/v1`); header bảo mật và CSP ở
+`security-headers.ts`.
+
 OpenAPI được khai báo bằng TypeScript trong `openapi.ts` và các file phụ, phục vụ `/docs`;
-test kiểm tra lệch route/spec. Không được mô tả là tự sinh toàn bộ từ zod.
+test kiểm tra lệch route/spec. `/docs` tắt ở production trừ khi `API_DOCS=true`. Không được mô tả là tự sinh toàn bộ từ zod.
 `server.ts` mount theo dependency; `main.ts` là nguồn quyết định module thực chạy. Các endpoint
 UC36/37 không hoạt động chỉ vì đã có file route hoặc entry OpenAPI.
 
 ## 8. Client
 
-Router declarative trong `client/src/main.tsx`. `services → hooks → component`, React Query quản
-lý server state, i18next en/vi, Tailwind token theme. Khu công khai (`PublicLayout`: home, danh bạ
+Router declarative trong `client/src/main.tsx`, mọi trang nạp lười (`lazy()` + `Suspense`). `services → hooks → component`
+(mọi service gọi API qua `services/apiRequest.ts`), React Query quản lý server state, i18next en/vi (chuỗi tách theo
+ngôn ngữ ở `i18n/locales/{en,vi}`, nạp lười), Tailwind token theme. Khu công khai (`PublicLayout`: home, danh bạ
 CLB, sự kiện và trang chi tiết) đọc được khi chưa đăng nhập, header chỉ hiện nút đăng nhập; API `/public/*` mở. WorkspaceShell kiểm tra workspace và menu theo permission.
 
 Các trang nằm ở `pages/auth`, `pages/public`, `pages/student`, `pages/club`, `pages/icpdp`.
@@ -143,8 +157,8 @@ Phía CLB có thêm route UI cho UC12, UC14, UC38, UC40, UC43, UC54; UC36/37 dù
 
 ## 9. Kiểm chứng và phần còn lại
 
-Số test ngày 14/11/2026: server 398 unit test / 62 file và 179 integration test / 48 file (cần Mongo),
-client 27 test / 2 file. Không thay kết quả
+Số test ngày 27/11/2026: server 1040 test / 140 file vitest (unit + integration; integration cần Mongo),
+client 110 test / 10 file, Playwright e2e 20 test / 5 file (`npm run test:e2e`, ngoài `npm run check`). Không thay kết quả
 OAuth/Cloudinary thật hoặc visual QA của từng feature. Trạng thái hiện hành:
 [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
