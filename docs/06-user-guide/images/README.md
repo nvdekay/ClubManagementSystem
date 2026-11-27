@@ -1,16 +1,15 @@
 # Ảnh hướng dẫn
 
-64 ảnh PNG chụp từ giao diện React của UCMS ngày 13/10/2026, tiếng Việt, theme sáng, viewport
-1440 × 1000. Một số ảnh cuộn tới phần thao tác hoặc mở sẵn hộp thoại.
+70 ảnh PNG chụp tự động ngày 27/11/2026 từ giao diện React hiện tại của UCMS, tiếng Việt, theme
+sáng, khung nhìn 1440 × 1000. Một số ảnh cuộn tới phần thao tác hoặc mở sẵn hộp thoại.
 
-`manifest.json` ghi file, URL, tài khoản mẫu, nguồn dữ liệu và thao tác trước khi chụp:
+Ảnh do `npm run guide:screenshots` sinh ra (script ở `client/e2e/guide/`, cách chạy ở
+[`../README.md`](../README.md)); tên file cố định để `GUIDE_BOOK.md` giữ nguyên link. Số thứ tự
+bỏ trống 15 (dữ liệu mẫu không có ghế ban chủ nhiệm trống nên không có đề cử để ICPDP xác nhận).
 
-- `local-api`: màn đăng nhập, chưa có phiên.
-- `seeded-demo-api`: API thật với database `ucms_guide_demo` riêng (bản sao database local sau
-  seed, thêm dữ liệu Wave 4 demo), có nối API khoản chi và đối soát.
-
-Ảnh không dùng route interception. Phiên local của tài khoản mẫu cấp qua SessionService trong
-database demo; Google OAuth không được dùng khi chụp. Ảnh không chứa cookie, CSRF token hay
-credential. Mọi tên và email `@demo.ucms.edu.vn` là nhân vật hư cấu; hai tài khoản thật của
-database local được đổi sang tên mẫu trong database demo trước khi chụp. Chứng từ `example.org`
-là placeholder demo. PNG được giảm xuống bảng 256 màu để HTML/PDF nhẹ hơn.
+`manifest.json` ghi cho từng ảnh: URL, tài khoản mẫu, thao tác trước khi chụp; phần `notes` ghi
+nguồn dữ liệu. Ảnh dùng API thật trên database riêng `ucms-e2e-guide`, không chặn hay giả lập
+request; phiên đăng nhập được cấp qua session service của server, không qua Google OAuth. Ảnh không
+chứa cookie, CSRF token hay credential. Tên người và email trong ảnh là dữ liệu mẫu của seed; tài
+khoản cán bộ mẫu `e2e.officer@fpt.edu.vn` hiển thị tên "Lê Thu Hằng". PNG được giảm xuống bảng 256
+màu (`../shrink-images.py`) để HTML/PDF nhẹ hơn.

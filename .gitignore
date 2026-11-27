@@ -26,3 +26,7 @@ coverage/
 client/e2e/.auth/
 client/e2e/test-results/
 client/e2e/playwright-report/
+
+# User guide builds: rebuilt from GUIDE_BOOK.md with build-guide.py (see docs/06-user-guide/README.md)
+docs/06-user-guide/GUIDE_BOOK.html
+docs/06-user-guide/GUIDE_BOOK.pdf
