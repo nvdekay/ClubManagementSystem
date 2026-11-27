@@ -27,13 +27,13 @@ Ngày 07/11/2026 người dùng chọn để nguyên các diagram phụ còn v�
 
 | Diagram | Trạng thái 14/11/2026 |
 |---|---|
-| `UCMS_Organization_and_Flows.drawio` | Khớp: hai role cố định, UC23 rút, có `ICPDP Head` (system role `ICPDP_HEAD`, chỉ cấu hình rule UC05); duyệt một cấp |
+| `UCMS_Organization_and_Flows.drawio` | Khớp: hai role cố định, UC23 rút; duyệt một cấp. Từ 25/11/2026 không còn `ICPDP Head`: system role `ICPDP_HEAD` (và `ATTENDANCE_UNLOCK`) đã gộp vào `ICPDP_OFFICER`, mọi ICPDP Officer cấu hình rule UC05 |
 | `UCMS_UseCase_ByActor.drawio` | Khớp: nhóm `Manage club roles` / CRUD role của UC23 đã bỏ (13/11/2026) |
 | `UCMS_Screen_Flow.drawio` | Khớp: đã thay góp ý cũ bằng `Complaints` (sinh viên, CLB, ICPDP), có `Approval routing` và `Event defense room` |
 | `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Schema khớp DBML 55 bảng: `uploadedAssets` (bảng vận hành thêm 26/11/2026 cho job dọn ảnh minh chứng) đã vẽ ở trang tổng quan và trang M08. ERD khái niệm không vẽ bảng này vì nó là bảng kỹ thuật, không phải thực thể nghiệp vụ: có `routingRuleSets`, `eventDefenseSessions`, khiếu nại liên kết `Violation`. `requiredLevel`/`currentLevel`/`level` vẫn vẽ vì còn trong DBML cho dữ liệu cũ, không còn dùng từ 09/11/2026 |
 | `UCMS_Sequence_Diagrams.drawio` | Khớp: duyệt một cấp; hình 06 thêm trang buổi bảo vệ (BR63) |
 | `UCMS_Security_Architecture.drawio` | Khớp: có audit `ACCESS_DENIED` (SEC-08) |
-| `../06-user-guide/` | Markdown đã cập nhật (07/11 và 14/11/2026); ảnh chụp từ 13/10/2026, trước đợt làm lại giao diện 11/2026; `GUIDE_BOOK.pdf`/`GUIDE_BOOK.html` chưa dựng lại sau các thay đổi đó |
+| `../06-user-guide/` | Markdown đã cập nhật (07/11 và 14/11/2026); ảnh chụp từ 13/10/2026, trước đợt làm lại giao diện 11/2026; bản dựng HTML/PDF cũ đã xoá khỏi repo (27/11/2026), dựng lại bằng `build-guide.py` khi cần |
 
 Báo cáo final là báo cáo Google Doc của nhóm (13–14/11/2026); các bản `.docx` cũ trong repo đã xoá.
 
@@ -71,6 +71,7 @@ Không còn lệch: G1 (UC23 động) đã gỡ, S3 đã khớp; S1 và S2 là k
   rule cần cấp 2 — cấp 1 duyệt không tạo tác dụng phụ cuối, Head nhận và quyết định cấp 2, người duyệt cấp 1
   không quyết định cấp 2. SPEC: `.sdd/specs/feat-approval-routing/`. **Sửa 09/11/2026:** người dùng bỏ cấp
   duyệt thứ hai; rule chỉ đặt SLA, mọi hồ sơ UC08/UC26/UC46 do một ICPDP Officer quyết định, `ICPDP_HEAD` chỉ
+  cấu hình rule. **Sửa 25/11/2026:** `ICPDP_HEAD` gộp vào `ICPDP_OFFICER`, mọi ICPDP Officer
   cấu hình rule.
 - **G5 (07/11/2026)** — Context: email đi ra Google SMTP qua `smtpMailTransport` (`nodemailer`) khi đủ cấu
   hình; production bắt buộc SMTP và dừng khởi động nếu thiếu; outbox, lease, retry giữ nguyên. Credential
