@@ -55,16 +55,17 @@ không qua đợt tuyển); lịch sử trạng thái mở trong một AppDialog
 dòng đang lọc ra `.xlsx` bằng `write-excel-file` (nạp động, không vào bundle chính) — chỉ trang này dùng.
 
 Thiết lập CLB bị gate theo permission ở cả UI và server: `getClubSettings` (GET) và mọi mutation đều
-yêu cầu `club.profile.manage` (Club Leader). API xem phòng UC58 cũng chỉ dành cho Leader.
+yêu cầu `club.profile.manage` (Club Leader). API xem phòng UC58 thì mở cho mọi thành viên `Active` (`club.room.view`).
 
 Các trang thêm ngày 15/10/2026, đều chỉ dành cho Club Leader:
 `ClubTransitionPlansPage` + `ClubTransitionPlanEditor` (UC12: ban mới, người nhận từng nghĩa vụ còn mở, nộp lại
 sau khi bị trả), `ClubSuspensionRequestsPage` (UC14, dùng `SuspensionRequestWorkspace`), `ClubPeriodicReportsPage`
-+ `ClubPeriodicReportEditor` (UC38: nháp, nộp, nộp lại, lịch sử các lần nộp), `ClubInvitationsPage` (UC54: nhận
++ `ClubPeriodicReportEditor` (UC38: nháp, nộp, nộp lại, lịch sử các lần nộp; ô minh chứng cho dán/chọn ảnh để upload
+qua `useUploadPeriodicEvidence` — ảnh quá giới hạn được thu nhỏ thành JPEG trước khi gửi — hoặc nhập URL), `ClubInvitationsPage` (UC54: nhận
 hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộp minh chứng khắc phục) và
 `ClubEvaluationsPage` (UC43: chỉ kết quả `Published`).
 
-Các trang khác (đối chiếu 17/10/2026), chủ yếu dành cho Club Leader:
+Các trang khác (đối chiếu 27/11/2026), chủ yếu dành cho Club Leader:
 `ClubEventsPage` (UC25, UC27, UC28, UC30; cùng component với `mode="attendance"` cho UC32 tại
 `/club/:clubId/event-attendance` — thành viên `Active` có `club.attendance.manage` xem được danh sách tham dự/mã check-in và điểm danh hộ trong khung giờ check-in, còn đổi sức chứa, đẩy waitlist, sửa/chốt điểm danh và check-in ngoài giờ chỉ Club Leader mới thực hiện được — và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
 trang được chia thành các component chỉ trang này dùng: `ClubEventDetail` (khung chi tiết đề xuất, kèm
@@ -83,9 +84,8 @@ Link trong Word hoặc URL viết trực tiếp đều bấm được ở bản 
 Hyperlink có tên hiển thị được giữ đúng đích từng lần xuất hiện; dùng primitive `AppLinkedText`.
 sửa Word rồi import lại để đổi thông tin. Thiếu field hoặc dữ liệu không hợp lệ thì chặn lưu/nộp;
 không hỗ trợ trích xuất PDF/scan. Xem `docs/05-implementation/EVENT_PROPOSAL_IMPORT.md`.
-Giao diện tạo mới chỉ có nút "Tạo đề xuất sự kiện"; không còn nút, liên kết hay route `/club/:clubId/events/internal/new`.
-`InternalClubEventPage` chỉ còn route sửa sự kiện nội bộ đã có ở `DRAFT`/`CREATED`
-tại `/club/:clubId/events/:eventId/internal-edit`; báo trước 24 giờ,
+Giao diện tạo mới chỉ có nút "Tạo đề xuất sự kiện"; sự kiện nội bộ của CLB đã bị gỡ khỏi hệ thống (không còn
+trang hay route nào cho chúng).
 `ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route
 `/club/:clubId/event-reports`) và `ClubBudgetsPage` (UC36, dùng `FinanceWorkspace`, route `/club/:clubId/budgets`).
 

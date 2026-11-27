@@ -23,7 +23,7 @@ kể cả khi nhiều nhận xét có cùng nội dung; chỉ lưu chính thức
 `SuspensionRequestWorkspace` dùng chung cho UC14 phía CLB (có `clubId`: form gửi yêu cầu kèm xác nhận ảnh
 hưởng) và UC15 phía ICPDP (không có `clubId`: hàng đợi duyệt).
 
-Các component còn lại (đối chiếu 17/10/2026):
+Các component còn lại (đối chiếu 27/11/2026):
 
 - `FinanceWorkspace` — chọn ngân sách sự kiện của CLB (`ClubBudgetsPage`) hoặc ICPDP (`ReconciliationPage`) và hiển thị `SponsoredItems`.
 - `SponsoredItems` (gồm các phần tách nhỏ `SponsoredItemCard`, `SponsoredItemInvoiceSection`, `SponsoredItemRefundSection`, `SponsoredItemAttachmentCard`) — giải ngân theo hạng mục (trả trước qua cán bộ ICPDP kèm hoàn trả 2 bước, trả sau dưới 5 triệu tự chi hoặc hợp đồng, trả sau từ 5 triệu trở lên bắt buộc hợp đồng & thông tin chuyển khoản nhà cung cấp), ẩn dữ liệu `Draft` khỏi phía ICPDP cho tới khi nộp, tối đa 5 tệp JPG/PNG/PDF mỗi hạng mục và hỗ trợ cán bộ tải xuống chứng từ; hiển thị tại `FinanceWorkspace` và `BudgetDetailPage`.

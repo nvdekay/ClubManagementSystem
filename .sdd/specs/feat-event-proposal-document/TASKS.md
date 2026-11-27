@@ -1,5 +1,7 @@
 # TASKS: feat-event-proposal-document
 
+> Ghi chú (27/11/2026): form đề xuất nay dùng luồng import file Word, xem [feat-event-proposal-import](../feat-event-proposal-import/SPEC.md).
+
 - [x] Đối chiếu plan với code, tạo SPEC (ghi các điều chỉnh so với plan).
 - [x] DBML: cập nhật ghi chú `eventProposalVersions.payload` (không đổi số bảng/enum; generator không đọc note nên không cần sinh lại).
 - [x] Domain: `EventProposalDocument`, `EventProposalFileStorage`, `validateEventProposalFile`, `assertProposalDocumentPresent`, ẩn `assetId`.

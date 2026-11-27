@@ -9,7 +9,11 @@
 >
 > **Lưu ý (02/11/2026):** tài liệu gốc, đã bị SRS thay thế ở nhiều điểm — gửi email qua Google SMTP, CLB `Pending Setup`, domain trong chính sách. Danh sách và trạng thái từng phần: [`README.md`](README.md); khi khác nhau, lấy theo [`../SRS.md`](../SRS.md).
 >
-> **Lưu ý (14/11/2026):** sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53 của SRS) — tạo chính thức cần báo trước `>= 24` giờ, không ngoại lệ; chỉ sửa/đổi lịch ở `CREATED` (lịch mới `>= now + 24h`), từ `PUBLIC` khoá lịch và chỉ còn huỷ; đề xuất ICPDP nhận `PUBLIC` hoặc `MEMBERS_ONLY` có ít nhất 1 hạng mục ngân sách (Phương án B), `MEMBERS_ONLY` không ngân sách phải đi luồng nội bộ; dashboard ICPDP tách biểu đồ sự kiện theo tháng thành 2 chuỗi `publicCount` / `internalCount`.
+> **Lưu ý (14/11/2026, đã bị thay bởi lưu ý 27/11/2026 bên dưới):** sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53 của SRS) — tạo chính thức cần báo trước `>= 24` giờ, không ngoại lệ; chỉ sửa/đổi lịch ở `CREATED` (lịch mới `>= now + 24h`), từ `PUBLIC` khoá lịch và chỉ còn huỷ; đề xuất ICPDP nhận `PUBLIC` hoặc `MEMBERS_ONLY` có ít nhất 1 hạng mục ngân sách (Phương án B), `MEMBERS_ONLY` không ngân sách phải đi luồng nội bộ; dashboard ICPDP tách biểu đồ sự kiện theo tháng thành 2 chuỗi `publicCount` / `internalCount`.
+>
+> **Lưu ý (27/11/2026):** sự kiện nội bộ CLB và mức rủi ro sự kiện đã gỡ khỏi code ngày 19/11/2026 (BR53 của SRS đã rút);
+> mọi đoạn về sự kiện nội bộ trong tài liệu này là lịch sử. Từ 09/11/2026 mọi hồ sơ duyệt một cấp (UC05 của SRS chỉ đặt SLA) và
+> từ 25/11/2026 ICPDP chỉ còn một vai trò hệ thống `ICPDP_OFFICER`, nên các tuyến duyệt lên `ICPDP Head` ở §4 và §23 không còn áp dụng.
 
 ---
 
@@ -472,6 +476,8 @@ kiến **ngoài hệ thống** và ghi nhận kết quả vào quyết định c
   không phải đa phòng ban;
 - phân cấp trong ICPDP (officer, senior officer, head) xử lý bằng **RBAC**, không tạo actor mới.
 
+*(Lịch sử — theo code: từ 09/11/2026 mọi hồ sơ duyệt một cấp, routing chỉ đặt SLA; từ 25/11/2026 chỉ còn vai trò `ICPDP_OFFICER`.)*
+
 ### Trách nhiệm
 
 - xét duyệt thành lập CLB;
@@ -684,7 +690,7 @@ Event Proposal
 → Evaluation Input
 ```
 
-**Sự kiện nội bộ CLB (`MEMBERS_ONLY` — cập nhật nghiệp vụ):**
+**Sự kiện nội bộ CLB (`MEMBERS_ONLY` — cập nhật nghiệp vụ):** *(đã gỡ khỏi hệ thống ngày 19/11/2026; giữ lại để truy vết)*
 
 ```text
 Tạo sự kiện nội bộ không ngân sách (DRAFT → CREATED, báo trước ≥ 24 giờ, không ngoại lệ)
@@ -2527,7 +2533,7 @@ Reporting Compliance
 | Pending Approvals | Những request nào đang chờ ICPDP xử lý? *(không gồm sự kiện nội bộ CLB — không đi qua hàng đợi đề xuất)* |
 | Approval Aging | Request nào chờ quá lâu? |
 | Upcoming Events | Sự kiện nào sắp diễn ra? |
-| Internal Events | Danh sách & biểu đồ thống kê sự kiện nội bộ các CLB (trừ `DRAFT` và đã huỷ; biểu đồ theo tháng 2 chuỗi `publicCount` / `internalCount`) là bao nhiêu? |
+| Internal Events *(đã gỡ 19/11/2026)* | Danh sách & biểu đồ thống kê sự kiện nội bộ các CLB (trừ `DRAFT` và đã huỷ; biểu đồ theo tháng 2 chuỗi `publicCount` / `internalCount`) là bao nhiêu? |
 | Conflict Alerts | Có sự kiện nào trùng lịch/địa điểm? |
 | Budget Exposure | Tổng approved/disbursed/reconciled là bao nhiêu? |
 | Property Booking Queue | Yêu cầu đặt cơ sở vật chất nào đang chờ duyệt? |
@@ -2787,7 +2793,7 @@ Không phải mọi request đều có cùng approval path — nhưng mọi path
 
 ### Processing
 
-Rule-based routing **trong nội bộ ICPDP** (phân cấp bằng RBAC):
+Rule-based routing **trong nội bộ ICPDP** (phân cấp bằng RBAC): *(lịch sử — từ 09/11/2026 mọi hồ sơ do một ICPDP Officer quyết định, rule chỉ đặt SLA; không còn `ICPDP Head` từ 25/11/2026)*
 
 ```text
 Normal Event

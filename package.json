@@ -13,6 +13,7 @@
     "dev": "concurrently -k -s first -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
     "test": "npm test --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspace=client",
+    "guide:screenshots": "npm run guide:screenshots --workspace=client",
     "seed": "npm run seed --workspace=server",
     "seed:demo": "npm run seed:demo --workspace=server --",
     "seed:dashboard": "npm run seed:dashboard --workspace=server",

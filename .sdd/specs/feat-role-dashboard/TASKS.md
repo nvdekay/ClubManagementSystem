@@ -1,5 +1,7 @@
 # TASKS: feat-role-dashboard
 
+> Ghi chú (27/11/2026): drill-down sự kiện nội bộ không còn sau khi gỡ sự kiện nội bộ ([feat-remove-internal-events](../feat-remove-internal-events/SPEC.md)).
+
 - [x] Đối chiếu UC02, schema dữ liệu và quyền của ba loại workspace; viết SPEC trước khi code.
 - [x] Tạo domain port, use case kiểm tra ngữ cảnh và Mongo read model cô lập từng panel.
 - [x] Thêm API chỉ đọc, wiring và OpenAPI.

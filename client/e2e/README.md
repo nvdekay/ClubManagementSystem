@@ -71,12 +71,13 @@ Cloudinary và SMTP để trống nên không có gì rời khỏi máy (email �
 | `tests/*.e2e.ts` | Các spec, mỗi file một khu vực (công khai, sinh viên, Club Leader, ICPDP, phiên). Đuôi `.e2e.ts` để vitest của client không nhặt nhầm |
 | `setup/` | Cấu hình stack (`env.ts`), seed DB, cấp phiên, global setup/teardown. Các script import module của `server/` nên chạy bằng `tsx` |
 | `fixtures.ts` | `test`/`expect` mở rộng dùng cho mọi spec |
+| `guide/`, `guide.config.ts` | Chụp ảnh cho hướng dẫn sử dụng (`npm run guide:screenshots`), không phải test; xem [`guide/README.md`](guide/README.md) |
 | `tsconfig.json` | Typecheck riêng cho e2e (`npm run typecheck -w client` chạy cả hai) |
 
 ## Viết test mới
 
 - Selector theo vai trò và chữ hiển thị tiếng Anh (`getByRole('button', { name: 'Save' })`), không
-  theo class CSS. Lấy chuỗi từ `src/i18n/<module>.ts` (khoá `en`).
+  theo class CSS. Lấy chuỗi từ `src/i18n/locales/en/<module>.ts`.
 - Dữ liệu dùng chung một DB cho mọi worker: test ghi dữ liệu thì chỉ đụng bản ghi của chính nó và
   không giả định danh sách đang rỗng.
 - Thiếu dữ liệu: ưu tiên seed có sẵn; nếu không có, thêm vào `addE2eRecords` trong

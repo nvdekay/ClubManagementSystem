@@ -15,7 +15,7 @@ Cài đặt lần đầu và bảng xử lý lỗi: [`README.md`](README.md).
 docker compose up -d --wait   # Mongo 7, replica set rs0, 127.0.0.1:27017 (transaction cần replica set)
 npm run dev                   # server :3000 + client :5173, Vite proxy /api; OpenAPI ở :3000/docs
 
-npm run check                 # Definition of Done: constitution + lint + typecheck + test
+npm run check                 # Definition of Done: constitution + lint + format + typecheck + test
 npm run build --workspaces    # CI chạy thêm sau check
 
 npm run test:unit -w server                                  # chỉ unit, không cần DB
@@ -58,9 +58,14 @@ Cơ chế xuyên suốt:
 - **Xác thực:** Google OAuth, phiên ở cookie `ucms_session` (collection `authSessions`), mutation
   cần header `X-CSRF-Token`. `authGuard` trong `auth-routes.ts` đặt `res.locals.actor`.
 - **Phân quyền CLB:** kiểm tra ở tầng usecase qua `requireClubPermission`, không phải middleware.
-  Club Leader có mọi permission, role UC23 mang permission riêng, mọi thành viên `Active` có hai quyền mặc định; danh mục ở `domain/access.ts`.
-- **Job nền:** `interface/jobs/` chỉ hẹn giờ và gọi usecase idempotent; được start và stop trong
-  `main.ts`, kể cả khi không có cấu hình Auth.
+  Club Leader (Chủ nhiệm hoặc Phó chủ nhiệm đã được xác nhận, BR47) có mọi permission, mọi thành viên
+  `Active` có hai quyền mặc định, founder đã duyệt của CLB `Pending Setup` có thêm quyền hồ sơ và đề
+  cử ban chủ nhiệm; không có role tuỳ biến (UC23 đã rút). Danh mục ở `domain/access.ts`.
+- **Job nền:** `interface/jobs/` chỉ hẹn giờ (helper chung `schedule.ts`) và gọi usecase idempotent;
+  được start và stop trong `main.ts`, kể cả khi không có cấu hình Auth.
+- **Bảo vệ HTTP:** `interface/http/security-headers.ts` (CSP và các header bảo mật),
+  `rate-limit.ts` (20 request/phút/IP cho `/api/v1/auth/*`, 300/phút/IP cho `/api/v1`, cấu hình ở
+  `main.ts`), `static-client.ts` phục vụ `client/dist` khi có `CLIENT_DIST_DIR` (bản Docker).
 - **Thông báo:** inbox lọc theo workspace bằng danh sách audience ở `domain/notification.ts`; mã sự
   kiện chưa có trong danh sách sẽ âm thầm rơi vào inbox sinh viên. Email đi qua outbox +
   `notification-delivery-job`; Google SMTP khi đủ `SMTP_*` (bắt buộc ở production), log transport khi dev (`infra/mail/`).
@@ -71,7 +76,9 @@ Cơ chế xuyên suốt:
 
 ## Kiến trúc client
 
-- Toàn bộ route nằm ở `client/src/main.tsx`; `App.tsx` chỉ render `AuthWorkspacePage`.
+- Toàn bộ route nằm ở `client/src/main.tsx`, mọi trang được nạp lười (`lazy()`); `App.tsx` chỉ
+  render `AuthWorkspacePage`.
+- Gọi API qua `services/` (dùng chung `services/apiRequest.ts`) và hook TanStack Query trong `hooks/`.
 - Hai shell: `PublicLayout` (khách) và `WorkspaceShell` (đăng nhập, sidebar theo workspace). URL chia
   theo workspace: `/student`, `/icpdp`, `/club/:clubId`, `/workspace/*`.
 - `/auth/me` trả danh sách `workspaces`, mỗi workspace có `permissions`; UI ẩn hiện chức năng dựa

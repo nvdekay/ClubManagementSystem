@@ -10,8 +10,6 @@ package-lock.json
 **/*.md
 docs/
 docs-qa/
-outputs/
-seed-data/
 .rules/
 .sdd/
 .claude/

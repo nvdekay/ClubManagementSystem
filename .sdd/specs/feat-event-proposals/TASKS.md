@@ -1,5 +1,7 @@
 # TASKS: feat-event-proposals
 
+> Ghi chú (27/11/2026): sự kiện nội bộ đã bị gỡ ([feat-remove-internal-events](../feat-remove-internal-events/SPEC.md)); form tạo/sửa đề xuất nay đi qua luồng import file Word ([feat-event-proposal-import](../feat-event-proposal-import/SPEC.md)).
+
 - [x] Đối chiếu SRS/source và tạo SPEC trước khi code.
 - [x] Ghi chính sách triển khai và AC cụ thể theo chỉ dẫn làm theo khuyến nghị.
 - [x] Domain/usecase và unit test quyền/ngoại lệ.

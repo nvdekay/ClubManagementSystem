@@ -56,9 +56,8 @@ Giữ bảng thay vì đổi sang ảnh. Thêm các dòng chưa có vào **chín
 | Thời gian bắt đầu | `dd/mm/yyyy HH:mm`, hoặc `HH:mm` nếu đã ghi ngày diễn ra |
 | Thời gian kết thúc | Như thời gian bắt đầu; phải sau bắt đầu |
 | Địa điểm | Tên địa điểm, không tự chọn ID phòng/booking |
-| Đối tượng | Sinh viên trường / Công khai, hoặc Thành viên CLB / Nội bộ CLB |
+| Đối tượng | Phải ghi rõ (Sinh viên trường / Công khai, hoặc Thành viên CLB / Nội bộ CLB); đề xuất luôn được lưu là công khai (`PUBLIC`) vì sự kiện nội bộ đã gỡ 19/11/2026 |
 | Số lượng người tham gia | Một số nguyên cụ thể, ví dụ `120 người`; không dùng số đội hoặc khoảng 3–5 người/đội |
-| Mức độ rủi ro | `Thấp`, `Trung bình`, `Cao` (hoặc `LOW`, `MEDIUM`, `HIGH`) |
 | Ghi chú rủi ro | Giải thích bổ sung, tuỳ chọn |
 
 Nếu có một ngày diễn ra duy nhất nhưng chưa ghi giờ, hệ thống đọc khung giờ sớm nhất–muộn nhất
@@ -72,17 +71,17 @@ học kỳ đang cấu hình, xung đột lịch và ngân sách. Học kỳ do 
 Chỉ bảng **ĐỀ XUẤT HỖ TRỢ TỪ PHÒNG PDP** được chuyển thành các khoản xin ngân sách.
 Giữ thứ tự cột của mẫu: STT, Đầu mục, Đơn vị, Số lượng, Đơn giá, Thành tiền.
 Lấy tiền từ cột Thành tiền; không nhân lại hoặc lấy dòng Tổng. Khoản có tên nhưng tiền không đọc
-được sẽ chặn lưu/nộp. Đề xuất chỉ dành cho thành viên phải có ít nhất một khoản ngân sách theo rule hiện hành.
+được sẽ chặn lưu/nộp.
 Các bảng BUDGET TỔ CHỨC và BUDGET TRUYỀN THÔNG không được coi là tiền xin trường.
 Phần văn bản sau tiêu đề Hỗ trợ cơ sở vật chất thành nhu cầu CSVC.
 
 ## Kết quả với hai file nguồn
 
 - `Đề án sự kiện.docx`: tên Coding Inspiration 2026; ngày 04/07/2026, khung Agenda 06:00–18:00;
-  8 khoản xin hỗ trợ, tổng **24.845.000 VND**. Chưa có sức chứa dạng số người cụ thể và mức độ rủi ro
+  8 khoản xin hỗ trợ, tổng **24.845.000 VND**. Chưa có sức chứa dạng số người cụ thể
   trong bảng Tổng quan nên cần bổ sung. Ngày trong file đã qua so với ngày triển khai 17/11/2026,
   vì vậy không thể dùng nguyên file để tạo đề xuất mới.
-- `Template Đề án sự kiện.docx`: mẫu trống, cần điền thông tin; không hiển thị/lưu tên, ngày, 40 người hay LOW mặc định.
+- `Template Đề án sự kiện.docx`: mẫu trống, cần điền thông tin; không hiển thị/lưu tên, ngày hay 40 người mặc định.
 
 ## Giới hạn
 

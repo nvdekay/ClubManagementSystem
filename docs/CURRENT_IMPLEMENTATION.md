@@ -1,14 +1,33 @@
 # Hiện trạng triển khai và ánh xạ use case
 
-> Đối chiếu code nhánh `main` ngày 14/11/2026 (cập nhật luồng giải ngân 3 kênh, hoàn trả tạm ứng 2 bước và `schoolRefundAccount` ngày 24/11/2026; lần đối chiếu đầy đủ trước: `655cad3`, 17/10/2026). Đây là nguồn hiện hành để
+> Đối chiếu code ngày 27/11/2026 (trước đó: `main` 14/11/2026; luồng giải ngân 3 kênh, hoàn trả tạm ứng 2 bước và `schoolRefundAccount` ngày 24/11/2026; lần đối chiếu đầy đủ đầu tiên: `655cad3`, 17/10/2026). Đây là nguồn hiện hành để
 > đọc phạm vi **đã có trong code**. `SRS.md` mô tả phạm vi nghiệp vụ đích; các tài liệu kế hoạch
 > theo wave và review issue chỉ giữ giá trị lịch sử.
 
 ## 1. Mô hình truy cập phía CLB
 
-Điều chỉnh giao diện ngày 17/11/2026: phía CLB chỉ có "Tạo đề xuất sự kiện" tại
-`/club/:clubId/events/new`. Nút, liên kết và route tạo sự kiện nội bộ đã gỡ khỏi giao diện;
-vẫn quản lý được sự kiện nội bộ đã có, API và dữ liệu hiện tại được giữ nguyên.
+Phía CLB chỉ có "Tạo đề xuất sự kiện" tại `/club/:clubId/events/new`. Sự kiện nội bộ CLB (giao
+diện gỡ 17/11/2026) đã gỡ hẳn khỏi code ngày 19/11/2026 cùng mức rủi ro đề xuất: không còn route
+`/clubs/:clubId/internal-events*`, trang `InternalClubEventPage`/`InternalEventsPage` hay panel sự
+kiện nội bộ trên dashboard ICPDP ([feat-remove-internal-events](../.sdd/specs/feat-remove-internal-events/SPEC.md)).
+
+Thay đổi sau 25/11/2026 cần biết khi đọc các mục dưới:
+
+- Client nạp lười mọi trang (`lazy()` trong `client/src/main.tsx`, fallback khi đang tải), chuỗi
+  i18n tách theo ngôn ngữ ở `client/src/i18n/locales/{en,vi}` và chỉ nạp ngôn ngữ đang dùng.
+- Hàng đợi ICPDP của UC37 (ngân sách), UC40 (hồ sơ vi phạm), UC14/UC15 (yêu cầu tạm ngừng) và UC51
+  (khiếu nại) phân trang phía server (`server/src/domain/paging.ts`, `pageQuery` trong
+  `interface/http/request.ts`).
+- UC38: ảnh minh chứng báo cáo định kỳ tải lên Cloudinary qua
+  `POST /clubs/:clubId/periodic-reports/evidence-images`, báo cáo chỉ lưu tham chiếu (trước đây nhúng
+  data URL); ảnh không được báo cáo nào tham chiếu sau 24 giờ bị `evidence-cleanup-job` xoá
+  ([feat-upload-orphan-cleanup](../.sdd/specs/feat-upload-orphan-cleanup/SPEC.md)).
+- UC25/UC26 (BR63): khi ICPDP chấp nhận yêu cầu dời lịch bảo vệ của CLB, buổi bảo vệ vào thẳng
+  `CONFIRMED`, CLB không phải xác nhận lại.
+- UC27: công bố sự kiện không gửi thông báo cho thành viên (nhánh này đã gỡ cùng sự kiện nội bộ).
+- Triển khai một container (`Dockerfile`, `docker-compose.prod.yml`): Express phục vụ cả API lẫn
+  bản build client với CSP/HSTS, giới hạn tần suất request và log JSON có `requestId`; xem
+  [`README.md`](../README.md) mục Triển khai.
 
 Ngày 17/11/2026, form đề xuất UC25 chuyển sang import DOCX và hiển thị field chỉ đọc.
 Muốn chỉnh sửa phải sửa Word rồi import lại; thiếu hoặc chưa rõ field bắt buộc thì chặn lưu/nộp.
@@ -52,9 +71,9 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Actor | Use case | Hiện trạng |
 |---|---|---|
 | Mọi user | UC01 đăng nhập Google | Có; cần nghiệm thu callback Google thật |
-| Mọi user | UC02 dashboard | Có; từ 19/10 có danh sách sự kiện nội bộ cho ICPDP và lịch sử cơ cấu/ban chủ nhiệm theo CLB (ICPDP và Club Leader); nhánh `internal-event` (14/11/2026): tập sự kiện nội bộ ghi nhận bỏ `DRAFT`/`CANCELLED`/`Cancelled`, biểu đồ tháng 2 chuỗi `publicCount`/`internalCount` |
+| Mọi user | UC02 dashboard | Có; lịch sử cơ cấu/ban chủ nhiệm theo CLB (ICPDP và Club Leader) từ 19/10; danh sách sự kiện nội bộ cho ICPDP đã gỡ 19/11/2026 |
 | Student | UC06 khám phá CLB/sự kiện | Có; Guest xem được danh bạ/chi tiết (chỉ đọc), ứng tuyển/đăng ký mới yêu cầu đăng nhập; E1 gợi ý CLB mới nhất (19/10) |
-| Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; còn QA Cloudinary thật và dọn asset mồ côi |
+| Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; tài liệu vừa upload bị xoá khỏi Cloudinary nếu ghi hồ sơ lỗi; còn QA Cloudinary thật |
 | Student | UC17 ứng tuyển thành viên | Có; thành viên `Active` hoặc `Inactive` của CLB không nộp được (E3/BR13, sửa 17/10/2026) |
 | Club Member | UC21 A2 tái xác nhận thành viên đầu kỳ | Có, tại `/workspace/clubs`; quá hạn chuyển `Inactive`, Leader kích hoạt lại qua UC21 |
 | Student | UC29 đăng ký sự kiện | Có |
@@ -72,10 +91,10 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
 | Club Leader | UC23 quản lý role và phân quyền | **Đã rút** (SRS hiện hành, role cố định); code UC23 đã gỡ 07/11/2026 |
-| Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có; nhánh `internal-event` (14/11/2026, `.sdd/specs/feat-internal-club-events`) thêm luồng sự kiện nội bộ `DRAFT → CREATED → PUBLIC → ONGOING → FINISH` / `CANCELLED`: server `POST`/`PUT /clubs/:clubId/internal-events`, `POST /clubs/:clubId/internal-events/:id/create`; client `/club/:clubId/events/internal/new`, `/club/:clubId/events/:eventId/internal-edit` (`client/src/pages/club/InternalClubEventPage.tsx`). Cũng trên nhánh này (`.sdd/specs/feat-event-proposal-document`): đề xuất ICPDP bắt buộc file đề án `proposalDocument` (`.docx`/`.pdf`, tối đa 10 MB) khi nộp, lưu nháp không bắt buộc — `GET /events/proposal-template`, `GET /events/proposal-template/download` (mẫu mặc định `docs/Template Đề án sự kiện.docx`), `POST /clubs/:clubId/events/:id/proposal-document`, `GET /clubs/:clubId/events/:id/proposal-document/access`; file được đóng băng trong `eventProposalVersions.payload.proposalDocument` khi nộp, bản đổi lịch kế thừa file hiện có (không bắt buộc với sự kiện cũ chưa có file); không áp dụng cho sự kiện nội bộ |
+| Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có. Đề xuất ICPDP bắt buộc file đề án `proposalDocument` (`.docx`/`.pdf`, tối đa 10 MB) khi nộp, lưu nháp không bắt buộc (`.sdd/specs/feat-event-proposal-document`); form nhập từ file Word ([EVENT_PROPOSAL_IMPORT.md](05-implementation/EVENT_PROPOSAL_IMPORT.md)) — `GET /events/proposal-template`, `GET /events/proposal-template/download` (mẫu mặc định `docs/Template Đề án sự kiện.docx`), `POST /clubs/:clubId/events/:id/proposal-document`, `GET /clubs/:clubId/events/:id/proposal-document/access`; file được đóng băng trong `eventProposalVersions.payload.proposalDocument` khi nộp, bản đổi lịch kế thừa file hiện có (không bắt buộc với sự kiện cũ chưa có file). Sự kiện nội bộ đã gỡ 19/11/2026 |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi, chứng từ & hoàn trả tạm ứng | Có (24/11/2026), tại `/club/:clubId/budgets` (`SponsoredItems.tsx`, `sponsored-item-routes.ts`): xác nhận đã nhận tạm ứng (`BEFORE_EVENT`) hoặc hoàn ứng (`AFTER_EVENT < 5M`), ghi số tiền/kênh/`vendorBankInfo` (`DIRECT_VENDOR`), tải 1–5 tệp JPG/PNG (≤ 5 MiB) hoặc PDF (≤ 10 MiB) chống trùng SHA-256, nộp sau khi sự kiện kết thúc (`E → E+14d`); khi có phần dư tạm ứng (`RefundPending`) xem STK nhà trường qua `/refund-account`, tải 1–5 biên lai hoàn trả và gửi ICPDP xác nhận (`RefundSubmitted`). Màn legacy giữ tương thích ngân sách cũ |
-| Club Leader | UC38 báo cáo định kỳ | Có, tại `/club/:clubId/periodic-reports`; mỗi lần nộp lưu snapshot riêng |
+| Club Leader | UC38 báo cáo định kỳ | Có, tại `/club/:clubId/periodic-reports`; mỗi lần nộp lưu snapshot riêng; ảnh minh chứng tải lên Cloudinary (`/periodic-reports/evidence-images`) |
 | Club Leader | UC40 giải trình và khắc phục vi phạm | Có, tại `/club/:clubId/violations` |
 | Club Leader | UC43 xem kết quả đánh giá | Có, tại `/club/:clubId/evaluations`; chỉ thấy kết quả `Published` |
 | Club Leader | UC45, UC47 booking ngoài `ROOM` | Có |
@@ -104,7 +123,7 @@ ngày 17/10/2026 ghi nhận các luồng thiếu dưới đây. Đến 14/11/202
 chỉ còn mục 11 và phần "Còn lại" của mục 6 chưa làm.
 
 Đã sửa ngày 17/10/2026 (nhánh `agent/fix-business-gaps`): panel sự kiện nội bộ UC02 đếm sự kiện
-`MEMBERS_ONLY`; BR21 coi kỳ đã quá hạn mà CLB chưa mở báo cáo là nghĩa vụ quá hạn
+`MEMBERS_ONLY` (panel đã gỡ 19/11/2026); BR21 coi kỳ đã quá hạn mà CLB chưa mở báo cáo là nghĩa vụ quá hạn
 ([periodic-report-obligations.ts](../server/src/infra/db/periodic-report-obligations.ts), chỉ tính kỳ
 bắt đầu sau khi CLB được tạo); UC17 E3 chặn cả thành viên `Inactive`; UC35 từ chối tạm ứng có ngày
 chi sau khi sự kiện kết thúc; UC10 chặn một người ở hai ghế; trang sự kiện CLB nêu rõ nghĩa vụ quá
@@ -116,8 +135,7 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 đặc tả UC15 đã sửa cho khớp.
 
 **Dashboard và khám phá** — đã xử lý ngày 19/10/2026 (nhánh `agent/gaps-dashboard`): UC02 có trang
-sự kiện nội bộ cho ICPDP (`/workspace/internal-events`, lọc CLB/học kỳ, chi tiết + điểm danh chỉ
-đọc) và lịch sử cơ cấu/ban chủ nhiệm theo CLB (hộp quản lý CLB của ICPDP, `/club/:clubId/board-history`
+sự kiện nội bộ cho ICPDP (`/workspace/internal-events`, đã gỡ 19/11/2026) và lịch sử cơ cấu/ban chủ nhiệm theo CLB (hộp quản lý CLB của ICPDP, `/club/:clubId/board-history`
 cho Club Leader); UC22 hiện yêu cầu rời trên dashboard Student và trang "CLB của tôi"; UC06 E1 gợi ý
 CLB mới nhất khi tìm không ra.
 
@@ -160,8 +178,10 @@ CLB mới nhất khi tìm không ra.
 
 **Hạ tầng bên ngoài**
 
-11. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi. Cả hai cần credential thật nên chưa làm; dọn
-    asset mồ côi cố ý chưa viết vì code xoá asset trên Cloudinary không kiểm thử được khi không có tài khoản thật (19/10).
+11. Nghiệm thu callback Google và Cloudinary thật: cần credential thật nên chưa làm. Dọn asset mồ côi đã làm
+    (`feat-upload-orphan-cleanup`): upload hồ sơ UC07 và mẫu đề án UC26 xoá asset khi bước ghi sau đó lỗi; ảnh
+    minh chứng UC38 được theo dõi ở `uploadedAssets` và `evidence-cleanup-job` (mỗi 24 giờ) xoá ảnh không được tham
+    chiếu. Các loại upload khác chưa có job dọn.
 12. ~~Mail delivery worker và inbox notification tổng quát.~~ Đã làm 19/10/2026 (`.sdd/specs/feat-notification-inbox`):
     chuông + hộp thông báo in-app ở mọi workspace (`/notifications/mine`, đánh dấu đã đọc), worker outbox SCH-10 có
     claim/lease, `emailDeliveryLogs` và retry backoff; email theo ma trận SRS §8.2. Từ 07/11/2026 gửi thật qua Google SMTP
@@ -222,10 +242,10 @@ CLB mới nhất khi tìm không ra.
 - UC28: sự kiện `Ongoing` huỷ được nhưng không đổi lịch được.
 - `audienceScope` dùng `PUBLIC`/`MEMBERS_ONLY`, đặc tả ghi Public/Internal.
 - UC33 (`655cad3`): chỉ soạn báo cáo sau sự kiện khi điểm danh đã chốt
-  ([post-event-report.ts](../server/src/domain/post-event-report.ts#L46)); no-show chỉ gắn cờ sau khi
+  ([post-event-report.ts](../server/src/domain/post-event-report.ts#L129)); no-show chỉ gắn cờ sau khi
   sự kiện kết thúc.
 - UC40 (`655cad3`): ICPDP chỉ đánh dấu biện pháp khắc phục hoàn thành khi CLB đã nộp minh chứng
-  ([violation.ts](../server/src/domain/violation.ts#L268)).
+  ([violation.ts](../server/src/domain/violation.ts#L553)).
 - UC43: chỉ Leader xem kết quả đã công bố.
 - UC44: từ chối xoá nếu từng có booking; mã tự sinh; tài sản mới ở trạng thái active.
 - UC46: thông báo quyết định chỉ gửi người nộp gần nhất. UC55: mọi loại xuất đều có PDF.
@@ -237,17 +257,18 @@ CLB mới nhất khi tìm không ra.
   `public-discovery-routes.ts`; mọi màn hình khác nằm sau UC01 (sửa 02/11/2026).
 - `club.transition.plan` (UC12) và `club.suspension.request` (UC14) đã có route nghiệp vụ.
   `club.complaint.respond` dùng cho màn tuân thủ UC40 phía CLB và trả lời khiếu nại UC52.
-- `isBoardSeat` là cờ kỹ thuật: resolver cấp quyền cho mọi vị trí active mang cờ này và assignment
-  đã xác nhận. Cơ cấu chuẩn hiện tạo Chủ nhiệm/Phó chủ nhiệm; dữ liệu cũ gắn cờ cho ghế khác cũng
-  được resolver coi là Leader.
+- `isBoardSeat` là cờ kỹ thuật đánh dấu ghế cần ICPDP xác nhận. Resolver (`isClubLeaderSeat`) chỉ coi
+  là Leader ghế `isLeaderRole` (Chủ nhiệm) hoặc ghế `isBoardSeat` có mã `VICE_LEADER`/`VICE` (Phó chủ
+  nhiệm); ghế khác mang cờ này không cấp quyền (BR55).
 - UC09: cả GET thiết lập (`getClubSettings`) lẫn mutation đều yêu cầu `club.profile.manage`
-  ([club-profile.ts](../server/src/usecase/club-profile.ts#L100)), tức chỉ Leader (hoặc founder khi
+  ([club-profile.ts](../server/src/usecase/club-profile.ts#L137)), tức chỉ Leader (hoặc founder khi
   `Pending Setup`). `assertClubSettingsRead` trong `usecase/access.ts` không còn được gọi.
 
 ## 5. Cổng kiểm chứng
 
-Số test ngày 14/11/2026: server 398 unit test / 62 file và 179 integration test / 48 file
-(integration cần `MONGO_URI` tới Mongo replica set; thiếu biến này thì bị bỏ qua), client 27 test / 2 file.
-Lần đối chiếu ngày 17/10/2026: `npm run check` xanh, 442 test đều qua, không skip. Các màn mới đã nghiệm thu trên trình duyệt với database QA
+Số test ngày 27/11/2026 (`npm run check` xanh): server 1040 test / 140 file vitest (unit + integration;
+integration cần `MONGO_URI` tới Mongo replica set, thiếu biến này thì bị bỏ qua — job `integration` trên CI
+chạy chúng với Mongo thật), client 110 test / 10 file; Playwright e2e 20 test / 5 file chạy riêng bằng
+`npm run test:e2e` (job `e2e` trên CI, trên bản build do API phục vụ). Các màn mới đã nghiệm thu trên trình duyệt với database QA
 riêng, ở `en`/sáng/desktop và `vi`/tối/mobile: không lỗi console hay API, không tràn ngang, và
 Member bị từ chối ở cả menu lẫn API. Khi code hoặc phạm vi thay đổi, cập nhật file này cùng SRS, SPEC/TASKS liên quan và sơ đồ.

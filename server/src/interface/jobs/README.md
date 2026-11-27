@@ -18,7 +18,7 @@ bước trong try/catch riêng, nên một bước lỗi không làm bỏ qua c�
 - `event-lifecycle-job.ts` — UC26 E2 + SCH-01: chạy lúc khởi động và mỗi giờ: đề xuất `Revision Requested` quá hạn
   sửa → `Expired`; sự kiện `Upcoming` tới giờ bắt đầu → `Ongoing`, qua giờ kết thúc → `Completed`; lời mời sự
   kiện cấp trường (UC53) còn `Pending` quá hạn phản hồi → `Expired` (BR59).
-- `accountability-reminder-job.ts` — nhắc và ghi nhận nghĩa vụ báo cáo/tài chính theo policy.
+- `accountability-reminder-job.ts` — chạy lúc khởi động và mỗi giờ: nhắc và ghi nhận nghĩa vụ báo cáo/tài chính theo policy.
 - `application-expiry-job.ts` — UC07/08: chạy lúc khởi động và mỗi giờ: hồ sơ thành lập `Revision Requested`
   quá `revisionDeadlineAt` → `Expired`, đúng một lần.
 - `membership-reconfirmation-job.ts` — UC21 A2: chạy lúc khởi động và mỗi giờ: mở đợt tái xác nhận đầu học kỳ

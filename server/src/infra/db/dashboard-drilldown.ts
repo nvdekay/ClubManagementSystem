@@ -9,7 +9,7 @@ function optionalText(value: unknown): string | undefined {
   return typeof value === 'string' && value ? value : undefined
 }
 
-// Bộ lọc sự kiện nội bộ đã được ghi nhận
+// Lịch sử ban điều hành của CLB: các nhiệm kỳ và ghế đã xác nhận
 export async function clubBoardHistory(clubId: string): Promise<ClubBoardHistory | null> {
   const id = new Types.ObjectId(clubId)
   const club = await m

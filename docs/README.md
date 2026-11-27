@@ -24,10 +24,6 @@ nhau về một yêu cầu, **lấy theo SRS**.
 flow liên quan thành sáu phần, kèm UC phụ trách, kịch bản demo, điểm cần giải thích, phân bổ
 thời lượng và cách bàn giao giữa người trình bày.
 
-**[`08-defense-scripts/`](08-defense-scripts/README.md) — lời thoại và Q&A cho từng flow.**
-11 file riêng theo bản phân công, có nghiệp vụ chính, chuẩn bị demo, lời thoại, nhánh xử lý
-và câu hỏi bảo vệ kèm câu trả lời để từng thành viên tập trình bày.
-
 **Report final hiện hành:** báo cáo Google Doc của nhóm (bản final, 13–14/11/2026), dùng bộ sơ đồ
 trong `03-diagrams/img/`. Các bản `.docx` cũ trong repo (`Group1_SE1939-NJ_Report_Final.docx` dựng 19/10/2026 và
 `03-diagrams/UCMS_Diagrams.docx`) đã lỗi thời nên được xoá ngày 14/11/2026; `v2.docx`, DOCX đặc tả, các file
@@ -39,13 +35,15 @@ thuyết trình và review rời đã được xoá từ 19/10/2026. Nguồn Mar
 | Thư mục | Bên trong có gì | Đọc khi nào |
 |---|---|---|
 | [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
-| [`02-use-cases/`](02-use-cases/) | Use case model v2, đặc tả chi tiết và nhật ký review — bản lịch sử, đã được `SRS.md` thay thế (UC23 đã rút, phê duyệt một cấp) | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
+| [`02-use-cases/`](02-use-cases/) | Use case model v2 và đặc tả chi tiết — bản lịch sử, đã được `SRS.md` thay thế (UC23 đã rút, phê duyệt một cấp) | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
 | [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram hiện hành [`UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) (ảnh v1, v2, v2.1 là lịch sử), use case diagram theo actor, state diagram, ERD, package diagram, screen flow, swimlane các luồng nghiệp vụ chính (main workflow) | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
 | [`05-implementation/`](05-implementation/) | Ma trận UC → code, các chỗ code lệch sơ đồ, thiết lập Auth/SMTP và thiết kế cơ sở dữ liệu dạng DBML (55 bảng) cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
-| [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed (ảnh chụp trước đợt làm lại giao diện 11/2026) | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
-| [`07-demo-videos/`](07-demo-videos/) | 18 video demo các luồng nghiệp vụ chính | Bạn chuẩn bị demo hoặc cần xem một luồng chạy thật |
-| [`08-defense-scripts/`](08-defense-scripts/README.md) | Script thuyết trình và Q&A, mỗi flow một file Markdown | Bạn chuẩn bị lời thoại, câu trả lời và bàn giao giữa 6 người bảo vệ |
+| [`06-user-guide/`](06-user-guide/) | Guide book Markdown (`build-guide.py` dựng bản HTML, bản dựng không nằm trong repo) và ảnh chụp các luồng chính với dữ liệu đã seed (ảnh chụp trước đợt làm lại giao diện 11/2026) | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
+| [`09-testing/`](09-testing/README.md) | Bảng Unit Test Case theo mẫu FPT (`.xlsx`) và cách chạy test tự động | Bạn cần test case của một use case hoặc số liệu kiểm thử |
+
+Video demo (`07-demo-videos/`) quá lớn để đưa vào Git nên chỉ có trên máy của nhóm (đã nằm trong
+`.gitignore`).
 
 ## Thứ tự đọc cho người mới
 

@@ -113,8 +113,9 @@ Callback nội tuyến vẫn dùng arrow.
 
 ### STD-02 · Kiểm thử
 - `tests/unit/` — domain + usecase, không DB, không mạng, repository in-memory.
-- `tests/integration/` — infra chạy với Mongo thật (docker compose / service của CI).
-- Một script e2e cho luồng thành công chính, khi giao diện demo đã ổn định.
+- `tests/integration/` — infra chạy với Mongo thật (docker compose, cả ở máy local lẫn job `integration` của CI).
+- Một script e2e cho luồng thành công chính, khi giao diện demo đã ổn định (đã có: Playwright ở `client/e2e/`,
+  `npm run test:e2e`, job `e2e` của CI).
 - Không đặt ngưỡng phần trăm coverage. Một ngưỡng coverage khiến nhóm viết test chạy theo con
   số; cổng thực sự là: mỗi tiêu chí nghiệm thu trong một SPEC đều có test.
 
