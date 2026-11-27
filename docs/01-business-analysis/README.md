@@ -20,3 +20,7 @@ nhau, lấy theo SRS. Không xoá gì cả, để một quyết định luôn tr
 - CLB mới vào `Pending Setup` — nay UC08 tạo CLB `Active` với ban chủ nhiệm sáng lập đã xác nhận,
   không còn quyền sáng lập tạm thời.
 - Domain email được phép là giá trị chính sách — nay lấy từ biến môi trường `ALLOWED_DOMAIN`.
+- Duyệt đa cấp trong ICPDP và vai trò `ICPDP Head` (§4, §23) — từ 09/11/2026 mọi hồ sơ duyệt một cấp,
+  từ 25/11/2026 chỉ còn một vai trò hệ thống `ICPDP_OFFICER` (ghi 27/11/2026).
+- Sự kiện nội bộ CLB (`MEMBERS_ONLY`) và mức rủi ro sự kiện (§7, §18) — đã gỡ khỏi code ngày 19/11/2026
+  (BR53 của SRS đã rút).
