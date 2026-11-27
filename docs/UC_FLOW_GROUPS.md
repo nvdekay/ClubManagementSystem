@@ -4,8 +4,8 @@ Cách chia dưới đây giữ nguyên **số thứ tự 11 flow trong danh sác
 Đây là số flow của bản phân công, không phải mã F1–F11 trong SRS.
 Người 1–6 là vị trí phân công để nhóm điền tên thành viên.
 
-Lời thoại và Q&A cho từng flow nằm tại
-[`08-defense-scripts/`](08-defense-scripts/README.md).
+Lời thoại và Q&A cho từng flow từng nằm ở `08-defense-scripts/`; thư mục này đã được xoá khỏi
+repo sau buổi bảo vệ (27/11/2026).
 
 Mỗi người phụ trách một nhóm flow liên quan, trình bày cả thao tác phía người gửi và phía
 người xử lý. Chia cùng tỷ trọng thời gian trình bày, điều chỉnh độ sâu theo độ phức tạp;
