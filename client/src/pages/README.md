@@ -1,9 +1,10 @@
 # pages/
 
-Router nằm ở `client/src/main.tsx` (React Router); `App.tsx` chỉ render `AuthWorkspacePage`.
+Router nằm ở `client/src/main.tsx` (React Router); mọi trang được nạp lười bằng `React.lazy` (mỗi trang
+một chunk, `RouteFallback` hiện trong lúc tải). `App.tsx` chỉ render `AuthWorkspacePage`.
 Mỗi nhóm trang một thư mục, chứa component của trang cộng các component con chỉ trang đó dùng:
 
-- `public/` — trong `PublicLayout`: `/`, `/clubs`, `/clubs/:id`, `/events`, `/events/:id`, trang 404. Hiện `PublicLayout` chuyển khách chưa đăng nhập về `/login` dù API `/public` mở.
+- `public/` — trong `PublicLayout`: `/`, `/clubs`, `/clubs/:id`, `/events`, `/events/:id`, trang 404. Khách chưa đăng nhập xem được (chỉ đọc); header có nút "Đăng nhập" giữ trang đang xem trong `returnTo`.
 - `student/` — trong `WorkspaceShell`: `/student` và các route `/workspace/...` của Student.
 - `club/` — trong `WorkspaceShell`: `/club/:clubId/...`, theo ngữ cảnh một CLB.
 - `icpdp/` — trong `WorkspaceShell`: `/icpdp`, `/icpdp/clubs`, `/icpdp/accounts` và các route `/workspace/...` của ICPDP.
