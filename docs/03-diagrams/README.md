@@ -331,3 +331,15 @@ Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
 - **Organization structure (2026-11-24):** bỏ ô note vàng và các dòng mô tả phụ trong từng khối, chỉ giữ tên khối; nhãn mũi tên còn `recruitment`.
 - **Screen flow (2026-11-24):** bỏ hai màn `Internal events` / `Internal event` của ICPDP (tính năng đã gỡ ngày 19/11/2026), dồn các màn phía dưới lên.
 - **State diagram (2026-11-24, đợt 2):** trang Event bỏ cung `unlock attendance` Closed → Completed (không thể xảy ra vì unlock bị chặn khi đã có báo cáo); trang Event Budget thêm nút đầu (`approve`) và nút cuối cho NOT_SPONSORED, Reconciled, Paid, Rejected, Expired.
+
+## Đồng bộ sơ đồ với code sau review (27/11/2026)
+
+Sửa có chọn lọc theo các thay đổi hành vi trong code từ 24/11/2026 (PR #59, #65, #66, #68); bố cục và kiểu vẽ giữ nguyên, chỉ xuất lại các trang bị ảnh hưởng.
+
+- **State diagram `Event Defense Session`:** chấp thuận dời lịch đưa buổi bảo vệ thẳng vào `CONFIRMED` (BR63, cập nhật 26/11/2026); `RESCHEDULE_REQUESTED → SCHEDULED` chỉ còn nhánh bác bỏ.
+- **Sequence:** trang `06 Event defense session (3/3)` bước 92 (lịch mới `CONFIRMED`, `confirmedAt` = lúc chấp thuận); trang `07` (1/3–3/3) đăng ký, mở chỗ và đôn waitlist chỉ nhận `Upcoming`, bỏ trạng thái nội bộ `PUBLIC`; trang `01 (1/3)` không ghi audit khi callback OAuth không có cookie `ucms_oauth`; trang `04 (3/3)` onboard / decline đơn không tồn tại trả 404; trang `03`, `06 (1/3)`, `08 (2/2)` và `06 (3/3)` dùng guard chung `requireIcpdpOfficer()` (`usecase/access.ts`).
+- **Class diagram:** trang `05` bỏ `notifyMembers` và nhánh thông báo khi công bố (FR-UC27-02); trang `06`–`09` bỏ trạng thái nội bộ khỏi đăng ký, sức chứa, waitlist và check-in, mở khoá điểm danh cần `ICPDP_OFFICER` (gộp `ATTENDANCE_UNLOCK` ngày 25/11/2026); trang `13` thêm `POST /clubs/:clubId/periodic-reports/evidence-images` và `uploadPeriodicEvidenceImage()`, minh chứng là link http(s) hoặc tham chiếu ảnh `ucms-evidence:` (không nhận `data:` URL), ảnh được ghi vào `uploadedAssets` cho job dọn dẹp hằng ngày; trang `14`–`17` dùng `requireIcpdpOfficer()` / `parseObjectId()`; trang `15` hàng đợi vi phạm phân trang (`ViolationListQuery` → `ViolationPage` `{items, total, page, pageSize, counts}`).
+- **Swimlane:** trang `04` nhánh chấp thuận dời lịch ghi `CONFIRMED`; trang `05` mở khoá điểm danh do ICPDP officer thực hiện.
+- **Database schema:** trang `Schema M10` thêm `notifications.clubId` (inbox CLB phân trang trong Mongo).
+- **Security architecture:** tầng 2 thêm CSP, HSTS sau proxy tin cậy (`TRUST_PROXY`), Permissions-Policy (`security-headers.ts`); tầng 3 thêm request id (`X-Request-Id`), rate limit theo IP (auth 20, API 300 request/phút → 429) và giới hạn JSON 100 KB; tầng 6 bỏ `ICPDP_HEAD`.
+- **System architecture:** `interface/http` ghi thêm việc phục vụ bản build client (`client/dist`) khi chạy một container.
