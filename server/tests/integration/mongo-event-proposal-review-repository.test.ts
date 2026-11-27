@@ -476,4 +476,145 @@ describe.skipIf(!uri)('Mongo event proposal review repository', () => {
     const queue = (await repo.listOpen()).filter((item) => selected.has(item.event.id))
     expect(queue.map((item) => item.event.id)).toEqual([tied, newest, oldest])
   })
+
+  it('expires approved club events that were never published before they started', async () => {
+    const repo = mongoEventProposalReviewRepository()
+    const later = new Date(now.getTime() + 60 * DAY)
+    // Flush whatever earlier cases left behind so the counts below are this case's alone.
+    await repo.advanceLifecycle(later)
+    const leader = new Types.ObjectId()
+    const membership = await ucmsModels.clubMemberships!.create({
+      clubId,
+      userId: leader,
+      state: 'Active',
+      joinedAt: now,
+      defaultRole: 'MEMBER',
+      statusHistory: [],
+    })
+    const seat = await ucmsModels.clubPositions!.create({
+      clubId,
+      code: 'LEADER',
+      name: 'Chủ nhiệm',
+      isBoardSeat: true,
+      isLeaderRole: true,
+      isActive: true,
+      permissionCodes: [],
+    })
+    await ucmsModels.clubPositionAssignments!.create({
+      clubId,
+      termId: new Types.ObjectId(),
+      positionId: seat._id,
+      membershipId: membership._id,
+      effectiveFrom: now,
+      assignedBy: officer,
+      confirmedBy: officer,
+    })
+    function event(title: string, state: string, startAt: Date, organizerType = 'CLUB') {
+      return {
+        organizerType,
+        ...(organizerType === 'CLUB' ? { clubId, clubName: 'HEBE' } : {}),
+        title,
+        startAt,
+        endAt: new Date(startAt.getTime() + 3 * 3_600_000),
+        semesterCode: 'Fall 2026',
+        audienceScope: 'PUBLIC',
+        capacity: 10,
+        state,
+        createdAt: now,
+      }
+    }
+    const started = new Date(later.getTime() - 3_600_000)
+    const notYet = new Date(later.getTime() + DAY)
+    const [stale, upcoming, future, school] = await ucmsModels.events!.insertMany([
+      event('Không công bố', 'Approved', started),
+      event('Đã công bố', 'Upcoming', notYet),
+      event('Chưa tới giờ', 'Approved', notYet),
+      event('Sự kiện trường', 'Approved', started, 'ICPDP'),
+    ])
+    const booking = await ucmsModels.propertyBookings!.create({
+      propertyId: new Types.ObjectId(),
+      clubId,
+      clubName: 'HEBE',
+      eventId: stale!._id,
+      purpose: 'Event',
+      startAt: started,
+      endAt: new Date(started.getTime() + 3 * 3_600_000),
+      semesterCode: 'Fall 2026',
+      state: 'Approved',
+      currentVersionNo: 1,
+      createdAt: now,
+    })
+    const budget = await ucmsModels.eventBudgets!.create({
+      eventId: stale!._id,
+      clubId,
+      lines: [],
+      requestedTotal: Types.Decimal128.fromString('1000000'),
+      approvedTotal: Types.Decimal128.fromString('1000000'),
+      approvedByDecisionId: new Types.ObjectId(),
+      disbursedTotal: Types.Decimal128.fromString('0'),
+      refundedTotal: Types.Decimal128.fromString('0'),
+      state: 'Approved',
+      periodCode: 'Fall 2026',
+      createdAt: now,
+    })
+    await ucmsModels.approvalTasks!.create({
+      entityType: 'EVENT_CANCELLATION',
+      entityId: stale!._id,
+      clubId,
+      title: 'Huỷ sự kiện',
+      state: 'Open',
+      openedAt: now,
+    })
+
+    expect(await repo.advanceLifecycle(later)).toMatchObject({ expired: 1, started: 0 })
+    const expired = await ucmsModels.events!.findById(stale!._id).lean()
+    expect(expired).toMatchObject({ state: 'Expired', cancelSourceType: 'PUBLICATION_EXPIRY' })
+    expect((await ucmsModels.propertyBookings!.findById(booking._id).lean())?.state).toBe(
+      'Released',
+    )
+    expect((await ucmsModels.eventBudgets!.findById(budget._id).lean())?.state).toBe('Cancelled')
+    expect(
+      await ucmsModels.approvalTasks!.countDocuments({ entityId: stale!._id, state: 'Open' }),
+    ).toBe(0)
+    expect(
+      await ucmsModels.auditLogs!.findOne({
+        entityId: stale!._id,
+        action: 'EVENT_EXPIRED_UNPUBLISHED',
+      }),
+    ).toMatchObject({
+      actorRole: 'SYSTEM',
+      before: { state: 'Approved' },
+      after: { state: 'Expired' },
+    })
+    expect(
+      await ucmsModels
+        .notifications!.find({ entityId: stale!._id })
+        .select({ recipientUserId: 1, eventCode: 1 })
+        .lean(),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recipientUserId: leader,
+          eventCode: 'EVENT_EXPIRED_UNPUBLISHED',
+        }),
+      ]),
+    )
+    // Published, not-yet-started and school-level events are left alone.
+    for (const [doc, state] of [
+      [upcoming, 'Upcoming'],
+      [future, 'Approved'],
+      [school, 'Approved'],
+    ] as const) {
+      expect((await ucmsModels.events!.findById(doc!._id).lean())?.state).toBe(state)
+    }
+
+    // Idempotent: a second run changes nothing and writes no second audit row.
+    expect(await repo.advanceLifecycle(later)).toMatchObject({ expired: 0 })
+    expect(
+      await ucmsModels.auditLogs!.countDocuments({
+        entityId: stale!._id,
+        action: 'EVENT_EXPIRED_UNPUBLISHED',
+      }),
+    ).toBe(1)
+  })
 })
