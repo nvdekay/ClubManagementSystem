@@ -2,7 +2,6 @@ import { Router } from 'express'
 import { z } from 'zod'
 import {
   MAX_ROUTING_RULES,
-  RISK_CATEGORIES,
   ROUTED_PROPERTY_TYPES,
   ROUTED_REQUEST_TYPES,
   type ApprovalRoutingRepository,
@@ -36,7 +35,6 @@ const routingRule = z
     requestType: z.enum(ROUTED_REQUEST_TYPES),
     minAmount: whole.optional(),
     maxAmount: whole.optional(),
-    riskCategories: z.array(z.enum(RISK_CATEGORIES)).max(3).optional(),
     propertyTypes: z
       .array(z.enum(ROUTED_PROPERTY_TYPES as [PropertyType, ...PropertyType[]]))
       .max(4)

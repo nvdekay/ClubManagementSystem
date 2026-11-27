@@ -3,27 +3,19 @@ import mongoose, { Types } from 'mongoose'
 import type {
   ApprovalRoutingRepository,
   RoutedRequestType,
-  RoutingRule,
   RoutingRuleSet,
   RoutingSample,
 } from '../../domain/approval-routing.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { isDuplicateKey } from './repo-helpers.js'
+import { withoutLegacyFields } from './approval-routing.js'
 
 type Doc = Record<string, unknown>
 
 // Trả Date nếu giá trị là Date, ngược lại undefined
 function date(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined
-}
-
-// Bỏ trường requiredLevel cũ khỏi rule định tuyến
-/** Các bộ rule lưu từ thời còn duyệt hai cấp vẫn mang `requiredLevel`; hiện nay trường này vô nghĩa. */
-function withoutLegacyLevel(rule: Doc): RoutingRule {
-  const copy = { ...rule }
-  delete copy.requiredLevel
-  return copy as unknown as RoutingRule
 }
 
 // Ánh xạ document thành RoutingRuleSet
@@ -33,7 +25,7 @@ function ruleSetFrom(doc: Doc): RoutingRuleSet {
     versionNo: Number(doc.versionNo),
     state: doc.state as RoutingRuleSet['state'],
     rules: (Array.isArray(doc.rules) ? (doc.rules as Record<string, unknown>[]) : []).map(
-      withoutLegacyLevel,
+      withoutLegacyFields,
     ),
     createdBy: String(doc.createdBy),
     createdAt: doc.createdAt as Date,
@@ -197,7 +189,6 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
             revisionNo: 1,
             submittedAt: 1,
             requestedBudgetTotal: 1,
-            'payload.riskCategory': 1,
           })
           .lean(),
         m
@@ -229,7 +220,7 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
             ),
         ).length
       }
-      // Dữ kiện được đọc đúng như router thấy khi review mở ra: revision được nộp lúc đó và mức rủi ro của nó.
+      // Dữ kiện được đọc đúng như router thấy khi review mở ra: revision được nộp lúc đó.
       return tasks.map((task): RoutingSample => {
         const type = task.entityType as RoutedRequestType
         const id = String(task.entityId)

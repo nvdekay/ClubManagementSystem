@@ -11,6 +11,8 @@ import {
   createRoutingDraft,
   listRoutingRuleSets,
 } from '../../src/usecase/approval-routing.js'
+import { withoutLegacyFields } from '../../src/infra/db/approval-routing.js'
+import { routingRulesBody } from '../../src/interface/http/approval-routing-routes.js'
 
 const now = new Date('2026-11-07T00:00:00Z')
 const bigBudget: RoutingRule = {
@@ -19,11 +21,10 @@ const bigBudget: RoutingRule = {
   minAmount: 20_000_000,
   slaHours: 72,
 }
-const highRisk: RoutingRule = {
-  id: 'risk',
+const smallBudget: RoutingRule = {
+  id: 'small',
   requestType: 'EVENT_PROPOSAL',
   maxAmount: 20_000_000,
-  riskCategories: ['HIGH'],
   slaHours: 48,
 }
 const stage: RoutingRule = {
@@ -35,11 +36,11 @@ const stage: RoutingRule = {
 
 describe('UC05 routing rules', () => {
   it('accepts disjoint rules and refuses overlapping ones with the offending pairs (E1)', () => {
-    expect(validateRoutingRules([bigBudget, highRisk, stage])).toHaveLength(3)
+    expect(validateRoutingRules([bigBudget, smallBudget, stage])).toHaveLength(3)
     expect(() =>
-      validateRoutingRules([bigBudget, { ...highRisk, maxAmount: undefined }]),
+      validateRoutingRules([bigBudget, { ...smallBudget, maxAmount: undefined }]),
     ).toThrowError(
-      expect.objectContaining({ kind: 'validation', details: { overlaps: [['big', 'risk']] } }),
+      expect.objectContaining({ kind: 'validation', details: { overlaps: [['big', 'small']] } }),
     )
     expect(() =>
       validateRoutingRules([stage, { ...stage, id: 'all-bookings', propertyTypes: undefined }]),
@@ -52,7 +53,7 @@ describe('UC05 routing rules', () => {
   })
 
   it("gives a matching request its rule's SLA and anything else no rule (BR16)", () => {
-    const set = { id: 'set', rules: [bigBudget, highRisk, stage] }
+    const set = { id: 'set', rules: [bigBudget, smallBudget, stage] }
     expect(
       resolveApprovalRoute(set, {
         requestType: 'EVENT_PROPOSAL',
@@ -64,17 +65,11 @@ describe('UC05 routing rules', () => {
       resolveApprovalRoute(set, {
         requestType: 'EVENT_PROPOSAL',
         amount: 1_000,
-        riskCategory: 'HIGH',
         openViolations: 0,
       }),
-    ).toMatchObject({ routingRuleId: 'risk', slaHours: 48 })
+    ).toMatchObject({ routingRuleId: 'small', slaHours: 48 })
     expect(
-      resolveApprovalRoute(set, {
-        requestType: 'EVENT_PROPOSAL',
-        amount: 1_000,
-        riskCategory: 'LOW',
-        openViolations: 0,
-      }),
+      resolveApprovalRoute(set, { requestType: 'CLUB_APPLICATION', openViolations: 0 }),
     ).toEqual({ routingRuleSetId: 'set' })
     expect(
       resolveApprovalRoute(null, {
@@ -88,6 +83,27 @@ describe('UC05 routing rules', () => {
   it('drops a legacy requiredLevel from a submitted rule', () => {
     const legacy = { ...stage, requiredLevel: 2 } as RoutingRule
     expect(validateRoutingRules([legacy])[0]).toEqual(stage)
+  })
+
+  it('no longer accepts a risk-level condition but still loads stored rules that carry one', () => {
+    // Events no longer record a risk level, so the condition is gone from the API (UC05, 27/11/2026).
+    expect(
+      routingRulesBody.safeParse({ rules: [{ ...smallBudget, riskCategories: ['HIGH'] }] }).success,
+    ).toBe(false)
+    expect(routingRulesBody.safeParse({ rules: [smallBudget] }).success).toBe(true)
+    // A rule set saved before then still loads, with the dead condition ignored.
+    const stored = withoutLegacyFields({
+      ...smallBudget,
+      riskCategories: ['HIGH'],
+      requiredLevel: 2,
+    })
+    expect(stored).toEqual(smallBudget)
+    expect(
+      resolveApprovalRoute(
+        { id: 'set', rules: [stored] },
+        { requestType: 'EVENT_PROPOSAL', amount: 1_000, openViolations: 0 },
+      ),
+    ).toMatchObject({ routingRuleId: 'small' })
   })
 
   it('simulates without writing and counts requests that match a rule (A1)', () => {

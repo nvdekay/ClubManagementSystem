@@ -15,6 +15,18 @@ const OPEN_VIOLATION_STATES = [
   'Corrective Action',
 ]
 
+// Bỏ các trường cũ không còn ý nghĩa khỏi rule định tuyến
+/**
+ * Bộ rule lưu từ thời còn duyệt hai cấp vẫn mang `requiredLevel`; bộ rule lưu trước 27/11/2026 có
+ * thể còn `riskCategories` (sự kiện không còn ghi mức rủi ro). Cả hai đều bị bỏ qua khi đọc.
+ */
+export function withoutLegacyFields(rule: Record<string, unknown>): RoutingRule {
+  const copy = { ...rule }
+  delete copy.requiredLevel
+  delete copy.riskCategories
+  return copy as unknown as RoutingRule
+}
+
 // Đếm vi phạm chưa đóng của CLB làm dữ kiện định tuyến duyệt
 /** Dữ kiện lịch sử tuân thủ (UC05): các vụ việc UC40 của CLB chưa được giải quyết hoặc đóng. */
 export async function openViolationCount(
@@ -34,7 +46,12 @@ export async function openViolationCount(
 export async function routedTaskFields(session: ClientSession, facts: RoutingFacts, now: Date) {
   const active = await m.routingRuleSets!.findOne({ state: 'Active' }).session(session).lean()
   const route = resolveApprovalRoute(
-    active ? { id: String(active._id), rules: (active.rules ?? []) as RoutingRule[] } : null,
+    active
+      ? {
+          id: String(active._id),
+          rules: ((active.rules ?? []) as Record<string, unknown>[]).map(withoutLegacyFields),
+        }
+      : null,
     facts,
   )
   return {

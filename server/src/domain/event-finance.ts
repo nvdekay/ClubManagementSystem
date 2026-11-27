@@ -203,10 +203,10 @@ export function assertFinanceEditable(state: string): void {
     throw new DomainError('expenses are locked for this budget', 'conflict')
   }
 }
-// Chỉ cho quyết toán khi sự kiện đã kết thúc hoặc bị huỷ
+// Chỉ cho quyết toán khi sự kiện đã kết thúc, bị huỷ hoặc hết hạn vì không công bố
 export function assertSettlementEvent(state: string, endAt: Date, now: Date): void {
   if (
-    state !== 'Cancelled' &&
+    !['Cancelled', 'Expired'].includes(state) &&
     (!['Completed', 'Report Submitted', 'Closed'].includes(state) || endAt > now)
   ) {
     throw new DomainError('settlement requires an ended or cancelled event', 'conflict')

@@ -955,4 +955,72 @@ describe.skipIf(!uri)('Mongo club event lifecycle', () => {
       reviewReason: 'Keep it',
     })
   })
+
+  it('keeps legacy FINISH events read-only for attendance', async () => {
+    const finished = new Date(endAt.getTime() + 1000)
+    function legacyFinished(title: string, attendanceFinalized: boolean) {
+      return {
+        organizerType: 'CLUB',
+        clubId: club,
+        clubName: 'Wave 3',
+        title,
+        objective: 'Goal',
+        startAt,
+        endAt,
+        venueText: 'Campus',
+        audienceScope: 'MEMBERS_ONLY',
+        capacity: 2,
+        semesterCode: 'Fall',
+        state: 'FINISH',
+        currentRevisionNo: 1,
+        publishedAt: now,
+        attendanceFinalized,
+        createdAt: now,
+      }
+    }
+    const [open, closed] = await m.events!.insertMany([
+      legacyFinished('Legacy open', false),
+      legacyFinished('Legacy finalized', true),
+    ])
+    await m.attendances!.create({
+      eventId: open!._id,
+      studentId: students[0],
+      clubId: club,
+      checkedInAt: startAt,
+      method: 'manual',
+      abnormalFlags: ['manual'],
+      finalized: false,
+    })
+    const blocked = { kind: 'conflict', message: 'legacy event is read-only' }
+    await expect(
+      repo.act(String(club), String(open!._id), { kind: 'finalize' }, String(actor), finished),
+    ).rejects.toMatchObject(blocked)
+    await expect(
+      repo.act(
+        String(club),
+        String(open!._id),
+        { kind: 'correct', studentId: String(students[0]), reason: 'Fix', absent: false },
+        String(actor),
+        finished,
+      ),
+    ).rejects.toMatchObject(blocked)
+    await expect(
+      repo.act(
+        String(club),
+        String(closed!._id),
+        { kind: 'unlock', reason: 'Review' },
+        String(actor),
+        finished,
+      ),
+    ).rejects.toMatchObject(blocked)
+    expect(await m.events!.findById(open!._id).lean()).toMatchObject({
+      state: 'FINISH',
+      attendanceFinalized: false,
+    })
+    expect(await m.events!.findById(closed!._id).lean()).toMatchObject({
+      state: 'FINISH',
+      attendanceFinalized: true,
+    })
+    expect((await m.attendances!.findOne({ eventId: open!._id }).lean())?.finalized).toBe(false)
+  })
 })
