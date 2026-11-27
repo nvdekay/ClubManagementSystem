@@ -14,7 +14,7 @@
 
 ## Đã code, còn bước nghiệm thu
 
-- [ ] ADR phiên/CSRF, cấu hình mẫu và bootstrap ICPDP/permission đã có; policy UC04 còn chờ giá trị khởi tạo hợp lệ.
+- [x] ADR phiên/CSRF, cấu hình mẫu và bootstrap ICPDP/permission đã có; policy UC04 còn chờ giá trị khởi tạo hợp lệ (27/11/2026: đã có qua [feat-policy-management](../feat-policy-management/SPEC.md) và các seed).
 - [ ] Google OAuth callback, transaction User/Profile, session, audit, middleware và OpenAPI đã qua unit/integration test; cần hoàn tất một callback Google thật bằng tài khoản thuộc domain.
 - [ ] Client login, `/me`, chọn workspace, logout, i18n/theme đã build; cần kiểm tra UI bằng trình duyệt và trạng thái nhiều CLB.
 - [ ] Đóng Gate A bằng callback Google thật và e2e UI; phần tự động đã xanh 92/92 test với Mongo thật.

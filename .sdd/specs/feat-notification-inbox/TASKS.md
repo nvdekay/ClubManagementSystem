@@ -8,7 +8,7 @@
 - [x] Client: service, hook, `utils/notificationLink`, `NotificationBell` trong `WorkspaceShell`, icon `bell`, i18n en/vi
 - [x] Bấm thử trên trình duyệt 19/10 (desktop sáng en, mobile tối vi 390px): badge, danh sách, đánh dấu tất cả,
       không tràn ngang; log server có dòng `{"mail":"log",...}` và `notification-delivery` sent 1
-- [ ] SMTP transport thật — chờ duyệt dependency
+- [x] SMTP transport thật — xong ở [feat-google-smtp](../feat-google-smtp/SPEC.md).
 - [x] Lọc thông báo theo workspace (01/11/2026): `notificationAudience()` + danh sách mã sinh viên/ICPDP/CLB ở domain
       (unit test quét mọi chỗ enqueue), tham số `scope`/`clubId` cho `mine`, `mine/unread-count`, `mine/read-all`
       (integration test), tách mã gửi cho hai nhóm (`CLUB_DISSOLUTION_COMPLETED`, `REPORT_ESCALATED_TO_ICPDP`,
