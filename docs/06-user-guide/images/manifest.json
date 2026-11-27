@@ -1,12 +1,21 @@
 {
-  "capturedAt": "2026-10-13",
-  "database": "ucms_guide_demo",
+  "capturedAt": "2026-11-27",
+  "database": "ucms-e2e-guide",
+  "generator": "client/e2e/guide/screens.guide.ts (npm run guide:screenshots)",
+  "notes": [
+    "Chụp tự động bằng Playwright từ app thật (API + bản build client), tiếng Việt, theme sáng, khung nhìn 1440 × 1000.",
+    "Database riêng ucms-e2e-guide được xoá và seed lại mỗi lần chụp: seed, seed:demo, seed:dashboard, seed:periodic-reports (client/e2e/setup/prepare-db.ts) cộng client/e2e/guide/prepare-guide.ts.",
+    "Không qua Google OAuth: phiên thật được cấp cho từng tài khoản mẫu bằng session service của server (client/e2e/setup/mint-sessions.ts). Không chặn hay giả lập request API.",
+    "Tài khoản e2e.officer@fpt.edu.vn vừa là cán bộ ICPDP vừa là Chủ nhiệm HEBE Club và thành viên Mây Mưa Club; tên hiển thị được đặt là \"Lê Thu Hằng\". Mọi tên sinh viên là dữ liệu mẫu.",
+    "Không có Cloudinary khi chụp: tệp đính kèm (đề án, hoá đơn) được lưu giả trong database nên bản xem trước tệp có thể báo không tải được.",
+    "PNG được giảm xuống bảng 256 màu bằng shrink-images.py."
+  ],
   "images": [
     {
       "file": "01-login.png",
       "url": "/login",
-      "source": "local-api",
-      "account": "Chưa đăng nhập",
+      "source": "guide-capture",
+      "account": "Khách (chưa đăng nhập)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -15,8 +24,8 @@
     {
       "file": "02-home.png",
       "url": "/",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -25,8 +34,8 @@
     {
       "file": "03-club-directory.png",
       "url": "/clubs",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -35,8 +44,8 @@
     {
       "file": "04-club-detail.png",
       "url": "/clubs/a10000000000000000000013",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -45,8 +54,8 @@
     {
       "file": "05-event-directory.png",
       "url": "/events",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -55,8 +64,8 @@
     {
       "file": "06-workspace-chooser.png",
       "url": "/workspace",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -65,8 +74,8 @@
     {
       "file": "07-student-home.png",
       "url": "/student",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -75,8 +84,8 @@
     {
       "file": "08-founding-form.png",
       "url": "/workspace/applications/new",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -85,7 +94,7 @@
     {
       "file": "09-founding-review-queue.png",
       "url": "/workspace/reviews",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -94,10 +103,10 @@
     },
     {
       "file": "10-founding-review-detail.png",
-      "url": "/workspace/reviews",
-      "source": "seeded-demo-api",
+      "url": "/workspace/reviews/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Mở thẩm định\"",
+      "action": "Bấm \"Mở thẩm định\" ở hồ sơ đầu tiên",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -105,8 +114,8 @@
     {
       "file": "11-club-leader-home.png",
       "url": "/club/a10000000000000000000013",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -114,9 +123,9 @@
     },
     {
       "file": "12-club-member-home.png",
-      "url": "/club/a10000000000000000000013",
-      "source": "seeded-demo-api",
-      "account": "Võ Ngọc Hà (Club Member, HEBE Club)",
+      "url": "/club/a10000000000000000000019",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Member, Mây Mưa Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -125,8 +134,8 @@
     {
       "file": "13-club-settings.png",
       "url": "/club/a10000000000000000000013/settings",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -135,27 +144,17 @@
     {
       "file": "14-board-nomination.png",
       "url": "/club/a10000000000000000000013/board",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Mở màn hình",
-      "viewport": "1440 × 1000",
-      "locale": "vi",
-      "theme": "light"
-    },
-    {
-      "file": "15-board-nomination-review.png",
-      "url": "/workspace/board-nominations/6ac90d33c1f68cc6deca1521",
-      "source": "seeded-demo-api",
-      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Mở màn hình",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Mở màn hình (không còn ghế trống)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
       "file": "16-transition-review.png",
-      "url": "/workspace/leadership-transitions",
-      "source": "seeded-demo-api",
+      "url": "/workspace/leadership-transitions/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Bấm \"Thẩm định chuyển giao\"",
       "viewport": "1440 × 1000",
@@ -165,8 +164,8 @@
     {
       "file": "17-recruitment-campaign.png",
       "url": "/club/a10000000000000000000013/recruitment",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -174,19 +173,19 @@
     },
     {
       "file": "18-recruitment-apply.png",
-      "url": "/workspace/recruitment/6ac90d30c1f68cc6deca1396",
-      "source": "seeded-demo-api",
-      "account": "Võ Ngọc Hà (Club Member, HEBE Club)",
-      "action": "Mở màn hình",
+      "url": "/workspace/recruitment/:campaignId",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
+      "action": "Từ trang HEBE Club bấm \"Ứng tuyển đợt này\" (đơn đã nộp)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
       "file": "19-recruitment-review.png",
-      "url": "/club/a10000000000000000000013/recruitment",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "url": "/club/a10000000000000000000013/recruitment/:campaignId/review",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Bấm \"Xét duyệt đơn\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -195,8 +194,8 @@
     {
       "file": "20-members-manage.png",
       "url": "/club/a10000000000000000000013/members",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -204,9 +203,9 @@
     },
     {
       "file": "21-members-readonly.png",
-      "url": "/club/a10000000000000000000013/members",
-      "source": "seeded-demo-api",
-      "account": "Võ Ngọc Hà (Club Member, HEBE Club)",
+      "url": "/club/a10000000000000000000019/members",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Member, Mây Mưa Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -215,8 +214,8 @@
     {
       "file": "22-member-space.png",
       "url": "/workspace/clubs/a10000000000000000000013",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Võ Ngọc Hà (thành viên HEBE Club, tư cách đang tạm ngừng)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -225,19 +224,19 @@
     {
       "file": "23-club-events.png",
       "url": "/club/a10000000000000000000013/events",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Bấm \"Workshop nhảy hiện đại K-pop cho tân sinh viên\"; Cuộn tới \"Các bản đã nộp\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Tìm và bấm \"Đêm diễn HEBE Club #9\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
       "file": "24-event-proposal-form.png",
-      "url": "/club/a10000000000000000000013/events",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Bấm \"Tạo đề xuất\"",
+      "url": "/club/a10000000000000000000013/events/new",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -245,7 +244,7 @@
     {
       "file": "25-event-proposal-queue.png",
       "url": "/workspace/event-proposals",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -254,10 +253,10 @@
     },
     {
       "file": "26-event-proposal-review.png",
-      "url": "/workspace/event-proposals",
-      "source": "seeded-demo-api",
+      "url": "/workspace/event-proposals/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Mở\"",
+      "action": "Bấm \"Mở\" ở \"HEBE Dance Battle 2026\" (nhận thẩm định)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -265,7 +264,7 @@
     {
       "file": "27-school-events.png",
       "url": "/workspace/school-events",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -275,7 +274,7 @@
     {
       "file": "28-school-event-create.png",
       "url": "/workspace/school-events",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Bấm \"Tạo sự kiện cấp trường\"",
       "viewport": "1440 × 1000",
@@ -284,20 +283,20 @@
     },
     {
       "file": "29-school-event-detail.png",
-      "url": "/workspace/school-events",
-      "source": "seeded-demo-api",
+      "url": "/workspace/school-events/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Tập huấn kỹ năng tổ chức sự kiện\"",
+      "action": "Bấm \"Tập huấn kỹ năng tổ chức sự kiện cho ban chủ nhiệm CLB\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
       "file": "30-event-register.png",
-      "url": "/events/de0000000000000000000e01",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
-      "action": "Cuộn tới \"Giới thiệu sự kiện\"",
+      "url": "/events/:id",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
+      "action": "Tìm \"Buổi giao lưu HEBE Club #8\", bấm \"Xem chi tiết\", cuộn tới \"Đăng ký tham gia\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -305,8 +304,8 @@
     {
       "file": "31-my-events.png",
       "url": "/workspace/event-registrations",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -315,9 +314,9 @@
     {
       "file": "32-attendance.png",
       "url": "/club/a10000000000000000000013/event-attendance",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Bấm \"Wave 4 demo: top-up\"; Cuộn tới \"Điểm danh đã chốt\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Tìm và bấm \"Đêm nhạc chào tân sinh viên K21\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -325,9 +324,9 @@
     {
       "file": "33-event-feedback.png",
       "url": "/club/a10000000000000000000013/event-feedback",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Bấm \"Wave 4 demo: top-up\"; Bấm \"Wave 4 demo: refund\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Chọn hai sự kiện để so sánh",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -335,7 +334,7 @@
     {
       "file": "34-properties.png",
       "url": "/workspace/properties",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -345,7 +344,7 @@
     {
       "file": "35-room-allocations.png",
       "url": "/workspace/room-allocations",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -355,7 +354,7 @@
     {
       "file": "36-room-allocation-create.png",
       "url": "/workspace/room-allocations",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Bấm \"Phân phòng\"",
       "viewport": "1440 × 1000",
@@ -365,8 +364,8 @@
     {
       "file": "37-club-rooms.png",
       "url": "/club/a10000000000000000000013/rooms",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -375,8 +374,8 @@
     {
       "file": "38-club-booking-request.png",
       "url": "/club/a10000000000000000000013/bookings",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
       "action": "Bấm \"Yêu cầu cơ sở vật chất\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
@@ -385,9 +384,9 @@
     {
       "file": "39-booking-review.png",
       "url": "/workspace/bookings",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"HEBE Club\"",
+      "action": "Bấm yêu cầu \"Hội trường Alpha\" của HEBE Club",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -395,9 +394,9 @@
     {
       "file": "40-report-draft.png",
       "url": "/club/a10000000000000000000013/event-reports",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Chọn sự kiện \"top-up\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Chọn sự kiện \"Wave 4 demo: top-up\" (bản nháp)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -405,9 +404,9 @@
     {
       "file": "41-report-returned.png",
       "url": "/club/a10000000000000000000013/event-reports",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Chọn sự kiện \"balanced\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Chọn sự kiện \"Wave 4 demo: balanced\" (bị trả về)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -415,9 +414,9 @@
     {
       "file": "42-report-review.png",
       "url": "/workspace/event-reports",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Chọn sự kiện \"refund\"",
+      "action": "Chọn sự kiện \"Wave 4 demo: refund\" (đã nộp)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -425,7 +424,7 @@
     {
       "file": "43-periodic-reports.png",
       "url": "/workspace/periodic-reports",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -434,10 +433,10 @@
     },
     {
       "file": "44-periodic-report-review.png",
-      "url": "/workspace/periodic-reports/6aca2f311966f6d004066fe0",
-      "source": "seeded-demo-api",
+      "url": "/workspace/periodic-reports/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Mở màn hình",
+      "action": "Bấm \"Thẩm định\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -445,7 +444,7 @@
     {
       "file": "45-budgets.png",
       "url": "/workspace/budgets",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -454,10 +453,10 @@
     },
     {
       "file": "46-budget-advance.png",
-      "url": "/workspace/budgets",
-      "source": "seeded-demo-api",
+      "url": "/workspace/budgets/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Workshop nhảy hiện đại K-pop cho tân sinh viên\"",
+      "action": "Lọc \"Chờ giải ngân trước\", mở khoản đầu tiên",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -465,39 +464,39 @@
     {
       "file": "47-club-expenses.png",
       "url": "/club/a10000000000000000000013/budgets",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Chọn sự kiện \"balanced\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Chọn sự kiện \"Đêm nhạc gây quỹ HEBE\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
-      "file": "48-expense-dialog.png",
+      "file": "48-club-refund.png",
       "url": "/club/a10000000000000000000013/budgets",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Chọn sự kiện \"balanced\"; Bấm \"Thêm khoản chi\"",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Chọn sự kiện \"Đêm nhạc gây quỹ HEBE\", cuộn tới hạng mục \"Thuê trang phục biểu diễn\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
       "file": "49-reconciliation.png",
-      "url": "/workspace/budgets",
-      "source": "seeded-demo-api",
-      "account": "Nguyễn Khánh Duy (Cán bộ ICPDP)",
-      "action": "Bấm \"Wave 4 demo: refund\"; Bấm \"Đối soát quyết toán\"",
+      "url": "/workspace/budgets/:id",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Lọc \"Chờ đối soát\", mở \"Đêm nhạc gây quỹ HEBE\", cuộn tới \"In ấn banner, standee\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
-      "file": "50-budget-topup.png",
-      "url": "/workspace/budgets",
-      "source": "seeded-demo-api",
+      "file": "50-vendor-payment.png",
+      "url": "/workspace/budgets/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Wave 4 demo: top-up\"",
+      "action": "Như ảnh 49, cuộn tới hạng mục âm thanh, ánh sáng",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -505,19 +504,19 @@
     {
       "file": "51-violations.png",
       "url": "/workspace/violations",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Tất cả\"",
+      "action": "Bấm tab \"Tất cả\"",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
       "file": "52-violation-detail.png",
-      "url": "/workspace/violations/6ac9f8db100686556bc0a465",
-      "source": "seeded-demo-api",
+      "url": "/workspace/violations/:id",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Mở màn hình",
+      "action": "Bấm tab \"Chờ CLB giải trình\", mở hồ sơ đầu tiên",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -525,7 +524,7 @@
     {
       "file": "53-evaluation-scheme.png",
       "url": "/workspace/evaluation-schemes",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Bấm \"Xem\"",
       "viewport": "1440 × 1000",
@@ -535,7 +534,7 @@
     {
       "file": "54-evaluations.png",
       "url": "/workspace/evaluations",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -543,31 +542,31 @@
       "theme": "light"
     },
     {
-      "file": "55-student-feedback.png",
-      "url": "/workspace/feedback",
-      "source": "seeded-demo-api",
-      "account": "Đặng Quốc Huy (Sinh viên)",
+      "file": "55-student-complaints.png",
+      "url": "/workspace/complaints",
+      "source": "guide-capture",
+      "account": "Nguyễn Văn Lan (Sinh viên)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
-      "file": "56-club-feedback-inbox.png",
-      "url": "/club/a10000000000000000000013/feedback",
-      "source": "seeded-demo-api",
-      "account": "Trần Minh Anh (Club Leader, HEBE Club)",
-      "action": "Mở màn hình",
+      "file": "56-club-complaints.png",
+      "url": "/club/a10000000000000000000013/complaints",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Mở màn hình (một khiếu nại đã được chuyển xuống)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
     },
     {
-      "file": "57-icpdp-feedback-inbox.png",
-      "url": "/workspace/student-feedback",
-      "source": "seeded-demo-api",
+      "file": "57-icpdp-complaints.png",
+      "url": "/workspace/complaint-review",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Mở màn hình",
+      "action": "Bấm \"Bắt đầu xem xét\" ở khiếu nại đầu tiên",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -575,7 +574,7 @@
     {
       "file": "58-icpdp-clubs.png",
       "url": "/icpdp/clubs",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -585,9 +584,9 @@
     {
       "file": "59-club-manage.png",
       "url": "/icpdp/clubs",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Quản lý\"",
+      "action": "Bấm \"Quản lý\" ở CLB đầu tiên",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -595,7 +594,7 @@
     {
       "file": "60-policy.png",
       "url": "/workspace/policy",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -605,7 +604,7 @@
     {
       "file": "61-club-fields.png",
       "url": "/workspace/club-fields",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -615,9 +614,9 @@
     {
       "file": "62-accounts.png",
       "url": "/icpdp/accounts",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Bấm \"Quản lý\"",
+      "action": "Bấm \"Quản lý\" ở tài khoản đầu tiên",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -625,7 +624,7 @@
     {
       "file": "63-exports.png",
       "url": "/workspace/exports",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
@@ -635,19 +634,82 @@
     {
       "file": "64-icpdp-home.png",
       "url": "/icpdp",
-      "source": "seeded-demo-api",
+      "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Mở màn hình",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
+    },
+    {
+      "file": "65-club-transition-plan.png",
+      "url": "/club/a10000000000000000000013/transition-plans",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "66-club-invitations.png",
+      "url": "/club/a10000000000000000000013/invitations",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "67-club-periodic-report.png",
+      "url": "/club/a10000000000000000000013/periodic-reports",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Cuộn tới mục sự kiện trong kỳ và link minh chứng",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "68-suspension-requests.png",
+      "url": "/workspace/suspension-requests",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "69-defense-schedule.png",
+      "url": "/workspace/event-proposals/:id",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Sau ảnh 26, bấm \"Tạo lịch bảo vệ\", chọn phòng trống, nhập ghi chú",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "70-club-defense-card.png",
+      "url": "/club/a10000000000000000000013/events",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
+      "action": "Sau khi ICPDP tạo lịch bảo vệ, tìm và bấm \"HEBE Dance Battle 2026\"",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "71-unsaved-changes.png",
+      "url": "/workspace/policy",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Tab \"Phiên bản chính sách mới\", sửa một số, bấm \"Tổng quan\" ở thanh bên",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
     }
-  ],
-  "notes": [
-    "Mọi ảnh dùng API thật và dữ liệu MongoDB đã seed; không chặn hay giả lập request.",
-    "Chụp trên database demo riêng ucms_guide_demo (bản sao database local sau seed + dữ liệu Wave 4 demo); bản demo có nối API khoản chi và đối soát.",
-    "Không qua Google OAuth: phiên local của tài khoản mẫu được cấp bằng SessionService, chỉ trong database demo.",
-    "Hai tài khoản thật trong database local được đổi sang tên và email mẫu trong database demo trước khi chụp.",
-    "PNG đã giảm xuống bảng 256 màu để file HTML/PDF nhẹ hơn."
   ]
 }
