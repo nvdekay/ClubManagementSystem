@@ -1009,10 +1009,10 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 |---|---|
 | **Module · Ưu tiên** | M01 · P1 |
 | **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, mức rủi ro, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
+| **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
 | **Kích hoạt** | ICPDP cần đổi SLA thẩm định cho một nhóm hồ sơ |
 | **Tiền điều kiện** | Người gọi giữ vai trò `ICPDP_OFFICER`; mọi ICPDP Officer xem, mô phỏng, tạo, sửa và kích hoạt bộ rule |
-| **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định |
+| **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định. *Sửa 27/11/2026:* bỏ điều kiện "mức rủi ro sự kiện" vì sự kiện không còn ghi mức rủi ro; API từ chối trường `riskCategories`, bộ rule cũ còn trường này vẫn đọc được và trường bị bỏ qua |
 | **Thực thể / trạng thái** | `RoutingRuleSet` — đánh phiên bản, `Draft → Active` |
 | **Quy tắc** | BR16 (đã sửa đổi), BR31 |
 | **Liên quan** | UC08, UC26, UC46 |

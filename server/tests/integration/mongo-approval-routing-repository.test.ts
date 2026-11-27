@@ -157,4 +157,30 @@ describe.skipIf(!uri)('Mongo approval routing repository (UC05)', () => {
       openViolations: 1,
     })
   })
+
+  it('loads a stored rule set that still carries the removed risk-level condition', async () => {
+    const repo = mongoApprovalRoutingRepository()
+    const [doc] = await m
+      .routingRuleSets!.collection.insertMany([
+        {
+          versionNo: 99,
+          state: 'Superseded',
+          rules: [
+            {
+              id: 'risky',
+              requestType: 'EVENT_PROPOSAL',
+              maxAmount: 5_000_000,
+              riskCategories: ['HIGH'],
+              slaHours: 24,
+            },
+          ],
+          createdBy: new Types.ObjectId(),
+          createdAt: now,
+        },
+      ])
+      .then((result) => Object.values(result.insertedIds))
+    expect((await repo.find(String(doc)))?.rules).toEqual([
+      { id: 'risky', requestType: 'EVENT_PROPOSAL', maxAmount: 5_000_000, slaHours: 24 },
+    ])
+  })
 })

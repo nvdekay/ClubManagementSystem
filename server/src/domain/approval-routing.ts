@@ -12,8 +12,6 @@ export const ROUTED_REQUEST_TYPES = [
   'PROPERTY_BOOKING',
 ] as const
 export type RoutedRequestType = (typeof ROUTED_REQUEST_TYPES)[number]
-export const RISK_CATEGORIES = ['LOW', 'MEDIUM', 'HIGH'] as const
-export type RiskCategory = (typeof RISK_CATEGORIES)[number]
 /** Chỉ áp dụng cho yêu cầu cơ sở vật chất: phòng học do UC58 phân bổ, không đặt qua booking. */
 export const ROUTED_PROPERTY_TYPES: readonly PropertyType[] = PROPERTY_TYPES.filter(
   (type) => type !== 'ROOM',
@@ -28,7 +26,6 @@ export interface RoutingRule {
   /** Ngân sách sự kiện (VND): [minAmount, maxAmount). */
   minAmount?: number
   maxAmount?: number
-  riskCategories?: RiskCategory[]
   propertyTypes?: PropertyType[]
   /** Số hồ sơ UC40 đang mở của CLB: [minOpenViolations, maxOpenViolations). */
   minOpenViolations?: number
@@ -53,7 +50,6 @@ export interface RoutingRuleSet {
 export interface RoutingFacts {
   requestType: RoutedRequestType
   amount?: number
-  riskCategory?: RiskCategory
   propertyType?: string
   openViolations: number
 }
@@ -138,15 +134,10 @@ export function normalizeRoutingRule(rule: RoutingRule): RoutingRule {
   }
   if (rule.requestType === 'EVENT_PROPOSAL') {
     range(rule.minAmount, rule.maxAmount, 'budget')
-    const risks = rule.riskCategories?.length ? [...new Set(rule.riskCategories)] : undefined
-    if (risks?.some((risk) => !RISK_CATEGORIES.includes(risk))) {
-      invalid('invalid risk category')
-    }
     return {
       ...base,
       ...(rule.minAmount !== undefined ? { minAmount: rule.minAmount } : {}),
       ...(rule.maxAmount !== undefined ? { maxAmount: rule.maxAmount } : {}),
-      ...(risks ? { riskCategories: risks } : {}),
     }
   }
   if (rule.requestType === 'PROPERTY_BOOKING') {
@@ -175,7 +166,6 @@ export function routingRulesOverlap(a: RoutingRule, b: RoutingRule): boolean {
   return (
     a.requestType === b.requestType &&
     rangesMeet(a.minAmount, a.maxAmount, b.minAmount, b.maxAmount) &&
-    setsMeet(a.riskCategories, b.riskCategories) &&
     setsMeet(a.propertyTypes, b.propertyTypes) &&
     rangesMeet(a.minOpenViolations, a.maxOpenViolations, b.minOpenViolations, b.maxOpenViolations)
   )
@@ -221,8 +211,6 @@ export function routingRuleMatches(rule: RoutingRule, facts: RoutingFacts): bool
   return (
     rule.requestType === facts.requestType &&
     within(facts.amount, rule.minAmount, rule.maxAmount) &&
-    (!rule.riskCategories ||
-      (facts.riskCategory !== undefined && rule.riskCategories.includes(facts.riskCategory))) &&
     (!rule.propertyTypes ||
       (facts.propertyType !== undefined &&
         rule.propertyTypes.includes(facts.propertyType as PropertyType))) &&

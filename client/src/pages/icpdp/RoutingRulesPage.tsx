@@ -19,7 +19,6 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { useConfirm } from '@/hooks/useConfirm'
 import type {
-  RiskCategory,
   RoutedPropertyType,
   RoutedRequestType,
   RoutingRule,
@@ -27,7 +26,6 @@ import type {
 } from '@/services/approvalRouting'
 
 const TYPES: RoutedRequestType[] = ['CLUB_APPLICATION', 'EVENT_PROPOSAL', 'PROPERTY_BOOKING']
-const RISKS: RiskCategory[] = ['LOW', 'MEDIUM', 'HIGH']
 const PROPERTY_TYPES: RoutedPropertyType[] = ['HALL', 'OUTDOOR', 'STAGE', 'EQUIPMENT']
 
 // Ánh xạ loại yêu cầu được định tuyến sang key i18n
@@ -39,17 +37,6 @@ function typeKey(value: RoutedRequestType) {
       return 'routing.type_EVENT_PROPOSAL' as const
     case 'PROPERTY_BOOKING':
       return 'routing.type_PROPERTY_BOOKING' as const
-  }
-}
-// Ánh xạ nhóm rủi ro sang key i18n
-function riskKey(value: RiskCategory) {
-  switch (value) {
-    case 'LOW':
-      return 'routing.risk_LOW' as const
-    case 'MEDIUM':
-      return 'routing.risk_MEDIUM' as const
-    case 'HIGH':
-      return 'routing.risk_HIGH' as const
   }
 }
 // Ánh xạ loại cơ sở vật chất sang key i18n
@@ -172,8 +159,6 @@ function RuleList({ rules }: { rules: RoutingRule[] }) {
                 `${t('routing.minAmount')}: ${rule.minAmount.toLocaleString()}`,
               rule.maxAmount !== undefined &&
                 `${t('routing.maxAmount')}: ${rule.maxAmount.toLocaleString()}`,
-              rule.riskCategories &&
-                `${t('routing.risks')}: ${rule.riskCategories.map((risk) => t(riskKey(risk))).join(', ')}`,
               rule.propertyTypes &&
                 `${t('routing.propertyTypes')}: ${rule.propertyTypes.map((type) => t(propertyKey(type))).join(', ')}`,
               rule.minOpenViolations !== undefined &&
@@ -315,7 +300,6 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
                   onChange={(value) =>
                     update(index, {
                       requestType: value as RoutedRequestType,
-                      riskCategories: undefined,
                       propertyTypes: undefined,
                       minAmount: undefined,
                       maxAmount: undefined,
@@ -361,26 +345,6 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
                   />
                 </label>
               </div>
-            )}
-            {rule.requestType === 'EVENT_PROPOSAL' && (
-              <fieldset className="flex flex-wrap items-center gap-3 text-sm">
-                <legend className="mb-1 text-sm font-medium text-text-app">
-                  {t('routing.risks')}
-                </legend>
-                {RISKS.map((risk) => (
-                  <label key={risk} className="inline-flex min-h-11 items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary-app"
-                      checked={Boolean(rule.riskCategories?.includes(risk))}
-                      onChange={() =>
-                        update(index, { riskCategories: toggle(rule.riskCategories, risk) })
-                      }
-                    />
-                    {t(riskKey(risk))}
-                  </label>
-                ))}
-              </fieldset>
             )}
             {rule.requestType === 'PROPERTY_BOOKING' && (
               <fieldset className="flex flex-wrap items-center gap-3 text-sm">

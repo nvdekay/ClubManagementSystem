@@ -368,7 +368,7 @@ Table routingRuleSets {
   id objectId [pk]
   versionNo int [not null]
   state string [not null, note: 'Draft | Active | Superseded (UC05). Chỉ một bộ Active; bộ Active không bao giờ bị sửa tại chỗ.']
-  rules json [not null, note: '[{ id, requestType: CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING, minAmount?, maxAmount?, riskCategories?[], propertyTypes?[], minOpenViolations?, maxOpenViolations?, slaHours }]. Rule chỉ đặt SLA thẩm định; bộ rule cũ có thể còn requiredLevel, bị bỏ qua. Không hai rule nào chồng nhau (FR-UC05-02).']
+  rules json [not null, note: '[{ id, requestType: CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING, minAmount?, maxAmount?, propertyTypes?[], minOpenViolations?, maxOpenViolations?, slaHours }]. Rule chỉ đặt SLA thẩm định; bộ rule cũ có thể còn requiredLevel hoặc riskCategories (gỡ 27/11/2026), cả hai bị bỏ qua khi đọc. Không hai rule nào chồng nhau (FR-UC05-02).']
   createdBy objectId [not null]
   createdAt datetime [not null]
   updatedAt datetime

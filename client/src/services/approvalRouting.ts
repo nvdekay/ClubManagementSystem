@@ -1,7 +1,6 @@
 import { ApiError } from '@/services/apiError'
 import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type RoutedRequestType = 'CLUB_APPLICATION' | 'EVENT_PROPOSAL' | 'PROPERTY_BOOKING'
-export type RiskCategory = 'LOW' | 'MEDIUM' | 'HIGH'
 export type RoutedPropertyType = 'HALL' | 'OUTDOOR' | 'STAGE' | 'EQUIPMENT'
 
 export interface RoutingRule {
@@ -9,7 +8,6 @@ export interface RoutingRule {
   requestType: RoutedRequestType
   minAmount?: number
   maxAmount?: number
-  riskCategories?: RiskCategory[]
   propertyTypes?: RoutedPropertyType[]
   minOpenViolations?: number
   maxOpenViolations?: number
