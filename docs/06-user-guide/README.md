@@ -2,55 +2,43 @@
 
 Guide book cho người dùng UCMS, theo ba không gian Student, CLB và ICPDP.
 
-- [GUIDE_BOOK.pdf](GUIDE_BOOK.pdf): bản để in hoặc gửi cho người dùng, khổ A4 ngang.
-- [GUIDE_BOOK.html](GUIDE_BOOK.html): bản đọc trên trình duyệt, có mục lục và ảnh nhúng,
-  dùng được khi offline; hỗ trợ màn hình điện thoại.
 - [GUIDE_BOOK.md](GUIDE_BOOK.md): nguồn hướng dẫn, từng bước thao tác và kết quả cần kiểm tra.
-- [images/](images/README.md): ảnh chụp app và [manifest.json](images/manifest.json) ghi nguồn.
-- `build-guide.py`: dựng lại HTML từ Markdown và PNG bằng Python standard library,
-  không cần cài thêm dependency.
+- [images/](images/README.md): ảnh chụp app và [manifest.json](images/manifest.json) ghi màn hình,
+  vai và thao tác trước khi chụp của từng ảnh.
+- `build-guide.py`: dựng `GUIDE_BOOK.html` (một file, ảnh nhúng sẵn, đọc được khi offline, có mục
+  lục, hỗ trợ màn hình điện thoại) bằng Python standard library.
+- `shrink-images.py`: giảm PNG xuống bảng 256 màu sau khi chụp lại (cần Pillow).
 
-`GUIDE_BOOK.md` đối chiếu code ngày 14/11/2026; ảnh chụp 13/10/2026. **`GUIDE_BOOK.pdf` (16/10/2026) và
-`GUIDE_BOOK.html` (07/11/2026) chưa dựng lại** sau các lần sửa Markdown ngày 09/11 và 14/11/2026 (mục buổi bảo
-vệ đề xuất BR63, khu công khai không cần đăng nhập, quyền xem phòng của mọi thành viên) — khi khác nhau, lấy
-theo Markdown. Bản ảnh phủ các màn hình đã chụp (23 chương, 64 ảnh). Khu công khai (trang chủ, danh bạ CLB,
-sự kiện và trang chi tiết) đọc được khi chưa đăng nhập; API `/public/*` công khai. Toàn bộ ảnh được chụp
-ngày 13/10/2026, **trước đợt làm lại giao diện 11–12/11/2026** (nay dùng tông cam FPT, bố cục khác), nên ảnh
-không còn khớp giao diện hiện tại; khi đó phía CLB chỉ có hai vai trò Club Leader / Club Member, trên database demo
-`ucms_guide_demo`. Ảnh UC36 và UC37 chụp trên bản demo có nối API trước khi server chính được
-nối ngày 15/10/2026. Các màn CLB thêm ngày 15/10/2026 (UC12, UC14, UC21 A2, UC38, UC40, UC43, UC54)
-mới được nhắc tên mục, chưa có ảnh. Đối chiếu phạm vi với
+`GUIDE_BOOK.md` đối chiếu code ngày 27/11/2026. Ảnh chụp tự động cùng ngày từ giao diện hiện tại.
+`GUIDE_BOOK.html` và `GUIDE_BOOK.pdf` là bản dựng, **không lưu trong repo** (có trong `.gitignore`);
+dựng lại theo các bước dưới đây mỗi khi cần gửi cho người dùng. Đối chiếu phạm vi với
 [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
-## Tạo dữ liệu
+## Chụp lại ảnh
 
-1. Chạy `npm run seed` để có CLB/sự kiện công khai.
-2. Chạy `npm run seed:demo -- --owner=<email-owner-hiện-có>`; giữ owner đang làm chủ nhiệm
-   bộ demo để không đổi cơ cấu đang được dùng.
-3. Chạy `node --env-file=.env --import tsx server/src/infra/db/seed-guide.ts` từ gốc repo.
-   Script tạo/cập nhật database riêng `ucms_guide_demo`, không chuyển app chính sang database đó.
+Ảnh được chụp bằng Playwright từ app thật, dùng lại hạ tầng e2e ở
+[`client/e2e/`](../../client/e2e/README.md) (script ở `client/e2e/guide/`):
 
-Seed guide copy các collection nghiệp vụ một lần, giữ liên kết và lịch sử, không copy phiên
-đăng nhập. Chạy lại không reset thao tác của người dùng trong database demo. Policy POST_EVENT
-7 ngày và chứng từ mẫu chỉ phục vụ demo. Hạn hoàn trả BR58 đã chốt 7 ngày (server chính và
-`seed-guide.ts` đều dùng 7).
-Link `example.org` là placeholder, không phải chứng từ thanh toán thật.
-
-Dữ liệu wave 4 có sự kiện Completed/Cancelled, điểm danh, phản hồi, báo cáo nháp/đã nộp/trả sửa,
-version mới, khoản chi có/thiếu chứng từ, task, đối soát còn số dư (`Reconciled`, UC37 A2 không có bước cấp bù) và chờ hoàn trả. Các ảnh ghi lại
-trạng thái tại lúc thao tác; database sau demo có thể đã chuyển sang bước tiếp theo.
-
-## Cập nhật guide
-
-Sửa `GUIDE_BOOK.md`, cập nhật PNG và manifest, rồi chạy:
-
-```sh
-python3 docs/06-user-guide/build-guide.py
+```bash
+docker compose up -d --wait                  # Mongo replica set
+npx playwright install chromium              # một lần cho mỗi máy, trong client/
+npm run guide:screenshots                    # từ thư mục gốc, khoảng 5 phút
+python3 docs/06-user-guide/shrink-images.py  # giảm dung lượng ảnh
 ```
 
-Mở HTML, chọn In → lưu PDF, khổ A4 ngang, bật hình nền. PDF bàn giao đã được xuất và kiểm tra
-font tiếng Việt, ảnh, số trang và khả năng đọc trên trình duyệt.
+Lệnh tự dựng database riêng `ucms-e2e-guide` (xoá rồi seed lại, xoá khi xong), API ở cổng 3400 và
+client ở 5400, nên không đụng database `ucms` hay stack dev. Dữ liệu là các seed có sẵn cộng
+`client/e2e/guide/prepare-guide.ts`; phiên đăng nhập được cấp thật cho từng tài khoản mẫu, không
+qua Google OAuth. Ảnh ghi đè đúng tên file trong `images/`, nên link trong `GUIDE_BOOK.md` giữ nguyên.
+Thêm hoặc đổi một ảnh: sửa `client/e2e/guide/screens.guide.ts`, rồi cập nhật `images/manifest.json`
+và `GUIDE_BOOK.md`.
 
-Từ 07/11/2026 nội dung chương 4 (hai vai trò cố định; mọi thành viên `Active` có quyền điểm danh và
-xem phòng) và chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) theo code mới;
-ảnh của hai chương này chưa chụp lại. Ngày 14/11/2026 chương 8 thêm mục buổi bảo vệ đề xuất (BR63), chưa có ảnh.
+## Dựng HTML và PDF
+
+```bash
+python3 docs/06-user-guide/build-guide.py    # → docs/06-user-guide/GUIDE_BOOK.html
+```
+
+Script dừng với lỗi nếu `GUIDE_BOOK.md` trỏ tới ảnh không có hoặc ảnh không có trong manifest. Mở
+HTML bằng trình duyệt, chọn In → Lưu thành PDF, khổ A4 ngang, bật hình nền, lưu thành
+`GUIDE_BOOK.pdf` cạnh file HTML. Gửi bản HTML/PDF vừa dựng cho người dùng; không commit chúng.
