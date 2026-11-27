@@ -24,6 +24,8 @@ export const notifications = {
     EVENT_PROPOSAL_REJECTED: 'Event proposal rejected',
     EVENT_PROPOSAL_REVISION_REQUESTED: 'Event proposal needs revision',
     EVENT_PROPOSAL_EXPIRED: 'Event proposal expired',
+    EVENT_EXPIRED_UNPUBLISHED:
+      'An approved event expired because it was not published before it started',
     EVENT_CANCELLATION_REQUESTED: 'A club requested to cancel an approved event',
     EVENT_CANCELLATION_DECIDED: 'ICPDP responded to your event cancellation request',
     EVENT_REGISTRATION_CONFIRMED: 'Event registration confirmed',

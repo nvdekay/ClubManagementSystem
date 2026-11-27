@@ -162,6 +162,8 @@ export const clubEvents = {
   confirmFinalize: 'Finalize attendance? Only ICPDP can unlock it afterwards.',
   unlock: 'Unlock attendance',
   attendanceLocked: 'Attendance is finalized.',
+  legacyAttendanceReadOnly:
+    'This is a legacy internal event: its attendance is kept for statistics but can no longer be changed.',
   registrationOpen: 'Registration opens',
   registrationClose: 'Registration closes',
   checkInOpen: 'Check-in opens',

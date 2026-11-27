@@ -1009,10 +1009,10 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 |---|---|
 | **Module · Ưu tiên** | M01 · P1 |
 | **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, mức rủi ro, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
+| **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
 | **Kích hoạt** | ICPDP cần đổi SLA thẩm định cho một nhóm hồ sơ |
 | **Tiền điều kiện** | Người gọi giữ vai trò `ICPDP_OFFICER`; mọi ICPDP Officer xem, mô phỏng, tạo, sửa và kích hoạt bộ rule |
-| **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định |
+| **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định. *Sửa 27/11/2026:* bỏ điều kiện "mức rủi ro sự kiện" vì sự kiện không còn ghi mức rủi ro; API từ chối trường `riskCategories`, bộ rule cũ còn trường này vẫn đọc được và trường bị bỏ qua |
 | **Thực thể / trạng thái** | `RoutingRuleSet` — đánh phiên bản, `Draft → Active` |
 | **Quy tắc** | BR16 (đã sửa đổi), BR31 |
 | **Liên quan** | UC08, UC26, UC46 |
@@ -1500,7 +1500,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC21-04 | Thông báo cho thành viên bị ảnh hưởng và hiển thị thay đổi trong UC24 của họ |
 | FR-UC21-05 | *(A1)* Thực thi yêu cầu rời CLB đã nộp ở UC22 bằng cách chuyển tư cách thành viên sang `Left` và liên kết với yêu cầu đó |
 | FR-UC21-06 | *(A2)* Hỗ trợ xác nhận lại thành viên theo kỳ: vào đầu mỗi học kỳ theo lịch học kỳ (UC04), yêu cầu mọi thành viên `Active` xác nhận lại trong 14 ngày (Club Leader đương nhiệm được miễn); quá hạn mà chưa xác nhận thì chuyển `Active` sang `Inactive`; Club Leader kích hoạt lại thủ công qua UC21 |
-| FR-UC21-07 | *(E1)* Từ chối chuyển sang `Inactive`, `Left` hoặc `Banned` với thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận cho tới khi UC10 / UC11 thay người — kể cả trong đợt quét A2, nơi thành viên ban chủ nhiệm được tính là đã xác nhận |
+| FR-UC21-07 | *(E1)* Từ chối chuyển sang `Inactive`, `Left` hoặc `Banned` với thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận cho tới khi UC10 / UC11 thay người — áp cho thao tác thủ công của UC21. Riêng đợt quét A2 (cập nhật 27/11/2026 theo code) chỉ miễn ghế Chủ nhiệm / Phó chủ nhiệm (Club Leader, BR47); thành viên giữ ghế ban điều hành khác vẫn phải xác nhận lại như thành viên thường và quá hạn thì chuyển `Inactive` |
 | FR-UC21-08 | *(E2)* Từ chối thay đổi có ngày hiệu lực khác ngày hôm nay, hoặc lệnh cấm không có lý do |
 | FR-UC21-09 | Coi `Left` và `Banned` là trạng thái cuối: sinh viên đã `Left` chỉ quay lại bằng một tư cách thành viên mới (UC20); sinh viên `Banned` không thể quay lại CLB đó (BR46) |
 | FR-UC21-10 | Giữ toàn bộ lịch sử trạng thái ở dạng đọc được |
@@ -1632,7 +1632,7 @@ không đổi số các use case còn lại.
 | **Kích hoạt** | Một review task từ UC25 |
 | **Tiền điều kiện** | Đề xuất đang `Pending Approval`, hoặc `Re-defense Pending` chờ xếp lịch bảo vệ lại (A4) |
 | **Dữ liệu vào** | Ghi chú thẩm định, nhận xét có cấu trúc, quyết định và lý do; số tiền duyệt theo từng dòng ngân sách |
-| **Thực thể / trạng thái** | `Event`: `Pending Approval → Under Review → {Revision Requested, Approved, Rejected, Re-defense Pending}`; `Re-defense Pending → Under Review` khi xếp lịch bảo vệ mới (BR63); tạo `EventBudget` ở `Approved` khi duyệt đề xuất có phần ngân sách |
+| **Thực thể / trạng thái** | `Event`: `Pending Approval → Under Review → {Revision Requested, Approved, Rejected, Re-defense Pending}`; `Re-defense Pending → Under Review` khi xếp lịch bảo vệ mới (BR63), hoặc `Re-defense Pending → {Approved, Rejected, Revision Requested}` khi cán bộ quyết định luôn không cần bảo vệ lại (27/11/2026); tạo `EventBudget` ở `Approved` khi duyệt đề xuất có phần ngân sách |
 | **Quy tắc** | BR05, BR14, BR16, BR22, BR31, BR63 |
 | **Liên quan · Pain point** | UC05, UC25, UC27, UC35, UC46 · BP05, BP09, BP15 |
 
@@ -1692,6 +1692,9 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC27-07 | *(E2)* Từ chối khung thời gian đăng ký kết thúc sau khi sự kiện đã bắt đầu |
 | FR-UC27-08 | Để scheduler lo việc chuyển `Upcoming → Ongoing → Completed` theo mốc giờ của chính sự kiện |
 | FR-UC27-09 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.event.manage`) đó (BR54) |
+
+> *Ghi chú 27/11/2026:* sự kiện đề xuất `Approved` mà không được công bố trước giờ bắt đầu sẽ được
+> scheduler chuyển `Expired` (SCH-15, §6.6); CLB không công bố được nữa và phải nộp đề xuất mới.
 
 **Hậu điều kiện** — sự kiện đề xuất ở `Upcoming` và hiển thị công khai. **Đầu ra** — `Event` đã công bố, bản ghi audit (không gửi thông báo, FR-UC27-02).
 
@@ -2648,8 +2651,8 @@ của nó không bao giờ được dùng lại.**
 | BR49 | **Mới** — Người dùng chỉ thấy và thao tác trên các CLB mà họ có tư cách thành viên hoặc ghế lãnh đạo trong nhiệm kỳ đang hoạt động; ICPDP thấy mọi CLB. | UC02, UC24 |
 | BR50 | **Mới** — `Registration Open` / `Registration Closed` suy ra từ registration window đặt ở UC27, không bao giờ lưu thành trạng thái của sự kiện. | UC27, UC29 |
 | BR51 | **Mới** — Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. | UC41, UC42 |
-| BR52 | **Mới** — Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. | UC21, UC22 |
-| BR53 | **Đã rút ngày 19/11/2026 (commit `5efb7fe`).** Sự kiện nội bộ CLB (`MEMBERS_ONLY`) không còn trong hệ thống: UC25 chỉ nhận đề xuất `PUBLIC` qua ICPDP (ngân sách không bắt buộc); dữ liệu cũ ở các trạng thái `DRAFT` / `CREATED` / `PUBLIC` / `ONGOING` / `FINISH` chỉ còn để đọc và chỉ có thể huỷ (UC28). Mã BR53 giữ lại để truy vết | — |
+| BR52 | **Mới** — Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. Ngoại lệ (27/11/2026): đợt quét xác nhận lại theo kỳ (UC21 A2) chỉ miễn Club Leader, nên ghế ban điều hành khác không xác nhận lại vẫn chuyển `Inactive`. | UC21, UC22 |
+| BR53 | **Đã rút ngày 19/11/2026 (commit `5efb7fe`).** Sự kiện nội bộ CLB (`MEMBERS_ONLY`) không còn trong hệ thống: UC25 chỉ nhận đề xuất `PUBLIC` qua ICPDP (ngân sách không bắt buộc); dữ liệu cũ ở các trạng thái `DRAFT` / `CREATED` / `PUBLIC` / `ONGOING` / `FINISH` chỉ còn để đọc và chỉ có thể huỷ (UC28). *Cập nhật 27/11/2026:* sự kiện cũ ở `FINISH` vẫn được tính trong báo cáo định kỳ, đánh giá và dashboard, nhưng điểm danh của nó không thay đổi được nữa — sửa, chốt và mở khoá điểm danh (UC32) đều bị từ chối. Mã BR53 giữ lại để truy vết | — |
 | BR54 | Ánh xạ capability/permission của `Club Leader` và `Club Member` là cố định do hệ thống định nghĩa. Mỗi use case kiểm tra đúng role cố định trong đúng CLB; chức danh nội bộ không cộng dồn hoặc cấp thêm quyền. Mọi membership `Active` có hai capability hiện hành `club.attendance.manage` và `club.room.view`; các permission quản lý khác chỉ Club Leader có | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54, UC58 |
 | BR55 | Không có RBAC tuỳ biến theo CLB: Club Leader không được tạo role truy cập, sửa permission hoặc gán permission cho chức danh. Cơ cấu tổ chức có thể lưu tên chức danh/ban/bộ phận để hiển thị và truy vết nhưng không tham gia quyết định quyền. Ghế Chủ nhiệm / Phó chủ nhiệm chỉ đổi qua UC08, UC10 / UC11 hoặc UC12 / UC13 | UC07, UC08, UC09, UC10, UC11, UC12, UC13 |
 | BR56 | Cơ cấu tổ chức được đánh phiên bản: phiên bản 1 là cơ cấu cố định được duyệt ở UC08 (Chủ nhiệm, Phó chủ nhiệm, Members), và một phiên bản đã lưu không bao giờ bị ghi đè. Sửa ở UC09 không tạo phiên bản mới; luồng UC12 / UC13 hiện tại cũng không tạo, vì UC12 không gửi danh sách role đề xuất. Phiên bản cơ cấu không chứa ánh xạ permission tuỳ biến và không có nguồn `ROLE_EDIT` từ UC23 | UC02, UC07, UC08, UC13 |
@@ -2715,9 +2718,12 @@ tại. `Inactive` **cố tình không** là một trạng thái của CLB — CL
 ## 6.3 Recruitment Campaign (đợt tuyển)
 
 ```text
-Draft → Published → Accepting Applications → Screening → Completed
+Draft → Published → Completed
                  ↘ Cancelled
 ```
+
+> Cập nhật 27/11/2026 theo code: enum còn `Accepting Applications` / `Screening` nhưng không có
+> chuyển trạng thái nào tới chúng; "đang nhận đơn" được tính từ khung `windowStart ≤ now < windowEnd`.
 
 Tác nhân: UC16 (`Draft → Published`, và `Cancelled` từ mọi trạng thái chưa kết thúc);
 UC18 (`Completed` được đặt tự động trong UC18 khi khung nhận đơn đã đóng hoặc đủ chỉ tiêu và mọi đơn
@@ -2748,7 +2754,7 @@ Active | Inactive → Banned (cuối)
 | Từ → Đến | Tác nhân |
 |---|---|
 | (chưa có) → Active | UC20 tiếp nhận |
-| Active → Inactive | UC21 (ngừng tham gia), hoặc **Scheduler** của UC21 A2 khi quá hạn xác nhận lại — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
+| Active → Inactive | UC21 (ngừng tham gia) — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận; hoặc **Scheduler** của UC21 A2 khi quá hạn xác nhận lại — chỉ miễn Club Leader (27/11/2026) |
 | Inactive → Active | UC21 (Club Leader kích hoạt lại thủ công); UC21 A2 chỉ áp cho membership `Active`, không đưa `Inactive` về `Active` |
 | Active / Inactive → Left | UC21 A1, thực thi yêu cầu của UC22 — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
 | Active / Inactive → Banned | UC21, bắt buộc lý do — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
@@ -2765,6 +2771,7 @@ ICPDP tạo (UC53).
 Draft → Pending Approval → Under Review ──┬──→ {Revision Requested → Pending Approval(bản sửa mới)}
                                           ├──→ {Re-defense Pending → Under Review(lịch bảo vệ mới)}
                                           ├──→ Approved → Upcoming → Ongoing → Completed → Report Submitted → Closed
+                                          │       └──→ Expired (Scheduler: chưa công bố trước giờ bắt đầu)
                                           └──→ Rejected (cuối)
 ```
 
@@ -2773,6 +2780,8 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 > `DRAFT / CREATED / PUBLIC / ONGOING → CANCELLED` (UC28). Không có scheduler cho các trạng thái này.
 > Cập nhật 26/11/2026: các trạng thái cũ này không còn nhận đăng ký, danh sách chờ, đổi sức chứa hay
 > check-in; chỉ `Upcoming` mở đăng ký (UC29, UC30) và chỉ `Upcoming` / `Ongoing` nhận check-in (UC31).
+> Cập nhật 27/11/2026: dữ liệu `FINISH` cũ vẫn được tính trong thống kê (báo cáo định kỳ, đánh giá,
+> dashboard) nhưng điểm danh của nó không thay đổi được — sửa, chốt, mở khoá đều bị từ chối (BR53).
 
 | Từ → Đến | Tác nhân |
 |---|---|
@@ -2784,6 +2793,8 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 | Under Review → Approved / Rejected | UC26 |
 | Under Review → Re-defense Pending | UC26 A4 — cho phép bảo vệ lại (BR63) |
 | Re-defense Pending → Under Review | UC26 A4 — xếp lịch bảo vệ mới và mở thẩm định (BR63) |
+| Re-defense Pending → Approved / Rejected / Revision Requested | UC26 A4 — cán bộ giữ review task có thể quyết định luôn mà không xếp buổi bảo vệ mới, khi không còn lịch bảo vệ hiệu lực (cập nhật 27/11/2026 theo code) |
+| Under Review / Revision Requested → Rejected | UC26 A4 — cán bộ chủ trì ghi CLB vắng mặt (`NO_SHOW`) khi buổi bảo vệ còn hiệu lực, kể cả lúc CLB đang sửa đề xuất (BR63; cập nhật 27/11/2026) |
 | Approved → Upcoming | UC27 (đề xuất), hoặc UC53 công bố sự kiện cấp trường |
 | Approved / Upcoming → Pending Approval (hoặc Under Review khi còn lịch bảo vệ) | UC28 A1 — đổi lịch tạo bản sửa mới, chỉ khi chưa có check-in và không có yêu cầu huỷ đang mở |
 | Upcoming → Ongoing | **Scheduler** (giờ bắt đầu) |
@@ -2796,6 +2807,7 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 | Pending Approval / Under Review / Revision Requested / Re-defense Pending → Cancelled | UC15 (tạm ngừng, hoặc quyết định giải thể theo BR45), hoặc **Scheduler** khi CLB chuyển `Dissolved` |
 | Draft → Cancelled | UC15 quyết định giải thể (BR45), hoặc **Scheduler** khi CLB chuyển `Dissolved` |
 | Revision Requested → Expired | **Scheduler** (deadline chỉnh sửa đặt ở UC26); là trạng thái cuối — CLB phải nộp đề xuất mới |
+| Approved → Expired | *(Thêm 27/11/2026)* **Scheduler** — sự kiện CLB đã duyệt nhưng không được công bố (UC27) trước giờ bắt đầu; giải phóng booking, huỷ đăng ký và lịch bảo vệ còn mở, đóng yêu cầu huỷ đang chờ, khoá ngân sách như khi huỷ (FR-UC28-03…05) và báo ban chủ nhiệm. Sự kiện cấp trường (UC53) không thuộc chuyển này |
 
 `Upcoming` bao trùm toàn bộ khoảng từ lúc công bố tới lúc bắt đầu, bất kể đăng ký đang mở, đã
 đóng hay không dùng tới. **`Registration Open` và `Registration Closed` được suy ra từ khung thời
@@ -2853,6 +2865,7 @@ Ngân sách sinh từ UC26 cùng mảng `sponsoredItems` (12 trạng thái xử 
 
 [Quá hạn hiển thị] Draft / Returned khi now > D → Expired (suy diễn để hiển thị và đóng ngân sách)
 [Aggregate EventBudget] Approved → Closed chỉ khi mọi hạng mục ở NOT_SPONSORED / Paid / Reconciled / Rejected / Expired
+                        (tính lại ở thao tác hạng mục kế tiếp, không có scheduler — 27/11/2026)
 ```
 
 | Cấp / Trạng thái | Quy tắc chuyển & Tác nhân |
@@ -2862,7 +2875,7 @@ Ngân sách sinh từ UC26 cùng mảng `sponsoredItems` (12 trạng thái xử 
 | Nộp & trả sửa chứng từ | `Draft / Returned → Submitted` (CLB `submit` trong `[E, D]`); `Submitted → Returned` (ICPDP `return` trước `D`) |
 | Đối soát `AFTER_EVENT` | `Submitted → Accepted` (`payable > 0`) hoặc `Rejected` (`payable = 0`); `Accepted → Paid` (CLB `pay` cho `< 5M` tự chi, ICPDP `confirmVendorPaid` cho `DIRECT_VENDOR`) |
 | Đối soát & hoàn trả `BEFORE_EVENT` | `Submitted → Reconciled` (`payable ≥ advance`) hoặc `RefundPending` (`payable < advance`, kể cả `validAmount = 0`); `RefundPending → RefundSubmitted` (CLB `submitRefund` kèm 1–5 biên lai); `RefundSubmitted → RefundPending` (ICPDP `returnRefund`) hoặc `Reconciled` (ICPDP `confirmRefund`, cộng `refundedTotal`) |
-| Toàn ngân sách | `Approved → Closed` tự động khi toàn bộ hạng mục đã kết thúc; mọi thao tác tài chính tạm khóa (409) khi sự kiện bị huỷ hoặc có yêu cầu huỷ mở |
+| Toàn ngân sách | `Approved → Closed` khi toàn bộ hạng mục đã kết thúc; mọi thao tác tài chính tạm khóa (409) khi sự kiện bị huỷ hoặc có yêu cầu huỷ mở. Cập nhật 27/11/2026 theo code: trạng thái ngân sách được tính lại ở mỗi thao tác trên một hạng mục (UC35–UC37), không có scheduler; ngân sách chỉ có hạng mục `NOT_SPONSORED`, hoặc còn hạng mục quá hạn `D` mà không ai thao tác tiếp, vẫn hiển thị `Approved`. Hạng mục `NOT_SPONSORED` được lưu với `status = Draft` nhưng không có kênh thanh toán và không nhận thao tác nào; mọi phép tính đóng ngân sách đều coi nó là đã kết thúc |
 
 ## 6.8 Property Booking (đặt cơ sở vật chất)
 
@@ -2941,7 +2954,8 @@ Data Ready ──UC43 chốt──→ Finalized;  Finalized ──UC43 mở lạ
 Tác nhân: UC42 tạo hoặc sinh lại bản ghi thẳng ở `Data Ready` (`Draft` có trong enum nhưng không
 được ghi); UC43 chỉnh tay đưa về `Under Review`, chốt, mở lại và công bố theo lô cả kỳ. Kỳ đánh giá
 đã công bố không bao giờ được sửa tại chỗ: sửa = tạo bản ghi mới (`revisionNo + 1`) ở `Data Ready`,
-bản cũ giữ nguyên (BR30).
+bản cũ giữ nguyên (BR30). Sinh lại bản chưa công bố (UC42) đưa `Under Review → Data Ready` và giữ điểm
+chấm tay (cập nhật 27/11/2026 theo code).
 
 ## 6.13 Event Invitation (lời mời tham gia sự kiện)
 
@@ -2962,6 +2976,38 @@ bản cũ giữ nguyên (BR30).
 | Withdrawn / Expired → Pending | UC53 (ICPDP mời lại CLB, đặt hạn mới) |
 
 UC54 chỉ nhận phản hồi khi sự kiện đang `Approved` / `Upcoming`, chưa bắt đầu và chưa quá hạn trả lời.
+
+## 6.14 Periodic Report (báo cáo định kỳ) — bổ sung 27/11/2026 theo code
+
+```text
+(chưa có) --UC38 lưu nháp--> Draft --UC38 nộp--> Submitted ──┬──UC39 chấp nhận──► Accepted (cuối)
+                                                            └──UC39 trả về────► Returned for correction
+Returned for correction --UC38 sửa và nộp lại (versionNo + 1)--> Submitted
+```
+
+| Từ → Đến | Tác nhân |
+|---|---|
+| (chưa có) → Draft | UC38 — Club Leader lưu nháp lần đầu cho kỳ (`periodCode`); mỗi CLB một báo cáo mỗi kỳ |
+| Draft / Returned for correction → Submitted | UC38 — nộp; lần nộp lại tăng `versionNo`, nộp sau hạn bật `lateFlag` |
+| Submitted → Accepted / Returned for correction | UC39 — ICPDP quyết định (trả về bắt buộc nhận xét); chấp nhận kích hoạt sinh bản nháp đánh giá (UC42) |
+
+Kỳ quá hạn mà CLB chưa nộp: ICPDP ghi nhận thiếu báo cáo (UC39), mở hồ sơ vi phạm `OVERDUE_REPORT`
+(UC40) và kỳ đánh giá tính 0 điểm (FR-UC43-03); báo cáo không đổi trạng thái.
+
+## 6.15 Post-event Report (báo cáo sau sự kiện) — bổ sung 27/11/2026 theo code
+
+```text
+(chưa có) --UC33 lưu nháp--> Draft --UC33 nộp--> Submitted ──┬──UC34 chấp nhận──► Accepted (cuối)
+                                                            └──UC34 trả về────► Returned for correction
+Returned for correction --UC33 sửa và nộp lại (versionNo + 1)--> Submitted
+```
+
+| Từ → Đến | Tác nhân |
+|---|---|
+| (chưa có) → Draft | UC33 — chỉ khi sự kiện `Completed` và điểm danh đã chốt |
+| Draft / Returned for correction → Submitted | UC33 — sự kiện chuyển `Completed → Report Submitted` |
+| Submitted → Accepted | UC34 — sự kiện chuyển `Report Submitted → Closed` |
+| Submitted → Returned for correction | UC34 — sự kiện quay về `Completed` để CLB sửa |
 
 ---
 
@@ -3186,6 +3232,7 @@ Scheduler **không phải actor**. Nó sở hữu đúng các hành vi sau, mỗ
 | SCH-12 | *(Ghi 27/11/2026 theo code)* Lời mời sự kiện cấp trường `Pending → Expired` khi quá hạn phản hồi (§6.13); cảnh báo ICPDP khi CLB chưa xác nhận lịch bảo vệ trước giờ bảo vệ 24 giờ (BR63) | `deadline` của lời mời; giờ bảo vệ |
 | SCH-13 | *(Ghi 27/11/2026 theo code)* Nhắc ICPDP trước khi hết hạn tạm ngừng và tự chuyển CLB `Suspended → Active` khi hết hạn (§6.2); cảnh báo ICPDP khi lượt chạy vòng đời CLB thất bại | hạn tạm ngừng đặt ở UC15 |
 | SCH-14 | *(Ghi 27/11/2026 theo code)* Đánh dấu khiếu nại `Forwarded` quá hạn trả lời là tín hiệu tuân thủ (UC52 E1) | `responseDueAt` của khiếu nại |
+| SCH-15 | *(Thêm 27/11/2026)* Sự kiện CLB `Approved → Expired` khi tới giờ bắt đầu mà chưa công bố (§6.6); xử lý booking, đăng ký, ngân sách như khi huỷ, ghi audit `EVENT_EXPIRED_UNPUBLISHED` và báo ban chủ nhiệm | giờ bắt đầu của chính sự kiện |
 
 SCH-06 phải là tất-cả-hoặc-không-gì với từng CLB: nếu bất kỳ phần nào thất bại, CLB ở lại
 `Dissolving` và ICPDP được cảnh báo (FR-UC15-11).

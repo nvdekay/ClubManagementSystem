@@ -125,6 +125,10 @@ describe('Event finance rules', () => {
     for (const state of ['Completed', 'Report Submitted', 'Closed', 'Cancelled']) {
       expect(() => assertSettlementEvent(state, now, now)).not.toThrow()
     }
+    // An approved event that expired unpublished is settled like a cancelled one.
+    const future = new Date(now.getTime() + 86_400_000)
+    expect(() => assertSettlementEvent('Expired', future, now)).not.toThrow()
+    expect(() => assertSettlementEvent('Approved', future, now)).toThrow()
     expect(() => assertSettlementEvent('Ongoing', now, now)).toThrow()
   })
 })

@@ -1,5 +1,5 @@
 import { Types, type ClientSession } from 'mongoose'
-import type { ClubEventAction } from '../../domain/club-event.js'
+import { isInternalClubEventState, type ClubEventAction } from '../../domain/club-event.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { policyAt } from './repo-helpers.js'
@@ -21,6 +21,10 @@ export async function applyEventAttendanceAction(
   allowOutOfWindowCheckIn = true,
 ): Promise<void> {
   const eventId = event._id as Types.ObjectId
+  // BR53: sự kiện nội bộ cũ (FINISH…) vẫn được tính trong thống kê nhưng điểm danh không đổi được nữa
+  if (isInternalClubEventState(String(event.state))) {
+    conflict('legacy event is read-only')
+  }
   if (action.kind === 'unlock') {
     if (
       await m
@@ -34,19 +38,13 @@ export async function applyEventAttendanceAction(
     }
     if (
       event.attendanceFinalized !== true ||
-      !['Completed', 'Closed', 'FINISH'].includes(String(event.state))
+      !['Completed', 'Closed'].includes(String(event.state))
     ) {
       conflict('attendance is not finalized')
     }
-    // Sự kiện nội bộ kết thúc ở FINISH và dừng ở đó; đề xuất thì mở lại ở Completed.
     await m.events!.updateOne(
       { _id: eventId },
-      {
-        $set: {
-          attendanceFinalized: false,
-          state: event.state === 'FINISH' ? 'FINISH' : 'Completed',
-        },
-      },
+      { $set: { attendanceFinalized: false, state: 'Completed' } },
       { session },
     )
     await m.attendances!.updateMany(
@@ -63,7 +61,7 @@ export async function applyEventAttendanceAction(
     conflict('attendance is finalized')
   }
   if (action.kind === 'finalize') {
-    if (!['Completed', 'FINISH'].includes(String(event.state)) || (event.endAt as Date) > now) {
+    if (event.state !== 'Completed' || (event.endAt as Date) > now) {
       conflict('only completed events can finalize attendance')
     }
     const registrations = await m
@@ -210,7 +208,7 @@ export async function applyEventAttendanceAction(
     )
     return
   }
-  if (!['Completed', 'FINISH'].includes(String(event.state))) {
+  if (event.state !== 'Completed') {
     conflict('attendance can only be corrected after completion')
   }
   if (!existing && registration?.state !== 'Confirmed') {

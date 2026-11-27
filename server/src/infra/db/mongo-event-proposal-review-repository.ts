@@ -36,6 +36,8 @@ const CANCELLATION_TASK_TYPE = 'EVENT_CANCELLATION'
 const reviewableStates = ['Pending Approval', 'Under Review', 'Re-defense Pending']
 const cancellableStates = ['Approved', 'Upcoming', 'Ongoing']
 const approvedStates = [...cancellableStates, 'Completed']
+const UNPUBLISHED_EXPIRY_SOURCE = 'PUBLICATION_EXPIRY'
+const UNPUBLISHED_EXPIRY_REASON = 'Approved event was not published before its start time'
 
 // Ánh xạ approval task thành EventProposalTask
 function taskFrom(doc: Doc): EventProposalTask {
@@ -318,6 +320,82 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       )
       return changed.modifiedCount
     })
+  }
+
+  // Chuyển sự kiện CLB đã duyệt nhưng không công bố trước giờ bắt đầu sang Expired
+  /** Approved → Expired: giải phóng booking, đóng task, khoá ngân sách như khi huỷ; trả về số sự kiện đã đổi. */
+  async function expireUnpublishedEvents(now: Date): Promise<number> {
+    const filter = {
+      state: 'Approved',
+      organizerType: { $ne: 'ICPDP' },
+      startAt: { $lte: now },
+    }
+    const due = await events.find(filter).select({ _id: 1 }).lean()
+    let expired = 0
+    for (const { _id } of due) {
+      const didExpire = await mongoose.connection.transaction(async (session) => {
+        const event = await events
+          .findOne({ ...filter, _id })
+          .session(session)
+          .lean()
+        if (!event) {
+          return false
+        }
+        await cancelEventInSession(
+          session,
+          event,
+          UNPUBLISHED_EXPIRY_REASON,
+          now,
+          UNPUBLISHED_EXPIRY_SOURCE,
+          0,
+        )
+        await events.updateOne(
+          { _id, state: 'Cancelled' },
+          { $set: { state: 'Expired' } },
+          { session },
+        )
+        // Yêu cầu huỷ đang chờ ICPDP không còn gì để quyết
+        await tasks.updateMany(
+          { entityType: CANCELLATION_TASK_TYPE, entityId: _id, state: 'Open' },
+          { $set: { state: 'Closed', closedAt: now } },
+          { session },
+        )
+        await audits.create(
+          [
+            {
+              entityType: 'Event',
+              entityId: _id,
+              action: 'EVENT_EXPIRED_UNPUBLISHED',
+              actorRole: 'SYSTEM',
+              before: { state: 'Approved' },
+              after: { state: 'Expired' },
+              reason: UNPUBLISHED_EXPIRY_REASON,
+              correlationId: randomUUID(),
+              at: now,
+            },
+          ],
+          { session },
+        )
+        if (event.clubId) {
+          await queueNotifications(
+            session,
+            await clubBoardUserIds(event.clubId as Types.ObjectId, session),
+            {
+              eventCode: 'EVENT_EXPIRED_UNPUBLISHED',
+              entityType: 'Event',
+              entityId: _id,
+              payload: { title: event.title, clubId: String(event.clubId) },
+              now,
+            },
+          )
+        }
+        return true
+      })
+      if (didExpire) {
+        expired += 1
+      }
+    }
+    return expired
   }
   return {
     // Liệt kê task thẩm định đề xuất và yêu cầu hủy đang Open
@@ -670,6 +748,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           expired += 1
         }
       }
+      expired += await expireUnpublishedEvents(now)
       const completed = await transitionEvents(
         { state: { $in: ['Upcoming', 'Ongoing'] }, endAt: { $lte: now } },
         'Completed',

@@ -181,7 +181,7 @@ export interface EventProposalReviewRepository {
     input: { approve: boolean; reason?: string },
     now: Date,
   ): Promise<EventProposalDetail>
-  /** Scheduler: cho hết hạn các phiên bản quá hạn và chuyển trạng thái sự kiện đã công bố theo giờ của chúng. */
+  /** Scheduler: cho hết hạn bản sửa quá hạn và sự kiện CLB `Approved` chưa công bố khi tới giờ bắt đầu, rồi chuyển sự kiện đã công bố theo giờ của chúng. */
   advanceLifecycle(now: Date): Promise<EventLifecycleResult>
 }
 

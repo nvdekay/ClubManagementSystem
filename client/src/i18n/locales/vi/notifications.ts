@@ -27,6 +27,8 @@ export const notifications = {
     EVENT_PROPOSAL_REJECTED: 'Đề xuất sự kiện bị từ chối',
     EVENT_PROPOSAL_REVISION_REQUESTED: 'Đề xuất sự kiện cần chỉnh sửa',
     EVENT_PROPOSAL_EXPIRED: 'Đề xuất sự kiện đã hết hạn',
+    EVENT_EXPIRED_UNPUBLISHED:
+      'Sự kiện đã duyệt bị hết hạn vì không được công bố trước giờ bắt đầu',
     EVENT_CANCELLATION_REQUESTED: 'Có yêu cầu huỷ sự kiện đã duyệt cần xác nhận',
     EVENT_CANCELLATION_DECIDED: 'Yêu cầu huỷ sự kiện đã có quyết định từ ICPDP',
     EVENT_REGISTRATION_CONFIRMED: 'Đăng ký sự kiện đã được xác nhận',

@@ -164,6 +164,8 @@ export const clubEvents = {
   confirmFinalize: 'Chốt điểm danh? Sau khi chốt chỉ ICPDP mở khoá được.',
   unlock: 'Mở khoá điểm danh',
   attendanceLocked: 'Điểm danh đã chốt.',
+  legacyAttendanceReadOnly:
+    'Đây là sự kiện nội bộ cũ: điểm danh được giữ để thống kê nhưng không thể thay đổi nữa.',
   registrationOpen: 'Mở đăng ký',
   registrationClose: 'Đóng đăng ký',
   checkInOpen: 'Mở check-in',
