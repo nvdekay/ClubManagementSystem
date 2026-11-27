@@ -403,7 +403,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
      - **Từ chối** — bắt buộc có lý do → `Rejected`; không tạo Club nào.
   5. Hệ thống ghi bản ghi audit và thông báo cho người nộp.
 - **Luồng thay thế:**
-  - **A1 Cấp thứ hai:** khi các rule định tuyến của UC05 yêu cầu, quyết định được leo thang
+  - *(Đã bỏ 09/11/2026 — mọi hồ sơ duyệt một cấp, rule UC05 chỉ đặt SLA thẩm định.)* **A1 Cấp thứ hai:** khi các rule định tuyến của UC05 yêu cầu, quyết định được leo thang
     trong nội bộ ICPDP trước khi có hiệu lực.
 - **Ngoại lệ:**
   - **E1** người nộp rút hồ sơ trong lúc đang thẩm định (UC07 A3) → phiên thẩm định đóng lại và

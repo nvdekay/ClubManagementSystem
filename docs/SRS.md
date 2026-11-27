@@ -3172,17 +3172,20 @@ Scheduler **không phải actor**. Nó sở hữu đúng các hành vi sau, mỗ
 
 | ID | Hành vi theo lịch | Nguồn chân lý |
 |---|---|---|
-| SCH-01 | `Upcoming → Ongoing → Completed` (và `Approved → Completed` khi job chạy sau giờ kết thúc) | giờ bắt đầu và kết thúc của chính sự kiện |
+| SCH-01 | `Upcoming → Ongoing → Completed` (và `Upcoming → Completed` khi job chạy sau giờ kết thúc; sửa 27/11/2026 theo code: sự kiện `Approved` chưa công bố không được job chuyển) | giờ bắt đầu và kết thúc của chính sự kiện |
 | SCH-02 | `Approved → In Use → Completed` của booking | giờ bắt đầu và kết thúc của chính booking |
 | SCH-03 | **Không có (theo code)** — không job nào mở (`Accepting Applications`) hay đóng (`Screening`) đợt tuyển; khung nhận đơn được kiểm tra ở mỗi request (`windowStart ≤ now < windowEnd`) | khung thời gian của đợt tuyển |
 | SCH-04 | `Revision Requested → Expired` của hồ sơ thành lập và đề xuất sự kiện | deadline chỉnh sửa đặt ở UC08 / UC26 |
 | SCH-05 | `Active`/`Suspended → Dissolving` vào đầu học kỳ sau quyết định giải thể | lịch học kỳ (UC04) + quyết định ở UC15 |
 | SCH-06 | `Dissolving → Dissolved` vào cuối học kỳ đó, gồm huỷ các đề xuất và booking chưa quyết định, ghi nhận nghĩa vụ tồn đọng và lưu trữ hồ sơ | lịch học kỳ (UC04) |
-| SCH-07 | Đóng feedback window | độ dài window cấu hình ở UC04 (BR36) |
+| SCH-07 | Đóng feedback window — theo code không có job: window được tính ở mỗi request từ giờ kết thúc sự kiện (§6.11) | độ dài window cấu hình ở UC04 (BR36) |
 | SCH-08 | Quét đăng ký lại thành viên theo kỳ (UC21 A2) | lịch học kỳ (UC04) |
 | SCH-09 | Nhắc hạn, đánh dấu quá hạn và leo thang (`T−X / T / T+Y / T+Z`) | các mốc ở UC04 + ngày đến hạn của từng mục |
 | SCH-10 | Rút hàng đợi thông báo và thử lại email thất bại | trạng thái outbox + backoff |
 | SCH-11 | *(Thêm 26/11/2026)* Mỗi 24 giờ xoá ảnh minh chứng báo cáo định kỳ đã tải lên quá 24 giờ mà không báo cáo nào tham chiếu (FR-UC38-03) | collection `uploadedAssets` + nội dung báo cáo định kỳ |
+| SCH-12 | *(Ghi 27/11/2026 theo code)* Lời mời sự kiện cấp trường `Pending → Expired` khi quá hạn phản hồi (§6.13); cảnh báo ICPDP khi CLB chưa xác nhận lịch bảo vệ trước giờ bảo vệ 24 giờ (BR63) | `deadline` của lời mời; giờ bảo vệ |
+| SCH-13 | *(Ghi 27/11/2026 theo code)* Nhắc ICPDP trước khi hết hạn tạm ngừng và tự chuyển CLB `Suspended → Active` khi hết hạn (§6.2); cảnh báo ICPDP khi lượt chạy vòng đời CLB thất bại | hạn tạm ngừng đặt ở UC15 |
+| SCH-14 | *(Ghi 27/11/2026 theo code)* Đánh dấu khiếu nại `Forwarded` quá hạn trả lời là tín hiệu tuân thủ (UC52 E1) | `responseDueAt` của khiếu nại |
 
 SCH-06 phải là tất-cả-hoặc-không-gì với từng CLB: nếu bất kỳ phần nào thất bại, CLB ở lại
 `Dissolving` và ICPDP được cảnh báo (FR-UC15-11).
@@ -3781,7 +3784,7 @@ feedback bất biến, tổng hợp hiển thị ngay khi đủ `feedbackMinResp
 | **Property** | Phòng, hội trường hoặc thiết bị có thể đặt (UC44) |
 | **Release / Released (booking)** | Booking được giải phóng vì sự kiện của nó bị huỷ (BR35) |
 | **Revision / Version** | Bản chụp chỉ-ghi-thêm của một hồ sơ đã nộp (CON-08) |
-| **Routing rule** | Điều kiện ở UC05 quyết định một hồ sơ có cần cấp ICPDP thứ hai hay không |
+| **Routing rule** | Điều kiện ở UC05 quyết định SLA thẩm định của một nhóm hồ sơ; từ 09/11/2026 không còn cấp ICPDP thứ hai (D1) |
 | **Scheduler** | Chức năng hệ thống chạy theo thời gian (§8.4); không bao giờ là actor |
 | **Scope check** | Kiểm tra trong usecase rằng actor thuộc *đúng* CLB đó, với *đúng* chức vụ đó, trong *đúng* nhiệm kỳ hiện tại (SEC-03) |
 | **Settlement (quyết toán)** | Bộ khoản chi và hóa đơn đầy đủ theo từng hạng mục CLB nộp trong cửa sổ BR57, không phụ thuộc đã giải ngân (UC36) |
