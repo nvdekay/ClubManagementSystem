@@ -13,7 +13,7 @@ import { useNow } from '@/hooks/useNow'
 import type { ClubEvent, EventParticipant } from '@/services/clubEvents'
 import { ClubEventErrorMessage } from '@/pages/club/ClubEventErrorMessage'
 import { ClubEventTablePager } from '@/pages/club/ClubEventTablePager'
-import type { ClubEventOperation } from '@/pages/club/clubEventFormat'
+import { isInternalState, type ClubEventOperation } from '@/pages/club/clubEventFormat'
 
 const participantsEmpty: EventParticipant[] = []
 const participantColumns = createColumnHelper<AppTableFeatures, EventParticipant>()
@@ -50,13 +50,14 @@ export function ClubEventAttendance({
   const people = participants.data ?? participantsEmpty
   const [attendanceFilter, setAttendanceFilter] = useState<'all' | 'checked' | 'missing'>('all')
   // Điểm danh mở khi sự kiện đã công khai và đang diễn ra, cho đến khi chốt danh sách tham dự (UC31, UC32).
-  // Sự kiện nội bộ tương ứng với đề xuất: PUBLIC ↔ Upcoming, ONGOING ↔ Ongoing, FINISH ↔ Completed.
-  const published = Boolean(active && ['Upcoming', 'PUBLIC'].includes(active.state))
-  const finished = Boolean(active && ['Completed', 'FINISH'].includes(active.state))
+  // Sự kiện nội bộ cũ (FINISH…) chỉ để đọc: vẫn tính trong thống kê nhưng không đổi được điểm danh (BR53).
+  const legacy = Boolean(active && isInternalState(active.state))
+  const published = active?.state === 'Upcoming'
+  const finished = active?.state === 'Completed'
   const canCheckIn = Boolean(
     active &&
     !active.attendanceFinalized &&
-    ['Upcoming', 'Ongoing', 'Completed', 'PUBLIC', 'ONGOING', 'FINISH'].includes(active.state),
+    ['Upcoming', 'Ongoing', 'Completed'].includes(active.state),
   )
   const checkInStartsAt = active ? Date.parse(active.checkInOpenAt ?? active.startAt) : NaN
   const checkInEndsAt = active ? Date.parse(active.checkInCloseAt ?? active.endAt) : NaN
@@ -220,7 +221,8 @@ export function ClubEventAttendance({
           {format.format(new Date(active.checkInCloseAt))}
         </p>
       )}
-      {!canCheckIn && !active.attendanceFinalized && (
+      {legacy && <AppNotice tone="info">{t('clubEvents.legacyAttendanceReadOnly')}</AppNotice>}
+      {!legacy && !canCheckIn && !active.attendanceFinalized && (
         <AppNotice tone="warning">
           {active.state === 'Approved' && active.publishedAt
             ? t('clubEvents.checkInRepublish')
@@ -258,9 +260,11 @@ export function ClubEventAttendance({
             {t('clubEvents.finalize')}
           </AppButton>
         )}
-        {active.attendanceFinalized && auth.data?.systemRoles.includes('ICPDP_OFFICER') && (
-          <AppButton onClick={() => openOperation('unlock')}>{t('clubEvents.unlock')}</AppButton>
-        )}
+        {!legacy &&
+          active.attendanceFinalized &&
+          auth.data?.systemRoles.includes('ICPDP_OFFICER') && (
+            <AppButton onClick={() => openOperation('unlock')}>{t('clubEvents.unlock')}</AppButton>
+          )}
       </div>
       <div className="w-full sm:w-64">
         <AppSelect

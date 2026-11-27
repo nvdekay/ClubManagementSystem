@@ -2652,7 +2652,7 @@ của nó không bao giờ được dùng lại.**
 | BR50 | **Mới** — `Registration Open` / `Registration Closed` suy ra từ registration window đặt ở UC27, không bao giờ lưu thành trạng thái của sự kiện. | UC27, UC29 |
 | BR51 | **Mới** — Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. | UC41, UC42 |
 | BR52 | **Mới** — Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. | UC21, UC22 |
-| BR53 | **Đã rút ngày 19/11/2026 (commit `5efb7fe`).** Sự kiện nội bộ CLB (`MEMBERS_ONLY`) không còn trong hệ thống: UC25 chỉ nhận đề xuất `PUBLIC` qua ICPDP (ngân sách không bắt buộc); dữ liệu cũ ở các trạng thái `DRAFT` / `CREATED` / `PUBLIC` / `ONGOING` / `FINISH` chỉ còn để đọc và chỉ có thể huỷ (UC28). Mã BR53 giữ lại để truy vết | — |
+| BR53 | **Đã rút ngày 19/11/2026 (commit `5efb7fe`).** Sự kiện nội bộ CLB (`MEMBERS_ONLY`) không còn trong hệ thống: UC25 chỉ nhận đề xuất `PUBLIC` qua ICPDP (ngân sách không bắt buộc); dữ liệu cũ ở các trạng thái `DRAFT` / `CREATED` / `PUBLIC` / `ONGOING` / `FINISH` chỉ còn để đọc và chỉ có thể huỷ (UC28). *Cập nhật 27/11/2026:* sự kiện cũ ở `FINISH` vẫn được tính trong báo cáo định kỳ, đánh giá và dashboard, nhưng điểm danh của nó không thay đổi được nữa — sửa, chốt và mở khoá điểm danh (UC32) đều bị từ chối. Mã BR53 giữ lại để truy vết | — |
 | BR54 | Ánh xạ capability/permission của `Club Leader` và `Club Member` là cố định do hệ thống định nghĩa. Mỗi use case kiểm tra đúng role cố định trong đúng CLB; chức danh nội bộ không cộng dồn hoặc cấp thêm quyền. Mọi membership `Active` có hai capability hiện hành `club.attendance.manage` và `club.room.view`; các permission quản lý khác chỉ Club Leader có | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54, UC58 |
 | BR55 | Không có RBAC tuỳ biến theo CLB: Club Leader không được tạo role truy cập, sửa permission hoặc gán permission cho chức danh. Cơ cấu tổ chức có thể lưu tên chức danh/ban/bộ phận để hiển thị và truy vết nhưng không tham gia quyết định quyền. Ghế Chủ nhiệm / Phó chủ nhiệm chỉ đổi qua UC08, UC10 / UC11 hoặc UC12 / UC13 | UC07, UC08, UC09, UC10, UC11, UC12, UC13 |
 | BR56 | Cơ cấu tổ chức được đánh phiên bản: phiên bản 1 là cơ cấu cố định được duyệt ở UC08 (Chủ nhiệm, Phó chủ nhiệm, Members), và một phiên bản đã lưu không bao giờ bị ghi đè. Sửa ở UC09 không tạo phiên bản mới; luồng UC12 / UC13 hiện tại cũng không tạo, vì UC12 không gửi danh sách role đề xuất. Phiên bản cơ cấu không chứa ánh xạ permission tuỳ biến và không có nguồn `ROLE_EDIT` từ UC23 | UC02, UC07, UC08, UC13 |
@@ -2777,6 +2777,8 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 > `DRAFT / CREATED / PUBLIC / ONGOING → CANCELLED` (UC28). Không có scheduler cho các trạng thái này.
 > Cập nhật 26/11/2026: các trạng thái cũ này không còn nhận đăng ký, danh sách chờ, đổi sức chứa hay
 > check-in; chỉ `Upcoming` mở đăng ký (UC29, UC30) và chỉ `Upcoming` / `Ongoing` nhận check-in (UC31).
+> Cập nhật 27/11/2026: dữ liệu `FINISH` cũ vẫn được tính trong thống kê (báo cáo định kỳ, đánh giá,
+> dashboard) nhưng điểm danh của nó không thay đổi được — sửa, chốt, mở khoá đều bị từ chối (BR53).
 
 | Từ → Đến | Tác nhân |
 |---|---|
