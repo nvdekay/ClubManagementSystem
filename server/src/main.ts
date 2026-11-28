@@ -225,29 +225,23 @@ const app = authConfig
       },
     })
   : buildApp(commonDeps)
-const stopApplicationExpiryJob = startApplicationExpiryJob(mongoApplicationExpiryRepository())
-const stopComplaintResponseJob = startComplaintResponseJob(mongoComplaintRepository())
-const stopReconfirmationJob = startMembershipReconfirmationJob(
-  membershipReconfirmationRepo,
-  mongoPolicyRepository(),
-)
-const stopAccountabilityJob = startAccountabilityReminderJob(
-  mongoAccountabilityReminderRepository(),
-)
-const stopBookingJob = startFacilityBookingJob(facilityBookingRepo)
-const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo)
-const stopEventLifecycleJob = startEventLifecycleJob(
-  eventProposalReviewRepo,
-  schoolEventRepo,
-  eventDefenseRepo,
-)
-// ponytail: dùng log transport cho tới khi SMTP client dependency được duyệt (xem infra/mail/README.md).
-const stopNotificationJob = startNotificationDeliveryJob(
-  mongoMailOutboxRepository(),
-  mailTransport,
-  authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {},
-)
-const stopEvidenceCleanupJob = startEvidenceCleanupJob(uploadedEvidenceRepo, periodicEvidenceFiles)
+// Timers start now; each stop function resolves once that job's in-flight tick has finished.
+const stopJobs = [
+  startApplicationExpiryJob(mongoApplicationExpiryRepository()),
+  startComplaintResponseJob(mongoComplaintRepository()),
+  startMembershipReconfirmationJob(membershipReconfirmationRepo, mongoPolicyRepository()),
+  startAccountabilityReminderJob(mongoAccountabilityReminderRepository()),
+  startFacilityBookingJob(facilityBookingRepo),
+  startClubLifecycleJob(clubLifecycleRepo),
+  startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo, eventDefenseRepo),
+  // ponytail: dùng log transport cho tới khi SMTP client dependency được duyệt (xem infra/mail/README.md).
+  startNotificationDeliveryJob(
+    mongoMailOutboxRepository(),
+    mailTransport,
+    authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {},
+  ),
+  startEvidenceCleanupJob(uploadedEvidenceRepo, periodicEvidenceFiles),
+]
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`)
 })
@@ -259,18 +253,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       process.exit(1)
     } // tín hiệu thứ hai = ngừng chờ, thoát ngay
     shuttingDown = true
-    // Timers stop now; each promise settles once that job's in-flight tick has finished.
-    const jobsStopped = Promise.all([
-      stopApplicationExpiryJob(),
-      stopComplaintResponseJob(),
-      stopReconfirmationJob(),
-      stopLifecycleJob(),
-      stopBookingJob(),
-      stopAccountabilityJob(),
-      stopEventLifecycleJob(),
-      stopNotificationJob(),
-      stopEvidenceCleanupJob(),
-    ])
+    const jobsStopped = Promise.all(stopJobs.map((stop) => stop()))
     // Hạn xả — một request đang xử lý bị treo không được chặn SIGTERM cho tới khi nền tảng SIGKILL.
     setTimeout(() => {
       console.error('shutdown deadline hit — forcing exit')
