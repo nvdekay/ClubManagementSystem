@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -17,7 +16,7 @@ import {
 import type { SimilarityCandidate } from '../../domain/similar-club.js'
 import { routedTaskFields } from './approval-routing.js'
 import { ucmsModels } from './ucms-models.js'
-import { queueNotification } from './repo-helpers.js'
+import { closeOpenTasks, queueNotification, writeAudit } from './repo-helpers.js'
 
 // Chuẩn hóa tài liệu đính kèm hồ sơ (ngày tải lên thành Date)
 function documentFrom(raw: ApplicationDocument): ApplicationDocument {
@@ -177,7 +176,6 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
   const users = ucmsModels.users!
   const clubs = ucmsModels.clubs!
   const tasks = ucmsModels.approvalTasks!
-  const audits = ucmsModels.auditLogs!
   const decisions = ucmsModels.approvalDecisions!
   const positions = ucmsModels.clubPositions!
   const terms = ucmsModels.clubTerms!
@@ -431,11 +429,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           ],
           { session },
         )
-        await tasks.updateMany(
-          { entityType: 'CLUB_APPLICATION', entityId: id, state: 'Open' },
-          { $set: { state: 'Closed', closedAt: input.now } },
-          { session },
-        )
+        await closeOpenTasks(session, 'CLUB_APPLICATION', id, input.now)
         // UC05: các rule định tuyến đang Active quyết định, một lần duy nhất, SLA của review này.
         await tasks.create(
           [
@@ -454,22 +448,16 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           ],
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'ClubApplication',
-              entityId: id,
-              action: 'CLUB_APPLICATION_SUBMITTED',
-              actorId: new Types.ObjectId(input.ownerId),
-              actorRole: 'Student',
-              before: { state: current.state, versionNo: current.currentVersionNo },
-              after: { state: 'Submitted', versionNo, policyVersionId: input.policyVersionId },
-              correlationId: randomUUID(),
-              at: input.now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'ClubApplication',
+          entityId: id,
+          action: 'CLUB_APPLICATION_SUBMITTED',
+          actorId: new Types.ObjectId(input.ownerId),
+          actorRole: 'Student',
+          before: { state: current.state, versionNo: current.currentVersionNo },
+          after: { state: 'Submitted', versionNo, policyVersionId: input.policyVersionId },
+          at: input.now,
+        })
         await queueNotification(session, {
           recipientUserId: new Types.ObjectId(input.ownerId),
           eventCode: 'CLUB_APPLICATION_SUBMITTED',
@@ -504,27 +492,17 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         if (changed.modifiedCount !== 1) {
           return conflict()
         }
-        await tasks.updateMany(
-          { entityType: 'CLUB_APPLICATION', entityId: objectId, state: 'Open' },
-          { $set: { state: 'Closed', closedAt: now } },
-          { session },
-        )
-        await audits.create(
-          [
-            {
-              entityType: 'ClubApplication',
-              entityId: objectId,
-              action: 'CLUB_APPLICATION_WITHDRAWN',
-              actorId: new Types.ObjectId(ownerId),
-              actorRole: 'Student',
-              before: { state: previous.state },
-              after: { state: 'Withdrawn' },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await closeOpenTasks(session, 'CLUB_APPLICATION', objectId, now)
+        await writeAudit(session, {
+          entityType: 'ClubApplication',
+          entityId: objectId,
+          action: 'CLUB_APPLICATION_WITHDRAWN',
+          actorId: new Types.ObjectId(ownerId),
+          actorRole: 'Student',
+          before: { state: previous.state },
+          after: { state: 'Withdrawn' },
+          at: now,
+        })
         await queueNotification(session, {
           recipientUserId: new Types.ObjectId(ownerId),
           eventCode: 'CLUB_APPLICATION_WITHDRAWN',
