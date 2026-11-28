@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   PROPERTY_TYPES,
   validatePropertyDetails,
@@ -48,10 +48,7 @@ export async function updateProperty(
   now: Date,
 ) {
   const actorId = await requireIcpdpOfficer(auth, actor)
-  const current = await repo.find(parseObjectId(id, 'property id'))
-  if (!current) {
-    throw new DomainError('property not found', 'not_found')
-  }
+  const current = orNotFound(await repo.find(parseObjectId(id, 'property id')), 'property')
   return repo.update(current.id, validatePropertyDetails(current.type, details), actorId, now)
 }
 
@@ -78,10 +75,7 @@ export async function deleteProperty(
   now: Date,
 ) {
   const actorId = await requireIcpdpOfficer(auth, actor)
-  const current = await repo.find(parseObjectId(id, 'property id'))
-  if (!current) {
-    throw new DomainError('property not found', 'not_found')
-  }
+  const current = orNotFound(await repo.find(parseObjectId(id, 'property id')), 'property')
   if (await repo.hasBookings(current.id)) {
     throw new DomainError('property has bookings; deactivate it instead', 'conflict')
   }
