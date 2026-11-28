@@ -4,7 +4,7 @@ Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `f
 
 `formatDate` là nơi duy nhất định dạng mốc thời gian: luôn theo giờ `Asia/Ho_Chi_Minh`, locale lấy từ ngôn ngữ i18n qua
 `dateLocale` (`vi` → `vi-VN`, còn lại → `en-GB`), formatter được cache theo locale + tuỳ chọn. Dùng `formatDate` (ngày giờ),
-`formatShortDateTime`, `formatDay` (chỉ ngày), `formatTime`, `formatEventWhen`, `formatDayBadge`; định dạng khác thì
+`formatShortDateTime`, `formatDay` (chỉ ngày), `formatTime`, `formatEventWhen`, `formatDayBadge`, `formatMonthAxis`/`formatMonthLong` (tháng `YYYY-MM` cho biểu đồ); định dạng khác thì
 `formatDateWith`/`dateFormatter(language, options)`. Không tự tạo `new Intl.DateTimeFormat` hay gọi `toLocaleString` cho
 ngày ở component. Các helper ô nhập ngày: `vnDateInput`, `vnDayBoundary`, `vnTomorrowInput`.
 `proposalReason` gộp nhận xét có tên mục vào lý do hiện có, giữ nguyên nội dung và chặn vượt 5.000 ký tự.
@@ -14,8 +14,9 @@ ngày ở component. Các helper ô nhập ngày: `vnDateInput`, `vnDayBoundary`
 `workspaceIcon` — icon của từng loại workspace, dùng chung cho màn chọn workspace và sidebar.
 `revisionDiff` — `diffFields`: so hai phiên bản hồ sơ theo danh sách trường có nhãn, trả các trường có nội dung khác nhau.
 `campusImage` — `CAMPUS_IMAGE_URL`: ảnh khuôn viên trường dùng chung cho trang đăng nhập và hero trang chủ.
-`saveFile` — đưa file tải từ API (blob + tên file) cho trình duyệt lưu xuống.
-`sponsoredItems` — các helper thuần dùng chung cho luồng giải ngân hạng mục (`EMPTY_VENDOR`, `triggerUrlDownload`, `isAllowedAttachment`, `sameVendorInfo`, `isVendorInfoComplete`, `formatSponsoredMoney`, `formatSponsoredDateTime`).
+`saveFile` — đưa file tải từ API (blob + tên file) cho trình duyệt lưu xuống; `saveImageUrl(url, title)` lưu một ảnh
+(data URL hoặc URL thường, tên file suy từ tiêu đề), tải lỗi thì mở ảnh ở tab mới.
+`sponsoredItems` — các helper thuần dùng chung cho luồng giải ngân hạng mục (`EMPTY_VENDOR`, `triggerUrlDownload`, `isAllowedAttachment`, `sameVendorInfo`, `isVendorInfoComplete`).
 `proposalFile` — `proposalFileType` (kiểm tra nhanh đuôi file + giới hạn 10 MB cho đề án và 10 MB cho template sự kiện, trả MIME để upload) và `formatBytes` (dung lượng KB/MB).
 
 `docxDocument` — đọc riêng `word/document.xml` trong DOCX, giới hạn giải nén 12 MB, giữ bảng/đoạn văn.
