@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 export type FounderRole = 'LEADER' | 'VICE_LEADER' | 'MEMBER'
 export type ApplicationDocumentType = 'PROPOSAL' | 'LOGO'
 
@@ -133,10 +133,7 @@ export interface ApplicationDetail {
   founders: FounderProfile[]
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/applications${path}`, { ...options, toError: toApplicationError })
-}
+const request = apiClient('/api/v1/applications', toApplicationError)
 
 // Maps a failed response to this module's error type
 function toApplicationError(failure: ApiFailure): Error {
