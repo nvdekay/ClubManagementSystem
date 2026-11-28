@@ -1,5 +1,5 @@
 import { overduePostEventReports } from './post-event-report-deadlines.js'
-import { Types, type FilterQuery, type Model } from 'mongoose'
+import { Types, type QueryFilter, type Model } from 'mongoose'
 import type {
   DashboardPanel,
   DashboardPanelKey,
@@ -26,7 +26,7 @@ function model(name: string): Model<UcmsDocument> {
 async function panel(
   key: DashboardPanelKey,
   collection: string,
-  filter: FilterQuery<UcmsDocument>,
+  filter: QueryFilter<UcmsDocument>,
 ): Promise<DashboardPanel> {
   try {
     const count = await model(collection).countDocuments(filter)

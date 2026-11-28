@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import mongoose from 'mongoose'
 import { ucmsEnums, ucmsTables } from '../../src/infra/db/ucms-schema.generated.js'
 import { ucmsCollectionNames, ucmsModels } from '../../src/infra/db/ucms-models.js'
 
@@ -35,7 +36,8 @@ describe('UCMS DBML model mapping', () => {
     const user = new ucmsModels.users({ displayName: 'Missing email', accountState: 'Unknown' })
     await expect(user.validate()).rejects.toThrow()
     const event = new ucmsModels.events({ capacity: 1.5 })
-    const error = event.validateSync()
-    expect(error?.errors.capacity).toBeDefined()
+    const error: unknown = await event.validate().catch((caught: unknown) => caught)
+    expect(error).toBeInstanceOf(mongoose.Error.ValidationError)
+    expect((error as mongoose.Error.ValidationError).errors.capacity).toBeDefined()
   })
 })

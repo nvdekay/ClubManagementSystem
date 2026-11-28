@@ -7,38 +7,36 @@ export async function clubOutstandingObligations(
   clubId: Types.ObjectId,
   session?: ClientSession,
 ): Promise<Omit<TransitionObligation, 'assigneeMembershipId'>[]> {
-  const [events, budgets, reports, cases] = await Promise.all([
-    m
-      .events!.find({
-        clubId,
-        state: {
-          $nin: [
-            'Draft',
-            'Cancelled',
-            'Closed',
-            'Expired',
-            'Rejected',
-            'DRAFT',
-            'CANCELLED',
-            'FINISH',
-          ],
-        },
-      })
-      .session(session ?? null)
-      .lean(),
-    m
-      .eventBudgets!.find({ clubId, state: { $nin: ['Closed', 'Cancelled'] } })
-      .session(session ?? null)
-      .lean(),
-    m
-      .periodicReports!.find({ clubId, state: { $ne: 'Accepted' } })
-      .session(session ?? null)
-      .lean(),
-    m
-      .violations!.find({ clubId, state: { $nin: ['Resolved', 'Closed'] } })
-      .session(session ?? null)
-      .lean(),
-  ])
+  const events = await m
+    .events!.find({
+      clubId,
+      state: {
+        $nin: [
+          'Draft',
+          'Cancelled',
+          'Closed',
+          'Expired',
+          'Rejected',
+          'DRAFT',
+          'CANCELLED',
+          'FINISH',
+        ],
+      },
+    })
+    .session(session ?? null)
+    .lean()
+  const budgets = await m
+    .eventBudgets!.find({ clubId, state: { $nin: ['Closed', 'Cancelled'] } })
+    .session(session ?? null)
+    .lean()
+  const reports = await m
+    .periodicReports!.find({ clubId, state: { $ne: 'Accepted' } })
+    .session(session ?? null)
+    .lean()
+  const cases = await m
+    .violations!.find({ clubId, state: { $nin: ['Resolved', 'Closed'] } })
+    .session(session ?? null)
+    .lean()
   return [
     ...events.map((d) => ({
       id: `EVENT:${String(d._id)}`,

@@ -840,7 +840,7 @@ try {
               createdAt: at(-10 * DAY),
             },
           },
-          { upsert: true, new: true },
+          { upsert: true, returnDocument: 'after' },
         )
         .lean()
       await ucmsModels.events!.updateOne(

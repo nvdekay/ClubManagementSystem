@@ -149,17 +149,15 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
     planId: Types.ObjectId,
     session?: ClientSession,
   ): Promise<LeadershipTransition | null> {
-    const [plan, taskDoc] = await Promise.all([
-      plans
-        .findById(planId)
-        .session(session ?? null)
-        .lean(),
-      tasks
-        .findOne({ entityType: 'TRANSITION_PLAN', entityId: planId })
-        .sort({ openedAt: -1 })
-        .session(session ?? null)
-        .lean(),
-    ])
+    const plan = await plans
+      .findById(planId)
+      .session(session ?? null)
+      .lean()
+    const taskDoc = await tasks
+      .findOne({ entityType: 'TRANSITION_PLAN', entityId: planId })
+      .sort({ openedAt: -1 })
+      .session(session ?? null)
+      .lean()
     if (!plan || !taskDoc) {
       return null
     }
@@ -395,18 +393,21 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
       const id = new Types.ObjectId(planId)
       const officer = new Types.ObjectId(officerId)
       await mongoose.connection.transaction(async (session) => {
-        const [plan, taskDoc] = await Promise.all([
-          plans.findOne({ _id: id, state: 'Pending Confirmation' }).session(session).lean(),
-          tasks
-            .findOne({
-              entityType: 'TRANSITION_PLAN',
-              entityId: id,
-              state: 'Open',
-              assigneeId: officer,
-            })
-            .session(session)
-            .lean(),
-        ])
+        // Sequential on purpose: the first command of a transaction starts it, and the MongoDB 7
+        // driver sends startTransaction on every command issued before the first reply.
+        const plan = await plans
+          .findOne({ _id: id, state: 'Pending Confirmation' })
+          .session(session)
+          .lean()
+        const taskDoc = await tasks
+          .findOne({
+            entityType: 'TRANSITION_PLAN',
+            entityId: id,
+            state: 'Open',
+            assigneeId: officer,
+          })
+          .session(session)
+          .lean()
         if (!plan || !taskDoc) {
           return conflict('transition plan cannot be decided')
         }

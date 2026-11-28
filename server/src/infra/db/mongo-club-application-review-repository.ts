@@ -70,22 +70,20 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
     applicationId: Types.ObjectId,
     session?: ClientSession,
   ): Promise<ApplicationReviewDetail | null> {
-    const [application, taskDocs, versionDocs] = await Promise.all([
-      applications
-        .findById(applicationId)
-        .session(session ?? null)
-        .lean(),
-      tasks
-        .find({ entityType: 'CLUB_APPLICATION', entityId: applicationId })
-        .sort({ openedAt: -1, _id: -1 })
-        .session(session ?? null)
-        .lean(),
-      versions
-        .find({ applicationId })
-        .sort({ versionNo: 1 })
-        .session(session ?? null)
-        .lean(),
-    ])
+    const application = await applications
+      .findById(applicationId)
+      .session(session ?? null)
+      .lean()
+    const taskDocs = await tasks
+      .find({ entityType: 'CLUB_APPLICATION', entityId: applicationId })
+      .sort({ openedAt: -1, _id: -1 })
+      .session(session ?? null)
+      .lean()
+    const versionDocs = await versions
+      .find({ applicationId })
+      .sort({ versionNo: 1 })
+      .session(session ?? null)
+      .lean()
     const task = taskDocs[0]
     if (!application || !task) {
       return null

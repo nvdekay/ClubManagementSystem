@@ -175,7 +175,7 @@ describe.skipIf(!uri)('Mongo account administration (UC03)', () => {
           isSystem: true,
         },
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     )
     // Only these two accounts hold the role in this database.
     await m.userRoleAssignments!.deleteMany({ roleId: role!._id })

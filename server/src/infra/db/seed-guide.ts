@@ -128,7 +128,7 @@ try {
         .eventRegistrations!.findOneAndUpdate(
           { eventId: event._id, studentId: member.userId },
           { $setOnInsert: { clubId, state: 'Confirmed', answers: {}, createdAt: now } },
-          { upsert: true, new: true },
+          { upsert: true, returnDocument: 'after' },
         )
         .lean()
       await m.attendances!.updateOne(

@@ -240,7 +240,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
                     }),
               },
               { $inc: { confirmedRegistrationCount: 1 } },
-              { session, new: true },
+              { session, returnDocument: 'after' },
             )
             .lean()
           let state: EventRegistrationState = 'Confirmed'
@@ -251,7 +251,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
               .findOneAndUpdate(
                 openFilter,
                 { $inc: { nextWaitlistPosition: 1 } },
-                { session, new: false },
+                { session, returnDocument: 'before' },
               )
               .lean()
             if (!waitlistEvent) {

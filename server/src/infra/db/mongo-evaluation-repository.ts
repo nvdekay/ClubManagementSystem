@@ -803,7 +803,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
             .findOneAndUpdate(
               { _id: item.id, state: 'Finalized' },
               { $set: { state: 'Published', publishedAt: now } },
-              { session, new: true },
+              { session, returnDocument: 'after' },
             )
             .lean()
           if (!doc) {

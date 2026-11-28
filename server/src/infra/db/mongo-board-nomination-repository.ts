@@ -38,6 +38,12 @@ function mapTerm(doc: Record<string, unknown>): BoardTerm {
   }
 }
 
+// True when `now` falls inside the term's [startAt, endAt) range.
+function termCovers(doc: Record<string, unknown>, now: Date): boolean {
+  const { startAt, endAt } = mapTerm(doc)
+  return startAt <= now && now < endAt
+}
+
 // Ánh xạ document thành BoardPosition
 function mapPosition(doc: Record<string, unknown>): BoardPosition {
   return {
@@ -91,17 +97,15 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
     nominationId: Types.ObjectId,
     session?: ClientSession,
   ): Promise<BoardNominationDetail | null> {
-    const [nomination, task] = await Promise.all([
-      nominations
-        .findById(nominationId)
-        .session(session ?? null)
-        .lean(),
-      tasks
-        .findOne({ entityType: 'BOARD_NOMINATION', entityId: nominationId })
-        .sort({ openedAt: -1 })
-        .session(session ?? null)
-        .lean(),
-    ])
+    const nomination = await nominations
+      .findById(nominationId)
+      .session(session ?? null)
+      .lean()
+    const task = await tasks
+      .findOne({ entityType: 'BOARD_NOMINATION', entityId: nominationId })
+      .sort({ openedAt: -1 })
+      .session(session ?? null)
+      .lean()
     if (!nomination || !task) {
       return null
     }
@@ -332,18 +336,17 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       const actorObjectId = new Types.ObjectId(actorId)
       const nominationId = new Types.ObjectId()
       await mongoose.connection.transaction(async (session) => {
-        const [club, term] = await Promise.all([
-          clubs.findById(clubObjectId).session(session).lean(),
-          terms
-            .findOne({ _id: termObjectId, clubId: clubObjectId, state: 'Active' })
-            .session(session)
-            .lean(),
-        ])
+        // Sequential on purpose: the first command of a transaction starts it, and the MongoDB 7
+        // driver sends startTransaction on every command issued before the first reply.
+        const club = await clubs.findById(clubObjectId).session(session).lean()
+        const term = await terms
+          .findOne({ _id: termObjectId, clubId: clubObjectId, state: 'Active' })
+          .session(session)
+          .lean()
         if (
           !club ||
           !term ||
-          term.startAt > now ||
-          term.endAt <= now ||
+          !termCovers(term, now) ||
           !['Pending Setup', 'Active'].includes(String(club.state))
         ) {
           return conflict('club or active term changed before submission')
@@ -678,7 +681,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           .findOne({ _id: nomination.termId, clubId: nomination.clubId, state: 'Active' })
           .session(session)
           .lean()
-        if (!club || !term || term.startAt > now || term.endAt <= now) {
+        if (!club || !term || !termCovers(term, now)) {
           return conflict('club term is outside its active date range')
         }
         const lockPositionIds = [
