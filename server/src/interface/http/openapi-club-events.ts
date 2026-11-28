@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { createDocument } from 'zod-openapi'
+import { commonErrors, jsonOk, type OpenApiPaths } from './openapi-shared.js'
 import {
   clubEventBody,
   clubEventCancelBody,
@@ -13,9 +13,9 @@ import {
   clubEventRescheduleBody,
   clubEventSaveBody,
   clubEventVersionBody,
-  eventObjectId,
   proposalDocumentAccessQuery,
 } from './club-event-routes.js'
+import { objectId } from './request.js'
 const date = z.string().datetime()
 const ProposalDocument = z.object({
   id: z.string(),
@@ -23,7 +23,7 @@ const ProposalDocument = z.object({
   mimeType: z.string(),
   bytes: z.number(),
   uploadedAt: date,
-  uploadedBy: eventObjectId,
+  uploadedBy: objectId,
 })
 const TemplateInfo = z.object({
   fileName: z.string(),
@@ -39,8 +39,8 @@ const DocumentAccess = z.object({
 })
 const rawFile = { content: { 'application/octet-stream': { schema: z.string() } } }
 const Event = clubEventBody.extend({
-  id: eventObjectId,
-  clubId: eventObjectId,
+  id: objectId,
+  clubId: objectId,
   clubName: z.string(),
   state: z.string(),
   semesterCode: z.string(),
@@ -82,8 +82,8 @@ const Detail = z.object({
   ),
   bookings: z.array(
     z.object({
-      id: eventObjectId,
-      propertyId: eventObjectId,
+      id: objectId,
+      propertyId: objectId,
       propertyName: z.string(),
       state: z.string(),
       startAt: date,
@@ -95,13 +95,13 @@ const Detail = z.object({
     .optional(),
 })
 const Participant = z.object({
-  studentId: eventObjectId,
+  studentId: objectId,
   name: z.string(),
   email: z.string(),
-  registrationId: eventObjectId.optional(),
+  registrationId: objectId.optional(),
   state: z.string().optional(),
   waitlistPosition: z.number().optional(),
-  attendanceId: eventObjectId.optional(),
+  attendanceId: objectId.optional(),
   checkedInAt: date.optional(),
   method: z.string().optional(),
   abnormalFlags: z.array(z.string()),
@@ -111,29 +111,15 @@ const Participant = z.object({
 // Tạo bộ response mẫu (200 kèm lỗi 400/401/403/409) cho endpoint sự kiện CLB
 function response(schema: z.ZodType, status = '200') {
   return {
-    [status]: {
-      description: 'Success',
-      content: {
-        'application/json': {
-          schema: z.object({
-            statusCode: z.number(),
-            message: z.string(),
-            data: schema,
-            timestamp: date,
-          }),
-        },
-      },
-    },
-    '400': { description: 'Invalid request' },
-    '401': { description: 'Authentication required' },
-    '403': { description: 'Permission required' },
+    [status]: jsonOk('Success', schema, date),
+    ...commonErrors,
     '409': { description: 'State or version conflict' },
   }
 }
-const clubPath = z.object({ clubId: eventObjectId })
-const eventPath = clubPath.extend({ id: eventObjectId })
+const clubPath = z.object({ clubId: objectId })
+const eventPath = clubPath.extend({ id: objectId })
 const base = '/clubs/{clubId}/events'
-export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument>[0]['paths']> = {
+export const clubEventOpenApiPaths: OpenApiPaths = {
   [base]: {
     get: {
       summary: 'List club events by current permissions',
@@ -153,11 +139,11 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
       requestParams: { path: clubPath },
       responses: response(
         z.object({
-          properties: z.array(z.object({ id: eventObjectId, name: z.string() })),
+          properties: z.array(z.object({ id: objectId, name: z.string() })),
           bookings: z.array(
             z.object({
-              id: eventObjectId,
-              propertyId: eventObjectId,
+              id: objectId,
+              propertyId: objectId,
               propertyType: z.string().optional(),
               title: z.string(),
               startAt: date,
@@ -175,7 +161,7 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
       responses: response(
         z.array(
           z.object({
-            eventId: eventObjectId,
+            eventId: objectId,
             title: z.string(),
             respondents: z.number(),
             visible: z.boolean(),
@@ -243,7 +229,7 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
     get: {
       summary:
         'ICPDP officer reads a 60-second signed URL to the proposal document of the latest or a given revision',
-      requestParams: { path: z.object({ id: eventObjectId }), query: proposalDocumentAccessQuery },
+      requestParams: { path: z.object({ id: objectId }), query: proposalDocumentAccessQuery },
       responses: response(DocumentAccess),
     },
   },
