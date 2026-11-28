@@ -1,7 +1,7 @@
-import { randomUUID } from 'node:crypto'
 import { Types, type ClientSession } from 'mongoose'
 import type { ViolationOrigin, ViolationSeverity } from '../../domain/violation.js'
 import { ucmsModels } from './ucms-models.js'
+import { writeAudit } from './repo-helpers.js'
 
 // Mở vụ vi phạm mới trong session kèm audit log VIOLATION_OPENED
 /**
@@ -44,22 +44,16 @@ export async function insertViolationCase(
     ],
     { session },
   )
-  await ucmsModels.auditLogs!.create(
-    [
-      {
-        entityType: 'Violation',
-        entityId: id,
-        action: 'VIOLATION_OPENED',
-        actorId,
-        actorRole: 'ICPDP_OFFICER',
-        before: null,
-        after: { state: 'Open', severity: input.severity, originType: input.originType },
-        reason: input.title,
-        correlationId: randomUUID(),
-        at: now,
-      },
-    ],
-    { session },
-  )
+  await writeAudit(session, {
+    entityType: 'Violation',
+    entityId: id,
+    action: 'VIOLATION_OPENED',
+    actorId,
+    actorRole: 'ICPDP_OFFICER',
+    before: null,
+    after: { state: 'Open', severity: input.severity, originType: input.originType },
+    reason: input.title,
+    at: now,
+  })
   return id
 }
