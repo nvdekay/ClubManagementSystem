@@ -1,7 +1,5 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   LIFECYCLE_LINKS,
   MAX_CORRECTIVE_ACTIONS,
@@ -18,17 +16,14 @@ import {
   listViolations,
   openViolation,
 } from '../../usecase/violation.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, pageQuery, parse } from './request.js'
+import { actor, pageQuery, parse, objectId as id } from './request.js'
 
-export interface ViolationRouteDeps {
+export interface ViolationRouteDeps extends SessionDeps {
   repo: ViolationRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const evidence = z
   .object({ note: z.string().max(1_000), url: z.string().max(500).optional() })
   .strict()
@@ -121,15 +116,15 @@ function step(body: z.infer<typeof violationStepBody>): ViolationStep {
 // Mount các route ICPDP quản lý vi phạm của CLB
 export function violationRoutes(deps: ViolationRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // ICPDP liệt kê các vi phạm
-  router.get('/admin/violations', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/violations', read, async (req, res) => {
     const query = parse(violationListQuery, req.query, 'violation list query')
     ok(res, await listViolations(deps.repo, deps.authRepo, actor(res), query))
   })
   // Lấy các nguồn dữ liệu có thể dẫn tới vi phạm của CLB
-  router.get('/admin/violations/sources/:clubId', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/violations/sources/:clubId', read, async (req, res) => {
     ok(
       res,
       await getViolationSources(
@@ -141,7 +136,7 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
     )
   })
   // Xem chi tiết một vi phạm
-  router.get('/admin/violations/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/violations/:id', read, async (req, res) => {
     ok(
       res,
       await getViolation(
@@ -154,7 +149,7 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
     )
   })
   // Mở hồ sơ vi phạm mới
-  router.post('/admin/violations', authGuard(guard), async (req, res) => {
+  router.post('/admin/violations', write, async (req, res) => {
     ok(
       res,
       await openViolation(
@@ -168,7 +163,7 @@ export function violationRoutes(deps: ViolationRouteDeps): Router {
     )
   })
   // Áp dụng một bước xử lý cho hồ sơ vi phạm
-  router.post('/admin/violations/:id/steps', authGuard(guard), async (req, res) => {
+  router.post('/admin/violations/:id/steps', write, async (req, res) => {
     ok(
       res,
       await applyViolationCaseStep(
