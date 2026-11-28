@@ -10,6 +10,7 @@ import { useFieldValidation } from '@/hooks/useFieldValidation'
 import type { useBooking } from '@/hooks/useFacilityBookings'
 import type { BookingAction, BookingDecisionInput, BookingSlot } from '@/services/facilityBookings'
 import { bookingLocalTime, slotInterval, slotNumber } from '@/utils/facilityBooking'
+import { AppField } from '@/components/ui/field/AppField'
 
 type BookingCheck = NonNullable<ReturnType<typeof useBooking>['data']>['check']
 
@@ -102,9 +103,7 @@ export function BookingDecisionForm({
           ]}
         />
       </div>
-      <label className="block text-sm font-medium text-text-app">
-        {t('facilityBookings.reason')}
-        <AppRequiredMark />
+      <AppField label={t('facilityBookings.reason')} required error={decisionField.error('reason')}>
         <AppInput
           className="mt-1.5 block w-full font-normal"
           {...decisionField.control('reason')}
@@ -112,17 +111,15 @@ export function BookingDecisionForm({
           value={reason}
           onChange={(event) => setReason(event.target.value)}
         />
-        <AppFieldError message={decisionField.error('reason')} />
-      </label>
-      <label className="block text-sm font-medium text-text-app">
-        {t('facilityBookings.reviewNote')}
+      </AppField>
+      <AppField label={t('facilityBookings.reviewNote')}>
         <AppInput
           className="mt-1.5 block w-full font-normal"
           maxLength={2000}
           value={reviewNote}
           onChange={(event) => setReviewNote(event.target.value)}
         />
-      </label>
+      </AppField>
       {outcome === 'Approve' && !!check?.conflicts.length && check.conflictResult === 'Warning' && (
         <div className="space-y-3">
           <label className="flex flex-wrap items-center gap-2 text-sm">
@@ -134,9 +131,11 @@ export function BookingDecisionForm({
             {t('facilityBookings.permitOverbooking')}
           </label>
           {permitOverbooking && (
-            <label className="block text-sm font-medium text-text-app">
-              {t('facilityBookings.overbookingReason')}
-              <AppRequiredMark />
+            <AppField
+              label={t('facilityBookings.overbookingReason')}
+              required
+              error={decisionField.error('overbookingReason')}
+            >
               <AppInput
                 {...decisionField.control('overbookingReason')}
                 maxLength={2000}
@@ -144,8 +143,7 @@ export function BookingDecisionForm({
                 value={overbookingReason}
                 onChange={(event) => setOverbookingReason(event.target.value)}
               />
-              <AppFieldError message={decisionField.error('overbookingReason')} />
-            </label>
+            </AppField>
           )}
         </div>
       )}
@@ -180,9 +178,11 @@ export function BookingDecisionForm({
                 />
                 <AppFieldError message={decisionField.error('altPropertyId')} />
               </div>
-              <label className="block text-sm font-medium text-text-app">
-                {t('facilityBookings.bookingDate')}
-                <AppRequiredMark />
+              <AppField
+                label={t('facilityBookings.bookingDate')}
+                required
+                error={decisionField.error('altDate')}
+              >
                 <AppInput
                   type="date"
                   className="mt-1.5 block w-full font-normal"
@@ -199,8 +199,7 @@ export function BookingDecisionForm({
                     })
                   }
                 />
-                <AppFieldError message={decisionField.error('altDate')} />
-              </label>
+              </AppField>
               <div className="block text-sm font-medium text-text-app">
                 <span>
                   {t('facilityBookings.slotLabel')}
