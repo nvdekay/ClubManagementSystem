@@ -3,11 +3,8 @@ export const properties = {
   description: 'Rooms, halls and equipment the school opens for club bookings.',
   homeDescription:
     'Add rooms, halls and equipment clubs can book, with bookable hours and closures.',
-  signIn: 'Sign in to manage facilities.',
-  signInLink: 'Sign in',
   forbidden: 'Only ICPDP officers can manage facilities.',
   loadError: 'Could not load facilities.',
-  retry: 'Retry',
   empty: 'No facilities yet. Add the first one.',
   add: 'Add facility',
   edit: 'Edit',
