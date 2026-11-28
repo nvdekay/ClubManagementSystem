@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import {
   normalizedInvitation,
@@ -11,10 +11,7 @@ import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.j
 
 // Lấy sự kiện trường theo id, không có thì báo not_found
 async function existing(repo: SchoolEventRepository, id: string) {
-  const found = await repo.find(parseObjectId(id, 'event id'))
-  if (!found) {
-    throw new DomainError('school event not found', 'not_found')
-  }
+  const found = orNotFound(await repo.find(parseObjectId(id, 'event id')), 'school event')
   return found
 }
 
