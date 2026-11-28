@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
@@ -12,7 +12,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useEventDefenseActions, useLiveDefenseSession } from '@/hooks/useEventDefense'
 import { useEventProposal } from '@/hooks/useEventProposalReviews'
-import { isUnknownApiError } from '@/services/apiError'
+import { formatMoney } from '@/utils/formatMoney'
+import { resolveI18nError } from '@/pages/icpdp/eventProposalReviewFormat'
 import { ProposalDecisionPanel } from '@/pages/icpdp/ProposalDecisionPanel'
 import { SubmittedEventProposal } from '@/components/custom/SubmittedEventProposal'
 import { ProposalSectionComments } from '@/components/custom/ProposalSectionComments'
@@ -20,6 +21,7 @@ import { useProposalReasonDraft } from '@/hooks/useProposalReasonDraft'
 import type { EventDefenseState } from '@/services/eventDefense'
 import { cn } from '@/utils/cn'
 import { formatDate, formatTime } from '@/utils/formatDate'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 // Chuyển markdown inline (đậm, nghiêng, code) thành phần tử React
 function renderInlineMarkdown(text: string): ReactNode[] {
@@ -127,17 +129,6 @@ function optionalText(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
-// Chọn thông báo lỗi dịch được, dùng dự phòng nếu lỗi chung
-function resolveProposalError(error: Error | null | undefined, fallback: string): string {
-  if (!error) {
-    return fallback
-  }
-  if (isUnknownApiError(error)) {
-    return fallback
-  }
-  return error.message || fallback
-}
-
 // Trang phòng bảo vệ trực tiếp: bắt đầu, ghi biên bản, kết thúc hoặc no-show
 export function LiveDefenseRoomPage() {
   const { id } = useParams()
@@ -194,14 +185,6 @@ export function LiveDefenseRoomPage() {
     return () => window.clearTimeout(timer)
   }, [csrfToken, id, localDraft, mutateDefense, serverContent, session?.state, userId])
 
-  function formatMoney(value: number) {
-    return new Intl.NumberFormat(i18n.language, {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(value)
-  }
-
   if (auth.isPending || (isOfficer && (proposal.isPending || liveSession.isPending))) {
     return (
       <div className="space-y-4">
@@ -212,17 +195,7 @@ export function LiveDefenseRoomPage() {
   }
 
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('eventReviews.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('eventReviews.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
 
   if (!isOfficer) {
@@ -240,7 +213,7 @@ export function LiveDefenseRoomPage() {
 
   if (proposal.isError || !proposal.data || !session) {
     const loadErrorMessage = proposal.error
-      ? resolveProposalError(proposal.error, t('eventReviews.loadError'))
+      ? resolveI18nError(proposal.error, t('eventReviews.loadError'))
       : (liveSession.error?.message ?? t('eventReviews.loadError'))
     return (
       <>
@@ -413,8 +386,7 @@ export function LiveDefenseRoomPage() {
             </dl>
           </section>
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('eventReviews.budget')}</h2>
+          <AppPanel title={t('eventReviews.budget')}>
             {lines.length > 0 ? (
               <div className="mt-4 overflow-x-auto rounded-xl border border-border-app bg-bg-app">
                 <table className="w-full min-w-[28rem] text-left text-sm">
@@ -449,12 +421,12 @@ export function LiveDefenseRoomPage() {
                           )}
                         </td>
                         <td className="px-4 py-2.5 text-right tabular-nums">
-                          {formatMoney(line.amount)}
+                          {formatMoney(line.amount, i18n.language)}
                         </td>
                         {budget && (
                           <td className="px-4 py-2.5 text-right tabular-nums">
                             {budget.lines[index]
-                              ? formatMoney(budget.lines[index]!.approvedAmount)
+                              ? formatMoney(budget.lines[index]!.approvedAmount, i18n.language)
                               : '—'}
                           </td>
                         )}
@@ -466,7 +438,7 @@ export function LiveDefenseRoomPage() {
             ) : (
               <p className="mt-3 text-sm text-muted-app">{t('eventReviews.budgetNone')}</p>
             )}
-          </section>
+          </AppPanel>
         </div>
 
         {/* Cột 2: Điều khiển phiên bảo vệ trực tiếp, ghi chú và quyết định */}
