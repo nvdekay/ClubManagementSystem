@@ -5,7 +5,6 @@ import { ComplaintCard, complaintStateKey } from '@/components/custom/ComplaintC
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppPagination } from '@/components/ui/pagination/AppPagination'
@@ -24,6 +23,8 @@ import type {
   TriageOutcome,
   Validity,
 } from '@/services/complaints'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 const STATES: ComplaintState[] = [
   'Submitted',
@@ -114,12 +115,9 @@ export function ComplaintReviewPage() {
       {queue.isPending ? (
         <AppSkeleton className="h-48 w-full" />
       ) : queue.isError ? (
-        <AppNotice tone="danger" role="alert" title={t('complaints.loadError')}>
+        <AppErrorNotice title={t('complaints.loadError')} onRetry={() => void queue.refetch()}>
           <p>{queue.error.message}</p>
-          <AppButton variant="secondary" onClick={() => void queue.refetch()}>
-            {t('complaints.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       ) : queue.data.items.length === 0 ? (
         <AppEmptyState variant="boxed" message={t('complaints.queueEmpty')} />
       ) : (
@@ -137,9 +135,6 @@ export function ComplaintReviewPage() {
             pageIndex={pageIndex}
             pageCount={pageCount}
             onPageChange={setPageIndex}
-            prevLabel={t('complaints.previousPage')}
-            nextLabel={t('complaints.nextPage')}
-            pageLabel={(value) => t('complaints.pageNumber', { page: value })}
             navLabel={t('complaints.pagination')}
           />
         </>
@@ -182,9 +177,7 @@ function ReviewItem({
   }
 
   const reasonField = (
-    <label className="block text-sm font-medium text-text-app">
-      {t('complaints.reason')}
-      <AppRequiredMark />
+    <AppField label={t('complaints.reason')} required>
       <AppTextarea
         className="mt-1.5 block w-full font-normal"
         rows={2}
@@ -193,7 +186,7 @@ function ReviewItem({
         onChange={(event) => setReason(event.target.value)}
       />
       <span className="block text-xs font-normal text-muted-app">{t('complaints.reasonHint')}</span>
-    </label>
+    </AppField>
   )
 
   const severityField = (
@@ -286,15 +279,14 @@ function ReviewItem({
               </div>
             </div>
             {outcome === 'Forwarded' && (
-              <label className="block text-sm font-medium text-text-app">
-                {t('complaints.responseDue')}
+              <AppField label={t('complaints.responseDue')}>
                 <AppInput
                   type="date"
                   className="mt-1.5 block font-normal"
                   value={due}
                   onChange={(event) => setDue(event.target.value)}
                 />
-              </label>
+              </AppField>
             )}
             {reasonField}
             <div className="flex flex-wrap gap-2">
