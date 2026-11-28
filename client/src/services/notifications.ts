@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export interface AppNotification {
   id: string
   eventCode: string
@@ -20,10 +20,7 @@ export interface NotificationPage {
   nextBefore?: string
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/notifications${path}`, options)
-}
+const request = apiClient('/api/v1/notifications')
 
 // Đổi workspace thông báo thành tham số query
 function scopeParams(scope: NotificationScope): Record<string, string> {
