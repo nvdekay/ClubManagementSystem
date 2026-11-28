@@ -36,9 +36,6 @@ thuyết trình và review rời đã được xoá từ 19/10/2026. Nguồn Mar
 | [`06-user-guide/`](06-user-guide/) | Guide book Markdown (`build-guide.py` dựng bản HTML, bản dựng không nằm trong repo) và ảnh chụp các luồng chính với dữ liệu đã seed (ảnh chụp trước đợt làm lại giao diện 11/2026) | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
 | [`09-testing/`](09-testing/README.md) | Bảng Unit Test Case theo mẫu FPT (`.xlsx`) và cách chạy test tự động | Bạn cần test case của một use case hoặc số liệu kiểm thử |
 
-Video demo (`07-demo-videos/`) quá lớn để đưa vào Git nên chỉ có trên máy của nhóm (đã nằm trong
-`.gitignore`).
-
 ## Thứ tự đọc cho người mới
 
 1. [`current-implementation.md`](current-implementation.md) — code đã có gì và còn thiếu gì.

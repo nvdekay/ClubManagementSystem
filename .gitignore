@@ -11,7 +11,6 @@ dist/
 __pycache__/
 
 .DS_Store
-docs/07-demo-videos/
 .claude/worktrees/
 
 # Test coverage reports
