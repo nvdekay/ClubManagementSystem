@@ -1,4 +1,4 @@
-import { randomInt, randomUUID } from 'node:crypto'
+import { randomInt } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -14,18 +14,13 @@ import {
   type SchoolEventRepository,
   type SchoolEventSummary,
 } from '../../domain/school-event.js'
-import { queueNotifications } from './repo-helpers.js'
+import { optionalText, queueNotifications, writeAudit } from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
 const busyEventStates = ['Approved', 'Upcoming', 'Ongoing', 'CREATED', 'PUBLIC', 'ONGOING']
 const busyBookingStates = ['Approved', 'In Use']
-
-// Lấy chuỗi không rỗng, ngược lại undefined
-function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value ? value : undefined
-}
 
 // Đếm lời mời theo từng trạng thái
 function counts(invitations: { status: InvitationStatus }[]): InvitationCounts {
@@ -155,21 +150,15 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
     after: unknown,
     now: Date,
   ): Promise<void> {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'Event',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(officerId),
-          actorRole: 'ICPDP_OFFICER',
-          after,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'Event',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(officerId),
+      actorRole: 'ICPDP_OFFICER',
+      after,
+      at: now,
+    })
   }
 
   // Tìm xung đột lịch của tài sản trong khung giờ sự kiện
