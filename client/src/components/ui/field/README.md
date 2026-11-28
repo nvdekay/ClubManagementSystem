@@ -10,3 +10,6 @@ Control báo lỗi bằng `aria-invalid` (AppInput, AppTextarea) hoặc prop `in
 
 Quy ước: lỗi của một trường hiện ngay khi người dùng rời trường đó (blur) hoặc đổi lựa chọn, và
 hiện cho mọi trường khi bấm nút gửi — không đợi server trả lỗi mới báo.
+
+- `AppField` — `<label>` chuẩn (`block text-sm font-medium text-text-app`) bọc một control: chữ nhãn, dấu
+  bắt buộc (`required`), control con và `AppFieldError` (`error`). Dùng thay cho việc tự viết lại khối label này.
