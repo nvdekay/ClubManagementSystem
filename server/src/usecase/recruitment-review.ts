@@ -1,4 +1,4 @@
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type {
   RecruitmentApplicationState,
   RecruitmentAttachmentStorage,
@@ -72,10 +72,7 @@ export async function reviewerAttachmentAccess(
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.attachmentId)) {
     throw new DomainError('invalid attachment id', 'validation')
   }
-  const attachment = await repo.reviewAttachment(input)
-  if (!attachment) {
-    throw new DomainError('recruitment attachment not found', 'not_found')
-  }
+  const attachment = orNotFound(await repo.reviewAttachment(input), 'recruitment attachment')
   if (!storage) {
     throw new DomainError('file storage is not configured', 'unavailable')
   }
