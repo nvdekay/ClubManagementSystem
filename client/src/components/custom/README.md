@@ -41,3 +41,7 @@ Các component còn lại (đối chiếu 27/11/2026):
 - `SimilarClubHints` — gợi ý CLB tương tự cho hồ sơ thành lập: bước xem lại/kết quả nộp của sinh viên (UC07, không hiện gì khi rỗng) và trang thẩm định ICPDP (UC08, báo "không có" khi rỗng).
 - `RevisionChanges` — khung "Thay đổi so với bản N" trên trang duyệt ICPDP (UC08, UC26): các phần đã yêu cầu sửa và từng trường đổi giữa hai phiên bản (dùng `utils/revisionDiff`).
 - `PublicEventCard`, `ClubLogo`, `ClubCover`, `UniversityLogo`, `MembershipStateBadge` — hiển thị dùng chung.
+
+- `EvidenceImageDialog` — hộp xem ảnh minh chứng báo cáo định kỳ kèm nút lưu ảnh (trang CLB và trang ICPDP).
+- `MemberRosterItem` — một dòng danh sách thành viên CLB (chữ cái đầu, tên, chức vụ, “ngừng hoạt động”) ở trang
+  thành viên CLB và không gian thành viên của sinh viên.
