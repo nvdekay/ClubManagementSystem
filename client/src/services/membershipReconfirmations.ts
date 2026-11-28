@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export interface Reconfirmation {
   id: string
   clubName: string
@@ -6,10 +6,7 @@ export interface Reconfirmation {
   dueAt: string
   state: 'Pending' | 'Confirmed' | 'Exempt' | 'Expired'
 }
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/memberships/reconfirmations${path}`, options)
-}
+const request = apiClient('/api/v1/memberships/reconfirmations')
 // GET các yêu cầu xác nhận lại thành viên của tôi
 export function fetchReconfirmations(signal: AbortSignal): Promise<Reconfirmation[]> {
   return request('/mine', { signal })
