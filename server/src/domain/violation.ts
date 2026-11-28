@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js'
+import { DomainError, invalidField as invalid, optionalText } from './errors.js'
 import type { Page, PageRequest } from './paging.js'
 
 /** Nguồn gốc của vụ việc (UC40 FR-01). `OTHER` là các trường hợp cán bộ tự phát hiện. */
@@ -231,23 +231,9 @@ export interface ViolationRepository {
 
 const finalStates = new Set<ViolationState>(['Resolved', 'Closed'])
 
-// Ném lỗi validation cho dữ liệu vi phạm không hợp lệ
-function invalid(message: string, field?: string): never {
-  throw new DomainError(message, 'validation', field ? { field } : undefined)
-}
-
 // Ném lỗi conflict cho thao tác không hợp lệ với vụ việc
 function conflict(message: string): never {
   throw new DomainError(message, 'conflict')
-}
-
-// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của vụ việc
-function text(value: string | undefined, max: number, field: string): string | undefined {
-  const trimmed = value?.trim()
-  if (trimmed && trimmed.length > max) {
-    invalid(`${field} is too long`, field)
-  }
-  return trimmed || undefined
 }
 
 // Chuẩn hoá danh sách minh chứng của vụ việc vi phạm
@@ -260,8 +246,8 @@ export function normalizedEvidence(
     invalid('too many evidence items', 'evidence')
   }
   return (items ?? []).flatMap((item) => {
-    const note = text(item.note, 1_000, 'evidence')
-    const url = text(item.url, 500, 'evidence')
+    const note = optionalText(item.note, 1_000, 'evidence')
+    const url = optionalText(item.url, 500, 'evidence')
     if (url && !/^https?:\/\//i.test(url)) {
       invalid('evidence link must start with http:// or https://', 'evidence')
     }
@@ -280,11 +266,11 @@ export function normalizedOpenInput(input: OpenViolationInput): OpenViolationInp
   if (!VIOLATION_SEVERITIES.includes(input.severity)) {
     invalid('invalid violation severity', 'severity')
   }
-  const title = text(input.title, 200, 'title')
+  const title = optionalText(input.title, 200, 'title')
   if (!title) {
     invalid('a title is required', 'title')
   }
-  return { ...input, title, description: text(input.description, 5_000, 'description') }
+  return { ...input, title, description: optionalText(input.description, 5_000, 'description') }
 }
 
 // UC40: áp dụng một bước của máy trạng thái vụ việc hoặc từ chối nếu không hợp lệ
@@ -363,7 +349,7 @@ function requestResponse(
   if (current.state !== 'Open' && current.state !== 'Under Investigation') {
     conflict('the club can only be asked to respond before a decision')
   }
-  const message = text(step.message, 2_000, 'message')
+  const message = optionalText(step.message, 2_000, 'message')
   if (!message) {
     invalid('tell the club what to explain', 'message')
   }
@@ -416,7 +402,7 @@ function recordResponse(
       notifyClub: false,
     }
   }
-  const answer = text(step.text, 5_000, 'text')
+  const answer = optionalText(step.text, 5_000, 'text')
   if (!answer) {
     invalid('enter what the club answered', 'text')
   }
@@ -444,7 +430,7 @@ function decide(
   actorId: string,
   now: Date,
 ): StepResult {
-  const reason = text(step.reason, 5_000, 'reason')
+  const reason = optionalText(step.reason, 5_000, 'reason')
   if (!reason) {
     invalid('a decision needs a reason (BR28)', 'reason')
   }
@@ -506,7 +492,7 @@ function addActions(
     invalid('add between 1 and 10 corrective actions', 'actions')
   }
   for (const item of step.actions) {
-    if (!text(item.description, 1_000, 'actions')) {
+    if (!optionalText(item.description, 1_000, 'actions')) {
       invalid('each corrective action needs a description', 'actions')
     }
     if (Number.isNaN(item.dueAt.getTime()) || item.dueAt <= now) {
@@ -568,7 +554,7 @@ function verifyAction(
       : step.outcome === 'Verified'
         ? 'VIOLATION_ACTION_VERIFIED'
         : 'VIOLATION_ACTION_FAILED',
-    reason: text(step.note, 1_000, 'note'),
+    reason: optionalText(step.note, 1_000, 'note'),
     notifyClub: true,
   }
 }
@@ -589,7 +575,7 @@ function resolve(
   return {
     next: { ...next, state: 'Resolved', resolvedAt: now },
     action: 'VIOLATION_RESOLVED',
-    reason: text(step.note, 1_000, 'note'),
+    reason: optionalText(step.note, 1_000, 'note'),
     notifyClub: true,
   }
 }
