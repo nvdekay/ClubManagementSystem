@@ -1,6 +1,6 @@
 import type { ClubAccessRepository } from '../domain/access.js'
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   MAX_DEFENSE_DURATION_MINUTES,
   MIN_DEFENSE_DURATION_MINUTES,
@@ -255,10 +255,7 @@ export async function decideAfterDefense(
   const officerId = await requireIcpdpOfficer(auth, actor)
   const id = parseObjectId(eventId, 'event id')
   const decision = normalizedEventDecision(input, now)
-  const detail = await reviewRepo.find(id, now)
-  if (!detail) {
-    throw new DomainError('event proposal not found', 'not_found')
-  }
+  const detail = orNotFound(await reviewRepo.find(id, now), 'event proposal')
   if (decision.outcome === 'Approve') {
     const current =
       detail.versions.find((version) => version.revisionNo === detail.event.currentRevisionNo) ??
