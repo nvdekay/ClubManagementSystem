@@ -127,10 +127,7 @@ async function allowed(
 ) {
   const parsed = parseObjectId(clubId, 'club id')
   await assertClubAccess(access, actor, parsed, 'club.profile.manage', now)
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  return { clubId: parsed, actorId: actor.id }
+  return { clubId: parsed, actorId: actor!.id }
 }
 
 // Xem cấu hình CLB gồm hồ sơ, các ban và trường bắt buộc
