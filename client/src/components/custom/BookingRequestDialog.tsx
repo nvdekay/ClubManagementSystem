@@ -14,6 +14,7 @@ import { useBookingAvailability, useBookingEvents } from '@/hooks/useFacilityBoo
 import type { Booking, BookingAction, BookingInput, BookingSlot } from '@/services/facilityBookings'
 import type { Property } from '@/services/properties'
 import { bookingLocalTime, slotInterval, slotNumber } from '@/utils/facilityBooking'
+import { AppField } from '@/components/ui/field/AppField'
 
 const emptyInput: BookingInput = {
   propertyId: '',
@@ -146,9 +147,11 @@ export function BookingRequestDialog({
         )}
         {!requestProperties.length && <AppNotice>{t('facilityBookings.noProperties')}</AppNotice>}
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-medium text-text-app">
-            {t('facilityBookings.bookingDate')}
-            <AppRequiredMark />
+          <AppField
+            label={t('facilityBookings.bookingDate')}
+            required
+            error={bookingField.error('date')}
+          >
             <AppInput
               type="date"
               className="mt-1.5 block w-full min-w-0 font-normal"
@@ -163,8 +166,7 @@ export function BookingRequestDialog({
                 })
               }
             />
-            <AppFieldError message={bookingField.error('date')} />
-          </label>
+          </AppField>
           <div className="block text-sm font-medium text-text-app">
             <span>
               {t('facilityBookings.slotLabel')}
@@ -233,9 +235,11 @@ export function BookingRequestDialog({
             </details>
           </div>
         )}
-        <label className="block text-sm font-medium text-text-app">
-          {t('facilityBookings.purpose')}
-          <AppRequiredMark />
+        <AppField
+          label={t('facilityBookings.purpose')}
+          required
+          error={bookingField.error('purpose')}
+        >
           <AppInput
             {...bookingField.control('purpose')}
             maxLength={2000}
@@ -243,11 +247,12 @@ export function BookingRequestDialog({
             value={form.purpose}
             onChange={(event) => setForm({ ...form, purpose: event.target.value })}
           />
-          <AppFieldError message={bookingField.error('purpose')} />
-        </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('facilityBookings.headcount')}
-          <AppRequiredMark />
+        </AppField>
+        <AppField
+          label={t('facilityBookings.headcount')}
+          required
+          error={bookingField.error('headcount')}
+        >
           <AppInput
             {...bookingField.control('headcount')}
             type="number"
@@ -257,8 +262,7 @@ export function BookingRequestDialog({
             value={form.headcount}
             onChange={(event) => setForm({ ...form, headcount: Number(event.target.value) })}
           />
-          <AppFieldError message={bookingField.error('headcount')} />
-        </label>
+        </AppField>
         <details>
           <summary>{t('facilityBookings.optionalFields')}</summary>
           <div className="mt-3 space-y-3">
