@@ -1,3 +1,4 @@
+import { fileSignatureMatches } from '../domain/file-signature.js'
 import { DomainError } from '../domain/errors.js'
 import type { ClubFieldRepository } from '../domain/club-field.js'
 import {
@@ -20,8 +21,9 @@ import {
 } from '../domain/club-application.js'
 import type { FoundingRequirements, PolicyRepository } from '../domain/policy.js'
 import { similarClubHints, type SimilarClubHint } from '../domain/similar-club.js'
-import { isObjectId, parseObjectId, type AccessActor } from './access.js'
+import { isObjectId, parseObjectId, requireSignedIn, type AccessActor } from './access.js'
 import { foundingRequirementsAt } from './policy.js'
+import { removeOnFailure } from './upload-rollback.js'
 
 const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 const documentRules: Record<
@@ -40,26 +42,6 @@ const documentRules: Record<
   },
 }
 
-// Kiểm nội dung file khớp magic bytes của loại MIME khai báo
-function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
-  if (mimeType === 'application/pdf') {
-    return bytes.subarray(0, 5).toString() === '%PDF-'
-  }
-  if (mimeType === 'image/png') {
-    return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-  }
-  if (mimeType === 'image/jpeg') {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-  }
-  if (mimeType === docxMime) {
-    return (
-      bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) &&
-      bytes.includes(Buffer.from('[Content_Types].xml'))
-    )
-  }
-  return false
-}
-
 export interface DraftInput {
   clubName: string
   fieldId: string
@@ -68,20 +50,6 @@ export interface DraftInput {
   fanpageUrl: string
   contactEmail: string
   founders: { userId: string; role: string }[]
-}
-
-// Kiểm actor đăng nhập, chưa bị khóa và trả id chủ đơn
-function owner(actor: AccessActor | null): string {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!isObjectId(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  return actor.id
 }
 
 // Chỉ cho sửa đơn ở trạng thái Draft hoặc Revision Requested
@@ -199,7 +167,7 @@ export async function createApplicationDraft(
   input: DraftInput,
   now: Date,
 ): Promise<ClubApplicationRecord> {
-  return repo.createDraft(owner(actor), await draftFrom(fields, input, []), now)
+  return repo.createDraft(requireSignedIn(actor), await draftFrom(fields, input, []), now)
 }
 
 // Sinh viên lưu bản nháp đơn, kiểm xung đột phiên bản
@@ -211,7 +179,7 @@ export async function saveApplicationDraft(
   input: DraftInput,
   expectedDraftRevision: number,
 ): Promise<ClubApplicationRecord> {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   editable(record)
   if (record.draftRevision !== expectedDraftRevision) {
@@ -230,7 +198,7 @@ export async function listMyApplications(
   repo: ClubApplicationRepository,
   actor: AccessActor | null,
 ): Promise<ClubApplicationRecord[]> {
-  return repo.listMine(owner(actor))
+  return repo.listMine(requireSignedIn(actor))
 }
 
 // Xem chi tiết đơn của mình kèm các phiên bản, quyết định và hồ sơ founder
@@ -244,7 +212,7 @@ export async function getMyApplication(
   decisions: ApplicantDecisionFeedback[]
   founders: FounderProfile[]
 }> {
-  const record = await owned(repo, id, owner(actor))
+  const record = await owned(repo, id, requireSignedIn(actor))
   const [versions, decisions] = await Promise.all([
     repo.versions(record.id),
     repo.decisionFeedback(record.id),
@@ -267,7 +235,7 @@ export async function lookupFounder(
   actor: AccessActor | null,
   email: string,
 ): Promise<FounderProfile> {
-  owner(actor)
+  requireSignedIn(actor)
   const normalized = email.trim().toLowerCase()
   if (!normalized || normalized.length > 254 || !emailPattern.test(normalized)) {
     throw new DomainError('invalid email', 'validation')
@@ -286,7 +254,7 @@ export async function applicationConfiguration(
   actor: AccessActor | null,
   now: Date,
 ) {
-  owner(actor)
+  requireSignedIn(actor)
   return {
     requirements: await foundingRequirementsAt(policy, now),
     fields: await fields.listActive(),
@@ -344,7 +312,7 @@ export async function previewApplication(
   id: string,
   now: Date,
 ) {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   editable(record)
   const requirements = await foundingRequirementsAt(policy, now)
@@ -369,7 +337,7 @@ export async function submitApplication(
   activeNameConflict: boolean
   similarClubs: SimilarClubHint[]
 }> {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   editable(record)
   const requirements = await foundingRequirementsAt(policy, now)
@@ -403,7 +371,7 @@ export async function withdrawApplication(
   id: string,
   now: Date,
 ): Promise<ClubApplicationRecord> {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   if (!['Submitted', 'Under Review', 'Revision Requested'].includes(record.state)) {
     throw new DomainError('application cannot be withdrawn in this state', 'conflict')
@@ -423,7 +391,7 @@ export async function uploadApplicationDocument(
   bytes: Buffer,
   now: Date,
 ): Promise<ApplicationDocument> {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   editable(record)
   if (!storage) {
@@ -460,13 +428,9 @@ export async function uploadApplicationDocument(
   })
   // Mỗi loại một file: bản upload mới thay thế bản trước.
   const replaced = record.draft.documents.filter((item) => item.documentType === type)
-  try {
-    await repo.addDocument(record.id, ownerId, document)
-  } catch (error) {
-    // The draft does not reference the upload: do not leave an orphaned asset behind.
-    await storage.remove(document.assetId).catch(() => undefined)
-    throw error
-  }
+  await removeOnFailure(storage, document.assetId, () =>
+    repo.addDocument(record.id, ownerId, document),
+  )
   for (const previous of replaced) {
     await repo.removeDocument(record.id, ownerId, previous.id)
   }
@@ -480,7 +444,7 @@ export async function removeApplicationDocument(
   id: string,
   documentId: string,
 ): Promise<ClubApplicationRecord> {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   editable(record)
   if (!record.draft.documents.some((document) => document.id === documentId)) {
@@ -497,7 +461,7 @@ export async function applicationDocumentAccess(
   id: string,
   documentId: string,
 ): Promise<{ fileName: string; url: string }> {
-  const ownerId = owner(actor)
+  const ownerId = requireSignedIn(actor)
   const record = await owned(repo, id, ownerId)
   const versions = await repo.versions(record.id)
   const document = [
