@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import { pageSkip } from '../../domain/paging.js'
@@ -18,16 +17,11 @@ import {
   type ViolationState,
   type ViolationSummary,
 } from '../../domain/violation.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, optionalText, queueNotifications, writeAudit } from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
-
-// Lấy chuỗi không rỗng, ngược lại undefined
-function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value ? value : undefined
-}
 
 // Chuyển id thành chuỗi nếu có
 function optionalId(value: unknown): string | undefined {
@@ -151,23 +145,17 @@ export function mongoViolationRepository(): ViolationRepository {
     reason: string | undefined,
     now: Date,
   ): Promise<void> {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'Violation',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(actorId),
-          actorRole: 'ICPDP_OFFICER',
-          before,
-          after,
-          ...(reason ? { reason } : {}),
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'Violation',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(actorId),
+      actorRole: 'ICPDP_OFFICER',
+      before,
+      after,
+      ...(reason ? { reason } : {}),
+      at: now,
+    })
   }
 
   // Nạp vụ vi phạm kèm CLB và các hành động khắc phục
@@ -424,10 +412,7 @@ export function mongoViolationRepository(): ViolationRepository {
     async apply(id, officerId, step, now) {
       const caseId = new Types.ObjectId(id)
       await mongoose.connection.transaction(async (session) => {
-        const loaded = await loadCase(caseId, session)
-        if (!loaded) {
-          throw new DomainError('violation case not found', 'not_found')
-        }
+        const loaded = found(await loadCase(caseId, session), 'violation case not found')
         const { current } = loaded
         const result = applyViolationStep(current, step, officerId, now)
         const { next } = result
