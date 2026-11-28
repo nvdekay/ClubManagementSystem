@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -26,6 +26,9 @@ import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { isEmail, isHttpUrl } from '@/utils/validation'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 // Khóa i18n nhãn của từng trường hồ sơ CLB
 function profileLabelKey(field: ClubProfileFormField) {
@@ -242,17 +245,7 @@ export function ClubSettingsPage() {
     )
   }
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('clubSettings.signIn')}</p>
-        <Link
-          className="inline-block font-medium text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('clubSettings.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
   if (!canManage) {
     return (
@@ -263,15 +256,10 @@ export function ClubSettingsPage() {
   }
   if (settings.isError || !settings.data) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
+      <AppErrorNotice
         title={settings.error?.message ?? t('clubSettings.loadError')}
-      >
-        <AppButton variant="secondary" onClick={() => void settings.refetch()}>
-          {t('clubSettings.retry')}
-        </AppButton>
-      </AppNotice>
+        onRetry={() => void settings.refetch()}
+      />
     )
   }
 
@@ -315,8 +303,7 @@ export function ClubSettingsPage() {
         }
       />
 
-      <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-        <h2 className="font-heading text-base font-semibold">{t('clubSettings.readOnly')}</h2>
+      <AppPanel title={t('clubSettings.readOnly')}>
         <p className="mt-1 text-sm text-muted-app">{t('clubSettings.readOnlyHint')}</p>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(
@@ -333,7 +320,7 @@ export function ClubSettingsPage() {
             </div>
           ))}
         </dl>
-      </section>
+      </AppPanel>
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
@@ -365,8 +352,7 @@ export function ClubSettingsPage() {
               <AppFieldError message={profileCheck.error('operatingScope')} />
             </label>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-text-app">
-                {label('contactEmail')}
+              <AppField label={label('contactEmail')} error={profileCheck.error('contactEmail')}>
                 <AppInput
                   className="mt-1.5 block w-full font-normal"
                   type="email"
@@ -374,18 +360,15 @@ export function ClubSettingsPage() {
                   value={profile.contactEmail}
                   onChange={(event) => profileField('contactEmail', event.target.value)}
                 />
-                <AppFieldError message={profileCheck.error('contactEmail')} />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {label('contactPhone')}
+              </AppField>
+              <AppField label={label('contactPhone')} error={profileCheck.error('contactPhone')}>
                 <AppInput
                   className="mt-1.5 block w-full font-normal"
                   {...profileCheck.control('contactPhone', required.contactPhone)}
                   value={profile.contactPhone}
                   onChange={(event) => profileField('contactPhone', event.target.value)}
                 />
-                <AppFieldError message={profileCheck.error('contactPhone')} />
-              </label>
+              </AppField>
             </div>
             <label className="mt-5 block text-sm font-medium text-text-app">
               {label('charterUrl')}
