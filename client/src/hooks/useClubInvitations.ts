@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   fetchClubInvitations,
   respondToInvitation,
@@ -15,10 +16,9 @@ export function useClubInvitations(clubId: string, enabled: boolean) {
 }
 // Mutation CLB phản hồi lời mời, rồi làm mới cache
 export function useRespondToInvitation(clubId: string) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { id: string; input: InvitationResponse; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { id: string; input: InvitationResponse; csrfToken: string }) =>
       respondToInvitation(clubId, action.id, action.input, action.csrfToken),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...key, clubId] }),
-  })
+    [[...key, clubId]],
+  )
 }
