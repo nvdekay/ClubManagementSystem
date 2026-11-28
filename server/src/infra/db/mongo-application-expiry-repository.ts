@@ -1,7 +1,6 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import type { ApplicationExpiryRepository } from '../../domain/application-expiry.js'
-import { queueNotifications } from './repo-helpers.js'
+import { queueNotifications, writeAudit } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 // Repository hết hạn hồ sơ lập CLB quá hạn chỉnh sửa
 export function mongoApplicationExpiryRepository(): ApplicationExpiryRepository {
@@ -29,21 +28,15 @@ export function mongoApplicationExpiryRepository(): ApplicationExpiryRepository 
             { $set: { state: 'Closed', closedAt: now } },
             { session },
           )
-          await m.auditLogs!.create(
-            [
-              {
-                entityType: 'ClubApplication',
-                entityId: id,
-                action: 'CLUB_APPLICATION_EXPIRED',
-                actorRole: 'SYSTEM',
-                before: { state: 'Revision Requested' },
-                after: { state: 'Expired', revisionDeadlineAt: doc.revisionDeadlineAt },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'ClubApplication',
+            entityId: id,
+            action: 'CLUB_APPLICATION_EXPIRED',
+            actorRole: 'SYSTEM',
+            before: { state: 'Revision Requested' },
+            after: { state: 'Expired', revisionDeadlineAt: doc.revisionDeadlineAt },
+            at: now,
+          })
           await queueNotifications(session, [doc.founderUserId], {
             eventCode: 'CLUB_APPLICATION_EXPIRED',
             entityType: 'ClubApplication',
