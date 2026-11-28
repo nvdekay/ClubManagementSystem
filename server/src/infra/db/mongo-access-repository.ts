@@ -7,18 +7,11 @@ import type {
   ClubTermAccess,
 } from '../../domain/access.js'
 import { ucmsModels } from './ucms-models.js'
+import { storedDate } from './repo-helpers.js'
 
 // Chuyển giá trị id thành chuỗi
 function id(value: unknown): string {
   return String(value)
-}
-
-// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
-function date(value: unknown): Date {
-  if (!(value instanceof Date)) {
-    throw new Error('invalid access date in database')
-  }
-  return value
 }
 
 // Repository đọc dữ liệu phân quyền của user trong một CLB
@@ -64,8 +57,8 @@ export function mongoAccessRepository(): ClubAccessRepository {
         id: id(term._id),
         clubId: id(term.clubId),
         state: String(term.state),
-        startAt: date(term.startAt),
-        endAt: date(term.endAt),
+        startAt: storedDate(term.startAt, 'access'),
+        endAt: storedDate(term.endAt, 'access'),
       }))
       const mappedPositions: ClubPositionAccess[] = positionDocs.map((position) => ({
         id: id(position._id),
@@ -80,8 +73,8 @@ export function mongoAccessRepository(): ClubAccessRepository {
         termId: id(assignment.termId),
         positionId: id(assignment.positionId),
         membershipId: id(assignment.membershipId),
-        effectiveFrom: date(assignment.effectiveFrom),
-        effectiveTo: assignment.effectiveTo ? date(assignment.effectiveTo) : null,
+        effectiveFrom: storedDate(assignment.effectiveFrom, 'access'),
+        effectiveTo: assignment.effectiveTo ? storedDate(assignment.effectiveTo, 'access') : null,
         confirmedBy: assignment.confirmedBy ? id(assignment.confirmedBy) : null,
       }))
       return {
