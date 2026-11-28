@@ -5,7 +5,6 @@ import type { TFunction } from 'i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppDialog } from '@/components/ui/dialog/AppDialog'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
@@ -15,7 +14,6 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
-import { useAuth } from '@/hooks/useAuth'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import {
@@ -39,6 +37,13 @@ import {
 } from '@/services/periodicReports'
 import { cn } from '@/utils/cn'
 import { formatMoney } from '@/utils/formatMoney'
+import { severityLabel } from '@/pages/icpdp/violationFormat'
+import { EvidenceImageDialog } from '@/components/custom/EvidenceImageDialog'
+import { saveImageUrl } from '@/utils/saveFile'
+import { IcpdpOfficerGate } from '@/pages/icpdp/IcpdpOfficerGate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 const filters = ['all', 'waiting', 'overdue', 'accepted'] as const
 type Filter = (typeof filters)[number]
@@ -123,57 +128,12 @@ function sectionLabel(t: TFunction, section: ReturnSection): string {
   }
 }
 
-// Dịch mức nghiêm trọng sang nhãn hiển thị
-function severityLabel(t: TFunction, value: Severity): string {
-  return value === 'MINOR'
-    ? t('violations.severityMINOR')
-    : value === 'MODERATE'
-      ? t('violations.severityMODERATE')
-      : t('violations.severitySERIOUS')
-}
-
 // Hook trả hàm định dạng ngày theo ngôn ngữ hiện tại
 function useDay() {
   const { i18n } = useTranslation()
   return function day(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))
   }
-}
-
-// Cổng kiểm tra đăng nhập và quyền cho các trang báo cáo định kỳ
-function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
-  const { t } = useTranslation()
-  const auth = useAuth()
-  if (auth.isPending) {
-    return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((item) => (
-          <AppSkeleton key={item} className="h-20 w-full" />
-        ))}
-      </div>
-    )
-  }
-  if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('periodicReports.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('periodicReports.signInLink')}
-        </Link>
-      </AppNotice>
-    )
-  }
-  if (!auth.data.systemRoles.includes('ICPDP_OFFICER')) {
-    return (
-      <AppNotice tone="danger" role="alert">
-        {t('periodicReports.unauthorized')}
-      </AppNotice>
-    )
-  }
-  return <>{children(auth.data.csrfToken)}</>
 }
 
 // Panel mở/đóng đợt nộp báo cáo, đặt hạn nộp và các trường tuỳ chỉnh
@@ -258,20 +218,17 @@ function CampaignPanel({
               />
               {t('periodicReports.campaignOpen')}
             </label>
-            <label className="block text-sm font-medium text-text-app">
-              {t('periodicReports.campaignDeadline')}
-              <AppRequiredMark />
+            <AppField label={t('periodicReports.campaignDeadline')} required>
               <AppInput
                 type="date"
                 value={dueAt}
                 onChange={(e) => setDueAt(e.target.value)}
                 className="mt-1.5 block w-full"
               />
-            </label>
+            </AppField>
           </div>
 
-          <label className="block text-sm font-medium text-text-app">
-            {t('periodicReports.campaignAnnouncement')}
+          <AppField label={t('periodicReports.campaignAnnouncement')}>
             <AppTextarea
               className="mt-1.5 block min-h-20 w-full font-normal"
               value={announcement}
@@ -279,7 +236,7 @@ function CampaignPanel({
               placeholder={t('periodicReports.campaignAnnouncementPlaceholder')}
               onChange={(e) => setAnnouncement(e.target.value)}
             />
-          </label>
+          </AppField>
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -516,15 +473,10 @@ function Overview({ csrfToken }: { csrfToken: string }) {
   }
   if (overview.isError) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
+      <AppErrorNotice
         title={overview.error.message || t('periodicReports.loadError')}
-      >
-        <AppButton variant="secondary" onClick={() => void overview.refetch()}>
-          {t('periodicReports.retry')}
-        </AppButton>
-      </AppNotice>
+        onRetry={() => void overview.refetch()}
+      />
     )
   }
   const data = overview.data
@@ -605,7 +557,9 @@ export function PeriodicReportsPage() {
         title={t('periodicReports.title')}
         description={t('periodicReports.description')}
       />
-      <Gate>{(csrfToken) => <Overview csrfToken={csrfToken} />}</Gate>
+      <IcpdpOfficerGate deniedMessage={t('periodicReports.unauthorized')}>
+        {(csrfToken) => <Overview csrfToken={csrfToken} />}
+      </IcpdpOfficerGate>
     </>
   )
 }
@@ -628,48 +582,6 @@ function Figure({ label, frozen, live }: { label: string; frozen: ReactNode; liv
       <td className="py-2.5 text-right tabular-nums">{live ?? '—'}</td>
     </tr>
   )
-}
-
-// Tạo tên file an toàn cho ảnh minh chứng từ tiêu đề
-function safeFileName(title: string, url: string): string {
-  const base =
-    title
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]+/gi, '-')
-      .replace(/^-+|-+$/g, '') || 'evidence-image'
-  const match = url.match(/^data:image\/([a-z0-9.+-]+);base64,/i)
-  const rawExt = match?.[1]?.toLowerCase() ?? 'png'
-  const ext = rawExt === 'jpeg' ? 'jpg' : rawExt === 'svg+xml' ? 'svg' : rawExt
-  return `${base}.${ext}`
-}
-
-// Tải ảnh minh chứng về máy
-async function saveEvidenceImage(url: string, title: string) {
-  const filename = safeFileName(title, url)
-  if (url.startsWith('data:image/')) {
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    return
-  }
-  try {
-    const res = await fetch(url)
-    const blob = await res.blob()
-    const blobUrl = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = blobUrl
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(blobUrl)
-  } catch {
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
 }
 
 // Hiển thị một minh chứng dạng ảnh kèm xem trước và tải về
@@ -732,7 +644,7 @@ function EvidenceDisplay({
               <AppButton variant="secondary" onClick={() => onPreview(url, title)}>
                 {t('periodicReports.viewImage')}
               </AppButton>
-              <AppButton variant="secondary" onClick={() => void saveEvidenceImage(url, title)}>
+              <AppButton variant="secondary" onClick={() => void saveImageUrl(url, title)}>
                 {t('periodicReports.saveImage')}
               </AppButton>
             </>
@@ -794,15 +706,10 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
     return (
       <>
         <PageHeader title={t('periodicReports.report')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={report.error.message || t('periodicReports.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void report.refetch()}>
-            {t('periodicReports.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void report.refetch()}
+        />
       </>
     )
   }
@@ -907,8 +814,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-5">
           {/* Số liệu tổng quan */}
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('periodicReports.figures')}</h2>
+          <AppPanel title={t('periodicReports.figures')}>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[26rem] text-sm">
                 <thead>
@@ -964,7 +870,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
               </table>
             </div>
             <p className="mt-2 text-xs text-muted-app">{t('periodicReports.activeMembersHint')}</p>
-          </section>
+          </AppPanel>
 
           {/* 1. Thành viên Active và đối chiếu với hệ thống */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
@@ -1480,31 +1386,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
         </aside>
       </div>
 
-      <AppDialog
-        open={Boolean(previewImage)}
-        title={previewImage?.title ?? ''}
-        closeLabel={t('periodicReports.closeImagePreview')}
-        onClose={() => setPreviewImage(null)}
-        className="w-[min(100%-2rem,56rem)]"
-        footer={
-          previewImage && (
-            <AppButton
-              variant="secondary"
-              onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}
-            >
-              {t('periodicReports.saveImage')}
-            </AppButton>
-          )
-        }
-      >
-        {previewImage && (
-          <img
-            src={previewImage.url}
-            alt={previewImage.title}
-            className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
-          />
-        )}
-      </AppDialog>
+      <EvidenceImageDialog image={previewImage} onClose={() => setPreviewImage(null)} />
     </>
   )
 }
@@ -1512,5 +1394,10 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
 // Trang ICPDP chi tiết một báo cáo định kỳ
 export function PeriodicReportReviewPage() {
   const { id } = useParams()
-  return <Gate>{(csrfToken) => (id ? <Review id={id} csrfToken={csrfToken} /> : null)}</Gate>
+  const { t } = useTranslation()
+  return (
+    <IcpdpOfficerGate deniedMessage={t('periodicReports.unauthorized')}>
+      {(csrfToken) => (id ? <Review id={id} csrfToken={csrfToken} /> : null)}
+    </IcpdpOfficerGate>
+  )
 }
