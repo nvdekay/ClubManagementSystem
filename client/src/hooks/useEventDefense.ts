@@ -1,3 +1,4 @@
+import { eventProposalKey as proposalKey } from '@/hooks/useEventProposalReviews'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   cancelEventDefense,
@@ -19,7 +20,6 @@ import {
 import type { EventReviewDecisionInput } from '@/services/eventProposalReviews'
 
 const defenseKey = ['event-defense'] as const
-const proposalKey = ['event-proposal-reviews'] as const
 
 // Query các phòng còn trống cho buổi bảo vệ sự kiện
 export function useAvailableDefenseRooms(
