@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
@@ -22,6 +21,7 @@ import {
 
 import { SchemeEditor } from './SchemeEditor'
 import { useConfirm } from '@/hooks/useConfirm'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang ICPDP quản lý bộ tiêu chí đánh giá CLB theo kỳ
 export function EvaluationSchemesPage() {
@@ -116,32 +116,18 @@ export function EvaluationSchemesPage() {
       />
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('evaluationSchemes.signIn')}</p>
-          <Link
-            className="font-semibold text-primary-app hover:underline"
-            to="/login?returnTo=%2Fworkspace%2Fevaluation-schemes"
-          >
-            {t('evaluationSchemes.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('evaluationSchemes.forbidden')}
         </AppNotice>
       ) : catalogue.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : catalogue.isError || !data ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={`${t('evaluationSchemes.loadError')} ${catalogue.error?.message ?? ''}`}
-        >
-          <AppButton onClick={() => void catalogue.refetch()}>
-            {t('evaluationSchemes.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void catalogue.refetch()}
+          retryVariant="primary"
+        />
       ) : (
         <div className="space-y-6">
           <section className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs sm:p-5">
