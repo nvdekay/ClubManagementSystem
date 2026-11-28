@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export interface TransitionTerm {
   id: string
   name: string
@@ -62,10 +62,7 @@ export interface TransitionDecisionInput {
   followUpObligationIds: string[]
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 
 // GET hàng đợi chuyển giao lãnh đạo CLB cho ICPDP
 export function fetchLeadershipTransitionQueue(signal: AbortSignal) {
