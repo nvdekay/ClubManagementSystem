@@ -1,5 +1,4 @@
 import { overduePostEventReports } from './post-event-report-deadlines.js'
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -24,16 +23,21 @@ import type { Property } from '../../domain/property.js'
 import { openViolationCount, routedTaskFields } from './approval-routing.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { oid, policyAt, queueNotifications } from './repo-helpers.js'
+import {
+  closeOpenTasks,
+  conflict,
+  found,
+  icpdpOfficerIds,
+  oid,
+  policyAt,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const taskType = 'PROPERTY_BOOKING'
 const editableStates = ['Draft', 'Revision Requested']
 const pendingStates = ['Requested', 'Under Review', 'Revision Requested']
-// Ném DomainError loại conflict với thông điệp cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
 // Ánh xạ document tài sản sang Property
 function propertyFrom(doc: Doc): Property {
   return {
@@ -118,16 +122,7 @@ export async function releaseFacilityBookingsInSession(
   state: 'Released' | 'Cancelled' = 'Released',
 ): Promise<number> {
   const docs = await m.propertyBookings!.find(filter).session(session).lean()
-  const roles = await m
-    .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-    .session(session)
-    .lean()
-  const officers = await m
-    .userRoleAssignments!.distinct('userId', {
-      roleId: { $in: roles.map((role) => role._id) },
-      revokedAt: null,
-    })
-    .session(session)
+  const officers = await icpdpOfficerIds(session)
   for (const doc of docs) {
     await m.propertyBookings!.updateOne(
       { _id: doc._id },
@@ -142,27 +137,17 @@ export async function releaseFacilityBookingsInSession(
       },
       { session },
     )
-    await m.approvalTasks!.updateMany(
-      { entityType: taskType, entityId: doc._id, state: 'Open' },
-      { $set: { state: 'Closed', closedAt: now } },
-      { session },
-    )
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'PropertyBooking',
-          entityId: doc._id,
-          action: 'BOOKING_RELEASED',
-          actorRole: 'SYSTEM',
-          before: { state: doc.state },
-          after: { state, source },
-          reason,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await closeOpenTasks(session, taskType, doc._id, now)
+    await writeAudit(session, {
+      entityType: 'PropertyBooking',
+      entityId: doc._id,
+      action: 'BOOKING_RELEASED',
+      actorRole: 'SYSTEM',
+      before: { state: doc.state },
+      after: { state, source },
+      reason,
+      at: now,
+    })
     await queueNotifications(session, officers, {
       eventCode: 'BOOKING_RELEASED',
       entityType: 'PropertyBooking',
@@ -191,29 +176,20 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     session: ClientSession,
     reason?: string,
   ) {
-    await audits.create(
-      [
-        {
-          entityType: 'PropertyBooking',
-          entityId: id,
-          action,
-          ...(actorId ? { actorId: oid(actorId) } : { actorRole: 'SYSTEM' }),
-          before,
-          after,
-          reason,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'PropertyBooking',
+      entityId: id,
+      action,
+      ...(actorId ? { actorId: oid(actorId) } : { actorRole: 'SYSTEM' }),
+      before,
+      after,
+      reason,
+      at: now,
+    })
   }
   // Lấy document booking hiện tại, không có thì báo not_found
   async function current(id: string, session: ClientSession) {
-    const doc = await bookings.findById(oid(id)).session(session).lean()
-    if (!doc) {
-      throw new DomainError('booking not found', 'not_found')
-    }
+    const doc = found(await bookings.findById(oid(id)).session(session).lean(), 'booking not found')
     return doc
   }
   // Lấy danh sách thiết bị từ audit snapshot mới nhất của booking
@@ -397,25 +373,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
   }
   // Lấy id các ICPDP officer
   async function officers(session: ClientSession): Promise<string[]> {
-    const roles = await m
-      .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-      .session(session)
-      .lean()
-    const ids = await m
-      .userRoleAssignments!.distinct('userId', {
-        roleId: { $in: roles.map((role) => role._id) },
-        revokedAt: null,
-      })
-      .session(session)
-    return ids.map(String)
-  }
-  // Đóng các approval task đang mở của booking
-  async function closeTasks(id: Types.ObjectId, now: Date, session: ClientSession) {
-    await tasks.updateMany(
-      { entityType: taskType, entityId: id, state: 'Open' },
-      { $set: { state: 'Closed', closedAt: now } },
-      { session },
-    )
+    return (await icpdpOfficerIds(session)).map(String)
   }
   // Dựng chi tiết booking kèm lịch sử và xung đột
   async function detail(id: string, now: Date): Promise<BookingDetail | null> {
@@ -527,11 +485,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
   }
   // Lấy chi tiết booking, không có thì báo not_found
   async function required(id: string, now: Date): Promise<BookingDetail> {
-    const found = await detail(id, now)
-    if (!found) {
-      throw new DomainError('booking not found', 'not_found')
-    }
-    return found
+    return found(await detail(id, now), 'booking not found')
   }
   return {
     // Liệt kê booking tài sản (không gồm phòng) của một CLB hoặc toàn bộ
@@ -944,7 +898,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
           },
           { session },
         )
-        await closeTasks(before._id as Types.ObjectId, now, session)
+        await closeOpenTasks(session, taskType, before._id as Types.ObjectId, now)
         await audit(
           before._id as Types.ObjectId,
           'BOOKING_CANCELLED',
@@ -1025,10 +979,10 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     },
     // UC44: tìm booking bị ảnh hưởng bởi khung blackout của tài sản
     async blackoutConflicts(propertyId, now) {
-      const property = await m.properties!.findById(oid(propertyId)).lean()
-      if (!property) {
-        throw new DomainError('property not found', 'not_found')
-      }
+      const property = found(
+        await m.properties!.findById(oid(propertyId)).lean(),
+        'property not found',
+      )
       const blackouts = propertyFrom(property).blackouts
       // UC44 A2: yêu cầu đang chờ, cùng các booking đã duyệt và phiên phòng UC58 chưa kết thúc —
       // blackout không bao giờ thu hồi một quyết định, nên ICPDP thấy chúng và xử lý thủ công.
