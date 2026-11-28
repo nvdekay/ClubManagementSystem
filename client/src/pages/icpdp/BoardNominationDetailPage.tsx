@@ -15,12 +15,14 @@ import { useBoardNomination, useBoardNominationAction } from '@/hooks/useBoardNo
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { cn } from '@/utils/cn'
-import { formatDate, formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang ICPDP xem đề cử ban chủ nhiệm, xác nhận hoặc trả lại từng ghế
 export function BoardNominationDetailPage() {
   const { id } = useParams()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date, day } = useFormat()
   const askConfirm = useConfirm()
   const auth = useAuth()
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
@@ -56,14 +58,6 @@ export function BoardNominationDetailPage() {
           ? t('boardNominations.returned')
           : value
   }
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
-  // Nhiệm kỳ tính theo trọn ngày, nên hiển thị mốc đầu/cuối không kèm giờ nửa đêm sẽ dễ đọc hơn.
-  function day(value: string) {
-    return formatDay(value, i18n.language)
-  }
-
   // Officer nhận (claim) đề cử ban chủ nhiệm để xử lý
   async function claim() {
     if (!auth.data || !id) {
@@ -117,7 +111,7 @@ export function BoardNominationDetailPage() {
     return loading
   }
   if (!auth.data) {
-    return <AppNotice>{t('boardNominations.signIn')}</AppNotice>
+    return null
   }
   if (!isOfficer) {
     return (
@@ -133,15 +127,10 @@ export function BoardNominationDetailPage() {
     return (
       <>
         <PageHeader title={t('boardNominations.queueTitle')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={query.error?.message ?? t('boardNominations.queueError')}
-        >
-          <AppButton variant="secondary" onClick={() => void query.refetch()}>
-            {t('boardNominations.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void query.refetch()}
+        />
       </>
     )
   }
