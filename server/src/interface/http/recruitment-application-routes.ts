@@ -1,6 +1,5 @@
 import { Router, json, raw } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type {
   RecruitmentApplicationRepository,
@@ -8,7 +7,6 @@ import type {
   RecruitmentAttachmentStorage,
 } from '../../domain/recruitment-application.js'
 import { DomainError } from '../../domain/errors.js'
-import type { SessionService } from '../../domain/session.js'
 import type {
   RecruitmentApplicationState,
   RecruitmentDecision,
@@ -31,19 +29,16 @@ import {
   onboardAcceptedRecruitmentApplication,
   reviewRecruitmentApplications,
 } from '../../usecase/recruitment-review.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface RecruitmentApplicationRouteDeps {
+export interface RecruitmentApplicationRouteDeps extends SessionDeps {
   repo: RecruitmentApplicationRepository
   files: RecruitmentAttachmentStorage | null
-  authRepo: AuthRepository
-  sessions: SessionService
   accessRepo: ClubAccessRepository
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 // Tệp đính kèm được khoá theo UUID sinh lúc upload, không phải Mongo ObjectId.
 const attachmentId = z.string().uuid()
 export const createRecruitmentApplicationBody = z
@@ -91,12 +86,12 @@ function header(value: string | undefined, name: string): string {
 // Mount các route đơn ứng tuyển thành viên của sinh viên và CLB
 export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // CLB liệt kê đơn ứng tuyển của một đợt tuyển để xét duyệt
   router.get(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications',
-    authGuard(guard, false),
+    read,
     async (req, res) => {
       const queryState = req.query.state
       const state =
@@ -135,7 +130,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // CLB lấy quyền truy cập tạm thời để mở tệp đính kèm của ứng viên
   router.get(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/attachments/:attachmentId/access',
-    authGuard(guard, false),
+    read,
     async (req, res) => {
       ok(
         res,
@@ -155,7 +150,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // CLB xét duyệt hàng loạt các đơn ứng tuyển
   router.post(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/review',
-    authGuard(guard),
+    write,
     async (req, res) => {
       const body = parse(reviewBody, req.body, 'recruitment application request')
       ok(
@@ -176,7 +171,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // CLB đưa ứng viên được nhận vào làm thành viên
   router.post(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/onboard',
-    authGuard(guard),
+    write,
     async (req, res) => {
       const body = parse(
         z
@@ -209,7 +204,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // CLB ghi nhận ứng viên được nhận nhưng từ chối gia nhập
   router.post(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/decline',
-    authGuard(guard),
+    write,
     async (req, res) => {
       const body = parse(
         z.object({ reason: z.string().max(2000).optional() }).strict(),
@@ -231,24 +226,20 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   )
 
   // Liệt kê đơn ứng tuyển của tôi
-  router.get('/applications/recruitment/mine', authGuard(guard, false), async (_req, res) => {
+  router.get('/applications/recruitment/mine', read, async (_req, res) => {
     ok(res, (await listMyRecruitmentApplications(deps.repo, actor(res))).map(publicApplication))
   })
   // Lấy đơn ứng tuyển của tôi theo đợt tuyển
-  router.get(
-    '/applications/recruitment/by-campaign/:campaignId',
-    authGuard(guard, false),
-    async (req, res) => {
-      const application = await getMyCampaignApplication(
-        deps.repo,
-        actor(res),
-        parse(id, req.params.campaignId, 'recruitment application request'),
-      )
-      ok(res, application ? publicApplication(application) : null)
-    },
-  )
+  router.get('/applications/recruitment/by-campaign/:campaignId', read, async (req, res) => {
+    const application = await getMyCampaignApplication(
+      deps.repo,
+      actor(res),
+      parse(id, req.params.campaignId, 'recruitment application request'),
+    )
+    ok(res, application ? publicApplication(application) : null)
+  })
   // Tạo bản nháp đơn ứng tuyển
-  router.post('/applications/recruitment', authGuard(guard), async (req, res) => {
+  router.post('/applications/recruitment', write, async (req, res) => {
     const body = parse(
       createRecruitmentApplicationBody,
       req.body,
@@ -269,7 +260,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     )
   })
   // Xem chi tiết đơn ứng tuyển của tôi
-  router.get('/applications/recruitment/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/applications/recruitment/:id', read, async (req, res) => {
     ok(
       res,
       publicApplication(
@@ -285,7 +276,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // Tới 30 câu trả lời x 10.000 ký tự nên vượt giới hạn JSON 100kb chung.
   router.patch(
     '/applications/recruitment/:id/draft',
-    authGuard(guard),
+    write,
     json({ limit: '1mb' }),
     async (req, res) => {
       ok(
@@ -305,7 +296,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // Tải tệp đính kèm lên đơn ứng tuyển
   router.post(
     '/applications/recruitment/:id/attachments',
-    authGuard(guard),
+    write,
     raw({ type: () => true, limit: '10mb' }),
     async (req, res) => {
       if (!Buffer.isBuffer(req.body)) {
@@ -329,7 +320,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
   // Lấy quyền truy cập tạm thời để mở tệp đính kèm của đơn
   router.get(
     '/applications/recruitment/:id/attachments/:attachmentId/access',
-    authGuard(guard, false),
+    read,
     async (req, res) => {
       ok(
         res,
@@ -344,7 +335,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     },
   )
   // Nộp đơn ứng tuyển
-  router.post('/applications/recruitment/:id/submit', authGuard(guard), async (req, res) => {
+  router.post('/applications/recruitment/:id/submit', write, async (req, res) => {
     ok(
       res,
       publicApplication(
@@ -358,7 +349,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     )
   })
   // Rút đơn ứng tuyển
-  router.post('/applications/recruitment/:id/withdraw', authGuard(guard), async (req, res) => {
+  router.post('/applications/recruitment/:id/withdraw', write, async (req, res) => {
     ok(
       res,
       publicApplication(
