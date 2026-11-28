@@ -3,7 +3,7 @@ import type {
   UploadedEvidenceRepository,
 } from '../../domain/periodic-report.js'
 import { cleanupOrphanedEvidence } from '../../usecase/periodic-evidence-cleanup.js'
-import { scheduleJob, type StopJob } from './schedule.js'
+import { logCounts, scheduleJob, type StopJob } from './schedule.js'
 
 // Hẹn giờ dọn ảnh minh chứng không được tham chiếu mỗi ngày, trả hàm dừng job
 export function startEvidenceCleanupJob(
@@ -16,8 +16,6 @@ export function startEvidenceCleanupJob(
     for (const failure of failures) {
       console.error(JSON.stringify({ job: 'evidence-cleanup', ...failure }))
     }
-    if (removed) {
-      console.log(JSON.stringify({ job: 'evidence-cleanup', removed }))
-    }
+    logCounts('evidence-cleanup', { removed })
   })
 }
