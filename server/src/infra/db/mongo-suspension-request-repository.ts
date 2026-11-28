@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import { pageSkip } from '../../domain/paging.js'
@@ -10,7 +9,7 @@ import {
 } from '../../domain/suspension-request.js'
 import { assertAccountabilityOfficer, openAccountabilityTask } from './accountability-workflow.js'
 import { assertEventWriteAccess } from './club-event-access.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, icpdpOfficerIds, queueNotifications, writeAudit } from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { mongoClubLifecycleRepository } from './mongo-club-lifecycle-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
@@ -147,30 +146,16 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
           'Club suspension request',
           now,
         )
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'SuspensionRequest',
-              entityId: id,
-              action: 'SUSPENSION_REQUEST_SUBMITTED',
-              actorId: new Types.ObjectId(userId),
-              actorRole: 'Club Leader',
-              after: input,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
-        const roleIds = await m
-          .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-          .session(session)
-          .distinct('_id')
-        const officerIds = await m
-          .userRoleAssignments!.find({ roleId: { $in: roleIds }, revokedAt: null })
-          .session(session)
-          .distinct('userId')
-        await queueNotifications(session, officerIds, {
+        await writeAudit(session, {
+          entityType: 'SuspensionRequest',
+          entityId: id,
+          action: 'SUSPENSION_REQUEST_SUBMITTED',
+          actorId: new Types.ObjectId(userId),
+          actorRole: 'Club Leader',
+          after: input,
+          at: now,
+        })
+        await queueNotifications(session, await icpdpOfficerIds(session), {
           eventCode: 'SUSPENSION_REQUEST_SUBMITTED',
           entityType: 'SuspensionRequest',
           entityId: id,
@@ -185,10 +170,10 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
     async decide(id, outcome, reason, officerId, now) {
       const requestId = new Types.ObjectId(id)
       if (outcome === 'Approve') {
-        const request = await m.suspensionRequests!.findById(requestId).lean()
-        if (!request) {
-          throw new DomainError('suspension request not found', 'not_found')
-        }
+        const request = found(
+          await m.suspensionRequests!.findById(requestId).lean(),
+          'suspension request not found',
+        )
         await mongoClubLifecycleRepository().suspend(
           String(request.clubId),
           {
@@ -236,21 +221,15 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
           [{ approvalTaskId: task._id, outcome: 'Reject', reason, actorId, at: now }],
           { session },
         )
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'SuspensionRequest',
-              entityId: requestId,
-              action: 'SUSPENSION_REQUEST_REJECTED',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              reason,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'SuspensionRequest',
+          entityId: requestId,
+          action: 'SUSPENSION_REQUEST_REJECTED',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          reason,
+          at: now,
+        })
         await queueNotifications(
           session,
           [
