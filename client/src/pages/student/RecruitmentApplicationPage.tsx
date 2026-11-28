@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import type { TFunction } from 'i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
@@ -26,49 +25,8 @@ import { cn } from '@/utils/cn'
 import { useConfirm } from '@/hooks/useConfirm'
 import { isHttpUrl } from '@/utils/validation'
 import { formatDate } from '@/utils/formatDate'
-
-// Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
-function stateLabel(state: RecruitmentApplication['state'], t: TFunction): string {
-  switch (state) {
-    case 'Draft':
-      return t('recruitmentApplications.stateDraft')
-    case 'Submitted':
-      return t('recruitmentApplications.stateSubmitted')
-    case 'Screening':
-      return t('recruitmentApplications.stateScreening')
-    case 'Shortlisted':
-      return t('recruitmentApplications.stateShortlisted')
-    case 'Accepted':
-      return t('recruitmentApplications.stateAccepted')
-    case 'Rejected':
-      return t('recruitmentApplications.stateRejected')
-    case 'Waitlisted':
-      return t('recruitmentApplications.stateWaitlisted')
-    case 'Onboarded':
-      return t('recruitmentApplications.stateOnboarded')
-    case 'Withdrawn':
-      return t('recruitmentApplications.stateWithdrawn')
-    case 'Declined':
-      return t('recruitmentApplications.stateDeclined')
-  }
-}
-
-// Màu badge theo trạng thái hồ sơ ứng tuyển
-function stateTone(state: RecruitmentApplication['state']): AppBadgeTone {
-  if (state === 'Accepted' || state === 'Onboarded') {
-    return 'success'
-  }
-  if (state === 'Rejected' || state === 'Declined') {
-    return 'danger'
-  }
-  if (state === 'Waitlisted') {
-    return 'warning'
-  }
-  if (state === 'Draft' || state === 'Withdrawn') {
-    return 'neutral'
-  }
-  return 'info'
-}
+import { recruitmentStateTone } from '@/pages/student/recruitmentApplicationFormat'
+import { AppField } from '@/components/ui/field/AppField'
 
 // Kiểm tra giá trị có phải hồ sơ ứng tuyển hay không
 function isApplication(value: unknown): value is RecruitmentApplication {
@@ -365,17 +323,7 @@ export function RecruitmentApplicationPage() {
     )
   }
   if (!auth.data) {
-    return (
-      <AppNotice className="max-w-3xl">
-        <p>{t('recruitmentApplications.signInFirst')}</p>
-        <Link
-          className="inline-block font-medium text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('recruitmentApplications.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
   // 404 nghĩa là chiến dịch không còn công khai (đã đóng hoặc hoàn tất): thử lại cũng không khắc phục được.
   const campaignGone = (campaignQuery.error as { status?: number } | null)?.status === 404
@@ -426,8 +374,8 @@ export function RecruitmentApplicationPage() {
         back={{ to: `/clubs/${campaign.clubId}`, label: t('recruitmentApplications.back') }}
         actions={
           application && (
-            <AppBadge tone={stateTone(application.state)}>
-              {stateLabel(application.state, t)}
+            <AppBadge tone={recruitmentStateTone(application.state)}>
+              {t(`recruitmentApplications.state${application.state}`)}
             </AppBadge>
           )
         }
@@ -485,9 +433,7 @@ export function RecruitmentApplicationPage() {
               disabled={!editable || action.isPending}
               className="space-y-5 disabled:opacity-80"
             >
-              <label className="block text-sm font-medium text-text-app">
-                {t('recruitmentApplications.positions')}
-                <AppRequiredMark />
+              <AppField label={t('recruitmentApplications.positions')} required>
                 <select
                   className={selectClass}
                   value={position}
@@ -502,7 +448,7 @@ export function RecruitmentApplicationPage() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </AppField>
               {campaign.formSchema.map((field) => {
                 const label = (
                   <span>
