@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 export type EvaluationState = 'Draft' | 'Data Ready' | 'Under Review' | 'Finalized' | 'Published'
 export type Classification = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'NEEDS_IMPROVEMENT'
 
@@ -74,19 +74,14 @@ export interface EvaluationDetail {
 export class EvaluationRequestError extends ApiError {
   constructor(
     message: string,
+    status: number,
     readonly pendingReviewClubs: string[] = [],
   ) {
-    super(message)
+    super(message, status)
   }
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/evaluations${path}`, {
-    ...options,
-    toError: toEvaluationError,
-  })
-}
+const request = apiClient('/api/v1/admin/evaluations', toEvaluationError)
 
 // Maps a failed response to this module's error type
 function toEvaluationError(failure: ApiFailure): Error {
@@ -95,7 +90,7 @@ function toEvaluationError(failure: ApiFailure): Error {
     details?.field === 'periodicReports' && Array.isArray(details.clubs)
       ? details.clubs.map(String)
       : []
-  return new EvaluationRequestError(failure.message, clubs)
+  return new EvaluationRequestError(failure.message, failure.status, clubs)
 }
 
 // GET tổng quan đánh giá CLB theo kỳ
