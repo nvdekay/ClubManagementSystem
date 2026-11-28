@@ -6,8 +6,14 @@ import {
   validateExpense,
   validateFinancialEvidence,
 } from '../domain/event-finance.js'
-import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
+import {
+  assertClubAccess,
+  assertClubOrOfficer,
+  parseObjectId,
+  requireIcpdpOfficer,
+  type AccessActor,
+} from './access.js'
 
 export interface EventFinanceDeps {
   repo: EventFinanceRepository
@@ -16,10 +22,7 @@ export interface EventFinanceDeps {
 }
 // Kiểm định dạng id tài chính sự kiện
 export function financeId(value: string): string {
-  if (!/^[0-9a-f]{24}$/i.test(value)) {
-    throw new DomainError('invalid finance identifier', 'validation')
-  }
-  return value
+  return parseObjectId(value, 'finance identifier')
 }
 // Liệt kê ngân sách sự kiện, theo CLB hoặc cho ICPDP
 export async function listEventFinances(
@@ -28,11 +31,7 @@ export async function listEventFinances(
   clubId: string | undefined,
   now: Date,
 ) {
-  if (clubId) {
-    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
-  } else {
-    await requireIcpdpOfficer(deps.auth, actor)
-  }
+  await assertClubOrOfficer(deps, actor, clubId && financeId(clubId), 'club.expense.record', now)
   return deps.repo.list(clubId)
 }
 // Xem chi tiết ngân sách và chi tiêu của một sự kiện
@@ -43,15 +42,8 @@ export async function getEventFinance(
   clubId: string | undefined,
   now: Date,
 ) {
-  if (clubId) {
-    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
-  } else {
-    await requireIcpdpOfficer(deps.auth, actor)
-  }
-  const result = await deps.repo.find(financeId(id), clubId)
-  if (!result) {
-    throw new DomainError('budget not found', 'not_found')
-  }
+  await assertClubOrOfficer(deps, actor, clubId && financeId(clubId), 'club.expense.record', now)
+  const result = orNotFound(await deps.repo.find(financeId(id), clubId), 'budget')
   return result
 }
 // Thực hiện thao tác tài chính sự kiện (chi tiêu, minh chứng, nộp, nhận, trả, chốt)
