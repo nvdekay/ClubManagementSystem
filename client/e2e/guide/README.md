@@ -27,4 +27,4 @@ Ghi đè bằng `E2E_DB_NAME` (phải bắt đầu bằng `ucms-e2e`), `E2E_SERV
 | `screens.guide.ts` | Mỗi test chụp một hoặc vài ảnh, tên file trùng `images/manifest.json` |
 
 Thêm ảnh: viết test mới trong `screens.guide.ts` (selector theo vai trò và chữ tiếng Việt, lấy từ
-`src/i18n/locales/vi/`), thêm dòng vào `images/manifest.json` và nhúng ảnh trong `GUIDE_BOOK.md`.
+`src/i18n/locales/vi/`), thêm dòng vào `images/manifest.json` và nhúng ảnh trong `guide-book.md`.

@@ -1,7 +1,7 @@
 from pathlib import Path
 import re, html, base64, json
 root=Path(__file__).resolve().parent
-text=(root/'GUIDE_BOOK.md').read_text()
+text=(root/'guide-book.md').read_text()
 manifest=json.loads((root/'images/manifest.json').read_text())
 images={i['file']:i for i in manifest['images']}
 source_labels={'guide-capture':'Chụp tự động từ app thật · dữ liệu mẫu đã seed'}
@@ -62,5 +62,5 @@ css='''
 '''
 body='\n'.join(parts);first=body.find('</h1>')+5;body=body[:first]+'<p class="edition">Hướng dẫn theo vai trò · Ảnh chụp '+captured+' từ app và dữ liệu seed</p>'+body[first:]
 body=re.sub(r'<h2 id="chapter-1">Mục lục</h2>.*?(?=<h2)', '<h2 id="chapter-1">Mục lục</h2>'+nav, body, count=1, flags=re.S)
-(root/'GUIDE_BOOK.html').write_text('<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UCMS — Guide book hướng dẫn sử dụng</title><style>'+css+'</style></head><body><main>'+body+'<footer>UCMS · Hướng dẫn sử dụng · Ảnh chụp '+captured+' · Ảnh nhúng trong file, đọc được khi offline.</footer></main></body></html>')
+(root/'guide-book.html').write_text('<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UCMS — Guide book hướng dẫn sử dụng</title><style>'+css+'</style></head><body><main>'+body+'<footer>UCMS · Hướng dẫn sử dụng · Ảnh chụp '+captured+' · Ảnh nhúng trong file, đọc được khi offline.</footer></main></body></html>')
 print(f'Rendered HTML with {counter} embedded screenshots')

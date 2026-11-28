@@ -5,7 +5,7 @@ import type { Locator, Page } from '@playwright/test'
 
 import { clientDir } from '../setup/env'
 
-/** Where GUIDE_BOOK.md links its screenshots. */
+/** Where guide-book.md links its screenshots. */
 export const imagesDir = path.resolve(clientDir, '../docs/06-user-guide/images')
 
 /** Switches the app to Vietnamese; runs after the shared fixture has set English. */

@@ -1,7 +1,7 @@
 # SPEC: feat-database-bootstrap
 
 ## Vấn đề
-Thiết kế MongoDB ở `docs/05-implementation/UCMS_Database_Design.dbml` mới là tài liệu; ứng dụng chỉ có collection `users` của template và chưa tạo các collection, enum, index của UCMS. Cần dựng nền schema trước khi làm Auth và các use case.
+Thiết kế MongoDB ở `docs/05-implementation/database-design.dbml` mới là tài liệu; ứng dụng chỉ có collection `users` của template và chưa tạo các collection, enum, index của UCMS. Cần dựng nền schema trước khi làm Auth và các use case.
 
 ## Hành vi
 - Khai báo Mongoose schema cho toàn bộ collection, trường, kiểu, enum, giá trị mặc định và index được mô tả trong DBML; dùng `_id: ObjectId` làm định danh Mongo tương ứng cột `id objectId [pk]`.

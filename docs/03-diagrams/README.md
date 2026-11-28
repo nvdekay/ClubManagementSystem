@@ -5,27 +5,27 @@ tương ứng của VS Code.
 
 ## Đồng bộ sơ đồ giải ngân 3 kênh và hoàn trả tạm ứng 2 bước (24/11/2026)
 
-Các file `.drawio` dưới đây đã được cập nhật đồng bộ với code hiện hành (`domain/sponsored-item.ts`, `domain/policy.ts`, `SRS.md`, `UCMS_UseCase_Specification_v2.md`, `UCMS_Database_Design.dbml`):
+Các file `.drawio` dưới đây đã được cập nhật đồng bộ với code hiện hành (`domain/sponsored-item.ts`, `domain/policy.ts`, `srs.md`, `database-design.dbml`):
 
-- **`UCMS_State_Diagrams.drawio`** — trang `07 Event Budget`: cập nhật đủ 12 trạng thái hạng mục (`AwaitingAdvance`, `AdvanceSent`, `Draft`, `Returned`, `Submitted`, `RefundPending`, `RefundSubmitted`, `Reconciled`, `Accepted`, `Paid`, `Rejected`, `Expired`), 3 kênh giải ngân, vòng hoàn trả 2 bước (kể cả `validAmount = 0` hoàn 100%), quy tắc bảo mật `schoolRefundAccount` và điều kiện đóng `EventBudget → Closed`.
-- **`UCMS_Database_Schema.drawio`** — trang `Schema M01` (bổ sung `schoolRefundAccount` vào `policyVersions`) và `Schema M07` (bổ sung `sponsoredItems` vào `eventBudgets`).
-- **`UCMS_ERD.drawio`** — cả 4 trang (Chen + Crow's Foot, bản có và không chú giải): thêm `School refund account` trên `Policy Version`, thêm `Sponsored items` (đa trị) và `Refunded total` trên `Event Budget`.
-- **`UCMS_Screen_Flow.drawio`** — đổi nhãn `Expenses & budgets` phía CLB (`/club/:clubId/budgets`), gộp màn đối soát legacy vào `Event budget (items, review & refund)` (`/workspace/budgets/:id`) phía ICPDP.
-- **`UCMS_Class_Diagrams.drawio`** — bổ sung trang `18 Sponsored-Item-Disbursement-and-Refund` (4 tầng `interface/http`, `usecase`, `domain`, `infra/db & infra/files`, đối chiếu trực tiếp từ `sponsored-item*` và `policy.ts`); trang `04` đã đồng bộ sẵn `fundingDecision` & `sponsoredItems`.
+- **`state-diagrams.drawio`** — trang `07 Event Budget`: cập nhật đủ 12 trạng thái hạng mục (`AwaitingAdvance`, `AdvanceSent`, `Draft`, `Returned`, `Submitted`, `RefundPending`, `RefundSubmitted`, `Reconciled`, `Accepted`, `Paid`, `Rejected`, `Expired`), 3 kênh giải ngân, vòng hoàn trả 2 bước (kể cả `validAmount = 0` hoàn 100%), quy tắc bảo mật `schoolRefundAccount` và điều kiện đóng `EventBudget → Closed`.
+- **`database-schema.drawio`** — trang `Schema M01` (bổ sung `schoolRefundAccount` vào `policyVersions`) và `Schema M07` (bổ sung `sponsoredItems` vào `eventBudgets`).
+- **`erd.drawio`** — cả 4 trang (Chen + Crow's Foot, bản có và không chú giải): thêm `School refund account` trên `Policy Version`, thêm `Sponsored items` (đa trị) và `Refunded total` trên `Event Budget`.
+- **`screen-flow.drawio`** — đổi nhãn `Expenses & budgets` phía CLB (`/club/:clubId/budgets`), gộp màn đối soát legacy vào `Event budget (items, review & refund)` (`/workspace/budgets/:id`) phía ICPDP.
+- **`class-diagrams.drawio`** — bổ sung trang `18 Sponsored-Item-Disbursement-and-Refund` (4 tầng `interface/http`, `usecase`, `domain`, `infra/db & infra/files`, đối chiếu trực tiếp từ `sponsored-item*` và `policy.ts`); trang `04` đã đồng bộ sẵn `fundingDecision` & `sponsoredItems`.
 
-> **Các file giữ nguyên trong lượt này:** `UCMS_Main_Workflow.drawio` (trang `09` và `Slide 09`), `UCMS_Swimlane_Flows.drawio` (trang `06 Event Finance`), `UCMS_Sequence_Diagrams.drawio` (trang `06` và `09`) đã phủ luồng mới từ lượt đồng bộ 23–24/11/2026; `UCMS_Organization_and_Flows.drawio` và `UCMS_UseCase_ByActor.drawio` giữ nguyên.
+> **Các file giữ nguyên trong lượt này:** `main-workflow.drawio` (trang `09` và `Slide 09`), `swimlane-flows.drawio` (trang `06 Event Finance`), `sequence-diagrams.drawio` (trang `06` và `09`) đã phủ luồng mới từ lượt đồng bộ 23–24/11/2026; `organization-and-flows.drawio` và `usecase-by-actor.drawio` giữ nguyên.
 
 > **Lưu ý xuất ảnh PNG/SVG:** môi trường hiện tại chưa cài `draw.io` CLI nên các ảnh dưới đây trong `img/` cần được xuất lại từ Draw.io Desktop/CLI sau khi mở các file `.drawio` vừa sửa:
-> - `UCMS_State_Diagrams_07_Event-Budget.png`
-> - `UCMS_Database_Schema_02_Schema-M01-Identity-Access-Configuration.png`, `UCMS_Database_Schema_06_Schema-M07-Event-Finance-Budget.png`
-> - `UCMS_ERD_01_ERD-Chen.png`, `UCMS_ERD_02_ERD-Crow-s-Foot.png`, `UCMS_ERD_03_ERD-Chen-no-legend.png`, `UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png`
-> - `UCMS_Screen_Flow_01_Screen-flow.png` và `UCMS_Screen_Flow_01_Screen-flow.svg`
+> - `state-diagrams-07-event-budget.png`
+> - `database-schema-02-schema-m01-identity-access-configuration.png`, `database-schema-06-schema-m07-event-finance-budget.png`
+> - `erd-01-erd-chen.png`, `erd-02-erd-crow-s-foot.png`, `erd-03-erd-chen-no-legend.png`, `erd-04-erd-crow-s-foot-no-legend.png`
+> - `screen-flow-01-screen-flow.png` và `screen-flow-01-screen-flow.svg`
 > - `UCMS_Class_18_Sponsored-Item-Disbursement-and-Refund.png` (`drawio -x -f png -p 18 --width 2400`)
 
 ## Thay đổi tài chính ngày 14/11/2026 — lịch sử thiết kế ban đầu
 
-Các trang dưới đây được cập nhật theo UC26, UC35–UC37 trong [SRS](../SRS.md) và
-[UC Specification](../02-use-cases/UCMS_UseCase_Specification_v2.md). Đây là **thiết kế nghiệp vụ
+Các trang dưới đây được cập nhật theo UC26, UC35–UC37 trong [SRS](../srs.md) và
+UC Specification v2 (đã xoá 28/11/2026; nội dung còn hiệu lực nằm trong [`srs.md`](../srs.md)). Đây là **thiết kế nghiệp vụ
 mới**, không phải xác nhận code hiện tại đã đáp ứng. UC25 không đổi. Không tạo dashboard
 thanh toán riêng; bộ hóa đơn nằm trong thông tin đề xuất sự kiện, dashboard chỉ nhận thông báo.
 
@@ -35,7 +35,7 @@ thanh toán riêng; bộ hóa đơn nằm trong thông tin đề xuất sự ki�
 - Main workflow: trang 07; Organization and flows: trang 02, chuỗi F5.
 - Screen flow: chú thích vị trí bộ hóa đơn trong thông tin đề xuất sự kiện là thay đổi đích.
 - Sequence: UC26 phần 2 cập nhật quyết định tài trợ; thêm trang 09 “Invoice review and one-time
-  payment”, ảnh [sequence tài chính](img/UCMS_Sequence_09_Invoice-review-and-one-time-payment.png).
+  payment”, ảnh [sequence tài chính](img/sequence-09-invoice-review-and-one-time-payment.png).
 
 Nguồn `.drawio` và các PNG của những trang trên phải đi cùng nhau. Screen flow cũng xuất lại
 SVG. Các trang không liên quan giữ nguyên. Class/package diagram, ERD và physical database
@@ -46,21 +46,21 @@ thế quy tắc nghiệp vụ mới trong SRS.
 
 | File | Thể hiện điều gì |
 |---|---|
-| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | **Context diagram hiện hành** (nội dung v2.1; file `UCMS_Context_Diagram_v2.1.drawio` cũ đã gộp vào đây và bị xoá ngày 14/10/2026, commit `402dafa`) — biên hệ thống và 45 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64). Ảnh `img/UCMS_Context_Diagram_01_Context-diagram.png` (xuất lại 13/11/2026: luồng role CLB của UC23 đã rút được thay bằng luồng xác nhận/xin dời lịch bảo vệ sự kiện BR63, lịch bảo vệ gộp vào luồng quyết định thẩm định, Cloudinary ghi `Uploaded file`/`File URL`; các ảnh `_v2`, `_v2.1` là lịch sử) |
-| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | Use case diagram phủ UC01–UC55 và UC58 (bản 19/10/2026, sửa 13/11/2026). Các oval `Manage club roles` / CRUD role của UC23 đã bỏ và ảnh đã xuất lại ngày 13/11/2026, khớp quyết định hai role cố định trong `UCMS_Organization_and_Flows.drawio` và SRS hiện hành (không có custom role) |
-| [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event (bổ sung trạng thái `Re-defense Pending` theo BR63), Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`), Event Defense Session (phiên bảo vệ đề xuất sự kiện giữa CLB và ICPDP: `SCHEDULED`, `CONFIRMED`, `RESCHEDULE_REQUESTED`, `IN_PROGRESS`, `DEFENDED`, `CANCELLED`, `NO_SHOW` theo BR63). Trang Club theo SRS §6.2 sửa 2026-11-01: CLB mới tạo thẳng ở `Active` khi UC08 duyệt, không còn `Pending Setup` (sửa sơ đồ và xuất lại `img/UCMS_State_Diagrams_02_Club.png` ngày 02/11/2026) |
-| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (19/10/2026) — mô hình **khái niệm**, 33 thực thể (cùng một màu xám), 188 thuộc tính nghiệp vụ (183 của thực thể + 5 của hai quan hệ N:M), **mỗi ký pháp đúng một hình**: trang 1 *ERD Chen* theo **ký pháp Chen chuẩn** (hình chữ nhật, elip thuộc tính, elip đôi là đa trị, hình thoi quan hệ, mỗi thực thể có **thuộc tính khoá gạch chân** — thêm elip `ID` cho 28 thực thể không có khoá tự nhiên nên trang này có 216 thuộc tính), bản số ghi bằng nhãn `1` / `N` / `M` cạnh thực thể, **nét đôi** là tham gia toàn phần, 53 quan hệ; trang 2 *ERD Crow's Foot* theo **ký pháp Crow's Foot** thuần (bảng thực thể liệt kê thuộc tính, đường nối thẳng giữa hai bảng, tên quan hệ ghi trên đường, hai quan hệ N:M vẽ thành thực thể liên kết `Candidate Evaluation` / `Dimension Result`), 55 đường nối; trang 3–4 *(no legend)* là chính hai hình đó bỏ tiêu đề / chú giải, để dán vào report. Không có Role / Permission, không có bảng kỹ thuật (approval, notification, audit). Không ghi kiểu dữ liệu hay ràng buộc; khoá chỉ vẽ ở trang Chen. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới. Ảnh `img/UCMS_ERD_01_ERD-Chen.png`, `img/UCMS_ERD_02_ERD-Crow-s-Foot.png` (có chú giải, để đọc), `img/UCMS_ERD_03_ERD-Chen-no-legend.png`, `img/UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png` (không chú giải, để dán vào report) |
-| [`UCMS_Database_Schema.drawio`](UCMS_Database_Schema.drawio) | **Database schema hiện hành** — mô hình **vật lý** MongoDB theo ký pháp Crow's Foot, sinh từ `docs/05-implementation/UCMS_Database_Design.dbml` (nguồn mà server dùng để tạo collection và index) cộng `authSessions`: 55 collection (54 bảng của DBML, gồm `routingRuleSets` ở M01 và `eventDefenseSessions` ở M05/M06, cộng `authSessions`; sinh lại 13/11/2026), mỗi trường ghi tên, kiểu BSON (`ObjectId`, `String`, `Int (Number)`, `Decimal128`, `Boolean`, `Date`, `Object (embedded)`, `String[]`, `String · enum X`) và ràng buộc `PK`/`FK`/`UQ`/`NN`/giá trị mặc định; unique ghép ghi ở dòng vàng cuối bảng. 12 trang: tổng quan (chỉ khoá và tham chiếu), 10 trang theo module, trang *Enums* liệt kê đúng 28 enum của DBML (bổ sung `eventDefenseState`, cập nhật `eventState` và `reviewOutcome`, bỏ `feedbackRecipient`) và trường dùng chúng. Ảnh `img/UCMS_Database_Schema_*.png` |
-| [`UCMS_Package_Diagrams.drawio`](UCMS_Package_Diagrams.drawio) | **Package diagram hiện hành** (13/10/2026) — Front-end (`client/src`) và Back-end (`server/src`), vẽ theo đúng thư mục và quan hệ import đang có trong code (`interface/http`, `interface/jobs`, `usecase`, `domain`, `infra/db`·`auth`·`files`·`config`, `main.ts`). Ảnh `img/UCMS_Package_Diagrams_01_Front-end-packages.png`, `img/UCMS_Package_Diagrams_02_Back-end-packages.png` (xuất lại 02/11/2026) |
-| [`UCMS_Screen_Flow.drawio`](UCMS_Screen_Flow.drawio) | **Screen flow hiện hành**, một trang gộp cho mọi role, đối chiếu từ router `client/src/main.tsx`, sidebar trong `WorkspaceShell.tsx`, top bar trong `PublicLayout.tsx` và các `Link`/`navigate` trong `pages/`: 75 màn hình (sửa 13/11/2026: bổ sung `Event defense room` và `Approval routing` trong ICPDP workspace; `Registration & attendance`, `Allocated rooms` tô màu Club Member vì mọi thành viên `Active` có hai quyền mặc định; nhãn khiếu nại đổi thành `Complaints`; màn public tô màu mọi user). Ảnh `.svg` cùng tên chưa xuất lại, dùng bản `.png`, 5 khung theo layout — Entry (Login, Workspace picker), Public area, Student workspace, Club workspace, ICPDP workspace. Màu hộp theo actor của use case model (xem *Màu trong screen flow* bên dưới); **không có Guest**, mọi màn hình đều sau UC01. Các màn hình trên sidebar/top bar xếp dọc cột trái mỗi khung và mở được từ mọi màn hình cùng khung nên không vẽ mũi tên menu; mũi tên chỉ vẽ cho màn hình mở từ màn hình khác (list → detail, form). Hộp nét đứt chữ nghiêng là màn hình của khung khác lặp lại. Ảnh `img/UCMS_Screen_Flow_01_Screen-flow.png` và `.svg` cùng tên. |
-| [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính mới nhất** (02/11/2026) — nguồn quyết định cho mô hình role cố định: chỉ `Club Leader` / `Club Member`, chức danh không cấp permission, UC23 bị rút. Trang Main business flows F1–F10 cũng phản ánh CLB `Active` ngay khi UC08 duyệt |
-| [`UCMS_Main_Workflow.drawio`](UCMS_Main_Workflow.drawio) | **Main workflow hiện hành** — **chín** swimlane tổng quát, mỗi trang một luồng chính, làn dọc theo actor (Student, Club Leader, ICPDP Officer, UCMS), luồng chạy từ trên xuống: *01 Club establishment*, *02 Member recruitment*, *03 Periodic reports submission*, *04 Term transition*, *05 Club suspension*, *06 Facilities request*, *07 Event proposal and approval* (đề xuất → duyệt), *08 Event run and close* (publish → đăng ký → điểm danh → báo cáo → Closed) và *09 Event disbursement* (giải ngân theo từng hạng mục tài trợ, bắt đầu khi CLB tải chứng từ lên: nộp hoá đơn → ICPDP đối soát → hoàn trả phần dư tạm ứng / trả nhà cung cấp / hoàn ứng cho CLB → đóng ngân sách). Đồng bộ với code ngày 23/11/2026 (xem mục *Đồng bộ swimlane với code* cuối file). Ảnh `img/UCMS_Main_Workflow_01…09_*.png`. Không vẽ chi tiết từng use case |
-| [`UCMS_Swimlane_Flows.drawio`](UCMS_Swimlane_Flows.drawio) | **Swimlane chi tiết từng luồng** (tiếng Anh, 14 trang) — tài liệu tham khảo sâu cho SRS §2.5, **không còn là main workflow của report**: Club Founding, Leadership Transition, Member Recruitment, Event Proposal (bổ sung lập lịch bảo vệ, xác nhận/dời lịch, phòng Live Room và 4 nhánh quyết định hậu bảo vệ theo BR63), Event Execution, Event Finance, Room Allocation (UC58), Facility Request, Complaint Handling, Periodic Report, Violation Case, Club Evaluation, Suspension and Dissolution, Club Leader and Club Member. Phía CLB chỉ có hai role cố định: `Club Leader` thao tác; `Club Member` tham gia, đồng thời có hai quyền mặc định là điểm danh và xem phòng được cấp. Đồng bộ với code ngày 23/11/2026 |
-| [`UCMS_System_Architecture.drawio`](UCMS_System_Architecture.drawio) | Sơ đồ kiến trúc hệ thống tổng quan, một trang (02/10/2026; 24/11/2026 rút gọn chữ trong khối và nhãn cạnh). Ảnh `img/UCMS_System_Architecture_01_System-architecture.png` (xuất 19/10/2026); thiết kế chi tiết xem [`../04-design/UCMS_High_Level_Design.md`](../04-design/UCMS_High_Level_Design.md) |
-| [`UCMS_Class_Diagrams.drawio`](UCMS_Class_Diagrams.drawio) | **Class diagram theo use case** (report IV.3 Detailed Design), 19 trang: `00 Notation` và `01`…`18` cho 3.3.1–3.5.2 (UC25–UC40, UC42–UC43, bổ sung trang `18 Sponsored-Item-Disbursement-and-Refund` ngày 24/11/2026 cho luồng giải ngân 3 kênh và hoàn trả tạm ứng 2 bước). Sửa 13/11/2026: `Re-defense` trong `EventReviewOutcome`; `activeDefenseSession` và `defenseHistory` trong `EventProposalDetail`; trang 10 (reschedule) và 13–14 (campaign báo cáo định kỳ, 9 return section) theo code hiện hành. Vẽ từ code thật trong `server/src`, mỗi trang chia 4 khung tầng `interface/http`, `usecase`, `domain`, `infra/db`. Ảnh `img/UCMS_Class_00…18_*.png`, xuất bằng `drawio -x -f png -p <trang> --width 2400` |
-| [`UCMS_Security_Architecture.drawio`](UCMS_Security_Architecture.drawio) | **Kiến trúc bảo mật** (một trang): các lớp phòng thủ của một request `/api/v1` từ trên xuống — Browser (cookie httpOnly/SameSite, header CSRF) → transport/header → parse và route → `authGuard` (session, khoá, CSRF) → zod → phân quyền trong usecase (vai trò ICPDP / phạm vi CLB + nhiệm kỳ + ghế / chủ sở hữu) → transaction + audit → `errorHandler`; bên phải là Google OIDC và MongoDB (`authSessions`, `auditLogs`), bên trái là mã lỗi trả về ở từng lớp. Ảnh `img/UCMS_Security_01_Request-pipeline.png` |
-| [`UCMS_Sequence_Diagrams.drawio`](UCMS_Sequence_Diagrams.drawio) | **Sequence diagram tiêu biểu**, 22 trang: 9 hình (hình 09 là sequence tài chính mới theo nghiệp vụ đích), mỗi hình chia 2–3 trang theo pha để vừa trang A4 dọc (cao/rộng ≤ 1,35). Hình **06** mở rộng thành 3 trang: `06 Decide event proposal (1/3)`, `(2/3)` (bổ sung nhánh Re-defense), và `(3/3)` (`06 Event defense session (3/3)`: lập lịch, xác nhận, phòng bảo vệ trực tiếp, lưu note Markdown và phân nhánh quyết định theo BR63). Kèm trang `06 Proposal template and document (ICPDP)`: ICPDP thay template đề án và lấy signed URL của `proposalDocument`. Ảnh `img/UCMS_Sequence_<NN>_<Slug>_p<k>.png` |
-| [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |
+| [`context-diagram.drawio`](context-diagram.drawio) | **Context diagram hiện hành** (nội dung v2.1; file `UCMS_Context_Diagram_v2.1.drawio` cũ đã gộp vào đây và bị xoá ngày 14/10/2026, commit `402dafa`) — biên hệ thống và 45 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../srs.md` §14.4 (review issue I56, I57, I58, I61, I64). Ảnh `img/context-diagram-01-context-diagram.png` (xuất lại 13/11/2026: luồng role CLB của UC23 đã rút được thay bằng luồng xác nhận/xin dời lịch bảo vệ sự kiện BR63, lịch bảo vệ gộp vào luồng quyết định thẩm định, Cloudinary ghi `Uploaded file`/`File URL`; các ảnh `_v2`, `_v2.1` là lịch sử) |
+| [`usecase-by-actor.drawio`](usecase-by-actor.drawio) | Use case diagram phủ UC01–UC55 và UC58 (bản 19/10/2026, sửa 13/11/2026). Các oval `Manage club roles` / CRUD role của UC23 đã bỏ và ảnh đã xuất lại ngày 13/11/2026, khớp quyết định hai role cố định trong `organization-and-flows.drawio` và SRS hiện hành (không có custom role) |
+| [`state-diagrams.drawio`](state-diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event (bổ sung trạng thái `Re-defense Pending` theo BR63), Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`), Event Defense Session (phiên bảo vệ đề xuất sự kiện giữa CLB và ICPDP: `SCHEDULED`, `CONFIRMED`, `RESCHEDULE_REQUESTED`, `IN_PROGRESS`, `DEFENDED`, `CANCELLED`, `NO_SHOW` theo BR63). Trang Club theo SRS §6.2 sửa 2026-11-01: CLB mới tạo thẳng ở `Active` khi UC08 duyệt, không còn `Pending Setup` (sửa sơ đồ và xuất lại `img/state-diagrams-02-club.png` ngày 02/11/2026) |
+| [`erd.drawio`](erd.drawio) | **ERD hiện hành** (19/10/2026) — mô hình **khái niệm**, 33 thực thể (cùng một màu xám), 188 thuộc tính nghiệp vụ (183 của thực thể + 5 của hai quan hệ N:M), **mỗi ký pháp đúng một hình**: trang 1 *ERD Chen* theo **ký pháp Chen chuẩn** (hình chữ nhật, elip thuộc tính, elip đôi là đa trị, hình thoi quan hệ, mỗi thực thể có **thuộc tính khoá gạch chân** — thêm elip `ID` cho 28 thực thể không có khoá tự nhiên nên trang này có 216 thuộc tính), bản số ghi bằng nhãn `1` / `N` / `M` cạnh thực thể, **nét đôi** là tham gia toàn phần, 53 quan hệ; trang 2 *ERD Crow's Foot* theo **ký pháp Crow's Foot** thuần (bảng thực thể liệt kê thuộc tính, đường nối thẳng giữa hai bảng, tên quan hệ ghi trên đường, hai quan hệ N:M vẽ thành thực thể liên kết `Candidate Evaluation` / `Dimension Result`), 55 đường nối; trang 3–4 *(no legend)* là chính hai hình đó bỏ tiêu đề / chú giải, để dán vào report. Không có Role / Permission, không có bảng kỹ thuật (approval, notification, audit). Không ghi kiểu dữ liệu hay ràng buộc; khoá chỉ vẽ ở trang Chen. Đối chiếu từ [`../05-implementation/database-design.dbml`](../05-implementation/database-design.dbml); xem mục *Ký hiệu ERD* bên dưới. Ảnh `img/erd-01-erd-chen.png`, `img/erd-02-erd-crow-s-foot.png` (có chú giải, để đọc), `img/erd-03-erd-chen-no-legend.png`, `img/erd-04-erd-crow-s-foot-no-legend.png` (không chú giải, để dán vào report) |
+| [`database-schema.drawio`](database-schema.drawio) | **Database schema hiện hành** — mô hình **vật lý** MongoDB theo ký pháp Crow's Foot, sinh từ `docs/05-implementation/database-design.dbml` (nguồn mà server dùng để tạo collection và index) cộng `authSessions`: 55 collection (54 bảng của DBML, gồm `routingRuleSets` ở M01 và `eventDefenseSessions` ở M05/M06, cộng `authSessions`; sinh lại 13/11/2026), mỗi trường ghi tên, kiểu BSON (`ObjectId`, `String`, `Int (Number)`, `Decimal128`, `Boolean`, `Date`, `Object (embedded)`, `String[]`, `String · enum X`) và ràng buộc `PK`/`FK`/`UQ`/`NN`/giá trị mặc định; unique ghép ghi ở dòng vàng cuối bảng. 12 trang: tổng quan (chỉ khoá và tham chiếu), 10 trang theo module, trang *Enums* liệt kê đúng 28 enum của DBML (bổ sung `eventDefenseState`, cập nhật `eventState` và `reviewOutcome`, bỏ `feedbackRecipient`) và trường dùng chúng. Ảnh `img/UCMS_Database_Schema_*.png` |
+| [`package-diagrams.drawio`](package-diagrams.drawio) | **Package diagram hiện hành** (13/10/2026) — Front-end (`client/src`) và Back-end (`server/src`), vẽ theo đúng thư mục và quan hệ import đang có trong code (`interface/http`, `interface/jobs`, `usecase`, `domain`, `infra/db`·`auth`·`files`·`config`, `main.ts`). Ảnh `img/package-diagrams-01-front-end-packages.png`, `img/package-diagrams-02-back-end-packages.png` (xuất lại 02/11/2026) |
+| [`screen-flow.drawio`](screen-flow.drawio) | **Screen flow hiện hành**, một trang gộp cho mọi role, đối chiếu từ router `client/src/main.tsx`, sidebar trong `WorkspaceShell.tsx`, top bar trong `PublicLayout.tsx` và các `Link`/`navigate` trong `pages/`: 75 màn hình (sửa 13/11/2026: bổ sung `Event defense room` và `Approval routing` trong ICPDP workspace; `Registration & attendance`, `Allocated rooms` tô màu Club Member vì mọi thành viên `Active` có hai quyền mặc định; nhãn khiếu nại đổi thành `Complaints`; màn public tô màu mọi user). Ảnh `.svg` cùng tên chưa xuất lại, dùng bản `.png`, 5 khung theo layout — Entry (Login, Workspace picker), Public area, Student workspace, Club workspace, ICPDP workspace. Màu hộp theo actor của use case model (xem *Màu trong screen flow* bên dưới); **không có Guest**, mọi màn hình đều sau UC01. Các màn hình trên sidebar/top bar xếp dọc cột trái mỗi khung và mở được từ mọi màn hình cùng khung nên không vẽ mũi tên menu; mũi tên chỉ vẽ cho màn hình mở từ màn hình khác (list → detail, form). Hộp nét đứt chữ nghiêng là màn hình của khung khác lặp lại. Ảnh `img/screen-flow-01-screen-flow.png` và `.svg` cùng tên. |
+| [`organization-and-flows.drawio`](organization-and-flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính mới nhất** (02/11/2026) — nguồn quyết định cho mô hình role cố định: chỉ `Club Leader` / `Club Member`, chức danh không cấp permission, UC23 bị rút. Trang Main business flows F1–F10 cũng phản ánh CLB `Active` ngay khi UC08 duyệt |
+| [`main-workflow.drawio`](main-workflow.drawio) | **Main workflow hiện hành** — **chín** swimlane tổng quát, mỗi trang một luồng chính, làn dọc theo actor (Student, Club Leader, ICPDP Officer, UCMS), luồng chạy từ trên xuống: *01 Club establishment*, *02 Member recruitment*, *03 Periodic reports submission*, *04 Term transition*, *05 Club suspension*, *06 Facilities request*, *07 Event proposal and approval* (đề xuất → duyệt), *08 Event run and close* (publish → đăng ký → điểm danh → báo cáo → Closed) và *09 Event disbursement* (giải ngân theo từng hạng mục tài trợ, bắt đầu khi CLB tải chứng từ lên: nộp hoá đơn → ICPDP đối soát → hoàn trả phần dư tạm ứng / trả nhà cung cấp / hoàn ứng cho CLB → đóng ngân sách). Đồng bộ với code ngày 23/11/2026 (xem mục *Đồng bộ swimlane với code* cuối file). Ảnh `img/UCMS_Main_Workflow_01…09_*.png`. Không vẽ chi tiết từng use case |
+| [`swimlane-flows.drawio`](swimlane-flows.drawio) | **Swimlane chi tiết từng luồng** (tiếng Anh, 14 trang) — tài liệu tham khảo sâu cho SRS §2.5, **không còn là main workflow của report**: Club Founding, Leadership Transition, Member Recruitment, Event Proposal (bổ sung lập lịch bảo vệ, xác nhận/dời lịch, phòng Live Room và 4 nhánh quyết định hậu bảo vệ theo BR63), Event Execution, Event Finance, Room Allocation (UC58), Facility Request, Complaint Handling, Periodic Report, Violation Case, Club Evaluation, Suspension and Dissolution, Club Leader and Club Member. Phía CLB chỉ có hai role cố định: `Club Leader` thao tác; `Club Member` tham gia, đồng thời có hai quyền mặc định là điểm danh và xem phòng được cấp. Đồng bộ với code ngày 23/11/2026 |
+| [`system-architecture.drawio`](system-architecture.drawio) | Sơ đồ kiến trúc hệ thống tổng quan, một trang (02/10/2026; 24/11/2026 rút gọn chữ trong khối và nhãn cạnh). Ảnh `img/system-architecture-01-system-architecture.png` (xuất 19/10/2026); thiết kế chi tiết xem [`../04-design/high-level-design.md`](../04-design/high-level-design.md) |
+| [`class-diagrams.drawio`](class-diagrams.drawio) | **Class diagram theo use case** (report IV.3 Detailed Design), 19 trang: `00 Notation` và `01`…`18` cho 3.3.1–3.5.2 (UC25–UC40, UC42–UC43, bổ sung trang `18 Sponsored-Item-Disbursement-and-Refund` ngày 24/11/2026 cho luồng giải ngân 3 kênh và hoàn trả tạm ứng 2 bước). Sửa 13/11/2026: `Re-defense` trong `EventReviewOutcome`; `activeDefenseSession` và `defenseHistory` trong `EventProposalDetail`; trang 10 (reschedule) và 13–14 (campaign báo cáo định kỳ, 9 return section) theo code hiện hành. Vẽ từ code thật trong `server/src`, mỗi trang chia 4 khung tầng `interface/http`, `usecase`, `domain`, `infra/db`. Ảnh `img/UCMS_Class_00…18_*.png`, xuất bằng `drawio -x -f png -p <trang> --width 2400` |
+| [`security-architecture.drawio`](security-architecture.drawio) | **Kiến trúc bảo mật** (một trang): các lớp phòng thủ của một request `/api/v1` từ trên xuống — Browser (cookie httpOnly/SameSite, header CSRF) → transport/header → parse và route → `authGuard` (session, khoá, CSRF) → zod → phân quyền trong usecase (vai trò ICPDP / phạm vi CLB + nhiệm kỳ + ghế / chủ sở hữu) → transaction + audit → `errorHandler`; bên phải là Google OIDC và MongoDB (`authSessions`, `auditLogs`), bên trái là mã lỗi trả về ở từng lớp. Ảnh `img/security-01-request-pipeline.png` |
+| [`sequence-diagrams.drawio`](sequence-diagrams.drawio) | **Sequence diagram tiêu biểu**, 22 trang: 9 hình (hình 09 là sequence tài chính mới theo nghiệp vụ đích), mỗi hình chia 2–3 trang theo pha để vừa trang A4 dọc (cao/rộng ≤ 1,35). Hình **06** mở rộng thành 3 trang: `06 Decide event proposal (1/3)`, `(2/3)` (bổ sung nhánh Re-defense), và `(3/3)` (`06 Event defense session (3/3)`: lập lịch, xác nhận, phòng bảo vệ trực tiếp, lưu note Markdown và phân nhánh quyết định theo BR63). Kèm trang `06 Proposal template and document (ICPDP)`: ICPDP thay template đề án và lấy signed URL của `proposalDocument`. Ảnh `img/UCMS_Sequence_<NN>_<Slug>_p<k>.png` |
+| [`img/`](img/) | Bản xuất PNG, đặt tên kebab-case theo `<tên-file-nguồn>-<số-trang>-<tên-trang>.png`, chữ thường, không dấu (ví dụ `state-diagrams-06-event.png`). Tool render xuất tên dạng cũ `UCMS_<Tên>_<NN>_<Trang>.png`, cần đổi lại trước khi commit |
 
 ## Bộ sơ đồ dùng trong report final
 
@@ -72,23 +72,23 @@ giữ nguyên như trong code.
 
 | Mục trong report | File nguồn | Ảnh dùng |
 |---|---|---|
-| Project schedule (II.7) | sinh từ lịch sử Git (số file đổi mỗi tuần theo luồng việc, 5 sprint 07/09–13/11/2026) | `UCMS_Project_Schedule.png` |
-| Context diagram (III.1) | `UCMS_Context_Diagram.drawio` | `UCMS_Context_Diagram_01_Context-diagram.png` |
-| Organization structure, Main business flows (III.1.1, III.3.1.1) | `UCMS_Organization_and_Flows.drawio` | `UCMS_Organization_and_Flows_01_*.png`, `…_02_*.png` |
-| Use case diagram (III.2.2.1) | `UCMS_UseCase_ByActor.drawio` | `UCMS_UseCase_ByActor_*.png` |
-| State Diagram (III.5.3) | `UCMS_State_Diagrams.drawio` | 9 ảnh `UCMS_State_Diagrams_01…09_*.png` |
-| Package Diagram (IV.1.2) | `UCMS_Package_Diagrams.drawio` | `UCMS_Package_Diagrams_01_Front-end-packages.png`, `…_02_Back-end-packages.png` |
-| Screen flow (III.3.1.2) | `UCMS_Screen_Flow.drawio` | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, 5 khung theo layout, tách actor bằng màu |
-| ERD (IV.2) | `UCMS_ERD.drawio` | 4 ảnh, mỗi ký pháp một hình: `UCMS_ERD_01_ERD-Chen.png` (Chen chuẩn: khoá gạch chân, bản số `1`/`N`/`M`, nét đôi là tham gia toàn phần) và `UCMS_ERD_02_ERD-Crow-s-Foot.png` (Crow's Foot) có chú giải để đọc; `UCMS_ERD_03_ERD-Chen-no-legend.png` và `UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png` không chú giải để dán vào report |
-| Main workflow (III.3.1.1) | `UCMS_Main_Workflow.drawio` | 9 ảnh `UCMS_Main_Workflow_01…09_*.png` |
-| Database schema (IV.2) | `UCMS_Database_Schema.drawio` | `UCMS_Database_Schema_01_Schema-overview.png` (10 trang module và trang Enums để tra cứu, không chèn) |
-| System architecture (IV.1.1) | `UCMS_System_Architecture.drawio` | `UCMS_System_Architecture_01_System-architecture.png` |
-| Sequence diagram tiêu biểu (UC01/02, UC07, UC08, UC17/18/20, UC25, UC26, UC29/30, UC45/46) | `UCMS_Sequence_Diagrams.drawio` | 20 ảnh `UCMS_Sequence_01…08_*_p<k>.png`, mỗi hình 2–3 trang theo pha (mỗi trang draw.io một ảnh) |
-| Security mechanism — defence in depth | `UCMS_Security_Architecture.drawio` | `UCMS_Security_01_Request-pipeline.png` (xuất bằng draw.io CLI, `--width 2000`) |
-| Class diagram (IV.3, mục 3.3.1–3.5.2) | `UCMS_Class_Diagrams.drawio` | 18 ảnh `UCMS_Class_01…18_*.png`, mỗi use case một trang (gồm trang `18 Sponsored-Item-Disbursement-and-Refund`), cộng `UCMS_Class_00_Notation.png` (trang ký hiệu, thay Figure IV.7) |
+| Project schedule (II.7) | sinh từ lịch sử Git (số file đổi mỗi tuần theo luồng việc, 5 sprint 07/09–13/11/2026) | `project-schedule.png` |
+| Context diagram (III.1) | `context-diagram.drawio` | `context-diagram-01-context-diagram.png` |
+| Organization structure, Main business flows (III.1.1, III.3.1.1) | `organization-and-flows.drawio` | `UCMS_Organization_and_Flows_01_*.png`, `…_02_*.png` |
+| Use case diagram (III.2.2.1) | `usecase-by-actor.drawio` | `UCMS_UseCase_ByActor_*.png` |
+| State Diagram (III.5.3) | `state-diagrams.drawio` | 9 ảnh `UCMS_State_Diagrams_01…09_*.png` |
+| Package Diagram (IV.1.2) | `package-diagrams.drawio` | `package-diagrams-01-front-end-packages.png`, `…_02_Back-end-packages.png` |
+| Screen flow (III.3.1.2) | `screen-flow.drawio` | `screen-flow-01-screen-flow.png` — một sơ đồ gộp, 5 khung theo layout, tách actor bằng màu |
+| ERD (IV.2) | `erd.drawio` | 4 ảnh, mỗi ký pháp một hình: `erd-01-erd-chen.png` (Chen chuẩn: khoá gạch chân, bản số `1`/`N`/`M`, nét đôi là tham gia toàn phần) và `erd-02-erd-crow-s-foot.png` (Crow's Foot) có chú giải để đọc; `erd-03-erd-chen-no-legend.png` và `erd-04-erd-crow-s-foot-no-legend.png` không chú giải để dán vào report |
+| Main workflow (III.3.1.1) | `main-workflow.drawio` | 9 ảnh `UCMS_Main_Workflow_01…09_*.png` |
+| Database schema (IV.2) | `database-schema.drawio` | `database-schema-01-schema-overview.png` (10 trang module và trang Enums để tra cứu, không chèn) |
+| System architecture (IV.1.1) | `system-architecture.drawio` | `system-architecture-01-system-architecture.png` |
+| Sequence diagram tiêu biểu (UC01/02, UC07, UC08, UC17/18/20, UC25, UC26, UC29/30, UC45/46) | `sequence-diagrams.drawio` | 20 ảnh `UCMS_Sequence_01…08_*_p<k>.png`, mỗi hình 2–3 trang theo pha (mỗi trang draw.io một ảnh) |
+| Security mechanism — defence in depth | `security-architecture.drawio` | `security-01-request-pipeline.png` (xuất bằng draw.io CLI, `--width 2000`) |
+| Class diagram (IV.3, mục 3.3.1–3.5.2) | `class-diagrams.drawio` | 18 ảnh `UCMS_Class_01…18_*.png`, mỗi use case một trang (gồm trang `18 Sponsored-Item-Disbursement-and-Refund`), cộng `class-00-notation.png` (trang ký hiệu, thay Figure IV.7) |
 
-Main workflow của report là **bảy swimlane tổng quát** trong `UCMS_Main_Workflow.drawio`. Bộ 14 swimlane
-chi tiết (`UCMS_Swimlane_Flows.drawio`) chỉ còn là tài liệu tham khảo; bản flowchart không chia làn
+Main workflow của report là **bảy swimlane tổng quát** trong `main-workflow.drawio`. Bộ 14 swimlane
+chi tiết (`swimlane-flows.drawio`) chỉ còn là tài liệu tham khảo; bản flowchart không chia làn
 (`UCMS_Main_Workflows.drawio`) đã bị loại ngày 13/10/2026 và xoá khỏi repo.
 
 Trên Google Drive của nhóm, mỗi loại sơ đồ nằm trong một thư mục con của `Diagrams`
@@ -98,7 +98,7 @@ sửa ở repo trước, rồi tải đè file tương ứng lên Drive.
 
 ## Màu trong screen flow
 
-`UCMS_Screen_Flow.drawio` tô màu mỗi hộp theo actor dùng màn hình đó, theo đúng chuỗi kế thừa của use case model
+`screen-flow.drawio` tô màu mỗi hộp theo actor dùng màn hình đó, theo đúng chuỗi kế thừa của use case model
 (User ◁ Student ◁ Club Member ◁ Club Leader; User ◁ ICPDP Officer). Legend nằm ở góc trên, cạnh khung Entry; sơ đồ không ghi đường dẫn hay chú thích, bảng dưới đây là nơi tra cứu.
 
 | Màu | Mã màu | Actor | Màn hình |
@@ -109,7 +109,7 @@ sửa ở repo trước, rồi tải đè file tương ứng lên Drive.
 | Hồng | `#FFCDD2` | **Club Leader** | Mọi màn hình còn lại của Club workspace: `Recruitment` → `Application screening`, `Leadership handover`, `Suspension requests`, `Board`, `Board history`, `Club settings`, `School event invitations`, `Club events`, `Registration & attendance`, `Event feedback`, `Periodic reports`, `Post-event reports`, `Expenses & settlement`, `Allocated rooms`, `Facility requests`, `Compliance and explanations`, `Published evaluations`, `Student feedback` |
 | Xanh lá | `#C8F7C5` | **ICPDP Officer** | ICPDP workspace: `Overview`; nhóm Clubs (`Manage clubs`, `Founding applications` → `Application snapshot`, `Suspension requests`, `Board confirmations` → `Board nomination`, `Leadership handovers` → `Leadership transition`, `Club fields`); nhóm Events & facilities (`Event proposals` → `Event proposal`, `Internal events` → `Internal event`, `Post-event reports`, `Event budgets` → `Event budget` → `Budget reconciliation`, `School events` → `School event`, `Events` của khu public — nhãn sidebar *Event calendar*, `Room allocation`, `Facility requests`, `Rooms & equipment`); nhóm Evaluation & reports (`Evaluation criteria`, `Periodic reports` → `Periodic report`, `Club evaluations` → `Club evaluation`, `Compliance cases` → `Compliance case`, `Export reports`); `Student feedback inbox` (ngoài nhóm); nhóm System settings (`School policy`, `Accounts & roles`) |
 
-> **Lưu ý 07/11/2026:** bảng trên mô tả đúng nội dung file `UCMS_Screen_Flow.drawio` hiện có, vẽ trước khi
+> **Lưu ý 07/11/2026:** bảng trên mô tả đúng nội dung file `screen-flow.drawio` hiện có, vẽ trước khi
 > code đổi. App hiện tại đã thay `Feedback` / `Student feedback inbox` bằng `Complaints` (Student, ICPDP) và
 > thêm `Complaints` (Club) và `Approval routing` (ICPDP); màn `Roles & permissions` đang có trong code
 > là lệch cần gỡ, không phải màn cần bổ sung vào diagram — xem
@@ -123,12 +123,12 @@ chuông thông báo mở hộp thư (dialog) mà từng mục dẫn thẳng tớ
 
 ## Ký hiệu ERD
 
-`UCMS_ERD.drawio` là **mô hình khái niệm**, vẽ cùng một nội dung theo hai ký pháp, **mỗi ký pháp đúng một
+`erd.drawio` là **mô hình khái niệm**, vẽ cùng một nội dung theo hai ký pháp, **mỗi ký pháp đúng một
 hình** (yêu cầu 19/10/2026: ERD trong report chỉ được là một hình, không chia trang theo module): trang
 *ERD Chen* theo **ký pháp Chen chuẩn** (khoá gạch chân, bản số `1` / `N` / `M`, nét đôi là tham gia toàn phần), trang *ERD
 Crow's Foot* theo **ký pháp Crow's Foot** thuần; trang 3–4 *(no legend)* lặp lại đúng hai hình đó, bỏ tiêu
 đề và chú giải để dán vào report. Không phải schema vật lý (schema vật lý ở
-`UCMS_Database_Schema.drawio`). Bản vẽ lại ngày 19/10/2026 thay bản Chen 48 thực thể / 349 thuộc tính (quá
+`database-schema.drawio`). Bản vẽ lại ngày 19/10/2026 thay bản Chen 48 thực thể / 349 thuộc tính (quá
 rậm, bản số chỉ ghi chữ `1` / `N`) và bản 10 trang (tổng quát + 9 trang module). Ngày 02/11/2026, theo góp ý của
 giảng viên ("Chen entity ellipse"), trang Chen bỏ chân quạ và chuyển sang Chen chuẩn: thêm thuộc tính khoá gạch chân
 cho mọi thực thể, bản số ghi bằng nhãn, tham gia toàn phần vẽ nét đôi; trang Crow's Foot giữ nguyên.
@@ -209,18 +209,17 @@ cho mọi thực thể, bản số ghi bằng nhãn, tham gia toàn phần vẽ 
   `invites / responds` (Event Invitation), `settles / closes` (Event Budget), `records` (Budget
   Disbursement, Expense), `opens / decides` (Violation), `verifies` (Corrective Action), `activates`
   (Evaluation Scheme), `finalises` (Evaluation). Chúng là các trường `…By` trong DBML và có đủ trong
-  `UCMS_Database_Schema.drawio`.
+  `database-schema.drawio`.
 - `complaints` vẽ thành `Student Feedback` (UC50 góp ý một chiều, không có leo thang sang `Violation`);
   `Suspension Request` lấy từ `suspensionRequests`, collection mà UC14 thực sự ghi.
-- Nguồn đối chiếu là [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml).
+- Nguồn đối chiếu là [`../05-implementation/database-design.dbml`](../05-implementation/database-design.dbml).
   Schema đổi thì sửa DBML trước rồi cập nhật ERD. Bố cục xếp lúc sinh file: trang Chen bằng graphviz `dot`,
   trang Crow's Foot bằng ELK (draw.io CLI); sửa nhỏ thì kéo tay trên draw.io.
 
 ## Quy ước chung
 
 **Khi một sơ đồ thay đổi:** sửa file `.drawio` nguồn, xuất lại mọi trang bị ảnh hưởng vào `img/`
-giữ đúng quy ước tên ở trên, và cập nhật `../SRS.md` cùng tài liệu liên quan trong
-[`../02-use-cases/`](../02-use-cases/) trong cùng một commit.
+giữ đúng quy ước tên ở trên, và cập nhật `../srs.md` cùng tài liệu liên quan trong cùng một commit.
 
 **Quy ước ký hiệu đang áp dụng** (review issue I09–I13, I27–I30, I55): mỗi trang actor chỉ nối
 actor tới các use case nhóm `Manage …`; mỗi use case nhóm `«include»` các chức năng con của nó (với
@@ -264,7 +263,7 @@ Club Leader → Club Member; ICPDP Officer → User. Mũi tên dùng nét liền
 tam giác rỗng hướng về actor cha. Trang User chỉ vẽ actor User với UC01, UC02, không vẽ cây kế thừa
 (đổi tên từ All users ngày 2026-10-19). Các use case được
 kế thừa tham chiếu sang trang của actor cha, không cần lặp lại oval trên trang của actor con.
-Ảnh PNG theo bộ 9 trang mới: `UCMS_UseCase_ByActor_01_User.png`, `02_Student`,
+Ảnh PNG theo bộ 9 trang mới: `usecase-by-actor-01-user.png`, `02_Student`,
 `03_Club-Member-Events-bookings`, `04_Club-Leader`, `05_Club-Leader-Club-recruitment`,
 `06_Club-Leader-Events-bookings-finance`, `07_ICPDP-1-Access-club-lifecycle`,
 `08_ICPDP-2-Events-bookings-finance`, `09_ICPDP-3-Compliance-evaluation`. Report final
@@ -281,18 +280,18 @@ khi nhận chìa khoá; CLB không đặt, xin duyệt hay tự huỷ phòng h�
 
 **PNG state diagram Property Booking** đã xuất lại ngày 13/10/2026 (UC58 tạo buổi `Approved`, thu hồi → `Released`).
 
-**Cập nhật luồng sự kiện nội bộ CLB (`MEMBERS_ONLY`, 2026-11-14):** Sự kiện nội bộ CLB tách hoàn toàn khỏi hàng đợi đề xuất ICPDP (không qua UC26, không cần bảo vệ, không có ngân sách trường, báo trước `>= 24` giờ thay cho 7 ngày, hỗ trợ đồng thời `venueText` + gắn phòng/booking thiết bị) với 6 trạng thái riêng: `DRAFT → CREATED → PUBLIC` (chỉ thành viên CLB trong UC24, không hiện ở UC06) `→ ONGOING → FINISH` (chốt điểm danh UC32 khoá `Attendance` và giữ `FINISH`, tự động tổng hợp vào Báo cáo định kỳ UC38 và hiển thị danh sách + biểu đồ ở ICPDP UC02 trừ `DRAFT`) và `CANCELLED`. Đã cập nhật file `.drawio` nguồn (`UCMS_State_Diagrams.drawio`, `UCMS_Main_Workflow.drawio`, `UCMS_Swimlane_Flows.drawio`, `UCMS_UseCase_ByActor.drawio`, `UCMS_Sequence_Diagrams.drawio`, `UCMS_Class_Diagrams.drawio`, `UCMS_Database_Schema.drawio`, `UCMS_Organization_and_Flows.drawio`); các ảnh PNG trong `img/` cần được xuất lại từ Draw.io desktop/CLI khi có môi trường Draw.io.
+**Cập nhật luồng sự kiện nội bộ CLB (`MEMBERS_ONLY`, 2026-11-14):** Sự kiện nội bộ CLB tách hoàn toàn khỏi hàng đợi đề xuất ICPDP (không qua UC26, không cần bảo vệ, không có ngân sách trường, báo trước `>= 24` giờ thay cho 7 ngày, hỗ trợ đồng thời `venueText` + gắn phòng/booking thiết bị) với 6 trạng thái riêng: `DRAFT → CREATED → PUBLIC` (chỉ thành viên CLB trong UC24, không hiện ở UC06) `→ ONGOING → FINISH` (chốt điểm danh UC32 khoá `Attendance` và giữ `FINISH`, tự động tổng hợp vào Báo cáo định kỳ UC38 và hiển thị danh sách + biểu đồ ở ICPDP UC02 trừ `DRAFT`) và `CANCELLED`. Đã cập nhật file `.drawio` nguồn (`state-diagrams.drawio`, `main-workflow.drawio`, `swimlane-flows.drawio`, `usecase-by-actor.drawio`, `sequence-diagrams.drawio`, `class-diagrams.drawio`, `database-schema.drawio`, `organization-and-flows.drawio`); các ảnh PNG trong `img/` cần được xuất lại từ Draw.io desktop/CLI khi có môi trường Draw.io.
 
 **Cập nhật quy tắc chốt sự kiện nội bộ (2026-11-14, theo `INTERNAL_CLUB_EVENT_PLAN.md` và `.sdd/specs/feat-internal-club-events/SPEC.md`, cả hai đã xoá; sự kiện nội bộ bị gỡ khỏi code ngày 19/11/2026):**
 (1) tạo sự kiện nội bộ (`DRAFT → CREATED` hoặc tạo & công bố ngay) bắt buộc `startAt >= now + 24h`, **không ngoại lệ** (kể cả chỉ dùng `venueText` hay phòng UC58); lưu nháp `DRAFT` không kiểm tra mốc này;
 (2) chỉ ở `CREATED` mới được sửa nội dung/đổi lịch, lịch mới `newStartAt >= now + 24h`, cập nhật trực tiếp không qua UC26; từ `PUBLIC` (và `ONGOING`) lịch/địa điểm bị khoá, chỉ còn huỷ;
 (3) Phương án B: đề xuất ICPDP nhận `PUBLIC` hoặc `MEMBERS_ONLY` có `budgetLines >= 1`; `MEMBERS_ONLY` không ngân sách bị từ chối ở luồng đề xuất và phải dùng nút **"Tạo sự kiện nội bộ"**;
 (4) UC02 đếm/liệt kê sự kiện nội bộ trừ `DRAFT` và các trạng thái huỷ/từ chối/hết hạn, biểu đồ `Events by month` tách 2 chuỗi `publicCount` / `internalCount`.
-Các cell đã sửa: `UCMS_State_Diagrams.drawio` trang `Event` (`n2`, `int_grp`, `int_e1`, `int_e2`, thêm cạnh tự lặp `int_e_cr_resched` trên `CREATED`); `UCMS_Main_Workflow.drawio` trang `07 Event management` (`f7_s1`, `f7_s2`, `f7_d1`, `f7_lbl_app_no`); `UCMS_Swimlane_Flows.drawio` trang `04 Event Proposal` (`f04-9`, `f04-11`, `f04-17`, `f04-35`); `UCMS_Sequence_Diagrams.drawio` trang `05 Submit event proposal (2/2)` (`c14`); `UCMS_Class_Diagrams.drawio` trang `03` (`n1206`), `05` (`n2268`), `10` (`n4662`). `UCMS_Class_Diagrams.drawio` cũng được khôi phục các trang `11`…`17` bị cắt cụt ở commit `79e4a8c`. Ảnh PNG tương ứng chưa xuất lại.
+Các cell đã sửa: `state-diagrams.drawio` trang `Event` (`n2`, `int_grp`, `int_e1`, `int_e2`, thêm cạnh tự lặp `int_e_cr_resched` trên `CREATED`); `main-workflow.drawio` trang `07 Event management` (`f7_s1`, `f7_s2`, `f7_d1`, `f7_lbl_app_no`); `swimlane-flows.drawio` trang `04 Event Proposal` (`f04-9`, `f04-11`, `f04-17`, `f04-35`); `sequence-diagrams.drawio` trang `05 Submit event proposal (2/2)` (`c14`); `class-diagrams.drawio` trang `03` (`n1206`), `05` (`n2268`), `10` (`n4662`). `class-diagrams.drawio` cũng được khôi phục các trang `11`…`17` bị cắt cụt ở commit `79e4a8c`. Ảnh PNG tương ứng chưa xuất lại.
 
 ## Đồng bộ swimlane với code (23/11/2026)
 
-`UCMS_Main_Workflow.drawio` (8 trang; luồng sự kiện tách thành 07a và 07b) và `UCMS_Swimlane_Flows.drawio` (14 trang) được dựng lại toàn bộ theo code
+`main-workflow.drawio` (8 trang; luồng sự kiện tách thành 07a và 07b) và `swimlane-flows.drawio` (14 trang) được dựng lại toàn bộ theo code
 trên `main` (`f915a94`). Id và tên trang giữ nguyên; id cell đổi. Cả hai file dùng chung một bộ ký hiệu:
 hoạt động màu xanh, bước "chỉ khi cần" nét đứt, bước tự động của hệ thống màu xám, quyết định hình thoi.
 Ảnh trong `img/` đã được xuất lại. Mỗi khối quyết định (hình thoi) có đúng 1 luồng vào và 2 luồng ra; quyết định nhiều kết quả được tách thành chuỗi câu hỏi Có/Không (ví dụ `Approve?` → `Request revision?` → Reject). Những thay đổi chính:
@@ -308,23 +307,23 @@ hoạt động màu xanh, bước "chỉ khi cần" nét đứt, bước tự đ
 
 ## Đồng bộ sequence và class diagram với code (24/11/2026)
 
-`UCMS_Sequence_Diagrams.drawio` (22 trang) và `UCMS_Class_Diagrams.drawio` (17 trang use case + trang ký hiệu)
+`sequence-diagrams.drawio` (22 trang) và `class-diagrams.drawio` (17 trang use case + trang ký hiệu)
 được vẽ lại theo code trên `main` (`a916d9a`); tên và id trang giữ nguyên, ảnh trong `img/` đã xuất lại.
 Sequence dùng đúng tên lifeline thật (page client, route module, usecase, repository), toán tử UML `alt / opt / loop /
 break / par / critical` (vùng transaction Mongo là `critical`), mã HTTP, thông báo lỗi, audit và notification thật;
 số bước liên tục qua các trang của cùng một hình. Trang 09 (hoá đơn và thanh toán) được vẽ lại theo luồng sponsored item
-đã cài đặt. Có thêm ảnh `UCMS_Sequence_06_Proposal-template-and-document.png`.
+đã cài đặt. Có thêm ảnh `sequence-06-proposal-template-and-document.png`.
 
-Các trang `Slide 01`, `Slide 07` và `Slide 09` (hai tầng nối bằng connector A) trong `UCMS_Main_Workflow.drawio` là bản vẽ ngang một tầng (cùng nội dung với
+Các trang `Slide 01`, `Slide 07` và `Slide 09` (hai tầng nối bằng connector A) trong `main-workflow.drawio` là bản vẽ ngang một tầng (cùng nội dung với
 trang 01, 07 và 09) dùng cho slide thuyết trình.
 
-**Rút gọn main workflow (2026-11-24, theo góp ý):** cả 9 trang (luồng sự kiện nay đánh số riêng 07 và 08 thay cho 07a/07b, cộng trang 09 giải ngân) và 3 trang `Slide` của `UCMS_Main_Workflow.drawio`
+**Rút gọn main workflow (2026-11-24, theo góp ý):** cả 9 trang (luồng sự kiện nay đánh số riêng 07 và 08 thay cho 07a/07b, cộng trang 09 giải ngân) và 3 trang `Slide` của `main-workflow.drawio`
 được vẽ lại theo luồng happy case: khối hoạt động một màu xám, hình thoi quyết định màu vàng (giữ đúng hình: khối bo góc, hình thoi,
 nút bắt đầu/kết thúc không kèm chữ), chữ trong khối ngắn gọn, nhãn cạnh chỉ Yes/No, bỏ bảng chú thích và ghi chú. Nhánh ngoại lệ
-(rút đơn, hết hạn, waitlist, đổi lịch bảo vệ, no-show, huỷ sự kiện…) vẫn được mô tả đầy đủ trong `UCMS_Swimlane_Flows.drawio`.
+(rút đơn, hết hạn, waitlist, đổi lịch bảo vệ, no-show, huỷ sự kiện…) vẫn được mô tả đầy đủ trong `swimlane-flows.drawio`.
 Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
 
-**State diagram kiểu xám (2026-11-24):** 9 trang `UCMS_State_Diagrams.drawio` dùng một màu xám cho mọi trạng thái, nhãn chuyển trạng thái ngắn (không mã UC, không điều kiện), bỏ toàn bộ note; trang Event Budget chỉ còn tên trạng thái. Script: `docs-qa/diagram-gen/state_mono.py`.
+**State diagram kiểu xám (2026-11-24):** 9 trang `state-diagrams.drawio` dùng một màu xám cho mọi trạng thái, nhãn chuyển trạng thái ngắn (không mã UC, không điều kiện), bỏ toàn bộ note; trang Event Budget chỉ còn tên trạng thái. Script: `docs-qa/diagram-gen/state_mono.py`.
 - **Bỏ tiêu đề trong ảnh (2026-11-24):** mọi trang sơ đồ không còn dòng tiêu đề ở góc trên (tên sơ đồ nằm ở caption của report); database schema bỏ ô note chú thích ký hiệu. Script: `docs-qa/diagram-gen/strip_titles.py`.
 - **State diagram Event (2026-11-24):** gỡ khối vòng đời sự kiện nội bộ CLB (`DRAFT → CREATED → PUBLIC → ONGOING → FINISH`) vì tính năng đã bị gỡ khỏi code ngày 19/11/2026 (commit `5efb7fe`).
 - **Context diagram (2026-11-24):** bỏ luồng `Internal event records` (UCMS → ICPDP) và đổi nhãn `Event proposals & internal events` thành `Event proposals`, vì sự kiện nội bộ CLB đã gỡ khỏi code; còn 45 luồng.
@@ -337,7 +336,7 @@ Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
 Sửa có chọn lọc theo các thay đổi hành vi trong code từ 24/11/2026 (PR #59, #65, #66, #68); bố cục và kiểu vẽ giữ nguyên, chỉ xuất lại các trang bị ảnh hưởng.
 
 - **State diagram `Event Defense Session`:** chấp thuận dời lịch đưa buổi bảo vệ thẳng vào `CONFIRMED` (BR63, cập nhật 26/11/2026); `RESCHEDULE_REQUESTED → SCHEDULED` chỉ còn nhánh bác bỏ.
-- **State diagram `Event` (theo SRS §6.6 sửa 27/11/2026):** thêm `Approved → Expired` (`not published`, Scheduler khi sự kiện CLB hoặc cấp trường chưa công bố trước giờ bắt đầu); `Re-defense Pending → Approved / Rejected / Revision Requested` (ICPDP quyết định luôn, không xếp buổi bảo vệ mới); `Revision Requested → Rejected` (`no-show`) và nhãn `Under Review → Rejected` đổi thành `reject / no-show`. Xuất lại `img/UCMS_State_Diagrams_06_Event.png`.
+- **State diagram `Event` (theo SRS §6.6 sửa 27/11/2026):** thêm `Approved → Expired` (`not published`, Scheduler khi sự kiện CLB hoặc cấp trường chưa công bố trước giờ bắt đầu); `Re-defense Pending → Approved / Rejected / Revision Requested` (ICPDP quyết định luôn, không xếp buổi bảo vệ mới); `Revision Requested → Rejected` (`no-show`) và nhãn `Under Review → Rejected` đổi thành `reject / no-show`. Xuất lại `img/state-diagrams-06-event.png`.
 - **Sequence:** trang `06 Event defense session (3/3)` bước 92 (lịch mới `CONFIRMED`, `confirmedAt` = lúc chấp thuận); trang `07` (1/3–3/3) đăng ký, mở chỗ và đôn waitlist chỉ nhận `Upcoming`, bỏ trạng thái nội bộ `PUBLIC`; trang `01 (1/3)` không ghi audit khi callback OAuth không có cookie `ucms_oauth`; trang `04 (3/3)` onboard / decline đơn không tồn tại trả 404; trang `03`, `06 (1/3)`, `08 (2/2)` và `06 (3/3)` dùng guard chung `requireIcpdpOfficer()` (`usecase/access.ts`).
 - **Class diagram:** trang `05` bỏ `notifyMembers` và nhánh thông báo khi công bố (FR-UC27-02); trang `06`–`09` bỏ trạng thái nội bộ khỏi đăng ký, sức chứa, waitlist và check-in, mở khoá điểm danh cần `ICPDP_OFFICER` (gộp `ATTENDANCE_UNLOCK` ngày 25/11/2026); trang `13` thêm `POST /clubs/:clubId/periodic-reports/evidence-images` và `uploadPeriodicEvidenceImage()`, minh chứng là link http(s) hoặc tham chiếu ảnh `ucms-evidence:` (không nhận `data:` URL), ảnh được ghi vào `uploadedAssets` cho job dọn dẹp hằng ngày; trang `14`–`17` dùng `requireIcpdpOfficer()` / `parseObjectId()`; trang `15` hàng đợi vi phạm phân trang (`ViolationListQuery` → `ViolationPage` `{items, total, page, pageSize, counts}`).
 - **Swimlane:** trang `04` nhánh chấp thuận dời lịch ghi `CONFIRMED`; trang `05` mở khoá điểm danh do ICPDP officer thực hiện.

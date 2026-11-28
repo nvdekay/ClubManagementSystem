@@ -2,8 +2,8 @@
 
 > **Đối chiếu code ngày 27/11/2026.** Toàn bộ ảnh được chụp tự động ngày 27–28/11/2026 từ giao diện hiện
 > tại (tông cam FPT) bằng `npm run guide:screenshots`, trên database mẫu riêng; xem **Phụ lục**.
-> `GUIDE_BOOK.html` và `GUIDE_BOOK.pdf` không lưu trong repo, dựng lại theo [README.md](README.md).
-> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+> `guide-book.html` và `guide-book.pdf` không lưu trong repo, dựng lại theo [README.md](README.md).
+> Trạng thái API/UI và khoảng trống triển khai: [current-implementation.md](../current-implementation.md).
 
 Hướng dẫn mọi màn hình đang có trong app, theo ba không gian làm việc: Sinh viên, CLB và
 ICPDP. Mỗi luồng ghi nơi bắt đầu, vai trò cần có, từng bước thao tác với đúng tên nút trên

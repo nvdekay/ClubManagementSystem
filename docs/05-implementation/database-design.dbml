@@ -5,7 +5,7 @@
 // complaints stores one-way UC50 feedback; legacy ticket fields/states are unused.
 // Import vào https://dbdiagram.io  (Import > From DBML / dán nội dung)
 //
-// Nguồn chân lý: docs/SRS.md §6 (vòng đời thực thể) và §7 (yêu cầu dữ
+// Nguồn chân lý: docs/srs.md §6 (vòng đời thực thể) và §7 (yêu cầu dữ
 // liệu). Mọi collection, giá trị trạng thái, khoá duy nhất và index bên
 // dưới đều truy vết được tới một use case (UCnn) hoặc một quy tắc nghiệp
 // vụ (BRnn).

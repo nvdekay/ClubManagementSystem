@@ -19,7 +19,7 @@ tới Mongoose.
 Danh sách UC26 hỗ trợ `pending` (task Open) và `approved` (task đề án Decided, sự kiện đã duyệt hoặc
 đã chuyển sang vận hành/hoàn thành). Mỗi sự kiện đã duyệt chỉ hiện một lần, theo task mới nhất.
 
-`ucms-schema.generated.ts` được sinh từ `docs/05-implementation/UCMS_Database_Design.dbml`
+`ucms-schema.generated.ts` được sinh từ `docs/05-implementation/database-design.dbml`
 qua `python3 server/src/infra/db/generate-ucms-schema.py`. `ucms-models.ts` ánh xạ các kiểu,
 enum và index DBML sang Mongoose; `init.ts` là lệnh `npm run db:init` idempotent, còn `verify.ts`
 kiểm tra kết nối và schema bằng `npm run db:verify`. Cột DBML

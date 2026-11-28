@@ -1,7 +1,7 @@
 # Hiện trạng triển khai và ánh xạ use case
 
 > Đối chiếu code ngày 27/11/2026 (trước đó: `main` 14/11/2026; luồng giải ngân 3 kênh, hoàn trả tạm ứng 2 bước và `schoolRefundAccount` ngày 24/11/2026; lần đối chiếu đầy đủ đầu tiên: `655cad3`, 17/10/2026). Đây là nguồn hiện hành để
-> đọc phạm vi **đã có trong code**. `SRS.md` mô tả phạm vi nghiệp vụ đích; các tài liệu kế hoạch
+> đọc phạm vi **đã có trong code**. `srs.md` mô tả phạm vi nghiệp vụ đích; các tài liệu kế hoạch
 > theo wave và review issue chỉ giữ giá trị lịch sử.
 
 ## 1. Mô hình truy cập phía CLB
@@ -37,7 +37,7 @@ Thay đổi sau 25/11/2026 cần biết khi đọc các mục dưới:
 Ngày 17/11/2026, form đề xuất UC25 chuyển sang import DOCX và hiển thị field chỉ đọc.
 Muốn chỉnh sửa phải sửa Word rồi import lại; thiếu hoặc chưa rõ field bắt buộc thì chặn lưu/nộp.
 Trích xuất văn bản/bảng, không OCR PDF/ảnh. Chi tiết mapping và giới hạn:
-[`EVENT_PROPOSAL_IMPORT.md`](05-implementation/EVENT_PROPOSAL_IMPORT.md).
+[`event-proposal-import.md`](05-implementation/event-proposal-import.md).
 Theo yêu cầu chỉnh UI cùng ngày, bản xem chính nay hiển thị toàn bộ tài liệu theo trang giấy với
 font/bảng/ảnh gốc và toolbar chuyển trang/thu phóng/in. Hồ sơ trích xuất được trình bày riêng bên dưới,
 có tổng quan và điều hướng đầy đủ các mục nguồn hoặc xem tất cả; giữ thứ tự văn bản, bảng và ô gộp.
@@ -66,7 +66,7 @@ trong code (07/11/2026) vẫn nằm trong lịch sử, không ảnh hưởng quy
 
 ## 2. Ánh xạ theo actor
 
-Ma trận đủ 56 mã UC với link route/UI: [UC_CODE_MAPPING.md](05-implementation/UC_CODE_MAPPING.md).
+Ma trận đủ 56 mã UC với link route/UI: [uc-code-mapping.md](05-implementation/uc-code-mapping.md).
 Danh mục có 56 mã, **55 trong phạm vi**: UC05, UC51, UC52 được khôi phục; UC23 đã rút theo quyết
 định role cố định. Số này không phải số UC đã hoàn thành.
 
@@ -96,7 +96,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
 | Club Leader | UC23 quản lý role và phân quyền | **Đã rút** (SRS hiện hành, role cố định); code UC23 đã gỡ 07/11/2026 |
-| Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có. Đề xuất ICPDP bắt buộc file đề án `proposalDocument` (`.docx`/`.pdf`, tối đa 10 MB) khi nộp, lưu nháp không bắt buộc (`.sdd/specs/feat-event-proposal-document`); form nhập từ file Word ([EVENT_PROPOSAL_IMPORT.md](05-implementation/EVENT_PROPOSAL_IMPORT.md)) — `GET /events/proposal-template`, `GET /events/proposal-template/download` (mẫu mặc định `docs/Template Đề án sự kiện.docx`), `POST /clubs/:clubId/events/:id/proposal-document`, `GET /clubs/:clubId/events/:id/proposal-document/access`; file được đóng băng trong `eventProposalVersions.payload.proposalDocument` khi nộp, bản đổi lịch kế thừa file hiện có (không bắt buộc với sự kiện cũ chưa có file). Sự kiện nội bộ đã gỡ 19/11/2026 |
+| Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có. Đề xuất ICPDP bắt buộc file đề án `proposalDocument` (`.docx`/`.pdf`, tối đa 10 MB) khi nộp, lưu nháp không bắt buộc (`.sdd/specs/feat-event-proposal-document`); form nhập từ file Word ([event-proposal-import.md](05-implementation/event-proposal-import.md)) — `GET /events/proposal-template`, `GET /events/proposal-template/download` (mẫu mặc định `docs/template-de-an-su-kien.docx`), `POST /clubs/:clubId/events/:id/proposal-document`, `GET /clubs/:clubId/events/:id/proposal-document/access`; file được đóng băng trong `eventProposalVersions.payload.proposalDocument` khi nộp, bản đổi lịch kế thừa file hiện có (không bắt buộc với sự kiện cũ chưa có file). Sự kiện nội bộ đã gỡ 19/11/2026 |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi, chứng từ & hoàn trả tạm ứng | Có (24/11/2026), tại `/club/:clubId/budgets` (`SponsoredItems.tsx`, `sponsored-item-routes.ts`): xác nhận đã nhận tạm ứng (`BEFORE_EVENT`) hoặc hoàn ứng (`AFTER_EVENT < 5M`), ghi số tiền/kênh/`vendorBankInfo` (`DIRECT_VENDOR`), tải 1–5 tệp JPG/PNG (≤ 5 MiB) hoặc PDF (≤ 10 MiB) chống trùng SHA-256, nộp sau khi sự kiện kết thúc (`E → E+14d`); khi có phần dư tạm ứng (`RefundPending`) xem STK nhà trường qua `/refund-account`, tải 1–5 biên lai hoàn trả và gửi ICPDP xác nhận (`RefundSubmitted`). Màn legacy giữ tương thích ngân sách cũ |
 | Club Leader | UC38 báo cáo định kỳ | Có, tại `/club/:clubId/periodic-reports`; mỗi lần nộp lưu snapshot riêng; ảnh minh chứng tải lên Cloudinary (`/periodic-reports/evidence-images`) |

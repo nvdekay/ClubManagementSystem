@@ -1,6 +1,6 @@
 # 09-testing
 
-`Group1_SE1939-NJ_Unit_Test_Case.xlsx` là bảng Unit Test Case của UCMS theo mẫu FPT: tab
+`group1-se1939-nj-unit-test-case.xlsx` là bảng Unit Test Case của UCMS theo mẫu FPT: tab
 `Guidleline`, `Cover`, `FunctionList`, `Test Report` và mỗi use case một sheet (ma trận
 Condition / Confirm / Result, cột `UTCIDxx`). Bản Google Sheet cùng nội dung nằm trong thư mục nộp bài
 WDP301 trên Drive: `Group1_SE1939-NJ_Unit_Test_Case`.

@@ -2,7 +2,7 @@
 
 > **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
 > checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
-> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+> Trạng thái API/UI và khoảng trống triển khai: [current-implementation.md](../../../docs/current-implementation.md).
 
 > **Cập nhật 2026-10-13 (review issue I66, ADR-007):** "quyền tuỳ biến" của role không còn tồn tại — role CLB không mang permission, mọi việc vận hành CLB thuộc riêng Club Leader (BR54, BR55).
 

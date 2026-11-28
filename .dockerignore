@@ -14,7 +14,7 @@
 **/.env
 **/.env.*
 docs/*
-!docs/Template Đề án sự kiện.docx
+!docs/template-de-an-su-kien.docx
 docs-qa
 scripts
 server/tests

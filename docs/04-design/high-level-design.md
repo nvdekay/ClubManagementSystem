@@ -1,8 +1,8 @@
 # UCMS — Thiết kế mức cao đối chiếu implementation
 
 > Đối chiếu code ngày 27/11/2026 (các bản trước: `main` 14/11/2026; 15/10/2026, commit `60fc2db`). Mapping UC đầy đủ:
-> [`../05-implementation/UC_CODE_MAPPING.md`](../05-implementation/UC_CODE_MAPPING.md).
-> Phạm vi đã có và còn thiếu: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+> [`../05-implementation/uc-code-mapping.md`](../05-implementation/uc-code-mapping.md).
+> Phạm vi đã có và còn thiếu: [`../current-implementation.md`](../current-implementation.md).
 
 ## 1. Các container và phụ thuộc
 
@@ -98,7 +98,7 @@ của từng `eventCode` do `notificationAudience()` ở `domain/notification.ts
 Auth dùng Google OpenID Connect (Authorization Code + PKCE S256, `state`, `nonce`, ID token RS256
 kiểm qua JWKS), phiên lưu phía server trong `authSessions` (chỉ hash), cookie phiên ký HMAC,
 `httpOnly`, `SameSite=Lax`, `Secure` khi `NODE_ENV=production`, CSRF token theo phiên cho request
-thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../SRS.md` §12.1](../SRS.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
+thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../srs.md` §12.1](../srs.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
 không lấy từ policy UC04. System role chỉ còn `ICPDP_OFFICER` (từ 25/11/2026 `ICPDP_HEAD` và `ATTENDANCE_UNLOCK` đã gộp vào đây): mọi ICPDP Officer cấu hình rule định tuyến UC05 và mở khoá điểm danh. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng rule khớp và SLA lên `approvalTasks` lúc mở task; UC08/UC26/UC46 duyệt một cấp (BR16, BR31).
 
 Thiết kế đích theo BR47, BR54, BR55 dùng hai role phía CLB cố định. Membership `Active` tạo
@@ -160,7 +160,7 @@ Phía CLB có thêm route UI cho UC12, UC14, UC38, UC40, UC43, UC54; UC36/37 dù
 Số test ngày 27/11/2026: server 1040 test / 140 file vitest (unit + integration; integration cần Mongo),
 client 110 test / 10 file, Playwright e2e 20 test / 5 file (`npm run test:e2e`, ngoài `npm run check`). Không thay kết quả
 OAuth/Cloudinary thật hoặc visual QA của từng feature. Trạng thái hiện hành:
-[`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+[`../current-implementation.md`](../current-implementation.md).
 
 Đây là bản ghi nhận implementation đã quan sát, không phải quyết định kiến trúc mới. Các ADR
 cũ giữ nguyên lịch sử; mọi thay đổi kiến trúc về sau phải tuân theo quy trình `.rules/`.

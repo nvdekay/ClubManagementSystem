@@ -4,7 +4,7 @@
 diện React hiện tại của UCMS, tiếng Việt, theme sáng, khung nhìn 1440 × 1000. Một số ảnh cuộn tới phần thao tác hoặc mở sẵn hộp thoại.
 
 Ảnh do `npm run guide:screenshots` sinh ra (script ở `client/e2e/guide/`, cách chạy ở
-[`../README.md`](../README.md)); tên file cố định để `GUIDE_BOOK.md` giữ nguyên link.
+[`../README.md`](../README.md)); tên file cố định để `guide-book.md` giữ nguyên link.
 
 `manifest.json` ghi cho từng ảnh: URL, tài khoản mẫu, thao tác trước khi chụp; phần `notes` ghi
 nguồn dữ liệu. Ảnh dùng API thật trên database riêng `ucms-e2e-guide`, không chặn hay giả lập

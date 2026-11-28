@@ -44,7 +44,7 @@ không mất nội dung. Ngân sách xin hỗ trợ vẫn là 8 khoản, tổng 
 
 ## Điền bảng Tổng quan chương trình
 
-Dùng cấu trúc bảng trong `docs/Template Đề án sự kiện.docx`: cột STT, Hạng mục, Nội dung.
+Dùng cấu trúc bảng trong `docs/template-de-an-su-kien.docx`: cột STT, Hạng mục, Nội dung.
 Giữ bảng thay vì đổi sang ảnh. Thêm các dòng chưa có vào **chính bảng Tổng quan**:
 
 | Hạng mục | Nội dung và ánh xạ |

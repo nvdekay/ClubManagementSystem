@@ -2,7 +2,7 @@
 
 > **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
 > checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
-> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+> Trạng thái API/UI và khoảng trống triển khai: [current-implementation.md](../../../docs/current-implementation.md).
 
 > **Cập nhật 2026-10-13 (review issue I66, ADR-007):** resolver không còn permission cấp được cho role: Club Leader đã xác nhận giữ mọi permission CLB (14 quyền), mọi thành viên `Active` tự có `club.attendance.manage` và `club.room.view` (mới); `permissionCodes` của role khác bị bỏ qua (BR54, BR55).
 

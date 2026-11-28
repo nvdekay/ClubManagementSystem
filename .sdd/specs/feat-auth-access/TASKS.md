@@ -23,6 +23,6 @@
 Người dùng sẽ tự điền Google credentials và domain. Không kiểm thử Google thật trước khi có cấu hình đó.
 `policyVersions` chưa seed vì tám giá trị khởi tạo ngoài domain chưa có trong SRS; đang chờ
 quyết định của người dùng. Mongo local đã chạy replica set `rs0` (xác minh lại 2026-10-08); transaction
-chạy được, xem `docs/05-implementation/AUTH_SETUP.md`.
+chạy được, xem `docs/05-implementation/auth-setup.md`.
 Lệnh cài `openid-client` bị DNS của npm registry chặn, nên adapter OIDC dùng Node crypto và
 Google discovery/JWKS, đã có test chữ ký/audience/nonce với khóa RSA giả lập.
