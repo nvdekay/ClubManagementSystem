@@ -32,6 +32,8 @@ import type {
   ReportSnapshot,
 } from '@/services/accountability'
 import { useConfirm } from '@/hooks/useConfirm'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 // Ánh xạ trạng thái báo cáo sự kiện sang key i18n
 function reportState(state: string): keyof typeof accountability {
@@ -272,8 +274,7 @@ function ReportEditor({
             </label>
           ))}
           <p className="text-sm text-muted-app">{t('accountability.evidenceHint')}</p>
-          <label className="block text-sm font-medium text-text-app">
-            {t('accountability.link')}
+          <AppField label={t('accountability.link')}>
             <AppInput
               className="mt-1.5 block w-full font-normal"
               type="url"
@@ -281,15 +282,14 @@ function ReportEditor({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
-          </label>
-          <label className="block text-sm font-medium text-text-app">
-            {t('accountability.evidenceNote')}
+          </AppField>
+          <AppField label={t('accountability.evidenceNote')}>
             <AppInput
               className="mt-1.5 block w-full font-normal"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
-          </label>
+          </AppField>
           <AppButton
             type="button"
             variant="secondary"
@@ -381,9 +381,11 @@ function ReportEditor({
             <AppNotice>{t('accountability.taskAssigned')}</AppNotice>
           )}
           {(claimed || data.obligation.overdue) && (
-            <label className="block text-sm font-medium text-text-app">
-              {t('accountability.reason')}
-              <AppRequiredMark />
+            <AppField
+              label={t('accountability.reason')}
+              required
+              error={reasonField.error('reason')}
+            >
               <AppTextarea
                 className="mt-1.5 block w-full font-normal"
                 value={reason}
@@ -391,8 +393,7 @@ function ReportEditor({
                 {...reasonField.control('reason')}
                 onChange={(e) => setReason(e.target.value)}
               />
-              <AppFieldError message={reasonField.error('reason')} />
-            </label>
+            </AppField>
           )}
           {claimed && (
             <>
@@ -552,12 +553,7 @@ export function ReportWorkspace({ context }: { context: AccountabilityContext })
       {list.isPending ? (
         <AppSkeleton className="h-32 w-full" />
       ) : list.isError ? (
-        <AppNotice tone="danger" role="alert">
-          {list.error.message}
-          <AppButton variant="secondary" onClick={() => void list.refetch()}>
-            {t('accountability.retry')}
-          </AppButton>
-        </AppNotice>
+        <AppErrorNotice onRetry={() => void list.refetch()}>{list.error.message}</AppErrorNotice>
       ) : items.length ? (
         // Gộp bộ chọn và phân trang vào một khung, để số trang được hiểu là phân trang danh sách sự kiện chứ không phải báo cáo.
         <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
@@ -601,10 +597,9 @@ export function ReportWorkspace({ context }: { context: AccountabilityContext })
         detail.isPending ? (
           <AppSkeleton className="h-60 w-full" />
         ) : detail.isError ? (
-          <AppNotice tone="danger" role="alert">
+          <AppErrorNotice onRetry={() => void detail.refetch()} retryVariant="primary">
             {detail.error.message}
-            <AppButton onClick={() => void detail.refetch()}>{t('accountability.retry')}</AppButton>
-          </AppNotice>
+          </AppErrorNotice>
         ) : (
           detail.data && (
             <ReportEditor
