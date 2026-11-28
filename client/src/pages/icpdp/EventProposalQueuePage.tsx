@@ -1,6 +1,6 @@
 /** Trang ICPDP quản lý mẫu đề xuất, nhận hồ sơ xử lý và mở chi tiết xét duyệt. */
 import { useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
@@ -19,11 +19,13 @@ import {
 } from '@/hooks/useEventProposalReviews'
 import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL } from '@/services/clubEvents'
 import { formatBytes, proposalFileType } from '@/utils/proposalFile'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 /** Chỉ tải danh sách chờ duyệt sau khi xác nhận người dùng có vai trò ICPDP. */
 export function EventProposalQueuePage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date, money } = useFormat()
   const navigate = useNavigate()
   const auth = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -56,21 +58,7 @@ export function EventProposalQueuePage() {
     }
   }
 
-  /** Định dạng thời gian trong danh sách theo ngôn ngữ giao diện đang chọn. */
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
-
   /** Dịch mức rủi ro đã biết; giữ nguyên giá trị khác do server trả về. */
-
-  /** Hiển thị kinh phí đề nghị theo tiền Việt Nam, không có phần thập phân. */
-  function money(value: number) {
-    return new Intl.NumberFormat(i18n.language, {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(value)
-  }
 
   /** Nhận hồ sơ còn trống trước khi mở chi tiết; hồ sơ đã giao người khác chỉ mở để xem. */
   async function open(eventId: string, takenElsewhere: boolean) {
@@ -203,30 +191,15 @@ export function EventProposalQueuePage() {
       )}
       {auth.isPending || (isOfficer && queue.isPending) ? (
         loading
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('eventReviews.signIn')}</p>
-          <Link
-            className="inline-block font-semibold text-primary-app hover:underline"
-            to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-          >
-            {t('eventReviews.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('eventReviews.unauthorized')}
         </AppNotice>
       ) : queue.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={queue.error.message || t('eventReviews.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void queue.refetch()}>
-            {t('eventReviews.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void queue.refetch()}
+        />
       ) : queue.data?.length ? (
         <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map(({ task, event }) => {
