@@ -1,4 +1,4 @@
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   feedbackWindowFor,
   isFeedbackWindowOpen,
@@ -6,27 +6,8 @@ import {
   type EventFeedbackRepository,
 } from '../domain/event-feedback.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import { isObjectId, parseObjectId, type AccessActor } from './access.js'
-
-// Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
-function student(actor: AccessActor | null): string {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!isObjectId(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  return actor.id
-}
-
-// The window is the policy's in force when the event ended, so a later policy edit cannot
-// reopen or cut short the window of an event that already finished.
-async function windowHours(policy: PolicyRepository, eventEndAt: Date): Promise<number | null> {
-  return (await policy.findEffective(eventEndAt))?.feedbackWindowHours ?? null
-}
+import { parseObjectId, requireSignedIn, type AccessActor } from './access.js'
+import { feedbackHours } from './event-checkin.js'
 
 // Cho biết sinh viên có thể gửi feedback sự kiện không và feedback đã gửi
 /** Trang sự kiện cần gì: có được hiển thị biểu mẫu không (FR-01, E3) và bản ghi của chính sinh viên. */
@@ -37,7 +18,7 @@ export async function getEventFeedbackContext(
   id: string,
   now: Date,
 ) {
-  const target = await repo.target(parseObjectId(id, 'event id'), student(actor))
+  const target = await repo.target(parseObjectId(id, 'event id'), requireSignedIn(actor))
   if (!target) {
     throw new DomainError('event not found', 'not_found')
   }
@@ -46,7 +27,7 @@ export async function getEventFeedbackContext(
   }
   const window = feedbackWindowFor(
     target.attendance,
-    await windowHours(policy, target.attendance.eventEndAt),
+    await feedbackHours(policy, target.attendance.eventEndAt),
   )
   return {
     attended: true,
@@ -66,7 +47,7 @@ export async function submitEventFeedback(
   input: { rating: number; comment: string; isAnonymous: boolean },
   now: Date,
 ) {
-  const studentId = student(actor)
+  const studentId = requireSignedIn(actor)
   const validEventId = parseObjectId(id, 'event id')
   let valid: { rating: number; comment: string }
   try {
@@ -74,10 +55,7 @@ export async function submitEventFeedback(
   } catch (error) {
     throw new DomainError(error instanceof Error ? error.message : 'invalid feedback', 'validation')
   }
-  const target = await repo.target(validEventId, studentId)
-  if (!target) {
-    throw new DomainError('event not found', 'not_found')
-  }
+  const target = orNotFound(await repo.target(validEventId, studentId), 'event')
   if (!target.attendance) {
     throw new DomainError('only checked-in attendees can give feedback', 'forbidden')
   }
@@ -86,7 +64,10 @@ export async function submitEventFeedback(
   }
   if (
     !isFeedbackWindowOpen(
-      feedbackWindowFor(target.attendance, await windowHours(policy, target.attendance.eventEndAt)),
+      feedbackWindowFor(
+        target.attendance,
+        await feedbackHours(policy, target.attendance.eventEndAt),
+      ),
       now,
     )
   ) {
@@ -108,5 +89,5 @@ export async function listMyEventFeedback(
   repo: EventFeedbackRepository,
   actor: AccessActor | null,
 ) {
-  return repo.listMine(student(actor))
+  return repo.listMine(requireSignedIn(actor))
 }
