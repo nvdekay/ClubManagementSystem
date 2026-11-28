@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import {
   normalizeInvitationResponse,
@@ -7,17 +6,17 @@ import {
 } from '../../domain/club-invitation.js'
 import { DomainError } from '../../domain/errors.js'
 import { assertEventWriteAccess } from './club-event-access.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, queueNotifications, writeAudit } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
 // Repository lời mời CLB tham gia sự kiện của ICPDP
 export function mongoClubInvitationRepository(): ClubInvitationRepository {
   async function mapped(doc: Doc): Promise<ClubInvitation> {
-    const event = await m.events!.findOne({ _id: doc.eventId, organizerType: 'ICPDP' }).lean()
-    if (!event) {
-      throw new DomainError('school event not found', 'not_found')
-    }
+    const event = found(
+      await m.events!.findOne({ _id: doc.eventId, organizerType: 'ICPDP' }).lean(),
+      'school event not found',
+    )
     const proposal = await m
       .eventProposalVersions!.findOne({ eventId: doc.eventId })
       .sort({ revisionNo: -1 })
@@ -65,13 +64,10 @@ export function mongoClubInvitationRepository(): ClubInvitationRepository {
         if (!(await m.clubs!.exists({ _id: club, state: 'Active' }).session(session))) {
           throw new DomainError('club must be active to respond', 'conflict')
         }
-        const invitation = await m
-          .eventInvitations!.findOne({ _id: id, clubId: club })
-          .session(session)
-          .lean()
-        if (!invitation) {
-          throw new DomainError('invitation not found', 'not_found')
-        }
+        const invitation = found(
+          await m.eventInvitations!.findOne({ _id: id, clubId: club }).session(session).lean(),
+          'invitation not found',
+        )
         const event = await m
           .events!.findOneAndUpdate(
             {
@@ -106,22 +102,16 @@ export function mongoClubInvitationRepository(): ClubInvitationRepository {
         }
         const action =
           input.outcome === 'Accepted' ? 'EVENT_INVITATION_ACCEPTED' : 'EVENT_INVITATION_DECLINED'
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'EventInvitation',
-              entityId: id,
-              action,
-              actorId: actor,
-              actorRole: 'Club Leader',
-              before: { status: 'Pending' },
-              after: input,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'EventInvitation',
+          entityId: id,
+          action,
+          actorId: actor,
+          actorRole: 'Club Leader',
+          before: { status: 'Pending' },
+          after: input,
+          at: now,
+        })
         await queueNotifications(session, [invitation.invitedBy], {
           eventCode: action,
           entityType: 'EventInvitation',
