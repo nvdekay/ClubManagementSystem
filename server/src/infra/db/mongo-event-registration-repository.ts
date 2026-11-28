@@ -9,22 +9,16 @@ import type {
   EventRegistrationState,
 } from '../../domain/event-registration.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey, queueNotification } from './repo-helpers.js'
+import {
+  conflict,
+  found,
+  isDuplicateKey,
+  queueNotification,
+  storedDate,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-
-// Ném DomainError loại conflict với thông điệp cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
-
-// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
-function date(value: unknown): Date {
-  if (!(value instanceof Date)) {
-    throw new Error('invalid event registration date in database')
-  }
-  return value
-}
 
 // Lọc câu trả lời form đăng ký, chỉ giữ giá trị chuỗi hoặc mảng chuỗi
 function answers(value: unknown): Record<string, string | string[]> {
@@ -83,7 +77,6 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
   const proposals = ucmsModels.eventProposalVersions!
   const registrations = ucmsModels.eventRegistrations!
   const memberships = ucmsModels.clubMemberships!
-  const audits = ucmsModels.auditLogs!
 
   // Ánh xạ document đăng ký sang EventRegistration kèm thông tin sự kiện
   async function mapRegistration(
@@ -104,18 +97,22 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       ...(registration.clubId ? { clubId: String(registration.clubId) } : {}),
       clubName: String(event.clubName ?? ''),
       eventTitle: String(event.title),
-      eventStartAt: date(event.startAt),
-      eventEndAt: date(event.endAt),
+      eventStartAt: storedDate(event.startAt, 'event registration'),
+      eventEndAt: storedDate(event.endAt, 'event registration'),
       checkInOpensAt:
-        event.checkInOpenAt instanceof Date ? event.checkInOpenAt : date(event.startAt),
+        event.checkInOpenAt instanceof Date
+          ? event.checkInOpenAt
+          : storedDate(event.startAt, 'event registration'),
       checkInClosesAt:
-        event.checkInCloseAt instanceof Date ? event.checkInCloseAt : date(event.endAt),
+        event.checkInCloseAt instanceof Date
+          ? event.checkInCloseAt
+          : storedDate(event.endAt, 'event registration'),
       state: registration.state as EventRegistrationState,
       ...(typeof registration.waitlistPosition === 'number'
         ? { waitlistPosition: registration.waitlistPosition }
         : {}),
       answers: answers(registration.answers),
-      createdAt: date(registration.createdAt),
+      createdAt: storedDate(registration.createdAt, 'event registration'),
       ...(registration.cancelledAt instanceof Date
         ? { cancelledAt: registration.cancelledAt }
         : {}),
@@ -171,8 +168,8 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           title: String(event.title),
           state: String(event.state),
           audienceScope: String(event.audienceScope),
-          startAt: date(event.startAt),
-          endAt: date(event.endAt),
+          startAt: storedDate(event.startAt, 'event registration'),
+          endAt: storedDate(event.endAt, 'event registration'),
           ...(event.registrationOpenAt instanceof Date
             ? { registrationOpenAt: event.registrationOpenAt }
             : {}),
@@ -295,21 +292,16 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
             registrationId = created[0]!._id as Types.ObjectId
           }
           const correlationId = randomUUID()
-          await audits.create(
-            [
-              {
-                entityType: 'EventRegistration',
-                entityId: registrationId,
-                action: `EVENT_REGISTRATION_${state.toUpperCase()}`,
-                actorId: studentId,
-                actorRole: 'STUDENT',
-                after: { eventId: input.eventId, state, waitlistPosition },
-                correlationId,
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'EventRegistration',
+            entityId: registrationId,
+            action: `EVENT_REGISTRATION_${state.toUpperCase()}`,
+            actorId: studentId,
+            actorRole: 'STUDENT',
+            after: { eventId: input.eventId, state, waitlistPosition },
+            correlationId,
+            at: input.now,
+          })
           await queueNotification(session, {
             recipientUserId: studentId,
             eventCode:
@@ -331,10 +323,10 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       if (!registrationId) {
         return conflict('event registration was not created')
       }
-      const result = await owned(registrationId, studentId)
-      if (!result) {
-        throw new DomainError('event registration not found after submission', 'not_found')
-      }
+      const result = found(
+        await owned(registrationId, studentId),
+        'event registration not found after submission',
+      )
       return result
     },
 
@@ -379,22 +371,17 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           await promoteEventWaitlist(session, event._id as Types.ObjectId, now)
         }
         const correlationId = randomUUID()
-        await audits.create(
-          [
-            {
-              entityType: 'EventRegistration',
-              entityId: id,
-              action: 'EVENT_REGISTRATION_CANCELLED',
-              actorId: userId,
-              actorRole: 'STUDENT',
-              before: { state: registration.state },
-              after: { state: 'Cancelled' },
-              correlationId,
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'EventRegistration',
+          entityId: id,
+          action: 'EVENT_REGISTRATION_CANCELLED',
+          actorId: userId,
+          actorRole: 'STUDENT',
+          before: { state: registration.state },
+          after: { state: 'Cancelled' },
+          correlationId,
+          at: now,
+        })
         await queueNotification(session, {
           recipientUserId: userId,
           eventCode: 'EVENT_REGISTRATION_CANCELLED',
@@ -404,10 +391,10 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           now,
         })
       })
-      const result = await owned(id, userId)
-      if (!result) {
-        throw new DomainError('event registration not found after cancellation', 'not_found')
-      }
+      const result = found(
+        await owned(id, userId),
+        'event registration not found after cancellation',
+      )
       return result
     },
   }
