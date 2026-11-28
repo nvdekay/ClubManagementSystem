@@ -1,4 +1,5 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   fetchNotifications,
   fetchUnreadNotificationCount,
@@ -43,20 +44,17 @@ export function useNotificationInbox(
 
 // Mutation đánh dấu một thông báo đã đọc
 export function useMarkNotificationRead() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (input: { id: string; csrfToken: string }) =>
-      markNotificationRead(input.id, input.csrfToken),
-    onSuccess: () => client.invalidateQueries({ queryKey: key }),
-  })
+  return useInvalidatingMutation(
+    (input: { id: string; csrfToken: string }) => markNotificationRead(input.id, input.csrfToken),
+    [key],
+  )
 }
 
 // Mutation đánh dấu đã đọc mọi thông báo của workspace
 export function useMarkAllNotificationsRead() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (input: { scope: NotificationScope; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (input: { scope: NotificationScope; csrfToken: string }) =>
       markAllNotificationsRead(input.scope, input.csrfToken),
-    onSuccess: () => client.invalidateQueries({ queryKey: key }),
-  })
+    [key],
+  )
 }
