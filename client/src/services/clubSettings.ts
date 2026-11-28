@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 import type { ClubProfileFormField } from '@/services/policy'
 
 export interface ClubChannel {
@@ -60,23 +60,21 @@ export interface ClubSettings {
 export class MissingProfileFieldsError extends ApiError {
   constructor(
     message: string,
+    status: number,
     readonly missing: ClubProfileFormField[],
   ) {
-    super(message)
+    super(message, status)
     this.name = 'MissingProfileFieldsError'
   }
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/clubs${path}`, { ...options, toError: toSettingsError })
-}
+const request = apiClient('/api/v1/clubs', toSettingsError)
 
 // Maps a failed response to this module's error type
 function toSettingsError(failure: ApiFailure): Error {
   const missing = (failure.details as { missing?: ClubProfileFormField[] } | undefined)?.missing
   return Array.isArray(missing)
-    ? new MissingProfileFieldsError(failure.message, missing)
+    ? new MissingProfileFieldsError(failure.message, failure.status, missing)
     : new ApiError(failure.message, failure.status)
 }
 
