@@ -4,7 +4,7 @@ import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import type { EventProposalDetail } from '@/services/eventProposalReviews'
 import { obligationLabel } from '@/pages/icpdp/eventProposalReviewFormat'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
 
 interface ProposalClubBookingsSectionProps {
   club: EventProposalDetail['club']
@@ -13,10 +13,8 @@ interface ProposalClubBookingsSectionProps {
 
 // Tình trạng CLB và các booking cơ sở vật chất cung cấp thông tin để xét duyệt.
 export function ProposalClubBookingsSection({ club, bookings }: ProposalClubBookingsSectionProps) {
-  const { t, i18n } = useTranslation()
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
+  const { t } = useTranslation()
+  const { date } = useFormat()
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
