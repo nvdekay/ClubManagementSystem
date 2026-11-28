@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 
 import {
   activateScheme,
@@ -23,9 +24,8 @@ export function useEvaluationSchemes(enabled: boolean) {
 // Mutation tạo, sửa, kích hoạt hoặc xoá thang đánh giá, rồi làm mới cache
 /** Kích hoạt một thang cũng thay thế thang khác, nên mọi thay đổi đều tải lại toàn bộ danh sách. */
 export function useEvaluationSchemeAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (
+  return useInvalidatingMutation(
+    async (
       action:
         | { kind: 'create'; periodCode: string; copyFromId?: string; csrfToken: string }
         | { kind: 'update'; id: string; settings: SchemeSettings; csrfToken: string }
@@ -48,6 +48,6 @@ export function useEvaluationSchemeAction() {
           return deleteScheme(action.id, action.csrfToken)
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: schemesKeyRoot }),
-  })
+    [schemesKeyRoot],
+  )
 }
