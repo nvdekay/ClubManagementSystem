@@ -12,21 +12,11 @@ import { appToast } from '@/components/ui/toast/AppToast'
 import { useEventDefenseActions } from '@/hooks/useEventDefense'
 import { useEventProposalAction } from '@/hooks/useEventProposalReviews'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
-import { isUnknownApiError } from '@/services/apiError'
+import { formatMoney } from '@/utils/formatMoney'
+import { outcomeLabel, resolveI18nError } from '@/pages/icpdp/eventProposalReviewFormat'
 import { type EventProposalDetail, type EventReviewOutcome } from '@/services/eventProposalReviews'
 import { cn } from '@/utils/cn'
 import { DIRECT_VENDOR_THRESHOLD_VND, type FundingDecision } from '@/services/sponsoredItems'
-
-// Dùng thông báo phù hợp với thao tác nếu API chỉ trả về lỗi chung.
-function resolveDecisionError(error: Error | null | undefined, fallback: string): string {
-  if (!error) {
-    return fallback
-  }
-  if (isUnknownApiError(error)) {
-    return fallback
-  }
-  return error.message || fallback
-}
 
 interface ProposalDecisionPanelProps {
   detail: EventProposalDetail
@@ -142,29 +132,6 @@ export function ProposalDecisionPanel({
       }),
     ),
   })
-
-  /** Định dạng số tiền đề nghị, số duyệt và tổng tiền theo đồng Việt Nam, không có phần thập phân. */
-  function money(value: number) {
-    return new Intl.NumberFormat(i18n.language, {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(value)
-  }
-
-  /** Dịch tên từng quyết định có thể chọn, bao gồm quyết định sau bảo vệ. */
-  function outcomeLabel(value: EventReviewOutcome) {
-    switch (value) {
-      case 'Approve':
-        return t('eventReviews.approve')
-      case 'Reject':
-        return t('eventReviews.reject')
-      case 'Request revision':
-        return t('eventReviews.requestRevision')
-      case 'Re-defense':
-        return t('eventDefense.outcomeReDefense')
-    }
-  }
 
   // Lưu giải thích của ICPDP cho dòng kinh phí không được tài trợ.
   function editLine(index: number, change: { reason?: string }) {
@@ -287,7 +254,7 @@ export function ProposalDecisionPanel({
                 { 'bg-segment-app text-text-app shadow-xs': outcome === value },
               )}
             >
-              {outcomeLabel(value)}
+              {outcomeLabel(t, value)}
             </button>
           )
         })}
@@ -365,12 +332,13 @@ export function ProposalDecisionPanel({
                     <span className="flex flex-wrap justify-between gap-2">
                       <span className="font-medium break-words">{line.category}</span>
                       <span className="text-xs text-muted-app">
-                        {t('eventReviews.requestedAmount')}: {money(line.amount)}
+                        {t('eventReviews.requestedAmount')}:{' '}
+                        {formatMoney(line.amount, i18n.language)}
                       </span>
                     </span>
                     <AppInput
                       readOnly
-                      value={money(approvedAmounts[index]!)}
+                      value={formatMoney(approvedAmounts[index]!, i18n.language)}
                       className="mt-1.5 w-full bg-surface-app tabular-nums"
                     />
                     <AppFieldError message={field.error(`amount${index}`)} />
@@ -394,7 +362,7 @@ export function ProposalDecisionPanel({
             })}
           </div>
           <p className="mt-3 text-sm font-semibold">
-            {t('eventReviews.approvedTotal', { amount: money(approvedTotal) })}
+            {t('eventReviews.approvedTotal', { amount: formatMoney(approvedTotal, i18n.language) })}
           </p>
         </fieldset>
       )}
@@ -446,7 +414,7 @@ export function ProposalDecisionPanel({
 
       {mutationError && (
         <p role="alert" className="mt-3 text-sm text-danger-app">
-          {resolveDecisionError(mutationError, t('eventReviews.actionError'))}
+          {resolveI18nError(mutationError, t('eventReviews.actionError'))}
         </p>
       )}
       {isSuccess && (
