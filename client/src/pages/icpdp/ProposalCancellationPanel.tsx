@@ -9,7 +9,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useEventProposalAction } from '@/hooks/useEventProposalReviews'
 import type { EventCancellationReviewInfo } from '@/services/eventProposalReviews'
 import { resolveI18nError } from '@/pages/icpdp/eventProposalReviewFormat'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
 
 interface ProposalCancellationPanelProps {
   id: string
@@ -26,16 +26,13 @@ export function ProposalCancellationPanel({
   canDecide,
   csrfToken,
 }: ProposalCancellationPanelProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const askConfirm = useConfirm()
   const action = useEventProposalAction()
   const [cancelApprove, setCancelApprove] = useState(true)
   const [cancelReviewReason, setCancelReviewReason] = useState('')
   const [cancelReviewError, setCancelReviewError] = useState<string | null>(null)
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
-
   /** Kiểm tra lý do khi từ chối hủy, yêu cầu xác nhận rồi gửi quyết định duyệt hủy sự kiện. */
   async function submitCancellationDecision(e: FormEvent) {
     e.preventDefault()
