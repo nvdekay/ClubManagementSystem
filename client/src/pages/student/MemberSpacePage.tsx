@@ -21,6 +21,9 @@ import { isNotAMember, useMemberSpace, useMembershipAction } from '@/hooks/useMe
 import type { Locale } from '@/i18n'
 import type { MemberSpace } from '@/services/memberSpace'
 import { formatDate, formatDay, vnDateInput } from '@/utils/formatDate'
+import { MemberRosterItem } from '@/components/custom/MemberRosterItem'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 const registrationLabels = {
   Confirmed: 'memberSpace.regConfirmed',
@@ -73,12 +76,9 @@ export function MemberSpacePage() {
         </Link>
       </section>
     ) : (
-      <AppNotice tone="danger" role="alert" title={t('memberSpace.loadError')}>
+      <AppErrorNotice title={t('memberSpace.loadError')} onRetry={() => void space.refetch()}>
         <p>{space.error.message}</p>
-        <AppButton variant="secondary" onClick={() => void space.refetch()}>
-          {t('memberSpace.retry')}
-        </AppButton>
-      </AppNotice>
+      </AppErrorNotice>
     )
   }
   return <MemberSpaceView space={space.data} csrfToken={auth.data!.csrfToken} />
@@ -260,23 +260,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
           >
             <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
               {space.members.map((member, index) => (
-                <li key={`${member.displayName}-${index}`} className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app"
-                  >
-                    {member.displayName.trim().charAt(0).toUpperCase()}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium" title={member.displayName}>
-                      {member.displayName}
-                    </span>
-                    <span className="block text-xs text-muted-app">
-                      {member.positions.join(', ') || t('memberSpace.noPosition')}
-                      {member.state === 'Inactive' && ` · ${t('memberSpace.stateInactive')}`}
-                    </span>
-                  </span>
-                </li>
+                <MemberRosterItem key={`${member.displayName}-${index}`} member={member} />
               ))}
             </ul>
           </Section>
@@ -300,8 +284,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
               {t('memberSpace.joinedOn', { date: formatDay(membership.joinedAt, locale) })}
             </p>
           </section>
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('memberSpace.board')}</h2>
+          <AppPanel title={t('memberSpace.board')}>
             {space.board.length === 0 ? (
               <div className="mt-2">
                 <AppEmptyState message={t('memberSpace.boardEmpty')} />
@@ -316,7 +299,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
                 ))}
               </ul>
             )}
-          </section>
+          </AppPanel>
           {!pending && <LeaveClub membershipId={membership.id} csrfToken={csrfToken} />}
         </aside>
       </div>
@@ -375,8 +358,7 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
   }
 
   return (
-    <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-      <h2 className="font-heading text-base font-semibold">{t('memberSpace.leaveTitle')}</h2>
+    <AppPanel title={t('memberSpace.leaveTitle')}>
       <p className="mt-1 text-sm text-muted-app">{t('memberSpace.leaveIntro')}</p>
       {action.isSuccess && (
         <p role="status" className="mt-3 text-sm font-semibold text-success-app">
@@ -437,6 +419,6 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
           )}
         </form>
       )}
-    </section>
+    </AppPanel>
   )
 }
