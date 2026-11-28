@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 import type { Property } from './properties'
 
 export interface BookingInput {
@@ -51,10 +51,7 @@ export interface BookingDetail {
     BookingDecisionInput & { id: string; taskId: string; actorId: string; at: string }
   >
 }
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 // Chọn đường dẫn booking của CLB hoặc của admin
 function base(clubId: string | null) {
   return clubId ? `/clubs/${encodeURIComponent(clubId)}/bookings` : '/admin/bookings'
