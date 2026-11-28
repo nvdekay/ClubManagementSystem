@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -18,12 +17,17 @@ import { cancelEventInSession } from './event-cancellation.js'
 import {
   applyProposalDecisionInSession,
   clubEventManagerRecipients,
-  conflict,
   mapDefenseSession,
-  oid,
 } from './event-defense-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { queueNotification, queueNotifications } from './repo-helpers.js'
+import {
+  conflict,
+  found,
+  oid,
+  queueNotification,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ACTIVE_STATES_ARRAY = [...ACTIVE_DEFENSE_STATES]
@@ -154,10 +158,7 @@ export function mongoEventDefenseRepository(
   const versions = m.eventProposalVersions!
 
   async function requireSessionById(id: Types.ObjectId): Promise<EventDefenseSession> {
-    const doc = await sessions.findById(id).lean()
-    if (!doc) {
-      throw new DomainError('defense session not found', 'not_found')
-    }
+    const doc = found(await sessions.findById(id).lean(), 'defense session not found')
     return mapDefenseSession(doc)
   }
 
@@ -340,28 +341,22 @@ export function mongoEventDefenseRepository(
           { session },
         )
 
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_SCHEDULED',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              after: {
-                defenseId,
-                title: input.title,
-                startAt: input.startAt,
-                endAt,
-                propertyId: propId,
-                propertyName,
-              },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_SCHEDULED',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          after: {
+            defenseId,
+            title: input.title,
+            startAt: input.startAt,
+            endAt,
+            propertyId: propId,
+            propertyName,
+          },
+          at: now,
+        })
 
         const version = await versions
           .findOne({ eventId: id, revisionNo: event.currentRevisionNo ?? 1 })
@@ -425,23 +420,17 @@ export function mongoEventDefenseRepository(
           { $set: { state: 'CANCELLED', cancelReason: reason, updatedAt: now } },
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_CANCELLED',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              before: { defenseId: updatedId, state: doc.state },
-              after: { defenseId: updatedId, state: 'CANCELLED' },
-              reason,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_CANCELLED',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          before: { defenseId: updatedId, state: doc.state },
+          after: { defenseId: updatedId, state: 'CANCELLED' },
+          reason,
+          at: now,
+        })
 
         const version = await versions
           .findOne({ eventId: id, revisionNo: event.currentRevisionNo ?? 1 })
@@ -565,27 +554,21 @@ export function mongoEventDefenseRepository(
             },
             { session },
           )
-          await audits.create(
-            [
-              {
-                entityType: 'Event',
-                entityId: id,
-                action: 'EVENT_DEFENSE_RESCHEDULE_ACCEPTED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                after: {
-                  defenseId: updatedId,
-                  state: 'CONFIRMED',
-                  startAt: input.startAt,
-                  endAt,
-                  propertyName,
-                },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Event',
+            entityId: id,
+            action: 'EVENT_DEFENSE_RESCHEDULE_ACCEPTED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            after: {
+              defenseId: updatedId,
+              state: 'CONFIRMED',
+              startAt: input.startAt,
+              endAt,
+              propertyName,
+            },
+            at: now,
+          })
           await notifyRecipients(
             recipients,
             'EVENT_DEFENSE_RESCHEDULE_DECIDED',
@@ -611,22 +594,16 @@ export function mongoEventDefenseRepository(
             },
             { session },
           )
-          await audits.create(
-            [
-              {
-                entityType: 'Event',
-                entityId: id,
-                action: 'EVENT_DEFENSE_RESCHEDULE_REJECTED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                reason: input.reason,
-                after: { defenseId: updatedId, state: fallbackState },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Event',
+            entityId: id,
+            action: 'EVENT_DEFENSE_RESCHEDULE_REJECTED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            reason: input.reason,
+            after: { defenseId: updatedId, state: fallbackState },
+            at: now,
+          })
           await notifyRecipients(
             recipients,
             'EVENT_DEFENSE_RESCHEDULE_DECIDED',
@@ -673,21 +650,15 @@ export function mongoEventDefenseRepository(
           { $set: { state: 'IN_PROGRESS', startedAt: now, updatedAt: now } },
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_STARTED',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              after: { defenseId: updatedId },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_STARTED',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          after: { defenseId: updatedId },
+          at: now,
+        })
       })
 
       return requireSessionById(updatedId!)
@@ -763,21 +734,15 @@ export function mongoEventDefenseRepository(
           { $set: { state: 'DEFENDED', endedAt: now, updatedAt: now } },
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_ENDED',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              after: { defenseId: updatedId },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_ENDED',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          after: { defenseId: updatedId },
+          at: now,
+        })
       })
 
       return requireSessionById(updatedId!)
@@ -875,23 +840,17 @@ export function mongoEventDefenseRepository(
           )
         }
 
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_NO_SHOW',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              before: { state: event.state, defenseState: doc.state },
-              after: { state: 'Rejected', defenseState: 'NO_SHOW' },
-              reason,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_NO_SHOW',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          before: { state: event.state, defenseState: doc.state },
+          after: { state: 'Rejected', defenseState: 'NO_SHOW' },
+          reason,
+          at: now,
+        })
 
         const version = await versions
           .findOne({ eventId: id, revisionNo: event.currentRevisionNo ?? 1 })
@@ -924,10 +883,7 @@ export function mongoEventDefenseRepository(
           requireDefendedSession: true,
         })
       })
-      const updated = await reviewRepo.find(eventId, now)
-      if (!updated) {
-        throw new DomainError('event proposal not found', 'not_found')
-      }
+      const updated = found(await reviewRepo.find(eventId, now), 'event proposal not found')
       return updated
     },
 
@@ -938,13 +894,13 @@ export function mongoEventDefenseRepository(
       let updatedId: Types.ObjectId | undefined
 
       await mongoose.connection.transaction(async (session) => {
-        const event = await events
-          .findOne({ _id: id, clubId: oid(clubId) })
-          .session(session)
-          .lean()
-        if (!event) {
-          throw new DomainError('event proposal not found', 'not_found')
-        }
+        const event = found(
+          await events
+            .findOne({ _id: id, clubId: oid(clubId) })
+            .session(session)
+            .lean(),
+          'event proposal not found',
+        )
         const doc = await sessions
           .findOne({ eventId: id, state: 'SCHEDULED' })
           .sort({ createdAt: -1 })
@@ -964,21 +920,15 @@ export function mongoEventDefenseRepository(
           { session },
         )
 
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_CONFIRMED',
-              actorId: userObjId,
-              actorRole: 'Club Member',
-              after: { defenseId: updatedId, confirmedAt: now },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_CONFIRMED',
+          actorId: userObjId,
+          actorRole: 'Club Member',
+          after: { defenseId: updatedId, confirmedAt: now },
+          at: now,
+        })
 
         await notifyRecipients(
           [oid(String(doc.leadOfficerId))],
@@ -1006,13 +956,13 @@ export function mongoEventDefenseRepository(
       let updatedId: Types.ObjectId | undefined
 
       await mongoose.connection.transaction(async (session) => {
-        const event = await events
-          .findOne({ _id: id, clubId: oid(clubId) })
-          .session(session)
-          .lean()
-        if (!event) {
-          throw new DomainError('event proposal not found', 'not_found')
-        }
+        const event = found(
+          await events
+            .findOne({ _id: id, clubId: oid(clubId) })
+            .session(session)
+            .lean(),
+          'event proposal not found',
+        )
         const doc = await sessions
           .findOne({
             eventId: id,
@@ -1035,22 +985,16 @@ export function mongoEventDefenseRepository(
           { session },
         )
 
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: id,
-              action: 'EVENT_DEFENSE_RESCHEDULE_REQUESTED',
-              actorId: userObjId,
-              actorRole: 'Club Member',
-              reason: cleanReason,
-              after: { defenseId: updatedId, state: 'RESCHEDULE_REQUESTED' },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: id,
+          action: 'EVENT_DEFENSE_RESCHEDULE_REQUESTED',
+          actorId: userObjId,
+          actorRole: 'Club Member',
+          reason: cleanReason,
+          after: { defenseId: updatedId, state: 'RESCHEDULE_REQUESTED' },
+          at: now,
+        })
 
         await notifyRecipients(
           [oid(String(doc.leadOfficerId))],
