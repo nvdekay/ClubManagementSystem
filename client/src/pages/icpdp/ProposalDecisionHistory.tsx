@@ -4,14 +4,12 @@ import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import type { EventReviewDecision } from '@/services/eventProposalReviews'
 import { outcomeLabel, reviewSectionLabel } from '@/pages/icpdp/eventProposalReviewFormat'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
 
 // Quyết định mới nhất hiển thị trước, kèm các mục yêu cầu sửa và lý do đã ghi nhận.
 export function ProposalDecisionHistory({ decisions }: { decisions: EventReviewDecision[] }) {
-  const { t, i18n } = useTranslation()
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
+  const { t } = useTranslation()
+  const { date } = useFormat()
   return (
     <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       {/* Quyết định mới nhất hiển thị trước, kèm các mục yêu cầu sửa và lý do đã ghi nhận. */}
