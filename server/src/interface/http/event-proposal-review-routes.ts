@@ -1,13 +1,11 @@
 /** HTTP adapter for ICPDP reviews; business authorization/validation lives in the use case. */
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import {
   EVENT_REVIEW_SECTIONS,
   MAX_APPROVAL_CONDITIONS,
   type EventProposalReviewRepository,
 } from '../../domain/event-proposal-review.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   claimEventProposalReview,
   decideEventCancellationReview,
@@ -15,17 +13,14 @@ import {
   getEventProposalReview,
   listEventProposalReviews,
 } from '../../usecase/event-proposal-review.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface EventProposalReviewRouteDeps {
+export interface EventProposalReviewRouteDeps extends SessionDeps {
   repo: EventProposalReviewRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const eventProposalListQuery = z
   .object({ view: z.enum(['pending', 'approved']).default('pending') })
   .strict()
@@ -63,15 +58,15 @@ export const eventCancellationDecisionBody = z
 /** Register authenticated reads and CSRF-protected review writes. */
 export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Read-only requests authenticate the session without requiring a CSRF token.
-  router.get('/admin/event-proposals', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/event-proposals', read, async (req, res) => {
     const { view } = parse(eventProposalListQuery, req.query, 'event proposal review request')
     ok(res, await listEventProposalReviews(deps.repo, deps.authRepo, actor(res), view))
   })
   // Load the complete review dossier for one proposal.
-  router.get('/admin/event-proposals/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/event-proposals/:id', read, async (req, res) => {
     ok(
       res,
       await getEventProposalReview(
@@ -84,7 +79,7 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
     )
   })
   // Claim requires CSRF protection; the repository resolves concurrent assignments.
-  router.post('/admin/event-proposals/:id/claim', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/claim', write, async (req, res) => {
     ok(
       res,
       await claimEventProposalReview(
@@ -97,7 +92,7 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
     )
   })
   // Convert the validated ISO deadline into a Date before calling the review use case.
-  router.post('/admin/event-proposals/:id/decision', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/decision', write, async (req, res) => {
     const body = parse(eventReviewDecisionBody, req.body, 'event proposal review request')
     ok(
       res,
@@ -117,24 +112,20 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
     )
   })
   // ICPDP quyết định yêu cầu huỷ sự kiện đã được duyệt
-  router.post(
-    '/admin/event-proposals/:id/cancellation-decision',
-    authGuard(guard),
-    async (req, res) => {
-      const body = parse(eventCancellationDecisionBody, req.body, 'event proposal review request')
-      ok(
-        res,
-        await decideEventCancellationReview(
-          deps.repo,
-          deps.authRepo,
-          actor(res),
-          parse(id, req.params.id, 'event proposal review request'),
-          body,
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.post('/admin/event-proposals/:id/cancellation-decision', write, async (req, res) => {
+    const body = parse(eventCancellationDecisionBody, req.body, 'event proposal review request')
+    ok(
+      res,
+      await decideEventCancellationReview(
+        deps.repo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'event proposal review request'),
+        body,
+        new Date(),
+      ),
+    )
+  })
 
   return router
 }
