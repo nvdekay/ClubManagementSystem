@@ -115,3 +115,16 @@ export function formatDayBadge(
     : formatDateWith(value, locale, { month: 'short' })
   return { day, month }
 }
+
+// Nhãn tháng ngắn cho trục biểu đồ từ giá trị `YYYY-MM`
+/** Chỉ một từ ngắn: "T5" ở tiếng Việt ("Tháng 5" bị xuống dòng trên điện thoại), "May" ở tiếng Anh. */
+export function formatMonthAxis(month: string, language: string): string {
+  return language.startsWith('vi')
+    ? `T${Number(month.slice(5))}`
+    : formatDateWith(`${month}-01T00:00:00Z`, language, { month: 'short' })
+}
+
+// Nhãn tháng đầy đủ kèm năm từ giá trị `YYYY-MM`
+export function formatMonthLong(month: string, language: string): string {
+  return formatDateWith(`${month}-01T00:00:00Z`, language, { month: 'long', year: 'numeric' })
+}
