@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 
 import { AppBadge } from '@/components/ui/badge/AppBadge'
 import type { EventProposalDetail, EventProposalVersion } from '@/services/eventProposalReviews'
-import { formatMoney } from '@/utils/formatMoney'
+import { useFormat } from '@/hooks/useFormat'
 
 interface ProposalBudgetSectionProps {
   current: EventProposalVersion | undefined
@@ -17,12 +17,10 @@ export function ProposalBudgetSection({
   budget,
   semesterBudgets,
 }: ProposalBudgetSectionProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { money } = useFormat()
   const lines = current?.budgetLines ?? []
   const semesterTotal = semesterBudgets.reduce((sum, item) => sum + item.approvedTotal, 0)
-  function money(value: number) {
-    return formatMoney(value, i18n.language)
-  }
   return (
     <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       {/* Đối chiếu từng khoản đề nghị với khoản đã duyệt và hiển thị kinh phí trong học kỳ. */}
