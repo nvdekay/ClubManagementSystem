@@ -76,7 +76,7 @@ chuyển Upcoming, Ongoing hoặc Completed; không gọi claim khi mở từ m�
 CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên quan, chứng cứ) và `ViolationDetailPage`: chứng
 cứ, giải trình của CLB, quyết định, biện pháp khắc phục, lịch sử, và khung "Bước tiếp theo" chỉ hiện những bước
 hợp lệ ở trạng thái hiện tại.
-Hai route này dùng chung `ViolationGate` (đăng nhập + quyền ICPDP). Danh sách (`ViolationList`, kèm
+Hai route này dùng chung `IcpdpOfficerGate` (quyền ICPDP; cũng dùng ở trang ngân sách, đánh giá, báo cáo định kỳ, sự kiện cấp trường). Danh sách (`ViolationList`, kèm
 `ViolationOpenCaseForm`) phân trang ở server (20 hồ sơ/trang, `AppPagination`); số trên từng tab lấy từ số đếm theo
 bộ lọc mà server trả về. Chi tiết (`ViolationDetailView`) ghép `ViolationEvidenceList`, `ViolationActionsSection` và
 `ViolationNextSteps` (mỗi bước dùng `ViolationStep`, tự giữ state form); nhãn/màu/ngày nằm trong `violationFormat.ts`.
@@ -112,3 +112,6 @@ của `PropertiesPage`.
 `RoutingRulesPage` (UC05, `/workspace/routing-rules`): mọi ICPDP Officer đọc, mô phỏng,
 tạo nháp, sửa và kích hoạt rule định tuyến. Rule chỉ đặt SLA thẩm định; mọi hồ sơ UC08/UC26/UC46 đều do một cán bộ
 ICPDP quyết định ở một cấp.
+
+`clubFormat.ts` — nhãn/màu xếp loại đánh giá (`ratingLabel`, `ratingTone`) và nhãn trạng thái vòng đời CLB
+(`clubStateLabel`), dùng chung cho `EvaluationsPage`, `AnnualReportSection` và `IcpdpClubsPage`.
