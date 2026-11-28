@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type {
   ApplicationReviewDetail,
   ApplicationReviewQueueItem,
@@ -8,7 +7,6 @@ import type {
 } from '../../domain/club-application-review.js'
 import type { ClubApplicationDraft } from '../../domain/club-application.js'
 import type { ApplicationFileStorage } from '../../domain/club-application.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   claimApplicationReview,
   applicationReviewDocumentAccess,
@@ -16,18 +14,15 @@ import {
   getApplicationReview,
   listApplicationReviews,
 } from '../../usecase/club-application-review.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface ClubApplicationReviewRouteDeps {
+export interface ClubApplicationReviewRouteDeps extends SessionDeps {
   repo: ClubApplicationReviewRepository
-  authRepo: AuthRepository
-  sessions: SessionService
   files: ApplicationFileStorage | null
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const applicationReviewDecisionBody = z
   .object({
     outcome: z.enum(['Request revision', 'Approve', 'Reject']),
@@ -73,17 +68,17 @@ function publicDetail(detail: ApplicationReviewDetail) {
 // Mount các route ICPDP duyệt đơn thành lập CLB
 export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // ICPDP liệt kê hàng đợi duyệt đơn thành lập CLB
-  router.get('/admin/application-reviews', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/application-reviews', read, async (_req, res) => {
     ok(
       res,
       (await listApplicationReviews(deps.repo, deps.authRepo, actor(res))).map(publicQueueItem),
     )
   })
   // ICPDP xem chi tiết một đơn cần duyệt
-  router.get('/admin/application-reviews/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/application-reviews/:id', read, async (req, res) => {
     ok(
       res,
       publicDetail(
@@ -97,7 +92,7 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
     )
   })
   // ICPDP nhận xử lý (claim) một đơn
-  router.post('/admin/application-reviews/:id/claim', authGuard(guard), async (req, res) => {
+  router.post('/admin/application-reviews/:id/claim', write, async (req, res) => {
     ok(
       res,
       publicDetail(
@@ -112,7 +107,7 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
     )
   })
   // ICPDP ghi quyết định duyệt đơn
-  router.post('/admin/application-reviews/:id/decision', authGuard(guard), async (req, res) => {
+  router.post('/admin/application-reviews/:id/decision', write, async (req, res) => {
     const body = parse(applicationReviewDecisionBody, req.body, 'application review request')
     ok(
       res,
@@ -136,7 +131,7 @@ export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps
   // Lấy quyền truy cập tạm thời để mở tài liệu của đơn đang duyệt
   router.get(
     '/admin/application-reviews/:id/documents/:documentId/access',
-    authGuard(guard, false),
+    read,
     async (req, res) => {
       ok(
         res,
