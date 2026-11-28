@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useSponsoredItems } from '@/hooks/useSponsoredItems'
 import { cn } from '@/utils/cn'
-import { formatSponsoredMoney } from '@/utils/sponsoredItems'
 import { SponsoredItemCard } from './SponsoredItemCard'
+import { formatMoney } from '@/utils/formatMoney'
 
 export interface SponsoredItemsProps {
   budgetId: string
@@ -73,7 +73,7 @@ export function SponsoredItems({
           <div key={total.label} className="rounded-xl border border-border-app bg-bg-app p-4">
             <dt className="text-sm text-muted-app">{total.label}</dt>
             <dd className="mt-1 text-xl font-semibold tabular-nums">
-              {formatSponsoredMoney(total.amount, i18n.language)}
+              {formatMoney(total.amount, i18n.language)}
             </dd>
           </div>
         ))}
