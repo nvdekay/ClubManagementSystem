@@ -1,9 +1,5 @@
 import { DomainError } from '../domain/errors.js'
-import {
-  isBeforeToday,
-  type MembershipRepository,
-  type MembershipState,
-} from '../domain/membership.js'
+import { isBeforeToday, type MembershipRepository } from '../domain/membership.js'
 import type { ClubAccessRepository } from '../domain/access.js'
 import { assertClubAccess, isObjectId, parseObjectId, type AccessActor } from './access.js'
 
@@ -179,9 +175,4 @@ export async function executeMembershipWithdrawal(
     actorId: id,
     now,
   })
-}
-
-// Cho biết trạng thái thành viên có được yêu cầu rút khỏi CLB không
-export function canRequestWithdrawal(state: MembershipState): boolean {
-  return state === 'Active' || state === 'Inactive'
 }
