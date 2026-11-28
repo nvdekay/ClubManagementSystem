@@ -26,7 +26,7 @@ import {
   openAccountabilityTask,
 } from './accountability-workflow.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { money, oid, policyAt } from './repo-helpers.js'
+import { found, money, oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 // Chuyển một bản báo cáo trong DB thành phiên bản trả về cho client
@@ -291,17 +291,17 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
     async act(eventId, clubId, actor, action, now) {
       await mongoose.connection.transaction(async (session) => {
         const actorId = oid(actor)
-        const event = await m
-          .events!.findOne({
-            _id: oid(eventId),
-            organizerType: 'CLUB',
-            ...(clubId ? { clubId: oid(clubId) } : {}),
-          })
-          .session(session)
-          .lean()
-        if (!event) {
-          throw new DomainError('event not found', 'not_found')
-        }
+        const event = found(
+          await m
+            .events!.findOne({
+              _id: oid(eventId),
+              organizerType: 'CLUB',
+              ...(clubId ? { clubId: oid(clubId) } : {}),
+            })
+            .session(session)
+            .lean(),
+          'event not found',
+        )
         const eventClub = event.clubId as Types.ObjectId
         if (clubId) {
           await assertEventWriteAccess(session, eventClub, actorId, 'club.report.submit', now)
