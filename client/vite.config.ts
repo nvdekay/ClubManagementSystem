@@ -8,13 +8,13 @@ import { defineConfig, loadEnv } from 'vite'
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') },
+    alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: {
-        app: path.resolve(__dirname, 'index.html'),
-        proposalPreview: path.resolve(__dirname, 'proposal-preview.html'),
+        app: path.resolve(import.meta.dirname, 'index.html'),
+        proposalPreview: path.resolve(import.meta.dirname, 'proposal-preview.html'),
       },
     },
   },
