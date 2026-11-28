@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import type {
   AccountAdminRepository,
@@ -6,22 +5,9 @@ import type {
   AdminUserClub,
   AdminUserPage,
 } from '../../domain/account-admin.js'
-import type { AuthUser } from '../../domain/auth.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
-import { escapeRegex } from './repo-helpers.js'
-
-// Ánh xạ document user thành AuthUser
-function mapUser(doc: Record<string, unknown>): AuthUser {
-  return {
-    id: String(doc._id),
-    email: String(doc.email),
-    displayName: String(doc.displayName),
-    avatarUrl: typeof doc.avatarUrl === 'string' ? doc.avatarUrl : undefined,
-    accountState: doc.accountState === 'Locked' ? 'Locked' : 'Active',
-    lockReason: typeof doc.lockReason === 'string' ? doc.lockReason : undefined,
-  }
-}
+import { authUserFrom, escapeRegex, found, writeAudit } from './repo-helpers.js'
 
 // Tạo regex không phân biệt hoa thường từ chuỗi tìm kiếm đã escape
 function escapedRegex(value: string): RegExp {
@@ -202,7 +188,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
       ])
       return {
         items: docs.map((doc) => ({
-          user: mapUser(doc),
+          user: authUserFrom(doc),
           clubs: clubsByUser.get(String(doc._id)) ?? [],
           ...(casesByUser.has(String(doc._id))
             ? { lockCase: casesByUser.get(String(doc._id)) }
@@ -220,7 +206,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
     // Tìm user theo id
     async findUser(userId) {
       const doc = await users.findById(new Types.ObjectId(userId)).lean()
-      return doc ? mapUser(doc) : null
+      return doc ? authUserFrom(doc) : null
     },
     // Lấy mã các role hệ thống đang hiệu lực của user
     async systemRoles(userId) {
@@ -243,13 +229,13 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
       const actorId = new Types.ObjectId(input.actorId)
       const targetId = new Types.ObjectId(input.targetId)
       await mongoose.connection.transaction(async (session) => {
-        const role = await roles
-          .findOne({ code: input.roleCode, scope: 'system', isSystem: true })
-          .session(session)
-          .lean()
-        if (!role) {
-          throw new DomainError('system role not found', 'not_found')
-        }
+        const role = found(
+          await roles
+            .findOne({ code: input.roleCode, scope: 'system', isSystem: true })
+            .session(session)
+            .lean(),
+          'system role not found',
+        )
         const existing = await assignments
           .findOne({
             userId: targetId,
@@ -291,22 +277,16 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
             await assertOfficerRemains(session)
           }
         }
-        await audits.create(
-          [
-            {
-              entityType: 'User',
-              entityId: targetId,
-              action: input.action === 'grant' ? 'SYSTEM_ROLE_GRANTED' : 'SYSTEM_ROLE_REVOKED',
-              actorId,
-              before: { roleCode: input.roleCode, active: input.action === 'revoke' },
-              after: { roleCode: input.roleCode, active: input.action === 'grant' },
-              reason: input.reason,
-              correlationId: randomUUID(),
-              at: input.now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'User',
+          entityId: targetId,
+          action: input.action === 'grant' ? 'SYSTEM_ROLE_GRANTED' : 'SYSTEM_ROLE_REVOKED',
+          actorId,
+          before: { roleCode: input.roleCode, active: input.action === 'revoke' },
+          after: { roleCode: input.roleCode, active: input.action === 'grant' },
+          reason: input.reason,
+          at: input.now,
+        })
       })
     },
     // Khóa hoặc mở khóa tài khoản, liên kết case vi phạm nếu có
@@ -314,36 +294,30 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
       const actorId = new Types.ObjectId(input.actorId)
       const targetId = new Types.ObjectId(input.targetId)
       await mongoose.connection.transaction(async (session) => {
-        const before = await users.findById(targetId).session(session).lean()
-        if (!before) {
-          throw new DomainError('user not found', 'not_found')
-        }
+        const before = found(
+          await users.findById(targetId).session(session).lean(),
+          'user not found',
+        )
         const violationId = input.violationId ? new Types.ObjectId(input.violationId) : undefined
         if (violationId) {
-          const linked = await violations.findById(violationId).session(session).lean()
-          if (!linked) {
-            throw new DomainError('violation case not found', 'not_found')
-          }
+          const linked = found(
+            await violations.findById(violationId).session(session).lean(),
+            'violation case not found',
+          )
           if (['Resolved', 'Closed'].includes(String(linked.state))) {
             throw new DomainError('violation case is already closed', 'conflict')
           }
-          await audits.create(
-            [
-              {
-                entityType: 'Violation',
-                entityId: violationId,
-                action: 'VIOLATION_ACCOUNT_LOCKED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                after: { userId: input.targetId, email: before.email },
-                // Lịch sử vụ việc chỉ hiện lý do, nên phải nêu thêm tài khoản bị khoá.
-                reason: `${String(before.email)} — ${input.reason}`,
-                correlationId: randomUUID(),
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Violation',
+            entityId: violationId,
+            action: 'VIOLATION_ACCOUNT_LOCKED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            after: { userId: input.targetId, email: before.email },
+            // Lịch sử vụ việc chỉ hiện lý do, nên phải nêu thêm tài khoản bị khoá.
+            reason: `${String(before.email)} — ${input.reason}`,
+            at: input.now,
+          })
         }
         const afterState = input.locked ? 'Locked' : 'Active'
         await users.updateOne(
@@ -367,26 +341,20 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
         if (input.locked) {
           await assertOfficerRemains(session)
         }
-        await audits.create(
-          [
-            {
-              entityType: 'User',
-              entityId: targetId,
-              action: input.locked ? 'ACCOUNT_LOCKED' : 'ACCOUNT_UNLOCKED',
-              actorId,
-              before: { accountState: before.accountState, lockReason: before.lockReason },
-              after: {
-                accountState: afterState,
-                ...(input.locked ? { lockReason: input.reason } : {}),
-                ...(violationId ? { violationId: input.violationId } : {}),
-              },
-              reason: input.reason,
-              correlationId: randomUUID(),
-              at: input.now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'User',
+          entityId: targetId,
+          action: input.locked ? 'ACCOUNT_LOCKED' : 'ACCOUNT_UNLOCKED',
+          actorId,
+          before: { accountState: before.accountState, lockReason: before.lockReason },
+          after: {
+            accountState: afterState,
+            ...(input.locked ? { lockReason: input.reason } : {}),
+            ...(violationId ? { violationId: input.violationId } : {}),
+          },
+          reason: input.reason,
+          at: input.now,
+        })
       })
     },
   }
