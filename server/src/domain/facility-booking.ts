@@ -1,3 +1,4 @@
+import { isObjectId } from './access-denial.js'
 import { DomainError } from './errors.js'
 import type { PolicyVersion } from './policy.js'
 import type { Property } from './property.js'
@@ -301,7 +302,7 @@ export function assertRequestableProperty(
 
 // Kiểm tra và chuẩn hoá mã booking dạng ObjectId
 export function bookingId(value: string): string {
-  if (!/^[0-9a-f]{24}$/i.test(value)) {
+  if (!isObjectId(value)) {
     throw new DomainError('invalid booking identifier', 'validation')
   }
   return value.toLowerCase()
