@@ -666,7 +666,7 @@ ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sa
 |---|---|---|
 | Client | React 19 + Vite, TypeScript, Tailwind v4 (theming theo token), TanStack React Query, TanStack Table, i18next (`en` / `vi`), toast Sonner | SPA build tĩnh, chỉ gọi `/api/v1/*` |
 | Routing | `react-router` | Điều kiện kích hoạt router của ADR-002 ("thêm router khi có màn hình thứ hai") **đã xảy ra**: UCMS có ba workspace theo vai trò |
-| Server | Node ≥ 22.12, Express 5, Mongoose 8, zod (+ `zod-openapi`), clean architecture 4 tầng | Một tiến trình triển khai duy nhất, OpenAPI phục vụ tại `/docs` (ở production chỉ khi `API_DOCS=true`) |
+| Server | Node ≥ 22.22, Express 5, Mongoose 9, zod (+ `zod-openapi`), clean architecture 4 tầng | Một tiến trình triển khai duy nhất, OpenAPI phục vụ tại `/docs` (ở production chỉ khi `API_DOCS=true`) |
 | Cơ sở dữ liệu | MongoDB 7 chạy dạng replica set (bắt buộc — repository dùng transaction đa document) | Lưu dữ liệu nghiệp vụ, hàng đợi thông báo và nhật ký audit |
 | Scheduler | Interval trong tiến trình, bảo vệ bằng một lease document trong Mongo | Không dùng hệ thống queue; chỉ tách ra worker riêng khi API chạy nhiều instance |
 | Xác thực | Google OpenID Connect, Authorization Code flow + PKCE; phiên lưu phía server, cookie được ký, `httpOnly`, `SameSite=Lax`; CSRF token theo phiên | Không lưu bất kỳ mật khẩu nào — xem §12.1 |

@@ -55,16 +55,14 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
   }
 
   async function load(ids: Types.ObjectId[], session?: ClientSession): Promise<EvaluationScheme[]> {
-    const [docs, rows] = await Promise.all([
-      schemes
-        .find({ _id: { $in: ids } })
-        .session(session ?? null)
-        .lean(),
-      dimensions
-        .find({ schemeId: { $in: ids } })
-        .session(session ?? null)
-        .lean(),
-    ])
+    const docs = await schemes
+      .find({ _id: { $in: ids } })
+      .session(session ?? null)
+      .lean()
+    const rows = await dimensions
+      .find({ schemeId: { $in: ids } })
+      .session(session ?? null)
+      .lean()
     return docs.map((doc) =>
       schemeFrom(
         doc,

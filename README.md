@@ -10,7 +10,7 @@ Clean architecture ở cả hai phía, ranh giới tầng được CI kiểm tra
 
 | Công cụ | Phiên bản | Ghi chú |
 |---|---|---|
-| Node.js | >= 22.12 | Theo `engines` trong `package.json` (vitest cần); kiểm tra bằng `node -v` |
+| Node.js | >= 22.22 | Theo `engines` trong `package.json` (react-router 8 cần); kiểm tra bằng `node -v` |
 | Docker Desktop | bản mới | Chạy MongoDB 7 ở chế độ replica set (cần cho transaction) |
 | Git | bất kỳ | |
 

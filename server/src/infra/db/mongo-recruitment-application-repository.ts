@@ -186,16 +186,16 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     clubId: Types.ObjectId,
     session?: ClientSession,
   ): Promise<RecruitmentEligibility> {
-    const [user, active, banned] = await Promise.all([
-      users
-        .findOne({ _id: userId, accountState: 'Active' })
-        .select('_id')
-        .session(session ?? null),
-      memberships
-        .exists({ userId, clubId, state: { $in: ['Active', 'Inactive'] } })
-        .session(session ?? null),
-      memberships.exists({ userId, clubId, state: 'Banned' }).session(session ?? null),
-    ])
+    const user = await users
+      .findOne({ _id: userId, accountState: 'Active' })
+      .select('_id')
+      .session(session ?? null)
+    const active = await memberships
+      .exists({ userId, clubId, state: { $in: ['Active', 'Inactive'] } })
+      .session(session ?? null)
+    const banned = await memberships
+      .exists({ userId, clubId, state: 'Banned' })
+      .session(session ?? null)
     return {
       userActive: Boolean(user),
       activeMembership: Boolean(active),

@@ -116,7 +116,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
                     updatedAt: now,
                   },
                 },
-                { new: true, session },
+                { returnDocument: 'after', session },
               )
               .lean()
             if (!restored) {
@@ -188,7 +188,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
                   updatedAt: now,
                 },
               },
-              { new: true, session },
+              { returnDocument: 'after', session },
             )
             .lean()
           if (!updated) {

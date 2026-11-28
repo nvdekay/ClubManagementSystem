@@ -101,18 +101,18 @@ async function assertOfficerAssignee(
   session: ClientSession,
 ): Promise<{ event: Doc; task: Doc }> {
   const actorId = oid(officerId)
-  const [event, task] = await Promise.all([
-    m.events!.findById(eventId).session(session).lean(),
-    m
-      .approvalTasks!.findOne({
-        entityType: 'EVENT_PROPOSAL',
-        entityId: eventId,
-        state: 'Open',
-      })
-      .sort({ openedAt: -1 })
-      .session(session)
-      .lean(),
-  ])
+  // Sequential on purpose: this is the first read of its transactions, and the MongoDB 7 driver
+  // sends startTransaction on every command issued before the first reply.
+  const event = await m.events!.findById(eventId).session(session).lean()
+  const task = await m
+    .approvalTasks!.findOne({
+      entityType: 'EVENT_PROPOSAL',
+      entityId: eventId,
+      state: 'Open',
+    })
+    .sort({ openedAt: -1 })
+    .session(session)
+    .lean()
   if (!event) {
     throw new DomainError('event proposal not found', 'not_found')
   }

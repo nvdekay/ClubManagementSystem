@@ -135,7 +135,7 @@ export function mongoPropertyRepository(): PropertyRepository {
               $set: details,
               ...(details.capacity === undefined ? { $unset: { capacity: '' } } : {}),
             },
-            { new: true, session },
+            { returnDocument: 'after', session },
           )
           .lean()
         await audit(
@@ -155,7 +155,11 @@ export function mongoPropertyRepository(): PropertyRepository {
       return mongoose.connection.transaction(async (session) => {
         const before = await current(id, session)
         const updated = await properties
-          .findOneAndUpdate({ _id: before._id }, { $set: { isActive } }, { new: true, session })
+          .findOneAndUpdate(
+            { _id: before._id },
+            { $set: { isActive } },
+            { returnDocument: 'after', session },
+          )
           .lean()
         if (before.isActive !== isActive) {
           await audit(

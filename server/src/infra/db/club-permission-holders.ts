@@ -14,25 +14,23 @@ export async function clubUserIdsWithPermission(
   now: Date,
   session?: ClientSession,
 ): Promise<Types.ObjectId[]> {
-  const [club, memberships, terms, positions] = await Promise.all([
-    m
-      .clubs!.findById(clubId)
-      .select({ name: 1, state: 1 })
-      .session(session ?? null)
-      .lean(),
-    m
-      .clubMemberships!.find({ clubId, state: 'Active' })
-      .session(session ?? null)
-      .lean(),
-    m
-      .clubTerms!.find({ clubId, state: 'Active' })
-      .session(session ?? null)
-      .lean(),
-    m
-      .clubPositions!.find({ clubId, isActive: true })
-      .session(session ?? null)
-      .lean(),
-  ])
+  const club = await m
+    .clubs!.findById(clubId)
+    .select({ name: 1, state: 1 })
+    .session(session ?? null)
+    .lean()
+  const memberships = await m
+    .clubMemberships!.find({ clubId, state: 'Active' })
+    .session(session ?? null)
+    .lean()
+  const terms = await m
+    .clubTerms!.find({ clubId, state: 'Active' })
+    .session(session ?? null)
+    .lean()
+  const positions = await m
+    .clubPositions!.find({ clubId, isActive: true })
+    .session(session ?? null)
+    .lean()
   if (!club || !memberships.length) {
     return []
   }

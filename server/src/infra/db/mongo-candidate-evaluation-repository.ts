@@ -113,7 +113,7 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
           .findOneAndUpdate(
             { _id: applicationId, state: 'Shortlisted' },
             { $inc: { __v: 1 } },
-            { new: true, session },
+            { returnDocument: 'after', session },
           )
           .lean()
         if (!application) {
@@ -126,7 +126,7 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
           .findOneAndUpdate(
             { _id: application.campaignId, state: { $ne: 'Cancelled' } },
             { $inc: { __v: 1 } },
-            { new: true, session },
+            { returnDocument: 'after', session },
           )
           .lean()
         if (!campaign) {
@@ -153,7 +153,7 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
               $setOnInsert: { createdAt: input.now },
               ...(Object.keys(unset).length ? { $unset: unset } : {}),
             },
-            { upsert: true, new: true, session },
+            { upsert: true, returnDocument: 'after', session },
           )
           .lean()
         if (!doc) {
