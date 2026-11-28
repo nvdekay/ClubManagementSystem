@@ -4,7 +4,7 @@ import type {
   BoardNominationRepository,
   BoardNominationSeatInput,
 } from '../domain/board-nomination.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type { ClubAccessRepository } from '../domain/access.js'
 import { assertClubAccess, parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
@@ -17,10 +17,7 @@ export async function getBoardNominationContext(
   now: Date,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.board.nominate', now)
-  const context = await repo.getContext(parseObjectId(clubId, 'identifier'))
-  if (!context) {
-    throw new DomainError('club not found', 'not_found')
-  }
+  const context = orNotFound(await repo.getContext(parseObjectId(clubId, 'identifier')), 'club')
   return context
 }
 
@@ -34,15 +31,10 @@ export async function submitBoardNomination(
   now: Date,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.board.nominate', now)
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  const validClubId = parseObjectId(clubId, 'identifier')
-  parseObjectId(actor.id, 'identifier')
   if (!seats.length || seats.length > 30) {
     throw new DomainError('at least one board seat is required', 'validation')
   }
-  const context = await repo.getContext(validClubId)
+  const context = await repo.getContext(clubId)
   if (
     !context?.term ||
     context.term.state !== 'Active' ||
@@ -89,8 +81,8 @@ export async function submitBoardNomination(
     }
   }
   return repo.submit(
-    validClubId,
-    actor.id,
+    clubId,
+    actor!.id,
     context.term.id,
     seats.map((seat) => ({ positionId: seat.positionId, membershipId: seat.membershipId })),
     now,
