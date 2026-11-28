@@ -3,7 +3,6 @@ import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppCard } from '@/components/ui/card/AppCard'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
@@ -14,6 +13,7 @@ import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubRoomAllocations } from '@/hooks/useRoomAllocations'
 import { slotLabel, weekdayLabel } from '@/utils/roomSchedule'
 import { dateFormatter } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Định dạng ngày theo múi giờ Việt Nam
 function vietnamDay(value: string | Date): string {
@@ -73,12 +73,13 @@ export function ClubRoomsPage() {
       {allocations.isPending ? (
         <AppSkeleton className="h-48 w-full" />
       ) : allocations.isError ? (
-        <AppNotice tone="danger" role="alert" title={t('roomAllocations.loadError')}>
+        <AppErrorNotice
+          title={t('roomAllocations.loadError')}
+          onRetry={() => void allocations.refetch()}
+          retryVariant="primary"
+        >
           <p>{allocations.error.message}</p>
-          <AppButton onClick={() => void allocations.refetch()}>
-            {t('roomAllocations.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       ) : !items.length ? (
         <AppEmptyState message={t('roomAllocations.clubEmpty')} />
       ) : (
