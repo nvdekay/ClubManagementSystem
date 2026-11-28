@@ -126,9 +126,6 @@ export function ClubDirectory() {
             pageIndex={page - 1}
             pageCount={Math.ceil(clubs.data.total / clubs.data.pageSize)}
             onPageChange={(index) => setPage(index + 1)}
-            prevLabel={t('discovery.prev')}
-            nextLabel={t('discovery.next')}
-            pageLabel={(number) => t('discovery.pageLabel', { page: number })}
             navLabel={t('discovery.pages')}
           />
         </>
