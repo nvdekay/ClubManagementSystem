@@ -1,15 +1,11 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubTransitionPlanRepository } from '../../domain/club-transition-plan.js'
-import { DomainError } from '../../domain/errors.js'
-import type { SessionService } from '../../domain/session.js'
-import type { AccessActor } from '../../usecase/access.js'
 import { clubTransitionContext, writeClubTransition } from '../../usecase/club-transition-plan.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
+import { objectId as id, parse as parseInput, actor } from './request.js'
 export const transitionPlanBody = z
   .object({
     toTerm: z
@@ -39,43 +35,39 @@ export const transitionPlanSaveBody = transitionPlanBody
   .strict()
 // Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
-  const r = schema.safeParse(value)
-  if (!r.success) {
-    throw new DomainError('invalid transition plan request', 'validation', r.error.issues)
-  }
-  return r.data
+  return parseInput(schema, value, 'transition plan request')
 }
 // Mount các route kế hoạch chuyển giao của CLB
-export function clubTransitionPlanRoutes(deps: {
-  repo: ClubTransitionPlanRepository
-  access: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
-}): Router {
+export function clubTransitionPlanRoutes(
+  deps: SessionDeps & {
+    repo: ClubTransitionPlanRepository
+    access: ClubAccessRepository
+  },
+): Router {
   const r = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Lấy ngữ cảnh và các kế hoạch chuyển giao của CLB
-  r.get('/clubs/:clubId/transition-plans', authGuard(guard, false), async (req, res) => {
+  r.get('/clubs/:clubId/transition-plans', read, async (req, res) => {
     ok(
       res,
       await clubTransitionContext(
         deps.repo,
         deps.access,
-        res.locals.actor as AccessActor,
+        actor(res),
         parse(id, req.params.clubId),
         new Date(),
       ),
     )
   })
   // Tạo kế hoạch chuyển giao mới
-  r.post('/clubs/:clubId/transition-plans', authGuard(guard), async (req, res) => {
+  r.post('/clubs/:clubId/transition-plans', write, async (req, res) => {
     const b = parse(transitionPlanBody, req.body)
     ok(
       res,
       await writeClubTransition(
         deps.repo,
         deps.access,
-        res.locals.actor as AccessActor,
+        actor(res),
         parse(id, req.params.clubId),
         {
           input: {
@@ -93,14 +85,14 @@ export function clubTransitionPlanRoutes(deps: {
     )
   })
   // Cập nhật kế hoạch chuyển giao
-  r.put('/clubs/:clubId/transition-plans/:id', authGuard(guard), async (req, res) => {
+  r.put('/clubs/:clubId/transition-plans/:id', write, async (req, res) => {
     const { revision, ...b } = parse(transitionPlanSaveBody, req.body)
     ok(
       res,
       await writeClubTransition(
         deps.repo,
         deps.access,
-        res.locals.actor as AccessActor,
+        actor(res),
         parse(id, req.params.clubId),
         {
           id: parse(id, req.params.id),
@@ -119,13 +111,13 @@ export function clubTransitionPlanRoutes(deps: {
     )
   })
   // Nộp kế hoạch chuyển giao
-  r.post('/clubs/:clubId/transition-plans/:id/submit', authGuard(guard), async (req, res) => {
+  r.post('/clubs/:clubId/transition-plans/:id/submit', write, async (req, res) => {
     ok(
       res,
       await writeClubTransition(
         deps.repo,
         deps.access,
-        res.locals.actor as AccessActor,
+        actor(res),
         parse(id, req.params.clubId),
         {
           id: parse(id, req.params.id),
