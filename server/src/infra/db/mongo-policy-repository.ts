@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import {
   CLUB_PROFILE_FORM_FIELDS,
@@ -15,6 +14,7 @@ import {
   type SchoolRefundAccount,
 } from '../../domain/policy.js'
 import { ucmsModels } from './ucms-models.js'
+import { writeAudit } from './repo-helpers.js'
 
 // Đọc các cờ boolean theo danh sách khoá, thiếu thì dùng giá trị mặc định
 function flags<K extends string>(
@@ -104,7 +104,6 @@ function mapPolicy(doc: Record<string, unknown>): PolicyVersion {
 // Repository quản lý các phiên bản policy của ICPDP
 export function mongoPolicyRepository(): PolicyManagementRepository {
   const policies = ucmsModels.policyVersions!
-  const audits = ucmsModels.auditLogs!
   const clubs = ucmsModels.clubs!
   const events = ucmsModels.events!
   const bookings = ucmsModels.propertyBookings!
@@ -253,22 +252,16 @@ export function mongoPolicyRepository(): PolicyManagementRepository {
           { session },
         )
         const version = created[0]!
-        await audits.create(
-          [
-            {
-              entityType: 'PolicyVersion',
-              entityId: version._id,
-              action: 'POLICY_VERSION_CREATED',
-              actorId: new Types.ObjectId(input.createdBy),
-              before: previous ? { policyVersionId: String(previous._id) } : null,
-              after: { ...input.settings, effectiveFrom: input.effectiveFrom },
-              reason: input.reason,
-              correlationId: randomUUID(),
-              at: input.createdAt,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'PolicyVersion',
+          entityId: version._id,
+          action: 'POLICY_VERSION_CREATED',
+          actorId: new Types.ObjectId(input.createdBy),
+          before: previous ? { policyVersionId: String(previous._id) } : null,
+          after: { ...input.settings, effectiveFrom: input.effectiveFrom },
+          reason: input.reason,
+          at: input.createdAt,
+        })
         return mapPolicy(version.toObject())
       })
     },
