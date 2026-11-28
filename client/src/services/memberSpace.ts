@@ -1,5 +1,4 @@
-import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export type MembershipState = 'Active' | 'Inactive' | 'Left' | 'Banned'
 export type WithdrawalState = 'Pending' | 'Held' | 'Executed' | 'Cancelled'
 
@@ -76,25 +75,7 @@ export interface MemberSpace {
   otherClubs: Array<{ clubId: string; clubName: string; state: MembershipState }>
 }
 
-/** Mang theo HTTP status để trang hiện "không phải thành viên" (403) thay vì lỗi chung chung. */
-export class MemberSpaceError extends ApiError {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message)
-  }
-}
-
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toMemberSpaceError })
-}
-
-// Maps a failed response to this module's error type
-function toMemberSpaceError(failure: ApiFailure): Error {
-  return new MemberSpaceError(failure.message, failure.status)
-}
+const request = apiClient('/api/v1')
 
 // GET /memberships/mine: các CLB tôi tham gia
 export function fetchMyMemberships(signal: AbortSignal) {
