@@ -1,4 +1,5 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   applyViolationStep,
   fetchViolation,
@@ -48,26 +49,20 @@ export function useViolationSources(clubId: string) {
 
 // Mutation mở hồ sơ vi phạm mới, rồi làm mới danh sách
 export function useOpenViolation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { input: OpenViolationInput; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { input: OpenViolationInput; csrfToken: string }) =>
       openViolation(action.input, action.csrfToken),
-    onSuccess: async (detail) => {
-      queryClient.setQueryData([...violationKey, 'detail', detail.id], detail)
-      await queryClient.invalidateQueries({ queryKey: [...violationKey, 'list'] })
-    },
-  })
+    [[...violationKey, 'list']],
+    (detail) => [[...violationKey, 'detail', detail.id], detail],
+  )
 }
 
 // Mutation thực hiện bước xử lý vi phạm, rồi làm mới cache
 export function useViolationStep() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { id: string; step: ViolationStep; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { id: string; step: ViolationStep; csrfToken: string }) =>
       applyViolationStep(action.id, action.step, action.csrfToken),
-    onSuccess: async (detail) => {
-      queryClient.setQueryData([...violationKey, 'detail', detail.id], detail)
-      await queryClient.invalidateQueries({ queryKey: [...violationKey, 'list'] })
-    },
-  })
+    [[...violationKey, 'list']],
+    (detail) => [[...violationKey, 'detail', detail.id], detail],
+  )
 }
