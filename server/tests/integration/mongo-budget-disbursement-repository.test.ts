@@ -154,117 +154,36 @@ describe.skipIf(!uri)('Mongo budget disbursement repository', () => {
     await mongoose.disconnect()
   })
 
-  it('records advances, sets the settlement deadline and notifies the board and submitter', async () => {
+  it('shows a legacy budget with the money flows recorded before sponsored items', async () => {
     const repo = mongoBudgetDisbursementRepository()
-    const id = await budget('Approved')
+    const id = await budget('Disbursed', { disbursedTotal: 1_500_000 })
+    await ucmsModels.budgetDisbursements!.create({
+      eventBudgetId: new Types.ObjectId(id),
+      kind: 'Advance',
+      amount: decimal(1_500_000),
+      disbursedAt: now,
+      paymentReference: 'UNC-01',
+      recordedBy: officer,
+    })
     expect(
       (await repo.list({ filter: 'all', page: 1, pageSize: 100 })).items.map((item) => item.id),
     ).toContain(id)
-    expect((await repo.find(id))?.allowed).toEqual({ kind: 'Advance', max: 4_000_000 })
-
-    const first = await repo.record(
-      id,
-      String(officer),
-      { kind: 'Advance', amount: 1_500_000, disbursedAt: now, paymentReference: 'UNC-01' },
-      now,
-    )
-    expect(first).toMatchObject({
+    const detail = await repo.find(id)
+    expect(detail).toMatchObject({
       state: 'Disbursed',
       disbursedTotal: 1_500_000,
-      settlementDueAt: new Date(endAt.getTime() + 14 * DAY),
-      allowed: { kind: 'Advance', max: 2_500_000 },
+      lines: [{ category: 'Hậu cần', approvedAmount: 4_000_000, reason: 'Giảm' }],
+      flows: [
+        {
+          kind: 'Advance',
+          amount: 1_500_000,
+          paymentReference: 'UNC-01',
+          recordedByName: 'Cán bộ',
+        },
+      ],
     })
-    expect(first.flows).toMatchObject([
-      { kind: 'Advance', amount: 1_500_000, paymentReference: 'UNC-01', recordedByName: 'Cán bộ' },
-    ])
-
-    const second = await repo.record(
-      id,
-      String(officer),
-      { kind: 'Advance', amount: 2_500_000, disbursedAt: now },
-      now,
-    )
-    expect(second).toMatchObject({ state: 'Disbursed', disbursedTotal: 4_000_000 })
-    expect(second.allowed).toBeUndefined()
-    await expect(
-      repo.record(id, String(officer), { kind: 'Advance', amount: 1, disbursedAt: now }, now),
-    ).rejects.toMatchObject({ kind: 'conflict' })
-
-    const notified = await ucmsModels
-      .notifications!.find({ entityId: new Types.ObjectId(id) })
-      .distinct('recipientUserId')
-    expect(notified.map(String).sort()).toEqual([String(leader), String(submitter)].sort())
-    expect(
-      await ucmsModels.auditLogs!.countDocuments({
-        entityId: new Types.ObjectId(id),
-        action: 'BUDGET_ADVANCE_RECORDED',
-      }),
-    ).toBe(2)
-  })
-
-  it('refuses an advance for a cancelled event', async () => {
-    const repo = mongoBudgetDisbursementRepository()
-    const id = await budget('Approved', {}, 'Cancelled')
-    await expect(
-      repo.record(id, String(officer), { kind: 'Advance', amount: 1, disbursedAt: now }, now),
-    ).rejects.toMatchObject({ kind: 'conflict' })
-  })
-
-  it('closes after the exact top-up and after the full refund', async () => {
-    const repo = mongoBudgetDisbursementRepository()
-    const reconciled = await budget('Reconciled', {
-      disbursedTotal: 3_000_000,
-      settlementBalance: 500_000,
-    })
-    await expect(
-      repo.record(
-        reconciled,
-        String(officer),
-        { kind: 'TopUp', amount: 400_000, disbursedAt: now },
-        now,
-      ),
-    ).rejects.toMatchObject({ kind: 'validation' })
-    expect(
-      await repo.record(
-        reconciled,
-        String(officer),
-        { kind: 'TopUp', amount: 500_000, disbursedAt: now },
-        now,
-      ),
-    ).toMatchObject({ state: 'Closed', disbursedTotal: 3_500_000 })
-
-    const owed = await budget('Recovery Pending', {
-      disbursedTotal: 3_000_000,
-      recoveryAmount: 800_000,
-    })
-    expect(
-      await repo.record(
-        owed,
-        String(officer),
-        { kind: 'Refund', amount: 300_000, disbursedAt: now },
-        now,
-      ),
-    ).toMatchObject({
-      state: 'Recovery Pending',
-      refundedTotal: 300_000,
-      allowed: { kind: 'Refund', max: 500_000 },
-    })
-    await expect(
-      repo.record(
-        owed,
-        String(officer),
-        { kind: 'Refund', amount: 600_000, disbursedAt: now },
-        now,
-      ),
-    ).rejects.toMatchObject({ kind: 'validation' })
-    expect(
-      await repo.record(
-        owed,
-        String(officer),
-        { kind: 'Refund', amount: 500_000, disbursedAt: now },
-        now,
-      ),
-    ).toMatchObject({ state: 'Closed', refundedTotal: 800_000 })
+    expect(detail).not.toHaveProperty('allowed')
+    expect(await repo.find(String(new Types.ObjectId()))).toBeNull()
   })
 
   it('pages budgets server-side with tab and club filters and per-tab counts', async () => {

@@ -3967,9 +3967,10 @@ hình dạng request/response do schema zod định nghĩa và được công b�
 | M11 | `GET\|POST /admin/properties`, `PATCH\|DELETE /admin/properties/:id`, `POST .../:id/activation`, `GET .../:id/booking-conflicts`; `GET /booking-slots`, `GET /clubs/:clubId/booking-events`, `GET /clubs/:clubId/booking-properties`, `GET .../:id/availability`, `GET\|POST /clubs/:clubId/bookings`, `GET\|PATCH .../:id`, `POST .../:id/submit`, `POST .../:id/cancel`, `GET /admin/bookings`, `GET .../:id`, `POST .../:id/claim`, `POST .../:id/decision`; UC58: `GET /admin/room-allocations?semesterCode=`, `GET /admin/room-allocations/options`, `GET /admin/room-allocations/occupancy`, `POST /admin/room-allocations`, `POST /admin/room-allocations/:id/revoke`, `GET /clubs/:clubId/room-allocations` (chỉ đọc, cần `club.room.view`) |
 | M12 | `GET\|POST /events/:id/feedback`, `GET /event-feedbacks/mine`, `GET /clubs/:clubId/events/feedback` (tổng hợp phía CLB); UC50–UC52: `POST /complaints`, `GET /complaints/mine`, `POST /complaints/:id/withdraw`, `GET /admin/complaints?state=`, `GET /admin/complaints/:id`, `POST .../:id/open`, `POST .../:id/link` (E1, ICPDP gộp tay), `POST .../:id/triage`, `POST .../:id/close`, `POST .../:id/escalate`, `GET /clubs/:clubId/complaints`, `POST /clubs/:clubId/complaints/:id/response` |
 
-> Endpoint cũ `POST /admin/budgets/:id/flows` (`kind` Advance / TopUp / Refund) vẫn được mount nhưng
-> client không gọi; không dùng các kind này để suy ra nghiệp vụ mới và cần quyết định gỡ bỏ. Không
-> còn endpoint `/event-budgets/*` hay `/expenses/*`.
+> **Sửa 28/11/2026:** endpoint cũ `POST /admin/budgets/:id/flows` (`kind` Advance / TopUp / Refund)
+> đã được gỡ bỏ vì luồng hạng mục tài trợ thay thế nó từ 23/11/2026. Ngân sách legacy vẫn đọc được qua
+> `GET /admin/budgets/:id` (trường `flows` liệt kê các khoản đã ghi trước đó). Không còn endpoint
+> `/event-budgets/*` hay `/expenses/*`.
 
 Quy ước: endpoint **decision** (`POST …/:id/decision`) mang kết quả kèm lý do và idempotent theo
 từng quyết định (API-07); hàng đợi ICPDP nhận việc bằng `POST …/:id/claim`. Một số luồng dùng endpoint

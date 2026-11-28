@@ -33,7 +33,7 @@ import {
   eventReviewDecisionBody,
 } from './event-proposal-review-routes.js'
 import { sponsoredItemOpenApiPaths } from './openapi-sponsored-items.js'
-import { budgetFlowBody, budgetListQuery } from './budget-disbursement-routes.js'
+import { budgetListQuery } from './budget-disbursement-routes.js'
 import {
   periodicCampaignBody,
   periodicDecisionBody,
@@ -487,13 +487,6 @@ const BudgetDetail = BudgetSummary.extend({
       recordedByName: z.string().optional(),
     }),
   ),
-  allowed: z
-    .object({
-      kind: z.enum(['Advance', 'TopUp', 'Refund']),
-      max: z.number(),
-      exact: z.number().optional(),
-    })
-    .optional(),
 })
 const PeriodFigures = z.object({
   events: z
@@ -3711,7 +3704,8 @@ export const openApiDocument = createDocument({
     },
     '/admin/budgets/{id}': {
       get: {
-        summary: 'Budget with its approved lines, recorded money flows and the flow it accepts now',
+        summary:
+          'Budget with its approved lines and the money flows recorded before sponsored items',
         requestParams: { path: IdPath },
         responses: {
           '200': {
@@ -3721,28 +3715,6 @@ export const openApiDocument = createDocument({
                 schema: envelope(BudgetDetail),
               },
             },
-          },
-        },
-      },
-    },
-    '/admin/budgets/{id}/flows': {
-      post: {
-        summary: 'Record an advance, top-up or club refund (requires CSRF token)',
-        requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: budgetFlowBody } } },
-        responses: {
-          '200': {
-            description: 'Updated budget',
-            content: { 'application/json': { schema: envelope(BudgetDetail) } },
-          },
-          '400': {
-            description:
-              'Amount over the approved total, not the exact top-up, or over what is owed',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'The budget does not accept this kind of flow now',
-            content: { 'application/json': { schema: ApiError } },
           },
         },
       },
