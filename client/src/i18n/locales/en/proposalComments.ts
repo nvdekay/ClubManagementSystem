@@ -13,6 +13,4 @@ export const proposalComments = {
   count: '{{count}} comment(s)',
   placeholder: 'Explain what is missing or needs revision in this section…',
   saveError: 'Unable to save the comment. Your text has been kept; please try again.',
-  loadError: 'Unable to load comments.',
-  retry: 'Retry',
 }
