@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
@@ -12,8 +12,9 @@ import {
   useMyRecruitmentApplications,
   useRecruitmentApplicationAction,
 } from '@/hooks/useRecruitmentApplications'
-import type { RecruitmentApplication } from '@/services/recruitmentApplications'
 import { useConfirm } from '@/hooks/useConfirm'
+import { recruitmentStateTone } from '@/pages/student/recruitmentApplicationFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang danh sách hồ sơ ứng tuyển CLB của sinh viên
 export function RecruitmentApplicationsPage() {
@@ -22,32 +23,6 @@ export function RecruitmentApplicationsPage() {
   const auth = useAuth()
   const applications = useMyRecruitmentApplications(Boolean(auth.data))
   const action = useRecruitmentApplicationAction()
-  // Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
-  function stateLabel(state: RecruitmentApplication['state']): string {
-    switch (state) {
-      case 'Draft':
-        return t('recruitmentApplications.stateDraft')
-      case 'Submitted':
-        return t('recruitmentApplications.stateSubmitted')
-      case 'Screening':
-        return t('recruitmentApplications.stateScreening')
-      case 'Shortlisted':
-        return t('recruitmentApplications.stateShortlisted')
-      case 'Accepted':
-        return t('recruitmentApplications.stateAccepted')
-      case 'Rejected':
-        return t('recruitmentApplications.stateRejected')
-      case 'Waitlisted':
-        return t('recruitmentApplications.stateWaitlisted')
-      case 'Onboarded':
-        return t('recruitmentApplications.stateOnboarded')
-      case 'Withdrawn':
-        return t('recruitmentApplications.stateWithdrawn')
-      case 'Declined':
-        return t('recruitmentApplications.stateDeclined')
-    }
-  }
-
   // Xác nhận rồi rút hồ sơ ứng tuyển
   async function withdraw(applicationId: string) {
     if (!auth.data || !(await askConfirm(t('recruitmentApplications.withdrawConfirm')))) {
@@ -58,23 +33,6 @@ export function RecruitmentApplicationsPage() {
     } catch {
       /* The mutation error is rendered in the page. */
     }
-  }
-
-  // Màu badge theo trạng thái hồ sơ ứng tuyển
-  function stateTone(state: RecruitmentApplication['state']): AppBadgeTone {
-    if (state === 'Accepted' || state === 'Onboarded') {
-      return 'success'
-    }
-    if (state === 'Rejected' || state === 'Declined') {
-      return 'danger'
-    }
-    if (state === 'Waitlisted') {
-      return 'warning'
-    }
-    if (state === 'Draft' || state === 'Withdrawn') {
-      return 'neutral'
-    }
-    return 'info'
   }
 
   const header = (
@@ -96,34 +54,17 @@ export function RecruitmentApplicationsPage() {
     )
   }
   if (!auth.data) {
-    return (
-      <>
-        {header}
-        <AppNotice>
-          <p>{t('recruitmentApplications.signIn')}</p>
-          <Link
-            className="inline-block font-medium text-primary-app hover:underline"
-            to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-          >
-            {t('recruitmentApplications.signInLink')}
-          </Link>
-        </AppNotice>
-      </>
-    )
+    return null
   }
   if (applications.isError || !applications.data) {
     return (
       <>
         {header}
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={applications.error?.message ?? t('recruitmentApplications.listError')}
-        >
-          <AppButton variant="secondary" onClick={() => void applications.refetch()}>
-            {t('recruitmentApplications.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void applications.refetch()}
+          retryLabel={t('recruitmentApplications.retry')}
+        />
       </>
     )
   }
@@ -169,8 +110,8 @@ export function RecruitmentApplicationsPage() {
                   <h2 className="min-w-0 font-heading text-base font-semibold break-words">
                     {application.campaignTitle ?? application.position}
                   </h2>
-                  <AppBadge tone={stateTone(application.state)}>
-                    {stateLabel(application.state)}
+                  <AppBadge tone={recruitmentStateTone(application.state)}>
+                    {t(`recruitmentApplications.state${application.state}`)}
                   </AppBadge>
                 </div>
                 <p className="mt-1 text-sm text-muted-app">
