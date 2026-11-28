@@ -1,30 +1,25 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { EventCheckInRepository } from '../../domain/event-checkin.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import { checkInToEvent, listMyAttendances } from '../../usecase/event-checkin.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface EventCheckInRouteDeps {
+export interface EventCheckInRouteDeps extends SessionDeps {
   repo: EventCheckInRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const eventCheckInBody = z.object({ code: z.string().trim().min(1).max(64) }).strict()
 
 // Mount các route điểm danh sự kiện của sinh viên
 export function eventCheckInRoutes(deps: EventCheckInRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Sinh viên điểm danh vào sự kiện
-  router.post('/events/:id/check-in', authGuard(guard), async (req, res) => {
+  router.post('/events/:id/check-in', write, async (req, res) => {
     const body = parse(eventCheckInBody, req.body, 'check-in request')
     ok(
       res,
@@ -39,7 +34,7 @@ export function eventCheckInRoutes(deps: EventCheckInRouteDeps): Router {
     )
   })
   // Liệt kê lịch sử điểm danh của tôi
-  router.get('/attendances/mine', authGuard(guard, false), async (_req, res) => {
+  router.get('/attendances/mine', read, async (_req, res) => {
     ok(res, await listMyAttendances(deps.repo, deps.policy, actor(res)))
   })
   return router
