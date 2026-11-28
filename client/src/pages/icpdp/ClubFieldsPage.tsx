@@ -1,13 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { Link } from 'react-router'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
@@ -27,6 +24,8 @@ import {
   type ClubFieldInput,
   type ClubFieldUsage,
 } from '@/services/clubFields'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface FieldDraft {
   name: string
@@ -124,9 +123,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
           className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]"
           onSubmit={(event) => void save(event)}
         >
-          <label className="block text-sm font-medium text-text-app">
-            {t('clubFields.name')}
-            <AppRequiredMark />
+          <AppField label={t('clubFields.name')} required error={form.error('name')}>
             <AppInput
               className="mt-1.5 block w-full font-normal"
               maxLength={100}
@@ -135,10 +132,8 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
               {...form.control('name')}
               onChange={(event) => setDraft({ ...draft, name: event.target.value })}
             />
-            <AppFieldError message={form.error('name')} />
-          </label>
-          <label className="block text-sm font-medium text-text-app">
-            {t('clubFields.order')}
+          </AppField>
+          <AppField label={t('clubFields.order')}>
             <AppInput
               className="mt-1.5 block w-full font-normal"
               type="number"
@@ -147,7 +142,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
               value={draft.sortOrder}
               onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
             />
-          </label>
+          </AppField>
           <div className="flex flex-wrap gap-2 sm:mt-6.5">
             <AppButton type="submit" disabled={update.isPending}>
               {update.isPending ? t('clubFields.saving') : t('clubFields.save')}
@@ -277,9 +272,7 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
     >
       <h2 className="font-heading text-base font-semibold">{t('clubFields.addTitle')}</h2>
       <div className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]">
-        <label className="block text-sm font-medium text-text-app">
-          {t('clubFields.name')}
-          <AppRequiredMark />
+        <AppField label={t('clubFields.name')} required error={field.error('name')}>
           <AppInput
             className="mt-1.5 block w-full font-normal"
             maxLength={100}
@@ -287,10 +280,8 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
             {...field.control('name')}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
-          <AppFieldError message={field.error('name')} />
-        </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('clubFields.order')}
+        </AppField>
+        <AppField label={t('clubFields.order')}>
           <AppInput
             className="mt-1.5 block w-full font-normal"
             type="number"
@@ -300,7 +291,7 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
             value={draft.sortOrder}
             onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })}
           />
-        </label>
+        </AppField>
         <AppButton type="submit" disabled={create.isPending} className="sm:mt-6.5">
           <AppIcon name="plus" className="size-4" />
           {create.isPending ? t('clubFields.adding') : t('clubFields.add')}
@@ -333,33 +324,23 @@ export function ClubFieldsPage() {
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : auth.isError ? (
-        <AppNotice tone="danger" role="alert" title={auth.error.message}>
-          <AppButton onClick={() => void auth.refetch()}>{t('clubFields.retry')}</AppButton>
-        </AppNotice>
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('clubFields.signIn')}</p>
-          <Link
-            className="font-semibold text-primary-app hover:underline"
-            to="/login?returnTo=%2Fworkspace%2Fclub-fields"
-          >
-            {t('clubFields.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+        <AppErrorNotice
+          title={auth.error.message}
+          onRetry={() => void auth.refetch()}
+          retryVariant="primary"
+        />
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('clubFields.forbidden')}
         </AppNotice>
       ) : fields.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : fields.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={`${t('clubFields.loadError')} ${fields.error.message}`}
-        >
-          <AppButton onClick={() => void fields.refetch()}>{t('clubFields.retry')}</AppButton>
-        </AppNotice>
+          onRetry={() => void fields.refetch()}
+          retryVariant="primary"
+        />
       ) : (
         <div className="space-y-6">
           {fields.data.length === 0 ? (
