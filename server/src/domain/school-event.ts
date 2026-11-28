@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js'
+import { invalidField as invalid, optionalText } from './errors.js'
 import type { AcademicSemester } from './policy.js'
 
 /** Mặc định BR59: CLB phản hồi trước khi sự kiện bắt đầu ba ngày (hằng số của tài liệu chính sách). */
@@ -129,20 +129,6 @@ export interface SchoolEventRepository {
   expireInvitations(now: Date): Promise<number>
 }
 
-// Ném lỗi validation cho trường sự kiện trường không hợp lệ
-function invalid(message: string, field: string): never {
-  throw new DomainError(message, 'validation', { field })
-}
-
-// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của sự kiện trường
-function text(value: string | undefined, max: number, field: string): string | undefined {
-  const trimmed = value?.trim()
-  if (trimmed && trimmed.length > max) {
-    invalid(`${field} is too long`, field)
-  }
-  return trimmed || undefined
-}
-
 // BR44: tìm học kỳ chứa trọn sự kiện
 /** BR44: học kỳ chứa trọn sự kiện. */
 export function semesterOf(
@@ -193,7 +179,7 @@ export function normalizedSchoolEvent(
   calendar: readonly AcademicSemester[],
   now: Date,
 ): NormalizedSchoolEvent {
-  const title = text(input.title, 200, 'title')
+  const title = optionalText(input.title, 200, 'title')
   if (!title) {
     invalid('a title is required', 'title')
   }
@@ -203,7 +189,7 @@ export function normalizedSchoolEvent(
   if (Number.isNaN(input.endAt.getTime()) || input.endAt <= input.startAt) {
     invalid('the event must end after it starts', 'endAt')
   }
-  const venueText = text(input.venueText, 200, 'venueText')
+  const venueText = optionalText(input.venueText, 200, 'venueText')
   if (!venueText && !input.propertyId) {
     invalid('choose a room or type a venue', 'venueText')
   }
@@ -212,8 +198,8 @@ export function normalizedSchoolEvent(
   }
   return {
     title,
-    objective: text(input.objective, 5_000, 'objective'),
-    coordination: text(input.coordination, 5_000, 'coordination'),
+    objective: optionalText(input.objective, 5_000, 'objective'),
+    coordination: optionalText(input.coordination, 5_000, 'coordination'),
     startAt: input.startAt,
     endAt: input.endAt,
     venueText,
