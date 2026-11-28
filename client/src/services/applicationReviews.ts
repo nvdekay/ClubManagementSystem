@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 import type {
   ApplicationRecord,
   ApplicationVersion,
@@ -50,10 +50,7 @@ export interface ReviewDecisionInput {
   revisionDeadlineAt?: string
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/application-reviews${path}`, options)
-}
+const request = apiClient('/api/v1/admin/application-reviews')
 
 // GET hàng đợi hồ sơ thành lập CLB chờ ICPDP xét duyệt
 export function fetchReviewQueue(signal: AbortSignal): Promise<ReviewQueueItem[]> {
