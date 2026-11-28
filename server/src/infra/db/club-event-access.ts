@@ -6,7 +6,13 @@ import {
   type ClubPermission,
 } from '../../domain/access.js'
 import { DomainError } from '../../domain/errors.js'
+import {
+  assignmentAccessFrom,
+  positionAccessFrom,
+  termAccessFrom,
+} from './club-permission-holders.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { found, lockActiveUser, lockIcpdpOfficerRole } from './repo-helpers.js'
 
 // Kiểm tra quyền ghi sự kiện của actor và khóa các dòng cấp quyền
 export async function assertEventWriteAccess(
@@ -17,34 +23,13 @@ export async function assertEventWriteAccess(
   now: Date,
 ): Promise<ClubPermission[]> {
   // These writes serialize against lifecycle, account locking, role edits and membership changes.
-  const user = await m
-    .users!.findOneAndUpdate(
-      { _id: actorId, accountState: 'Active' },
-      { $inc: { __v: 1 } },
-      { session },
-    )
-    .lean()
-  if (!user) {
-    throw new DomainError('account is not active', 'locked')
-  }
-  const club = await m
-    .clubs!.findOneAndUpdate({ _id: clubId }, { $inc: { __v: 1 } }, { session })
-    .lean()
-  if (!club) {
-    throw new DomainError('club not found', 'not_found')
-  }
+  await lockActiveUser(session, actorId)
+  const club = found(
+    await m.clubs!.findOneAndUpdate({ _id: clubId }, { $inc: { __v: 1 } }, { session }).lean(),
+    'club not found',
+  )
   if (permission === 'ICPDP_OFFICER') {
-    const roles = await m.roles!.find({ code: permission, scope: 'system' }).session(session).lean()
-    const assignment = await m
-      .userRoleAssignments!.findOneAndUpdate(
-        { userId: actorId, roleId: { $in: roles.map((r) => r._id) }, revokedAt: null },
-        { $inc: { __v: 1 } },
-        { session },
-      )
-      .lean()
-    if (!assignment) {
-      throw new DomainError('ICPDP officer role required', 'forbidden')
-    }
+    await lockIcpdpOfficerRole(session, actorId)
     return []
   }
   const membership = await m
@@ -75,30 +60,9 @@ export async function assertEventWriteAccess(
       clubId: String(clubId),
       state: String(membership.state),
     },
-    terms: terms.map((t) => ({
-      id: String(t._id),
-      clubId: String(clubId),
-      state: String(t.state),
-      startAt: t.startAt as Date,
-      endAt: t.endAt as Date,
-    })),
-    positions: positions.map((p) => ({
-      id: String(p._id),
-      clubId: String(clubId),
-      code: String(p.code),
-      isActive: p.isActive === true,
-      isLeaderRole: p.isLeaderRole === true,
-      isBoardSeat: p.isBoardSeat === true,
-    })),
-    assignments: assignments.map((a) => ({
-      clubId: String(clubId),
-      membershipId: String(a.membershipId),
-      termId: String(a.termId),
-      positionId: String(a.positionId),
-      effectiveFrom: a.effectiveFrom as Date,
-      effectiveTo: a.effectiveTo as Date | undefined,
-      confirmedBy: a.confirmedBy ? String(a.confirmedBy) : undefined,
-    })),
+    terms: terms.map((t) => termAccessFrom(t, clubId)),
+    positions: positions.map((p) => positionAccessFrom(p, clubId)),
+    assignments: assignments.map((a) => assignmentAccessFrom(a, clubId)),
     isApprovedFounder: false,
   }
   requireClubPermission(snapshot, permission, now)
