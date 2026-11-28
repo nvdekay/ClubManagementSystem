@@ -1,62 +1,24 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 
-import { AppButton } from '@/components/ui/button/AppButton'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
-import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { useAuth } from '@/hooks/useAuth'
 import { useMyApplications } from '@/hooks/useApplications'
+import {
+  applicationStateLabel,
+  applicationStateTone,
+} from '@/pages/student/applicationEditorFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang danh sách đơn thành lập CLB của sinh viên
 export function ApplicationsPage() {
   const { t } = useTranslation()
   const auth = useAuth()
   const applications = useMyApplications(Boolean(auth.data))
-  // Nhãn đã dịch của trạng thái đơn
-  function stateLabel(state: string): string {
-    switch (state) {
-      case 'Draft':
-        return t('applications.statusDraft')
-      case 'Submitted':
-        return t('applications.statusSubmitted')
-      case 'Under Review':
-        return t('applications.statusUnderReview')
-      case 'Revision Requested':
-        return t('applications.statusRevisionRequested')
-      case 'Approved':
-        return t('applications.statusApproved')
-      case 'Rejected':
-        return t('applications.statusRejected')
-      case 'Withdrawn':
-        return t('applications.statusWithdrawn')
-      case 'Expired':
-        return t('applications.statusExpired')
-      default:
-        return t('applications.state')
-    }
-  }
-
-  // Màu badge theo trạng thái đơn
-  function stateTone(state: string): AppBadgeTone {
-    if (state === 'Approved') {
-      return 'success'
-    }
-    if (state === 'Rejected' || state === 'Expired') {
-      return 'danger'
-    }
-    if (state === 'Revision Requested') {
-      return 'warning'
-    }
-    if (state === 'Draft' || state === 'Withdrawn') {
-      return 'neutral'
-    }
-    return 'info'
-  }
-
   return (
     <>
       <PageHeader
@@ -79,26 +41,11 @@ export function ApplicationsPage() {
           ))}
         </div>
       ) : auth.isError || applications.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={applications.error?.message ?? auth.error?.message ?? t('applications.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void applications.refetch()}>
-            {t('applications.retry')}
-          </AppButton>
-        </AppNotice>
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('applications.signIn')}</p>
-          <Link
-            to="/login?returnTo=%2Fworkspace%2Fapplications"
-            className="inline-block font-medium text-primary-app hover:underline"
-          >
-            {t('applications.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : applications.data?.length ? (
+          onRetry={() => void applications.refetch()}
+        />
+      ) : !auth.data ? null : applications.data?.length ? (
         <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {applications.data.map((application) => (
             <li key={application.id}>
@@ -122,8 +69,8 @@ export function ApplicationsPage() {
                     </span>
                   )}
                 </span>
-                <AppBadge tone={stateTone(application.state)}>
-                  {stateLabel(application.state)}
+                <AppBadge tone={applicationStateTone(application.state)}>
+                  {applicationStateLabel(t, application.state)}
                 </AppBadge>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app group-hover:text-text-app">
                   {t('applications.edit')}
