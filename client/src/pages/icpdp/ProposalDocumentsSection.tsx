@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import type { EventProposalVersion } from '@/services/eventProposalReviews'
 import { proposalDocument } from '@/pages/icpdp/eventProposalReviewFormat'
-import { formatDate } from '@/utils/formatDate'
 import { formatBytes } from '@/utils/proposalFile'
+import { useFormat } from '@/hooks/useFormat'
 
 interface ProposalDocumentsSectionProps {
   versions: EventProposalVersion[]
@@ -22,11 +22,9 @@ export function ProposalDocumentsSection({
   error,
   onOpen,
 }: ProposalDocumentsSectionProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const currentDocument = proposalDocument(current)
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   return (
     <section className="rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs">
       <h2 className="font-heading text-base font-semibold">{t('eventReviews.documentTitle')}</h2>
