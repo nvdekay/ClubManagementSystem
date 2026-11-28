@@ -1,7 +1,10 @@
-import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
-import { proposalDocumentMaxBytes } from '@/utils/proposalFile'
-import type { EventProposalTemplateInfo, FileAccess } from '@/services/clubEvents'
+import { apiClient } from '@/services/apiRequest'
+import {
+  documentAccessQuery,
+  downloadSignedFile,
+  type EventProposalTemplateInfo,
+  type FileAccess,
+} from '@/services/clubEvents'
 import type { EventDefenseSession } from '@/services/eventDefense'
 
 export type EventReviewOutcome = 'Request revision' | 'Approve' | 'Reject' | 'Re-defense'
@@ -142,10 +145,7 @@ export interface EventReviewDecisionInput {
   }[]
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/event-proposals${path}`, options)
-}
+const request = apiClient('/api/v1/admin/event-proposals')
 
 // GET hàng đợi đề xuất sự kiện chờ ICPDP
 export function fetchEventProposalQueue(
@@ -209,10 +209,7 @@ export function accessReviewProposalDocument(
   revisionNo?: number,
   inline = false,
 ): Promise<FileAccess> {
-  const query = new URLSearchParams({
-    inline: String(inline),
-    ...(revisionNo ? { revisionNo: String(revisionNo) } : {}),
-  })
+  const query = documentAccessQuery(revisionNo, inline)
   return request(`/${encodeURIComponent(id)}/document/access?${query}`)
 }
 
@@ -222,17 +219,5 @@ export async function fetchReviewProposalPreviewFile(
   revisionNo: number,
   signal: AbortSignal,
 ): Promise<File> {
-  const access = await accessReviewProposalDocument(id, revisionNo)
-  const response = await fetch(access.url, { signal, credentials: 'omit' })
-  if (!response.ok) {
-    throw new ApiError(`HTTP ${response.status}`, response.status)
-  }
-  if (Number(response.headers.get('content-length')) > proposalDocumentMaxBytes) {
-    throw new ApiError('Document too large', 413)
-  }
-  const blob = await response.blob()
-  if (blob.size > proposalDocumentMaxBytes) {
-    throw new ApiError('Document too large', 413)
-  }
-  return new File([blob], access.fileName, { type: access.mimeType })
+  return downloadSignedFile(await accessReviewProposalDocument(id, revisionNo), signal)
 }
