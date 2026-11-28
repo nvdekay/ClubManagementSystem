@@ -97,7 +97,7 @@ export interface Dashboard {
 export type DashboardContext =
   { workspace: 'student' } | { workspace: 'icpdp' } | { workspace: 'club'; clubId: string }
 
-/** UC02 xem chi tiết: một sự kiện nội bộ đã ghi nhận của bất kỳ CLB nào (BR53). */
+/** Nguồn tạo ghế ban chủ nhiệm: duyệt hồ sơ (UC08), đề cử (UC10/UC11) hoặc chuyển giao (UC12/UC13). */
 export type BoardSeatSource = 'APPLICATION' | 'NOMINATION' | 'TRANSITION'
 
 /** BR56: các phiên bản cơ cấu và ban chủ nhiệm của mọi nhiệm kỳ, mới nhất trước. */
@@ -158,7 +158,7 @@ export function fetchDashboard(context: DashboardContext, signal: AbortSignal): 
   return get(`?${new URLSearchParams(context).toString()}`, signal)
 }
 
-// GET /dashboard/internal-events: sự kiện nội bộ lọc theo CLB và học kỳ
+// GET /dashboard/clubs/:clubId/board-history: lịch sử ban chủ nhiệm của một CLB
 export function fetchClubBoardHistory(
   clubId: string,
   signal: AbortSignal,
