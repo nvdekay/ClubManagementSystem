@@ -31,7 +31,6 @@ export const roomAllocations = {
   denied: 'Only ICPDP officers can allocate rooms.',
   selectClub: 'Select a club',
   selectRoom: 'Select a room',
-  selectBuilding: 'Select a building',
   gridTitle: 'This room in {{semester}}',
   gridHint: 'Pick a free cell to choose the day and slot.',
   gridFree: 'Free',
@@ -47,7 +46,6 @@ export const roomAllocations = {
   conflictTitle: 'These dates are already in use',
   conflictEvent: 'Event',
   conflictBooking: 'Booking',
-  invalidForm: 'Choose the club, room, day and slot.',
   revokeTitle: 'Revoke allocation',
   revokeReason: 'Reason',
   revokeRule:
