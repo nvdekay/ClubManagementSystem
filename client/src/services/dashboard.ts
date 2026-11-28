@@ -1,4 +1,3 @@
-import { ApiError } from '@/services/apiError'
 import { apiRequest } from '@/services/apiRequest'
 export type DashboardKind = 'student' | 'club' | 'icpdp'
 
@@ -134,23 +133,9 @@ export interface ClubBoardHistory {
   }[]
 }
 
-/** Response không phải 2xx; giữ status để phân biệt 404 với request thất bại. */
-export class DashboardRequestError extends ApiError {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message, status)
-    this.name = 'DashboardRequestError'
-  }
-}
-
-// GET /dashboard through the shared helper, failing with DashboardRequestError
+// GET /dashboard through the shared helper
 function get<T>(path: string, signal: AbortSignal): Promise<T> {
-  return apiRequest<T>(`/api/v1/dashboard${path}`, {
-    signal,
-    toError: (failure) => new DashboardRequestError(failure.message, failure.status),
-  })
+  return apiRequest<T>(`/api/v1/dashboard${path}`, { signal })
 }
 
 // GET /dashboard: số liệu dashboard theo ngữ cảnh
