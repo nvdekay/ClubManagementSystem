@@ -2,12 +2,12 @@ import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubTransitionPlans } from '@/hooks/useClubTransitionPlans'
 import { ClubTransitionPlanEditor } from './ClubTransitionPlanEditor'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 // Trang kế hoạch chuyển giao nhiệm kỳ ban chủ nhiệm của CLB
 export function ClubTransitionPlansPage() {
   const { clubId = '' } = useParams()
@@ -29,12 +29,9 @@ export function ClubTransitionPlansPage() {
       />
       {query.isPending && <AppSkeleton className="h-64 w-full" />}
       {query.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void query.refetch()} retryVariant="primary">
           {query.error.message}
-          <AppButton onClick={() => void query.refetch()}>
-            {t('clubTransitionPlans.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {query.data && (
         <div className="space-y-6">
