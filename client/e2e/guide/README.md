@@ -22,7 +22,7 @@ Ghi đè bằng `E2E_DB_NAME` (phải bắt đầu bằng `ucms-e2e`), `E2E_SERV
 | `../guide.config.ts` | Cấu hình Playwright riêng cho việc chụp |
 | `defaults.ts` | Đặt database và cổng mặc định trước khi `../setup/env.ts` được đọc |
 | `global-setup.ts` | Chạy `prepare-guide.ts`, rồi cấp phiên cho từng vai |
-| `prepare-guide.ts` | Dữ liệu riêng cho ảnh: hồ sơ thành lập, báo cáo sau sự kiện, kinh phí theo hạng mục, yêu cầu cơ sở vật chất, khiếu nại đã chuyển CLB; đổi nhãn e2e sang tiếng Việt. Ghi qua usecase/repository của server |
+| `prepare-guide.ts` | Dữ liệu riêng cho ảnh: hồ sơ thành lập, báo cáo sau sự kiện, kinh phí theo hạng mục, yêu cầu cơ sở vật chất, khiếu nại đã chuyển CLB, ghế ban chủ nhiệm còn trống ở HEBE, buổi bảo vệ đề án đang diễn ra, bản nháp đánh giá CLB; đổi nhãn e2e sang tiếng Việt. Ghi qua usecase/repository của server |
 | `capture.ts` | Mở trang, chờ dữ liệu tải xong (không còn skeleton, ảnh, toast), lưu PNG |
 | `screens.guide.ts` | Mỗi test chụp một hoặc vài ảnh, tên file trùng `images/manifest.json` |
 

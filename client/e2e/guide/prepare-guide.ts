@@ -2,8 +2,9 @@
 // guide screen shows a record in the state its chapter describes. Runs under tsx from
 // guide/global-setup.ts, only against the guide database. Writes go through the app's own usecases
 // and repositories, except where the server seeds themselves write directly (the approved event and
-// budget of the sponsored-payment demo, as seed-sponsored-payments.ts does) and the relabelling of
-// e2e test records into sample Vietnamese text.
+// budget of the sponsored-payment demo, as seed-sponsored-payments.ts does), the extra HEBE board
+// seat (written as a leadership transition writes one) and the relabelling of e2e test records into
+// sample Vietnamese text.
 import './defaults'
 
 import { createHash, randomUUID } from 'node:crypto'
@@ -23,7 +24,13 @@ import { mongoAuthRepository } from '../../../server/src/infra/db/mongo-auth-rep
 import { mongoClubApplicationRepository } from '../../../server/src/infra/db/mongo-club-application-repository.js'
 import { mongoClubFieldRepository } from '../../../server/src/infra/db/mongo-club-field-repository.js'
 import { mongoComplaintRepository } from '../../../server/src/infra/db/mongo-complaint-repository.js'
+import { mongoEvaluationRepository } from '../../../server/src/infra/db/mongo-evaluation-repository.js'
+import { mongoEvaluationSchemeRepository } from '../../../server/src/infra/db/mongo-evaluation-scheme-repository.js'
+import { mongoEventDefenseRepository } from '../../../server/src/infra/db/mongo-event-defense-repository.js'
+import { mongoEventProposalReviewRepository } from '../../../server/src/infra/db/mongo-event-proposal-review-repository.js'
 import { mongoFacilityBookingRepository } from '../../../server/src/infra/db/mongo-facility-booking-repository.js'
+import { roleSnapshot } from '../../../server/src/infra/db/mongo-leadership-transition-repository.js'
+import { mongoPeriodicReportRepository } from '../../../server/src/infra/db/mongo-periodic-report-repository.js'
 import { mongoPolicyRepository } from '../../../server/src/infra/db/mongo-policy-repository.js'
 import { mongoPostEventReportRepository } from '../../../server/src/infra/db/mongo-post-event-report-repository.js'
 import { mongoPropertyRepository } from '../../../server/src/infra/db/mongo-property-repository.js'
@@ -37,7 +44,15 @@ import {
   uploadApplicationDocument,
 } from '../../../server/src/usecase/club-application.js'
 import { decideComplaint } from '../../../server/src/usecase/complaint.js'
+import {
+  confirmClubEventDefense,
+  saveDefenseNote,
+  scheduleEventDefense,
+  startEventDefense,
+} from '../../../server/src/usecase/event-defense.js'
+import { claimEventProposalReview } from '../../../server/src/usecase/event-proposal-review.js'
 import { saveBooking, submitBooking } from '../../../server/src/usecase/facility-booking.js'
+import { decidePeriodicReport } from '../../../server/src/usecase/periodic-report.js'
 import { assertE2eDatabase, hebeClubId, mongoUri, officerEmail } from '../setup/env.js'
 
 /** Sample name shown for the officer account (also the HEBE leader) in the guide. */
@@ -527,6 +542,178 @@ async function forwardedComplaint(officer: Types.ObjectId): Promise<void> {
   )
 }
 
+/** Name of the HEBE board seat left vacant for the nomination screens (chapter 5). */
+export const vacantSeatName = 'Phó chủ nhiệm phụ trách đối ngoại'
+
+// A second Vice Leader seat in HEBE with nobody on it, so the club can nominate a member and ICPDP
+// can confirm the nomination (chapter 5). HEBE's seeded board has every seat filled. The seat is
+// written as a leadership transition (UC13) writes a new board seat: the position plus a new
+// role-structure version (BR56). The nomination itself is submitted through the UI by the capture.
+async function vacantBoardSeat(officer: Types.ObjectId): Promise<void> {
+  const seat = {
+    clubId: hebe,
+    code: 'VICE_LEADER',
+    name: vacantSeatName,
+    isBoardSeat: true,
+    isLeaderRole: false,
+    isDefaultMemberRole: false,
+    isSingleHolder: true,
+    permissionCodes: [],
+    isActive: true,
+  }
+  if (await m.clubPositions!.exists({ clubId: hebe, code: seat.code })) {
+    return
+  }
+  await m.clubPositions!.create(seat)
+  const positions = await m.clubPositions!.find({ clubId: hebe, isActive: true }).lean()
+  const previous = await m
+    .clubRoleStructureVersions!.findOne({ clubId: hebe })
+    .sort({ versionNo: -1 })
+    .lean()
+  await m.clubRoleStructureVersions!.create({
+    clubId: hebe,
+    versionNo: Number(previous?.versionNo ?? 0) + 1,
+    effectiveFrom: now,
+    source: 'TRANSITION',
+    roles: positions.map(roleSnapshot),
+    createdBy: officer,
+    reason: 'Bổ sung ghế Phó chủ nhiệm phụ trách đối ngoại',
+    createdAt: now,
+  })
+}
+
+/** Proposal whose defense is in progress when the guide is captured (chapter 9, BR63). */
+export const liveDefenseEventTitle = 'Hackathon An toàn thông tin 24h'
+
+// A defense session of a proposal under review that is in progress right now, so the live
+// defense room can be captured. Everything goes through the defense usecases: the review is
+// claimed and the session scheduled three days ago (the schedule needs 48 hours' notice), the
+// club leader confirmed it the next day, and the officer started it five minutes after its start.
+async function liveDefense(officer: Types.ObjectId): Promise<void> {
+  const event = await m
+    .events!.findOne({ title: liveDefenseEventTitle, state: 'Pending Approval' })
+    .lean()
+  if (!event) {
+    console.warn('[guide] skipped the live defense: no pending proposal to defend')
+    return
+  }
+  const leaderPosition = await m
+    .clubPositions!.findOne({ clubId: event.clubId, isLeaderRole: true, isActive: true })
+    .lean()
+  const leaderSeat =
+    leaderPosition &&
+    (await m
+      .clubPositionAssignments!.findOne({ positionId: leaderPosition._id, effectiveTo: null })
+      .lean())
+  const leaderMembership =
+    leaderSeat && (await m.clubMemberships!.findById(leaderSeat.membershipId).lean())
+  if (!leaderMembership) {
+    console.warn('[guide] skipped the live defense: the club has no leader')
+    return
+  }
+  const id = String(event._id)
+  const auth = mongoAuthRepository('*')
+  const reviews = mongoEventProposalReviewRepository()
+  const defenses = mongoEventDefenseRepository(reviews)
+  const minute = 60_000
+  const startAt = new Date(now.getTime() - 5 * minute)
+  const scheduledAt = new Date(now.getTime() - 3 * 86_400_000)
+  const durationMinutes = 90
+  const rooms = await defenses.listAvailableRooms(
+    startAt,
+    new Date(startAt.getTime() + durationMinutes * minute),
+  )
+  const room = rooms.find((item) => item.available)
+  if (!room) {
+    console.warn('[guide] skipped the live defense: no free room')
+    return
+  }
+  await claimEventProposalReview(reviews, auth, actor(officer), id, scheduledAt)
+  await scheduleEventDefense(
+    defenses,
+    auth,
+    actor(officer),
+    id,
+    {
+      title: 'Bảo vệ đề án Hackathon An toàn thông tin 24h',
+      startAt,
+      durationMinutes,
+      propertyId: room.id,
+      note: 'Trình bày phương án an ninh mạng cho cuộc thi và chi tiết ngân sách giải thưởng.',
+    },
+    scheduledAt,
+  )
+  await confirmClubEventDefense(
+    defenses,
+    mongoAccessRepository(),
+    actor(leaderMembership.userId),
+    String(event.clubId),
+    id,
+    new Date(scheduledAt.getTime() + 86_400_000),
+  )
+  await startEventDefense(defenses, auth, actor(officer), id, now)
+  await saveDefenseNote(
+    defenses,
+    auth,
+    actor(officer),
+    id,
+    [
+      '## Nhận xét chung',
+      '- Kế hoạch tổ chức rõ ràng, có phân công ban tổ chức theo ca 8 tiếng.',
+      '- Đề án đã có phương án dự phòng mất mạng và mất điện.',
+      '',
+      '## Cần làm rõ',
+      '1. Quy trình kiểm tra máy của thí sinh trước giờ thi.',
+      '2. Căn cứ đề xuất **4.500.000 đ** giải thưởng.',
+      '',
+      '## Kết luận sơ bộ',
+      'Có thể phê duyệt nếu CLB bổ sung quy chế cuộc thi.',
+    ].join('\n'),
+    now,
+  )
+}
+
+// Two submitted Summer 2026 periodic reports accepted with the evaluation dependencies wired, as the server
+// does, so each acceptance generates the club's evaluation draft for the period (chapter 18.2).
+async function evaluationDrafts(officer: Types.ObjectId): Promise<void> {
+  const policy = mongoPolicyRepository()
+  const auth = mongoAuthRepository('*')
+  const deps = {
+    repo: mongoPeriodicReportRepository(),
+    policy,
+    auth,
+    evaluation: {
+      repo: mongoEvaluationRepository(),
+      schemes: mongoEvaluationSchemeRepository(),
+      policy,
+      auth,
+    },
+  }
+  // Clubs already evaluated for the period keep their result; only the others get a draft.
+  const evaluated = await m.evaluations!.distinct('clubId', { periodCode: 'Summer 2026' })
+  const submitted = await m
+    .periodicReports!.find({
+      periodCode: 'Summer 2026',
+      state: 'Submitted',
+      clubId: { $nin: [hebe, ...evaluated] },
+    })
+    .sort({ clubId: 1 })
+    .limit(2)
+    .lean()
+  for (const report of submitted) {
+    await decidePeriodicReport(
+      deps,
+      actor(officer),
+      String(report._id),
+      {
+        outcome: 'Accept',
+        observation: 'Báo cáo đầy đủ, minh chứng khớp với hoạt động trong kỳ.',
+      },
+      now,
+    )
+  }
+}
+
 assertE2eDatabase()
 await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5_000 })
 try {
@@ -537,6 +724,9 @@ try {
   await sponsoredPayments(officer)
   await facilityRequest(officer)
   await forwardedComplaint(officer)
+  await vacantBoardSeat(officer)
+  await liveDefense(officer)
+  await evaluationDrafts(officer)
   console.log('[guide] prepared the guide records')
 } finally {
   await mongoose.disconnect()
