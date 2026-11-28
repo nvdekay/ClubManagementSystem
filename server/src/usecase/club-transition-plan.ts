@@ -5,7 +5,7 @@ import {
   type TransitionPlanInput,
 } from '../domain/club-transition-plan.js'
 import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, isObjectId, type AccessActor } from './access.js'
 // CLB xem ngữ cảnh kế hoạch bàn giao nhiệm kỳ
 export async function clubTransitionContext(
   repo: ClubTransitionPlanRepository,
@@ -29,9 +29,7 @@ export async function writeClubTransition(
   await assertClubAccess(access, actor, clubId, 'club.transition.plan', now)
   if (
     action.id &&
-    (!/^[0-9a-f]{24}$/i.test(action.id) ||
-      !Number.isInteger(action.revision) ||
-      action.revision! < 0)
+    (!isObjectId(action.id) || !Number.isInteger(action.revision) || action.revision! < 0)
   ) {
     throw new DomainError('invalid plan identifier or revision', 'validation')
   }
