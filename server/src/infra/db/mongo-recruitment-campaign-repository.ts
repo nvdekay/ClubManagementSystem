@@ -10,25 +10,8 @@ import type {
   RecruitmentSelectionStep,
 } from '../../domain/recruitment-campaign.js'
 import { DomainError } from '../../domain/errors.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, queueNotifications, records, strings, writeAudit } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
-
-// Lọc mảng, chỉ giữ phần tử là object
-function records(value: unknown): Record<string, unknown>[] {
-  return Array.isArray(value)
-    ? value.filter(
-        (item): item is Record<string, unknown> =>
-          Boolean(item) && typeof item === 'object' && !Array.isArray(item),
-      )
-    : []
-}
-
-// Lọc mảng, chỉ giữ phần tử là chuỗi
-function strings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : []
-}
 
 // Chuẩn hóa các bước tuyển chọn của đợt tuyển
 function selectionSteps(value: unknown): RecruitmentSelectionStep[] {
@@ -135,7 +118,6 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
   const campaigns = ucmsModels.recruitmentCampaigns!
   const applications = ucmsModels.recruitmentApplications!
   const clubs = ucmsModels.clubs!
-  const audits = ucmsModels.auditLogs!
 
   return {
     // Liệt kê đợt tuyển của CLB, mới nhất trước
@@ -177,10 +159,10 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       const actorObjectId = new Types.ObjectId(actorId)
       let createdId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
-        const club = await clubs.findById(clubObjectId).session(session).lean()
-        if (!club) {
-          throw new DomainError('club not found', 'not_found')
-        }
+        const club = found(
+          await clubs.findById(clubObjectId).session(session).lean(),
+          'club not found',
+        )
         if (club.state !== 'Active') {
           throw new DomainError('club is not active', 'conflict')
         }
@@ -197,26 +179,20 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
         )
         const campaign = created[0]!
         createdId = new Types.ObjectId(String(campaign._id))
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentCampaign',
-              entityId: campaign._id,
-              action: 'RECRUITMENT_CAMPAIGN_DRAFT_CREATED',
-              actorId: actorObjectId,
-              actorRole: 'Club Member',
-              after: campaignData(input),
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentCampaign',
+          entityId: campaign._id,
+          action: 'RECRUITMENT_CAMPAIGN_DRAFT_CREATED',
+          actorId: actorObjectId,
+          actorRole: 'Club Member',
+          after: campaignData(input),
+          at: now,
+        })
       })
-      const created = await campaigns.findById(createdId).lean()
-      if (!created) {
-        throw new DomainError('recruitment campaign not found', 'not_found')
-      }
+      const created = found(
+        await campaigns.findById(createdId).lean(),
+        'recruitment campaign not found',
+      )
       return mapCampaign(created)
     },
 
@@ -225,20 +201,20 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       const clubObjectId = new Types.ObjectId(clubId)
       const campaignObjectId = new Types.ObjectId(campaignId)
       await mongoose.connection.transaction(async (session) => {
-        const current = await campaigns
-          .findOne({ _id: campaignObjectId, clubId: clubObjectId })
-          .session(session)
-          .lean()
-        if (!current) {
-          throw new DomainError('recruitment campaign not found', 'not_found')
-        }
+        const current = found(
+          await campaigns
+            .findOne({ _id: campaignObjectId, clubId: clubObjectId })
+            .session(session)
+            .lean(),
+          'recruitment campaign not found',
+        )
         if (current.state !== 'Draft') {
           throw new DomainError('only draft campaigns can be edited', 'conflict')
         }
-        const club = await clubs.findById(clubObjectId).session(session).lean()
-        if (!club) {
-          throw new DomainError('club not found', 'not_found')
-        }
+        const club = found(
+          await clubs.findById(clubObjectId).session(session).lean(),
+          'club not found',
+        )
         if (club.state !== 'Active') {
           throw new DomainError('club is not active', 'conflict')
         }
@@ -250,27 +226,21 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
         if (changed.modifiedCount !== 1) {
           throw new DomainError('campaign changed while saving', 'conflict')
         }
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentCampaign',
-              entityId: campaignObjectId,
-              action: 'RECRUITMENT_CAMPAIGN_DRAFT_UPDATED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'Club Member',
-              before: mapCampaign(current),
-              after: campaignData(input),
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentCampaign',
+          entityId: campaignObjectId,
+          action: 'RECRUITMENT_CAMPAIGN_DRAFT_UPDATED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'Club Member',
+          before: mapCampaign(current),
+          after: campaignData(input),
+          at: now,
+        })
       })
-      const updated = await campaigns.findById(campaignObjectId).lean()
-      if (!updated) {
-        throw new DomainError('recruitment campaign not found', 'not_found')
-      }
+      const updated = found(
+        await campaigns.findById(campaignObjectId).lean(),
+        'recruitment campaign not found',
+      )
       return mapCampaign(updated)
     },
 
@@ -279,20 +249,20 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       const clubObjectId = new Types.ObjectId(clubId)
       const campaignObjectId = new Types.ObjectId(campaignId)
       await mongoose.connection.transaction(async (session) => {
-        const current = await campaigns
-          .findOne({ _id: campaignObjectId, clubId: clubObjectId })
-          .session(session)
-          .lean()
-        if (!current) {
-          throw new DomainError('recruitment campaign not found', 'not_found')
-        }
+        const current = found(
+          await campaigns
+            .findOne({ _id: campaignObjectId, clubId: clubObjectId })
+            .session(session)
+            .lean(),
+          'recruitment campaign not found',
+        )
         if (current.state !== 'Draft') {
           throw new DomainError('only draft campaigns can be published', 'conflict')
         }
-        const club = await clubs.findById(clubObjectId).session(session).lean()
-        if (!club) {
-          throw new DomainError('club not found', 'not_found')
-        }
+        const club = found(
+          await clubs.findById(clubObjectId).session(session).lean(),
+          'club not found',
+        )
         if (club.state !== 'Active') {
           throw new DomainError('club is not active', 'conflict')
         }
@@ -310,27 +280,21 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
         if (changed.modifiedCount !== 1) {
           throw new DomainError('campaign changed while publishing', 'conflict')
         }
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentCampaign',
-              entityId: campaignObjectId,
-              action: 'RECRUITMENT_CAMPAIGN_PUBLISHED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'Club Member',
-              before: { state: 'Draft' },
-              after: { state: 'Published', publishedAt: now },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentCampaign',
+          entityId: campaignObjectId,
+          action: 'RECRUITMENT_CAMPAIGN_PUBLISHED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'Club Member',
+          before: { state: 'Draft' },
+          after: { state: 'Published', publishedAt: now },
+          at: now,
+        })
       })
-      const published = await campaigns.findById(campaignObjectId).lean()
-      if (!published) {
-        throw new DomainError('recruitment campaign not found', 'not_found')
-      }
+      const published = found(
+        await campaigns.findById(campaignObjectId).lean(),
+        'recruitment campaign not found',
+      )
       return mapCampaign(published)
     },
 
@@ -339,13 +303,13 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       const clubObjectId = new Types.ObjectId(clubId)
       const campaignObjectId = new Types.ObjectId(campaignId)
       await mongoose.connection.transaction(async (session) => {
-        const current = await campaigns
-          .findOne({ _id: campaignObjectId, clubId: clubObjectId })
-          .session(session)
-          .lean()
-        if (!current) {
-          throw new DomainError('recruitment campaign not found', 'not_found')
-        }
+        const current = found(
+          await campaigns
+            .findOne({ _id: campaignObjectId, clubId: clubObjectId })
+            .session(session)
+            .lean(),
+          'recruitment campaign not found',
+        )
         if (['Completed', 'Cancelled'].includes(String(current.state))) {
           throw new DomainError('campaign can no longer be cancelled', 'conflict')
         }
@@ -372,22 +336,17 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
           throw new DomainError('campaign changed while cancelling', 'conflict')
         }
         const correlationId = randomUUID()
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentCampaign',
-              entityId: campaignObjectId,
-              action: 'RECRUITMENT_CAMPAIGN_CANCELLED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'Club Member',
-              before: { state: current.state },
-              after: { state: 'Cancelled', notifiedApplicants: recipientIds.length },
-              correlationId,
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentCampaign',
+          entityId: campaignObjectId,
+          action: 'RECRUITMENT_CAMPAIGN_CANCELLED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'Club Member',
+          before: { state: current.state },
+          after: { state: 'Cancelled', notifiedApplicants: recipientIds.length },
+          correlationId,
+          at: now,
+        })
         await queueNotifications(session, recipientIds, {
           eventCode: 'RECRUITMENT_CAMPAIGN_CANCELLED',
           entityType: 'RecruitmentCampaign',
@@ -396,10 +355,10 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
           now,
         })
       })
-      const cancelled = await campaigns.findById(campaignObjectId).lean()
-      if (!cancelled) {
-        throw new DomainError('recruitment campaign not found', 'not_found')
-      }
+      const cancelled = found(
+        await campaigns.findById(campaignObjectId).lean(),
+        'recruitment campaign not found',
+      )
       return mapCampaign(cancelled)
     },
   }
