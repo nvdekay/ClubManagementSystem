@@ -25,6 +25,8 @@ import {
 } from './facility-booking-routes.js'
 import { z } from 'zod'
 import { createDocument } from 'zod-openapi'
+import { apiError, jsonBody, jsonOk } from './openapi-shared.js'
+import { objectId } from './request.js'
 import { policyCreateBody, policySettingsBody } from './policy-routes.js'
 import { applicationDraftBody } from './club-application-routes.js'
 import { applicationReviewDecisionBody } from './club-application-review-routes.js'
@@ -96,14 +98,6 @@ import {
 import { candidateEvaluationBody } from './candidate-evaluation-routes.js'
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from '../../domain/membership.js'
 
-const ApiError = z.object({
-  statusCode: z.number(),
-  error: z.string(),
-  message: z.string(),
-  details: z.unknown().optional(),
-  timestamp: z.string(),
-  path: z.string(),
-})
 const Health = z.object({ ok: z.boolean() })
 const Me = z.object({
   user: z.object({
@@ -215,7 +209,11 @@ const Dashboard = z.object({
 })
 const Reason = z.object({ reason: z.string().min(1).max(1000) })
 const RoleChange = z.object({ roleCode: z.string(), reason: z.string().optional() })
-const UserIdPath = z.object({ id: z.string() })
+const IdPath = z.object({ id: z.string() })
+const ClubPath = z.object({ clubId: z.string() })
+const ClubIdPath = ClubPath.extend({ id: z.string() })
+const CampaignPath = ClubPath.extend({ campaignId: z.string() })
+const ApplicationPath = CampaignPath.extend({ applicationId: z.string() })
 const RolePath = z.object({ id: z.string(), roleCode: z.string() })
 const PolicyVersion = policySettingsBody.extend({
   id: z.string(),
@@ -1493,8 +1491,15 @@ const EventPage = z.object({
   page: z.number(),
   pageSize: z.number(),
 })
-const IdPath = z.object({ id: z.string() })
 
+// Bộ lỗi chung của các endpoint đặt phòng
+const bookingErrors = {
+  '400': apiError('Invalid booking input'),
+  '401': apiError('Authentication required'),
+  '403': apiError('Club permission or ICPDP role required'),
+  '404': apiError('Booking or property not found'),
+  '409': apiError('State, version or slot conflict'),
+}
 const FacilityBooking = bookingBody.extend({
   id: z.string(),
   clubId: z.string(),
@@ -1545,30 +1550,24 @@ const roomAllocationPaths = {
       summary:
         'UC58 form options: semesters not yet ended, clubs that may receive rooms, active rooms',
       responses: {
-        '200': {
-          description: 'Options',
-          content: {
-            'application/json': {
-              schema: envelope(
-                z.object({
-                  semesters: z.array(
-                    z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }),
-                  ),
-                  clubs: z.array(
-                    z.object({
-                      id: z.string(),
-                      name: z.string(),
-                      state: z.string(),
-                      dissolutionSemester: z.string().optional(),
-                      dissolutionEffectiveTo: z.string().optional(),
-                    }),
-                  ),
-                  rooms: z.array(Property),
-                }),
-              ),
-            },
-          },
-        },
+        '200': jsonOk(
+          'Options',
+          z.object({
+            semesters: z.array(
+              z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }),
+            ),
+            clubs: z.array(
+              z.object({
+                id: z.string(),
+                name: z.string(),
+                state: z.string(),
+                dissolutionSemester: z.string().optional(),
+                dissolutionEffectiveTo: z.string().optional(),
+              }),
+            ),
+            rooms: z.array(Property),
+          }),
+        ),
         '403': { description: 'ICPDP officer required' },
       },
     },
@@ -1579,30 +1578,24 @@ const roomAllocationPaths = {
         'UC58 A3 weekly grid cells of a room blocked by approved events or bookings this semester',
       requestParams: { query: roomOccupancyQuery },
       responses: {
-        '200': {
-          description: 'Blocked cells',
-          content: {
-            'application/json': {
-              schema: envelope(
-                z.array(
-                  z.object({
-                    weekday: z.number().int().min(1).max(7),
-                    slot: z.number().int().min(1).max(4),
-                    items: z.array(
-                      z.object({
-                        startAt: z.string(),
-                        endAt: z.string(),
-                        source: z.enum(['booking', 'event']),
-                        title: z.string(),
-                        clubName: z.string().optional(),
-                      }),
-                    ),
-                  }),
-                ),
+        '200': jsonOk(
+          'Blocked cells',
+          z.array(
+            z.object({
+              weekday: z.number().int().min(1).max(7),
+              slot: z.number().int().min(1).max(4),
+              items: z.array(
+                z.object({
+                  startAt: z.string(),
+                  endAt: z.string(),
+                  source: z.enum(['booking', 'event']),
+                  title: z.string(),
+                  clubName: z.string().optional(),
+                }),
               ),
-            },
-          },
-        },
+            }),
+          ),
+        ),
         '400': { description: 'Unknown semester or invalid room id' },
         '403': { description: 'ICPDP officer required' },
       },
@@ -1613,22 +1606,16 @@ const roomAllocationPaths = {
       summary: 'UC58 room allocations, optionally for one semester',
       requestParams: { query: roomAllocationQuery },
       responses: {
-        '200': {
-          description: 'Allocations with their occurrences',
-          content: { 'application/json': { schema: envelope(z.array(RoomAllocation)) } },
-        },
+        '200': jsonOk('Allocations with their occurrences', z.array(RoomAllocation)),
         '403': { description: 'ICPDP officer required' },
       },
     },
     post: {
       summary:
         'UC58 allocate a room to a club for one weekday and slot of every week in a semester; CSRF required',
-      requestBody: { content: { 'application/json': { schema: roomAllocationBody } } },
+      requestBody: jsonBody(roomAllocationBody),
       responses: {
-        '201': {
-          description: 'Approved occurrences generated (blackout dates skipped)',
-          content: { 'application/json': { schema: envelope(RoomAllocation) } },
-        },
+        '201': jsonOk('Approved occurrences generated (blackout dates skipped)', RoomAllocation),
         '400': { description: 'Invalid input, outside bookable hours or no upcoming dates' },
         '403': { description: 'ICPDP officer required' },
         '404': { description: 'Room or club not found' },
@@ -1644,12 +1631,9 @@ const roomAllocationPaths = {
       summary:
         'UC58 revoke an allocation; future occurrences are released, past ones kept; CSRF required',
       requestParams: { path: IdPath },
-      requestBody: { content: { 'application/json': { schema: roomAllocationRevokeBody } } },
+      requestBody: jsonBody(roomAllocationRevokeBody),
       responses: {
-        '200': {
-          description: 'Revoked allocation',
-          content: { 'application/json': { schema: envelope(RoomAllocation) } },
-        },
+        '200': jsonOk('Revoked allocation', RoomAllocation),
         '403': { description: 'ICPDP officer required' },
         '404': { description: 'Allocation not found' },
         '409': { description: 'Already revoked' },
@@ -1660,12 +1644,9 @@ const roomAllocationPaths = {
     get: {
       summary:
         'Rooms ICPDP allocated to the club with their remaining dates (read-only, club.room.view: every Active member)',
-      requestParams: { path: z.object({ clubId: z.string() }) },
+      requestParams: { path: ClubPath },
       responses: {
-        '200': {
-          description: 'Active allocations',
-          content: { 'application/json': { schema: envelope(z.array(RoomAllocation)) } },
-        },
+        '200': jsonOk('Active allocations', z.array(RoomAllocation)),
         '403': { description: 'Active club membership required (club.room.view)' },
       },
     },
@@ -1711,17 +1692,6 @@ const FacilityBookingDetail = z.object({
   obligations: z.array(z.string()),
 })
 
-// Bọc schema dữ liệu vào envelope response thành công
-// Envelope thành công bao mọi response 2xx — xem interface/http/response.ts.
-function envelope<T extends z.ZodTypeAny>(data: T) {
-  return z.object({
-    statusCode: z.number(),
-    message: z.string(),
-    data,
-    timestamp: z.string(),
-  })
-}
-
 export const openApiDocument = createDocument({
   openapi: '3.1.0',
   info: { title: 'UCMS API', version: '1.0.0' },
@@ -1733,7 +1703,7 @@ export const openApiDocument = createDocument({
     '/clubs/{clubId}/periodic-reports': {
       get: {
         summary: "UC38 reporting periods and this club's reports with immutable versions",
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
           '200': { description: 'Periods and reports' },
           '403': { description: 'Club Leader required' },
@@ -1741,11 +1711,8 @@ export const openApiDocument = createDocument({
       },
       post: {
         summary: 'UC38 create a periodic report draft (CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: clubPeriodicCreateBody } },
-        },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(clubPeriodicCreateBody, true),
         responses: {
           '201': { description: 'Draft created' },
           '409': { description: 'Report already exists' },
@@ -1756,7 +1723,7 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'UC38 upload a private PNG/JPEG/WebP evidence image (max 5 MB, CSRF required); store the returned reference in the report',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         requestBody: {
           required: true,
           content: {
@@ -1766,21 +1733,15 @@ export const openApiDocument = createDocument({
           },
         },
         responses: {
-          '201': {
-            description: 'Evidence reference and a short-lived signed preview URL',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    reference: z.string(),
-                    url: z.string(),
-                    mimeType: z.string(),
-                    bytes: z.number().int(),
-                  }),
-                ),
-              },
-            },
-          },
+          '201': jsonOk(
+            'Evidence reference and a short-lived signed preview URL',
+            z.object({
+              reference: z.string(),
+              url: z.string(),
+              mimeType: z.string(),
+              bytes: z.number().int(),
+            }),
+          ),
           '400': { description: 'Unsupported type, content mismatch or empty file' },
           '403': { description: 'Periodic report permission required' },
           '413': { description: 'Image larger than 5 MB' },
@@ -1791,11 +1752,8 @@ export const openApiDocument = createDocument({
     '/clubs/{clubId}/periodic-reports/{id}': {
       put: {
         summary: 'UC38 save draft/correction using revision for concurrency (CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: clubPeriodicDraftBody } },
-        },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(clubPeriodicDraftBody, true),
         responses: {
           '200': { description: 'Draft saved' },
           '409': { description: 'Report changed or locked' },
@@ -1805,11 +1763,8 @@ export const openApiDocument = createDocument({
     '/clubs/{clubId}/periodic-reports/{id}/submit': {
       post: {
         summary: 'UC38 freeze a submission version and open UC39 review (CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: clubPeriodicVersionBody } },
-        },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(clubPeriodicVersionBody, true),
         responses: {
           '200': { description: 'Report submitted' },
           '409': { description: 'Report changed or locked' },
@@ -1819,7 +1774,7 @@ export const openApiDocument = createDocument({
     '/clubs/{clubId}/invitations': {
       get: {
         summary: "List this club's school event invitations (UC54, Club Leader)",
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
           '200': { description: 'Invitations with event coordination details' },
           '403': { description: 'Club Leader required' },
@@ -1829,11 +1784,8 @@ export const openApiDocument = createDocument({
     '/clubs/{clubId}/invitations/{id}/response': {
       post: {
         summary: 'Accept or decline a pending invitation before its deadline (UC54, CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: invitationResponseBody } },
-        },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(invitationResponseBody, true),
         responses: {
           '200': { description: 'Response saved' },
           '409': { description: 'Invitation no longer answerable' },
@@ -1849,80 +1801,40 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'Four fixed campus booking slots (Vietnam time)',
         responses: {
-          '200': {
-            description: 'Campus slots',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.array(
-                    z.object({
-                      number: z.number().int().min(1).max(4),
-                      start: z.string(),
-                      end: z.string(),
-                    }),
-                  ),
-                ),
-              },
-            },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Campus slots',
+            z.array(
+              z.object({
+                number: z.number().int().min(1).max(4),
+                start: z.string(),
+                end: z.string(),
+              }),
+            ),
+          ),
+          '401': apiError('Authentication required'),
         },
       },
     },
     '/clubs/{clubId}/booking-events': {
       get: {
         summary: 'Club events available to attach to a booking (UC45, club.booking.manage)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Club events',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.array(z.object({ id: z.string(), title: z.string(), startAt: z.string() })),
-                ),
-              },
-            },
-          },
-          '403': {
-            description: 'Club permission required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Club events',
+            z.array(z.object({ id: z.string(), title: z.string(), startAt: z.string() })),
+          ),
+          '403': apiError('Club permission required'),
         },
       },
     },
     '/clubs/{clubId}/booking-properties': {
       get: {
         summary: 'Active properties (UC45, club.booking.manage)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(z.array(Property)) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', z.array(Property)),
+          ...bookingErrors,
         },
       },
     },
@@ -1930,227 +1842,73 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'Campus slot availability (UC45)',
         requestParams: {
-          path: z.object({ clubId: z.string(), id: z.string() }),
+          path: ClubIdPath,
           query: bookingAvailabilityQuery,
         },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(BookingCheck) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', BookingCheck),
+          ...bookingErrors,
         },
       },
     },
     '/clubs/{clubId}/bookings': {
       get: {
         summary: 'Club booking history (UC47)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(z.array(FacilityBooking)) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', z.array(FacilityBooking)),
+          ...bookingErrors,
         },
       },
       post: {
         summary:
           'Create a facility request draft for a hall, outdoor area, stage or equipment; rooms are allocated by ICPDP (UC45/UC58, CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: bookingBody } } },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(bookingBody),
         responses: {
-          '201': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
     '/clubs/{clubId}/bookings/{id}': {
       get: {
         summary: 'Booking versions and decisions (UC45/47)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
+        requestParams: { path: ClubIdPath },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
       patch: {
         summary: 'Edit draft or revision (UC45, CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: bookingSaveBody } } },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(bookingSaveBody),
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
     '/clubs/{clubId}/bookings/{id}/submit': {
       post: {
         summary: 'Submit a new immutable version (UC45, CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: bookingVersionBody } } },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(bookingVersionBody),
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
     '/clubs/{clubId}/bookings/{id}/cancel': {
       post: {
         summary: 'Cancel and free a booking slot (UC47, CSRF required)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: bookingReasonBody } } },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(bookingReasonBody),
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
@@ -2158,127 +1916,39 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'Bookings for ICPDP review (UC46)',
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(z.array(FacilityBooking)) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', z.array(FacilityBooking)),
+          ...bookingErrors,
         },
       },
     },
     '/admin/bookings/{id}': {
       get: {
         summary: 'Booking with conflicts and obligations (UC46)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
     '/admin/bookings/{id}/claim': {
       post: {
         summary: 'Claim booking review exclusively (UC46, CSRF required)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
     '/admin/bookings/{id}/decision': {
       post: {
         summary: 'Decide booking; recheck slot atomically (UC46, CSRF required)',
-        requestParams: { path: z.object({ id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: bookingDecisionBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(bookingDecisionBody),
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(FacilityBookingDetail) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', FacilityBookingDetail),
+          ...bookingErrors,
         },
       },
     },
@@ -2286,32 +1956,10 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           'Pending requests, approved bookings and room-allocation sessions overlapping property blackouts (UC44 A2)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Booking result',
-            content: { 'application/json': { schema: envelope(z.array(FacilityBooking)) } },
-          },
-          '400': {
-            description: 'Invalid booking input',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Club permission or ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Booking or property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'State, version or slot conflict',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Booking result', z.array(FacilityBooking)),
+          ...bookingErrors,
         },
       },
     },
@@ -2342,24 +1990,14 @@ export const openApiDocument = createDocument({
           }),
         },
         responses: {
-          '200': {
-            description:
-              'Active and suspended clubs; a filtered search with no match adds the newest Active clubs (UC06 E1)',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  PublicPage.extend({
-                    fields: z.array(z.string()),
-                    suggestions: z.array(PublicClub).optional(),
-                  }),
-                ),
-              },
-            },
-          },
-          '400': {
-            description: 'Invalid query',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Active and suspended clubs; a filtered search with no match adds the newest Active clubs (UC06 E1)',
+            PublicPage.extend({
+              fields: z.array(z.string()),
+              suggestions: z.array(PublicClub).optional(),
+            }),
+          ),
+          '400': apiError('Invalid query'),
         },
       },
     },
@@ -2368,32 +2006,23 @@ export const openApiDocument = createDocument({
         summary: 'Public club profile, current board, campaigns and activities',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Public club profile',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    club: PublicClub,
-                    board: z.array(
-                      z.object({
-                        memberName: z.string(),
-                        positionName: z.string(),
-                        termName: z.string(),
-                      }),
-                    ),
-                    campaigns: z.array(PublicCampaign),
-                    upcomingEvents: z.array(PublicEvent),
-                    history: z.array(PublicEvent),
-                  }),
-                ),
-              },
-            },
-          },
-          '404': {
-            description: 'Club not public or not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Public club profile',
+            z.object({
+              club: PublicClub,
+              board: z.array(
+                z.object({
+                  memberName: z.string(),
+                  positionName: z.string(),
+                  termName: z.string(),
+                }),
+              ),
+              campaigns: z.array(PublicCampaign),
+              upcomingEvents: z.array(PublicEvent),
+              history: z.array(PublicEvent),
+            }),
+          ),
+          '404': apiError('Club not public or not found'),
         },
       },
     },
@@ -2402,14 +2031,8 @@ export const openApiDocument = createDocument({
         summary: 'Read an open recruitment campaign and its public application form',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Open recruitment campaign',
-            content: { 'application/json': { schema: envelope(PublicCampaignDetail) } },
-          },
-          '404': {
-            description: 'Campaign not open or not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Open recruitment campaign', PublicCampaignDetail),
+          '404': apiError('Campaign not open or not found'),
         },
       },
     },
@@ -2424,14 +2047,8 @@ export const openApiDocument = createDocument({
           }),
         },
         responses: {
-          '200': {
-            description: 'Public events (8 per page)',
-            content: { 'application/json': { schema: envelope(EventPage) } },
-          },
-          '400': {
-            description: 'Invalid query',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Public events (8 per page)', EventPage),
+          '400': apiError('Invalid query'),
         },
       },
     },
@@ -2440,23 +2057,14 @@ export const openApiDocument = createDocument({
         summary: 'Published public event detail (upcoming, ongoing or ended)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Public event',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    event: PublicEvent,
-                    club: z.object({ id: z.string(), name: z.string() }).nullable(),
-                  }),
-                ),
-              },
-            },
-          },
-          '404': {
-            description: 'Event not public or not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Public event',
+            z.object({
+              event: PublicEvent,
+              club: z.object({ id: z.string(), name: z.string() }).nullable(),
+            }),
+          ),
+          '404': apiError('Event not public or not found'),
         },
       },
     },
@@ -2480,18 +2088,12 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'Read and clear the latest signed login error',
         responses: {
-          '200': {
-            description: 'Login error reason, when available',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    reason: z.string().nullable(),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Login error reason, when available',
+            z.object({
+              reason: z.string().nullable(),
+            }),
+          ),
         },
       },
     },
@@ -2499,18 +2101,9 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'Get current user and CSRF token',
         responses: {
-          '200': {
-            description: 'Current account and contexts',
-            content: { 'application/json': { schema: envelope(Me) } },
-          },
-          '401': {
-            description: 'Session missing or expired',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '423': {
-            description: 'Account locked',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Current account and contexts', Me),
+          '401': apiError('Session missing or expired'),
+          '423': apiError('Account locked'),
         },
       },
     },
@@ -2518,20 +2111,9 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Revoke current session (requires X-CSRF-Token)',
         responses: {
-          '200': {
-            description: 'Logged out',
-            content: {
-              'application/json': { schema: envelope(z.object({ loggedOut: z.literal(true) })) },
-            },
-          },
-          '401': {
-            description: 'Session missing or expired',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'CSRF token missing or invalid',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Logged out', z.object({ loggedOut: z.literal(true) })),
+          '401': apiError('Session missing or expired'),
+          '403': apiError('CSRF token missing or invalid'),
         },
       },
     },
@@ -2541,29 +2123,14 @@ export const openApiDocument = createDocument({
         requestParams: {
           query: z.object({
             workspace: z.enum(['student', 'icpdp', 'club']),
-            clubId: z
-              .string()
-              .regex(/^[0-9a-f]{24}$/i)
-              .optional(),
+            clubId: objectId.optional(),
           }),
         },
         responses: {
-          '200': {
-            description: 'Role-scoped dashboard with independently resolved panels',
-            content: { 'application/json': { schema: envelope(Dashboard) } },
-          },
-          '400': {
-            description: 'Invalid dashboard context',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Workspace access denied',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Role-scoped dashboard with independently resolved panels', Dashboard),
+          '400': apiError('Invalid dashboard context'),
+          '401': apiError('Authentication required'),
+          '403': apiError('Workspace access denied'),
         },
       },
     },
@@ -2571,17 +2138,11 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           "UC02 role-structure versions and board seats by term (BR56); ICPDP or the club's Club Leader",
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
           '200': { description: 'Structure versions and terms, newest first' },
-          '403': {
-            description: "Not ICPDP and not this club's Club Leader",
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Club not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '403': apiError("Not ICPDP and not this club's Club Leader"),
+          '404': apiError('Club not found'),
         },
       },
     },
@@ -2590,14 +2151,8 @@ export const openApiDocument = createDocument({
         summary: 'Search users (ICPDP only), one page at a time sorted by email',
         requestParams: { query: adminUsersQuery },
         responses: {
-          '200': {
-            description: 'Users and current system roles',
-            content: { 'application/json': { schema: envelope(AdminUsers) } },
-          },
-          '403': {
-            description: 'Account administration denied',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Users and current system roles', AdminUsers),
+          '403': apiError('Account administration denied'),
         },
       },
     },
@@ -2605,28 +2160,16 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List the club field catalog with how many clubs and applications use each field',
         responses: {
-          '200': {
-            description: 'Club field catalog',
-            content: { 'application/json': { schema: envelope(z.array(ClubFieldUsage)) } },
-          },
-          '403': {
-            description: 'ICPDP officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Club field catalog', z.array(ClubFieldUsage)),
+          '403': apiError('ICPDP officer role required'),
         },
       },
       post: {
         summary: "Add a club field (re-adding a hidden field's name restores it)",
-        requestBody: { content: { 'application/json': { schema: clubFieldBody } } },
+        requestBody: jsonBody(clubFieldBody),
         responses: {
-          '201': {
-            description: 'Club field created',
-            content: { 'application/json': { schema: envelope(ClubField) } },
-          },
-          '409': {
-            description: 'A field with this name already exists',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Club field created', ClubField),
+          '409': apiError('A field with this name already exists'),
         },
       },
     },
@@ -2634,19 +2177,13 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List clubs with their lifecycle state and the suspensions ending soon (UC15)',
         responses: {
-          '200': {
-            description: 'Clubs',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    clubs: z.array(ClubLifecycleSummary),
-                    expiringSuspensions: z.array(ClubLifecycleSummary),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Clubs',
+            z.object({
+              clubs: z.array(ClubLifecycleSummary),
+              expiringSuspensions: z.array(ClubLifecycleSummary),
+            }),
+          ),
         },
       },
     },
@@ -2656,33 +2193,23 @@ export const openApiDocument = createDocument({
           'Club lifecycle detail: obligations, history and the semester a dissolution would take effect',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Club detail',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    club: ClubLifecycleSummary.extend({
-                      openCampaigns: z.array(z.unknown()),
-                      upcomingEvents: z.array(z.unknown()),
-                      activeTerm: z.unknown().optional(),
-                      history: z.array(z.unknown()),
-                      unreconciledBudgets: z
-                        .array(
-                          z.object({ id: z.string(), eventTitle: z.string(), state: z.string() }),
-                        )
-                        .describe(
-                          'UC15 E1: budgets to reconcile before the Dissolving semester ends',
-                        ),
-                    }),
-                    nextSemester: z
-                      .object({ code: z.string(), startAt: z.string(), endAt: z.string() })
-                      .nullable(),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Club detail',
+            z.object({
+              club: ClubLifecycleSummary.extend({
+                openCampaigns: z.array(z.unknown()),
+                upcomingEvents: z.array(z.unknown()),
+                activeTerm: z.unknown().optional(),
+                history: z.array(z.unknown()),
+                unreconciledBudgets: z
+                  .array(z.object({ id: z.string(), eventTitle: z.string(), state: z.string() }))
+                  .describe('UC15 E1: budgets to reconcile before the Dissolving semester ends'),
+              }),
+              nextSemester: z
+                .object({ code: z.string(), startAt: z.string(), endAt: z.string() })
+                .nullable(),
+            }),
+          ),
         },
       },
     },
@@ -2691,16 +2218,10 @@ export const openApiDocument = createDocument({
         summary:
           'Suspend an active club until a date or indefinitely; cancels upcoming events and bookings',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: suspendBody } } },
+        requestBody: jsonBody(suspendBody),
         responses: {
-          '200': {
-            description: 'What the cascade cancelled',
-            content: { 'application/json': { schema: envelope(CascadeResult) } },
-          },
-          '409': {
-            description: 'The club is not active',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('What the cascade cancelled', CascadeResult),
+          '409': apiError('The club is not active'),
         },
       },
     },
@@ -2708,14 +2229,9 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Reactivate a suspended club',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: lifecycleReasonBody } } },
+        requestBody: jsonBody(lifecycleReasonBody),
         responses: {
-          '200': {
-            description: 'Reactivated',
-            content: {
-              'application/json': { schema: envelope(z.object({ reactivated: z.literal(true) })) },
-            },
-          },
+          '200': jsonOk('Reactivated', z.object({ reactivated: z.literal(true) })),
         },
       },
     },
@@ -2724,23 +2240,17 @@ export const openApiDocument = createDocument({
         summary:
           'Schedule dissolution from the next semester; cancels what would end after it (BR45)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: lifecycleReasonBody } } },
+        requestBody: jsonBody(lifecycleReasonBody),
         responses: {
-          '200': {
-            description: 'Dissolution scheduled',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  CascadeResult.extend({
-                    effectiveSemester: z.string(),
-                    unreconciledBudgets: z
-                      .number()
-                      .describe('UC15 E1: budgets the club must still reconcile'),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Dissolution scheduled',
+            CascadeResult.extend({
+              effectiveSemester: z.string(),
+              unreconciledBudgets: z
+                .number()
+                .describe('UC15 E1: budgets the club must still reconcile'),
+            }),
+          ),
         },
       },
     },
@@ -2749,34 +2259,28 @@ export const openApiDocument = createDocument({
         summary:
           'Export catalogue: data types with their status filters, formats, semesters and clubs (UC55)',
         responses: {
-          '200': {
-            description: 'Export options',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    types: z.array(
-                      z.object({
-                        type: z.string(),
-                        title: z.string(),
-                        statuses: z.array(z.string()),
-                      }),
-                    ),
-                    formats: z.array(z.string()),
-                    periods: z.array(
-                      z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }),
-                    ),
-                    clubs: z.array(z.object({ id: z.string(), name: z.string() })),
-                    annualYears: z
-                      .array(z.object({ year: z.number(), terms: AnnualTerms }))
-                      .describe(
-                        'Academic years with at least one Published evaluation, newest first (UC55 A2)',
-                      ),
-                  }),
+          '200': jsonOk(
+            'Export options',
+            z.object({
+              types: z.array(
+                z.object({
+                  type: z.string(),
+                  title: z.string(),
+                  statuses: z.array(z.string()),
+                }),
+              ),
+              formats: z.array(z.string()),
+              periods: z.array(
+                z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }),
+              ),
+              clubs: z.array(z.object({ id: z.string(), name: z.string() })),
+              annualYears: z
+                .array(z.object({ year: z.number(), terms: AnnualTerms }))
+                .describe(
+                  'Academic years with at least one Published evaluation, newest first (UC55 A2)',
                 ),
-              },
-            },
-          },
+            }),
+          ),
         },
       },
     },
@@ -2784,16 +2288,10 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'Annual club evaluation report of an academic year, as JSON; not audited (UC55 A2, requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: annualPreviewBody } } },
+        requestBody: jsonBody(annualPreviewBody),
         responses: {
-          '200': {
-            description: 'The six report sections and the selectable achievements',
-            content: { 'application/json': { schema: envelope(AnnualReport) } },
-          },
-          '404': {
-            description: 'The year has no Published evaluation',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('The six report sections and the selectable achievements', AnnualReport),
+          '404': apiError('The year has no Published evaluation'),
         },
       },
     },
@@ -2801,34 +2299,25 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'Download the annual report as pdf or xlsx; audited as ANNUAL_REPORT (UC55 A2, requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: annualExportBody } } },
+        requestBody: jsonBody(annualExportBody),
         responses: {
           '200': { description: 'bao-cao-danh-gia-clb-{year}.{pdf|xlsx}, sent as an attachment' },
-          '404': {
-            description: 'The year has no Published evaluation; no file is produced',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '404': apiError('The year has no Published evaluation; no file is produced'),
         },
       },
     },
     '/admin/exports/preview': {
       post: {
         summary: 'Count the rows an export would contain, per selected type (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: exportPreviewBody } } },
+        requestBody: jsonBody(exportPreviewBody),
         responses: {
-          '200': {
-            description: 'Total row count and the count of each selected type',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    rowCount: z.number(),
-                    types: z.array(z.object({ type: z.string(), rowCount: z.number() })),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Total row count and the count of each selected type',
+            z.object({
+              rowCount: z.number(),
+              types: z.array(z.object({ type: z.string(), rowCount: z.number() })),
+            }),
+          ),
         },
       },
     },
@@ -2836,22 +2325,17 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'Download the data as xlsx, csv or pdf; several types go in one xlsx; one audit record per type (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: exportBody } } },
+        requestBody: jsonBody(exportBody),
         responses: {
           '200': {
             description:
               'One type: ucms-{type}-{date}.{xlsx|csv|pdf}. Several: bao-cao-tong-hop-{date}.xlsx with a ' +
               '"Thông tin" sheet then one sheet per type; an empty type keeps its headers. Sent as an attachment',
           },
-          '400': {
-            description:
-              'Invalid filter, duplicate types, or csv/pdf/status filter with more than one type',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'No selected type has data for the filter; no file is produced',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '400': apiError(
+            'Invalid filter, duplicate types, or csv/pdf/status filter with more than one type',
+          ),
+          '404': apiError('No selected type has data for the filter; no file is produced'),
         },
       },
     },
@@ -2860,53 +2344,41 @@ export const openApiDocument = createDocument({
         summary:
           'List evaluation schemes with the evaluation periods and the D1–D8 catalogue (UC41)',
         responses: {
-          '200': {
-            description: 'Schemes',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    schemes: z.array(EvaluationScheme),
-                    periods: z.array(
-                      z.object({
-                        code: z.string(),
-                        startAt: z.string(),
-                        endAt: z.string(),
-                        evaluated: z
-                          .boolean()
-                          .describe(
-                            'The period already has evaluations, so its scheme version is pinned (BR51, BR60)',
-                          ),
-                      }),
+          '200': jsonOk(
+            'Schemes',
+            z.object({
+              schemes: z.array(EvaluationScheme),
+              periods: z.array(
+                z.object({
+                  code: z.string(),
+                  startAt: z.string(),
+                  endAt: z.string(),
+                  evaluated: z
+                    .boolean()
+                    .describe(
+                      'The period already has evaluations, so its scheme version is pinned (BR51, BR60)',
                     ),
-                    dimensions: z.array(
-                      z.object({
-                        code: z.string(),
-                        name: z.string(),
-                        core: z.boolean(),
-                        measures: z.string(),
-                      }),
-                    ),
-                  }),
-                ),
-              },
-            },
-          },
+                }),
+              ),
+              dimensions: z.array(
+                z.object({
+                  code: z.string(),
+                  name: z.string(),
+                  core: z.boolean(),
+                  measures: z.string(),
+                }),
+              ),
+            }),
+          ),
         },
       },
       post: {
         summary:
           'Create a draft scheme for a semester from the defaults or a copy (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: evaluationSchemeCreateBody } } },
+        requestBody: jsonBody(evaluationSchemeCreateBody),
         responses: {
-          '201': {
-            description: 'Draft created',
-            content: { 'application/json': { schema: envelope(EvaluationScheme) } },
-          },
-          '400': {
-            description: 'Period not in the academic calendar',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Draft created', EvaluationScheme),
+          '400': apiError('Period not in the academic calendar'),
         },
       },
     },
@@ -2914,28 +2386,17 @@ export const openApiDocument = createDocument({
       patch: {
         summary: "Edit a draft's dimensions, weights and thresholds",
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: evaluationSchemeSettingsBody } } },
+        requestBody: jsonBody(evaluationSchemeSettingsBody),
         responses: {
-          '200': {
-            description: 'Draft updated',
-            content: { 'application/json': { schema: envelope(EvaluationScheme) } },
-          },
-          '409': {
-            description: 'Only drafts can change',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Draft updated', EvaluationScheme),
+          '409': apiError('Only drafts can change'),
         },
       },
       delete: {
         summary: 'Delete a draft scheme',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Draft deleted',
-            content: {
-              'application/json': { schema: envelope(z.object({ deleted: z.literal(true) })) },
-            },
-          },
+          '200': jsonOk('Draft deleted', z.object({ deleted: z.literal(true) })),
         },
       },
     },
@@ -2945,19 +2406,11 @@ export const openApiDocument = createDocument({
           "Activate a draft (weights total 100, D1–D3 above 0); supersedes the period's active scheme",
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Scheme active',
-            content: { 'application/json': { schema: envelope(EvaluationScheme) } },
-          },
-          '400': {
-            description: 'details.issues lists totalWeight / coreWeight',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description:
-              'The period already has evaluations; it keeps their scheme version (BR51, BR60)',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Scheme active', EvaluationScheme),
+          '400': apiError('details.issues lists totalWeight / coreWeight'),
+          '409': apiError(
+            'The period already has evaluations; it keeps their scheme version (BR51, BR60)',
+          ),
         },
       },
     },
@@ -2965,29 +2418,17 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List the facility catalogue (UC44)',
         responses: {
-          '200': {
-            description: 'Properties',
-            content: { 'application/json': { schema: envelope(z.array(Property)) } },
-          },
-          '403': {
-            description: 'ICPDP officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Properties', z.array(Property)),
+          '403': apiError('ICPDP officer role required'),
         },
       },
       post: {
         summary:
           'Add a room, hall or equipment; the code is generated from the type (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: propertyCreateBody } } },
+        requestBody: jsonBody(propertyCreateBody),
         responses: {
-          '201': {
-            description: 'Property created',
-            content: { 'application/json': { schema: envelope(Property) } },
-          },
-          '400': {
-            description: 'Invalid property values',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Property created', Property),
+          '400': apiError('Invalid property values'),
         },
       },
     },
@@ -2995,32 +2436,18 @@ export const openApiDocument = createDocument({
       patch: {
         summary: "Edit a property's details, bookable hours and blackouts; the type cannot change",
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: propertyDetailsBody } } },
+        requestBody: jsonBody(propertyDetailsBody),
         responses: {
-          '200': {
-            description: 'Property updated',
-            content: { 'application/json': { schema: envelope(Property) } },
-          },
-          '404': {
-            description: 'Property not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Property updated', Property),
+          '404': apiError('Property not found'),
         },
       },
       delete: {
         summary: 'Delete a property that was never booked (BR41: otherwise deactivate it)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Property deleted',
-            content: {
-              'application/json': { schema: envelope(z.object({ deleted: z.literal(true) })) },
-            },
-          },
-          '409': {
-            description: 'The property has bookings',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Property deleted', z.object({ deleted: z.literal(true) })),
+          '409': apiError('The property has bookings'),
         },
       },
     },
@@ -3028,12 +2455,9 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Deactivate or reactivate a property; existing approved bookings are kept',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: propertyActivationBody } } },
+        requestBody: jsonBody(propertyActivationBody),
         responses: {
-          '200': {
-            description: 'Property updated',
-            content: { 'application/json': { schema: envelope(Property) } },
-          },
+          '200': jsonOk('Property updated', Property),
         },
       },
     },
@@ -3042,42 +2466,24 @@ export const openApiDocument = createDocument({
         summary:
           'Rename or reorder a club field; clubs and applications using it follow the new name',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: clubFieldBody } } },
+        requestBody: jsonBody(clubFieldBody),
         responses: {
-          '200': {
-            description: 'Club field updated',
-            content: { 'application/json': { schema: envelope(ClubField) } },
-          },
-          '404': {
-            description: 'Club field not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'A field with this name already exists',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Club field updated', ClubField),
+          '404': apiError('Club field not found'),
+          '409': apiError('A field with this name already exists'),
         },
       },
       delete: {
         summary: 'Delete an unused club field, or hide one that clubs or applications still use',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Removal result',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    result: z.enum(['deleted', 'deactivated']),
-                  }),
-                ),
-              },
-            },
-          },
-          '404': {
-            description: 'Club field not found',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Removal result',
+            z.object({
+              result: z.enum(['deleted', 'deactivated']),
+            }),
+          ),
+          '404': apiError('Club field not found'),
         },
       },
     },
@@ -3085,53 +2491,28 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List current and recent school policy versions (ICPDP only)',
         responses: {
-          '200': {
-            description: 'Current policy and recent versions',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    current: PolicyVersion.nullable(),
-                    versions: z.array(PolicyVersion),
-                  }),
-                ),
-              },
-            },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'ICPDP role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Current policy and recent versions',
+            z.object({
+              current: PolicyVersion.nullable(),
+              versions: z.array(PolicyVersion),
+            }),
+          ),
+          '401': apiError('Authentication required'),
+          '403': apiError('ICPDP role required'),
         },
       },
       post: {
         summary: 'Create a school policy version (ICPDP only; requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: policyCreateBody } } },
+        requestBody: jsonBody(policyCreateBody),
         responses: {
-          '201': {
-            description: 'Policy version created',
-            content: { 'application/json': { schema: envelope(PolicyVersion) } },
-          },
-          '400': {
-            description: 'Policy values are invalid',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'Policy would invalidate issued decisions; details lists affected records',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '401': {
-            description: 'Authentication required',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'ICPDP role or CSRF token required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Policy version created', PolicyVersion),
+          '400': apiError('Policy values are invalid'),
+          '409': apiError(
+            'Policy would invalidate issued decisions; details lists affected records',
+          ),
+          '401': apiError('Authentication required'),
+          '403': apiError('ICPDP role or CSRF token required'),
         },
       },
     },
@@ -3140,27 +2521,21 @@ export const openApiDocument = createDocument({
         summary:
           'Read the founding form requirements, club field catalog and fixed founding positions',
         responses: {
-          '200': {
-            description: 'Application configuration',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    requirements: FoundingRequirements,
-                    fields: z.array(ClubField),
-                    positions: z.array(
-                      z.object({
-                        code: z.string(),
-                        name: z.string(),
-                        founderRole: z.enum(['LEADER', 'VICE_LEADER', 'MEMBER']),
-                      }),
-                    ),
-                    maxViceLeaders: z.number(),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Application configuration',
+            z.object({
+              requirements: FoundingRequirements,
+              fields: z.array(ClubField),
+              positions: z.array(
+                z.object({
+                  code: z.string(),
+                  name: z.string(),
+                  founderRole: z.enum(['LEADER', 'VICE_LEADER', 'MEMBER']),
+                }),
+              ),
+              maxViceLeaders: z.number(),
+            }),
+          ),
         },
       },
     },
@@ -3168,10 +2543,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the signed-in student's club applications",
         responses: {
-          '200': {
-            description: 'Applications',
-            content: { 'application/json': { schema: envelope(z.array(ApplicationRecord)) } },
-          },
+          '200': jsonOk('Applications', z.array(ApplicationRecord)),
         },
       },
     },
@@ -3179,12 +2551,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the signed-in student's recruitment applications",
         responses: {
-          '200': {
-            description: 'Recruitment applications',
-            content: {
-              'application/json': { schema: envelope(z.array(RecruitmentApplication)) },
-            },
-          },
+          '200': jsonOk('Recruitment applications', z.array(RecruitmentApplication)),
         },
       },
     },
@@ -3193,28 +2560,16 @@ export const openApiDocument = createDocument({
         summary: "Find the signed-in student's application for a campaign",
         requestParams: { path: z.object({ campaignId: z.string() }) },
         responses: {
-          '200': {
-            description: 'Application or null',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication.nullable()) },
-            },
-          },
+          '200': jsonOk('Application or null', RecruitmentApplication.nullable()),
         },
       },
     },
     '/applications/recruitment': {
       post: {
         summary: 'Create one application draft for a campaign',
-        requestBody: {
-          content: { 'application/json': { schema: createRecruitmentApplicationBody } },
-        },
+        requestBody: jsonBody(createRecruitmentApplicationBody),
         responses: {
-          '201': {
-            description: 'Application draft',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '201': jsonOk('Application draft', RecruitmentApplication),
         },
       },
     },
@@ -3223,12 +2578,7 @@ export const openApiDocument = createDocument({
         summary: 'Read an owned recruitment application',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Recruitment application',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '200': jsonOk('Recruitment application', RecruitmentApplication),
         },
       },
     },
@@ -3236,16 +2586,9 @@ export const openApiDocument = createDocument({
       patch: {
         summary: 'Update an owned application draft',
         requestParams: { path: IdPath },
-        requestBody: {
-          content: { 'application/json': { schema: updateRecruitmentApplicationBody } },
-        },
+        requestBody: jsonBody(updateRecruitmentApplicationBody),
         responses: {
-          '200': {
-            description: 'Saved draft',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '200': jsonOk('Saved draft', RecruitmentApplication),
         },
       },
     },
@@ -3255,12 +2598,7 @@ export const openApiDocument = createDocument({
         requestParams: { path: IdPath },
         requestBody: { content: { 'application/octet-stream': { schema: z.string() } } },
         responses: {
-          '201': {
-            description: 'Draft with attachment',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '201': jsonOk('Draft with attachment', RecruitmentApplication),
         },
       },
     },
@@ -3269,14 +2607,10 @@ export const openApiDocument = createDocument({
         summary: 'Create a short-lived private download URL for an owned attachment',
         requestParams: { path: z.object({ id: z.string(), attachmentId: z.string() }) },
         responses: {
-          '200': {
-            description: 'Short-lived access URL',
-            content: {
-              'application/json': {
-                schema: envelope(z.object({ url: z.string(), fileName: z.string() })),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Short-lived access URL',
+            z.object({ url: z.string(), fileName: z.string() }),
+          ),
         },
       },
     },
@@ -3285,12 +2619,7 @@ export const openApiDocument = createDocument({
         summary: 'Validate and submit an application before the campaign closes',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Submitted application',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '200': jsonOk('Submitted application', RecruitmentApplication),
         },
       },
     },
@@ -3299,24 +2628,16 @@ export const openApiDocument = createDocument({
         summary: 'Withdraw an undecided recruitment application',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Withdrawn application',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '200': jsonOk('Withdrawn application', RecruitmentApplication),
         },
       },
     },
     '/applications': {
       post: {
         summary: 'Create a club application draft (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: applicationDraftBody } } },
+        requestBody: jsonBody(applicationDraftBody),
         responses: {
-          '201': {
-            description: 'Draft created',
-            content: { 'application/json': { schema: envelope(ApplicationRecord) } },
-          },
+          '201': jsonOk('Draft created', ApplicationRecord),
         },
       },
     },
@@ -3325,12 +2646,7 @@ export const openApiDocument = createDocument({
         summary: 'Find an active account by exact email to add it as a founding member',
         requestParams: { query: z.object({ email: z.string() }) },
         responses: {
-          '200': {
-            description: 'Matching account',
-            content: {
-              'application/json': { schema: envelope(FounderProfile) },
-            },
-          },
+          '200': jsonOk('Matching account', FounderProfile),
           '404': { description: 'No active account uses this email' },
         },
       },
@@ -3340,21 +2656,15 @@ export const openApiDocument = createDocument({
         summary: 'Read an owned application, its submitted versions and ICPDP decision feedback',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Application, history and decisions (without internal review notes)',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    application: ApplicationRecord,
-                    versions: z.array(ApplicationVersion),
-                    decisions: z.array(ApplicantDecisionFeedback),
-                    founders: z.array(FounderProfile),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Application, history and decisions (without internal review notes)',
+            z.object({
+              application: ApplicationRecord,
+              versions: z.array(ApplicationVersion),
+              decisions: z.array(ApplicantDecisionFeedback),
+              founders: z.array(FounderProfile),
+            }),
+          ),
         },
       },
     },
@@ -3363,26 +2673,20 @@ export const openApiDocument = createDocument({
         summary: 'Preview what still blocks submission and any active-name conflict',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Submission preview',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    requirements: FoundingRequirements,
-                    issues: z.array(FoundingIssue),
-                    activeNameConflict: z.boolean(),
-                    similarClubs: z
-                      .array(SimilarClubHint)
-                      .max(5)
-                      .describe(
-                        'Public clubs (Active, Suspended, Dissolving, Dissolved) that look similar',
-                      ),
-                  }),
+          '200': jsonOk(
+            'Submission preview',
+            z.object({
+              requirements: FoundingRequirements,
+              issues: z.array(FoundingIssue),
+              activeNameConflict: z.boolean(),
+              similarClubs: z
+                .array(SimilarClubHint)
+                .max(5)
+                .describe(
+                  'Public clubs (Active, Suspended, Dissolving, Dissolved) that look similar',
                 ),
-              },
-            },
-          },
+            }),
+          ),
         },
       },
     },
@@ -3390,22 +2694,15 @@ export const openApiDocument = createDocument({
       patch: {
         summary: 'Save an editable application draft (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: applicationDraftBody
-                .extend({
-                  draftRevision: z.number().int().nonnegative(),
-                })
-                .strict(),
-            },
-          },
-        },
+        requestBody: jsonBody(
+          applicationDraftBody
+            .extend({
+              draftRevision: z.number().int().nonnegative(),
+            })
+            .strict(),
+        ),
         responses: {
-          '200': {
-            description: 'Draft saved',
-            content: { 'application/json': { schema: envelope(ApplicationRecord) } },
-          },
+          '200': jsonOk('Draft saved', ApplicationRecord),
         },
       },
     },
@@ -3414,25 +2711,19 @@ export const openApiDocument = createDocument({
         summary: 'Submit a new immutable application version and review task (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '201': {
-            description: 'Application submitted',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    version: ApplicationVersion,
-                    activeNameConflict: z.boolean(),
-                    similarClubs: z
-                      .array(SimilarClubHint)
-                      .max(5)
-                      .describe(
-                        'Public clubs (Active, Suspended, Dissolving, Dissolved) that look similar',
-                      ),
-                  }),
+          '201': jsonOk(
+            'Application submitted',
+            z.object({
+              version: ApplicationVersion,
+              activeNameConflict: z.boolean(),
+              similarClubs: z
+                .array(SimilarClubHint)
+                .max(5)
+                .describe(
+                  'Public clubs (Active, Suspended, Dissolving, Dissolved) that look similar',
                 ),
-              },
-            },
-          },
+            }),
+          ),
         },
       },
     },
@@ -3441,10 +2732,7 @@ export const openApiDocument = createDocument({
         summary: 'Withdraw an undecided application (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Application withdrawn',
-            content: { 'application/json': { schema: envelope(ApplicationRecord) } },
-          },
+          '200': jsonOk('Application withdrawn', ApplicationRecord),
         },
       },
     },
@@ -3456,10 +2744,7 @@ export const openApiDocument = createDocument({
           '(requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '201': {
-            description: 'Document uploaded',
-            content: { 'application/json': { schema: envelope(ApplicationDocument) } },
-          },
+          '201': jsonOk('Document uploaded', ApplicationDocument),
         },
       },
     },
@@ -3468,10 +2753,7 @@ export const openApiDocument = createDocument({
         summary: 'Remove a document from the editable draft (requires CSRF token)',
         requestParams: { path: ApplicationDocumentPath },
         responses: {
-          '200': {
-            description: 'Draft updated',
-            content: { 'application/json': { schema: envelope(ApplicationRecord) } },
-          },
+          '200': jsonOk('Draft updated', ApplicationRecord),
         },
       },
     },
@@ -3480,19 +2762,13 @@ export const openApiDocument = createDocument({
         summary: 'Get a short-lived Cloudinary access URL for an owned document',
         requestParams: { path: ApplicationDocumentPath },
         responses: {
-          '200': {
-            description: 'Temporary access URL',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    fileName: z.string(),
-                    url: z.string().url(),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Temporary access URL',
+            z.object({
+              fileName: z.string(),
+              url: z.string().url(),
+            }),
+          ),
         },
       },
     },
@@ -3500,18 +2776,8 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List open club application review tasks (ICPDP Officer only)',
         responses: {
-          '200': {
-            description: 'Review queue',
-            content: {
-              'application/json': {
-                schema: envelope(z.array(ApplicationReviewQueueItem)),
-              },
-            },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Review queue', z.array(ApplicationReviewQueueItem)),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
     },
@@ -3520,14 +2786,7 @@ export const openApiDocument = createDocument({
         summary: 'Read a club application review snapshot and history',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Review detail',
-            content: {
-              'application/json': {
-                schema: envelope(ApplicationReviewDetail),
-              },
-            },
-          },
+          '200': jsonOk('Review detail', ApplicationReviewDetail),
         },
       },
     },
@@ -3536,14 +2795,7 @@ export const openApiDocument = createDocument({
         summary: 'Claim an open application review and start review (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Claimed review',
-            content: {
-              'application/json': {
-                schema: envelope(ApplicationReviewDetail),
-              },
-            },
-          },
+          '200': jsonOk('Claimed review', ApplicationReviewDetail),
         },
       },
     },
@@ -3551,16 +2803,9 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Record the single decision for an application review (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: applicationReviewDecisionBody } } },
+        requestBody: jsonBody(applicationReviewDecisionBody),
         responses: {
-          '200': {
-            description: 'Decided review',
-            content: {
-              'application/json': {
-                schema: envelope(ApplicationReviewDetail),
-              },
-            },
-          },
+          '200': jsonOk('Decided review', ApplicationReviewDetail),
         },
       },
     },
@@ -3569,19 +2814,13 @@ export const openApiDocument = createDocument({
         summary: 'Get a short-lived document URL for ICPDP application review',
         requestParams: { path: ApplicationDocumentPath },
         responses: {
-          '200': {
-            description: 'Temporary access URL',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    fileName: z.string(),
-                    url: z.string().url(),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Temporary access URL',
+            z.object({
+              fileName: z.string(),
+              url: z.string().url(),
+            }),
+          ),
         },
       },
     },
@@ -3593,18 +2832,8 @@ export const openApiDocument = createDocument({
           query: z.object({ view: z.enum(['pending', 'approved']).default('pending') }),
         },
         responses: {
-          '200': {
-            description: 'Event proposal queue',
-            content: {
-              'application/json': {
-                schema: envelope(z.array(EventProposalQueueItem)),
-              },
-            },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Event proposal queue', z.array(EventProposalQueueItem)),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
     },
@@ -3614,14 +2843,7 @@ export const openApiDocument = createDocument({
           'Event proposal with its revisions, budget lines, club obligations, bookings and semester budgets',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Event proposal detail',
-            content: {
-              'application/json': {
-                schema: envelope(EventProposalDetail),
-              },
-            },
-          },
+          '200': jsonOk('Event proposal detail', EventProposalDetail),
         },
       },
     },
@@ -3630,14 +2852,8 @@ export const openApiDocument = createDocument({
         summary: 'Claim an event proposal and move it to Under Review (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Claimed proposal',
-            content: { 'application/json': { schema: envelope(EventProposalDetail) } },
-          },
-          '409': {
-            description: 'Already claimed or no longer reviewable',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Claimed proposal', EventProposalDetail),
+          '409': apiError('Already claimed or no longer reviewable'),
         },
       },
     },
@@ -3646,20 +2862,11 @@ export const openApiDocument = createDocument({
         summary:
           'Request revision, approve (with conditions and per-line approved budget) or reject (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: eventReviewDecisionBody } } },
+        requestBody: jsonBody(eventReviewDecisionBody),
         responses: {
-          '200': {
-            description: 'Decided proposal',
-            content: { 'application/json': { schema: envelope(EventProposalDetail) } },
-          },
-          '400': {
-            description: 'Missing reason, sections, deadline or approved amounts',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'Proposal already decided or not claimed by this officer',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Decided proposal', EventProposalDetail),
+          '400': apiError('Missing reason, sections, deadline or approved amounts'),
+          '409': apiError('Proposal already decided or not claimed by this officer'),
         },
       },
     },
@@ -3668,20 +2875,11 @@ export const openApiDocument = createDocument({
         summary:
           "Approve or reject a club's request to cancel an approved event (requires CSRF token)",
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: eventCancellationDecisionBody } } },
+        requestBody: jsonBody(eventCancellationDecisionBody),
         responses: {
-          '200': {
-            description: 'Decided cancellation request',
-            content: { 'application/json': { schema: envelope(EventProposalDetail) } },
-          },
-          '400': {
-            description: 'Invalid decision body',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'No pending cancellation request for this event',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Decided cancellation request', EventProposalDetail),
+          '400': apiError('Invalid decision body'),
+          '409': apiError('No pending cancellation request for this event'),
         },
       },
     },
@@ -3691,14 +2889,8 @@ export const openApiDocument = createDocument({
           'One page of approved event budgets matching a tab and club, newest first, with per-tab counts and the clubs that have budgets (UC35, ICPDP Officer only)',
         requestParams: { query: budgetListQuery },
         responses: {
-          '200': {
-            description: 'Budgets',
-            content: { 'application/json': { schema: envelope(BudgetPage) } },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Budgets', BudgetPage),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
     },
@@ -3708,14 +2900,7 @@ export const openApiDocument = createDocument({
           'Budget with its approved lines and the money flows recorded before sponsored items',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Budget detail',
-            content: {
-              'application/json': {
-                schema: envelope(BudgetDetail),
-              },
-            },
-          },
+          '200': jsonOk('Budget detail', BudgetDetail),
         },
       },
     },
@@ -3724,14 +2909,8 @@ export const openApiDocument = createDocument({
         summary: 'Periodic report status of every club for a semester (UC39, ICPDP Officer only)',
         requestParams: { query: periodicOverviewQuery },
         responses: {
-          '200': {
-            description: 'Overview',
-            content: { 'application/json': { schema: envelope(PeriodicOverview) } },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Overview', PeriodicOverview),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
     },
@@ -3739,20 +2918,11 @@ export const openApiDocument = createDocument({
       put: {
         summary:
           'Open or update periodic report submission campaign, deadline and custom fields for a semester (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: periodicCampaignBody } } },
+        requestBody: jsonBody(periodicCampaignBody),
         responses: {
-          '200': {
-            description: 'Saved campaign',
-            content: { 'application/json': { schema: envelope(PeriodicCampaign) } },
-          },
-          '400': {
-            description: 'Invalid period, deadline or custom fields',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Saved campaign', PeriodicCampaign),
+          '400': apiError('Invalid period, deadline or custom fields'),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
     },
@@ -3761,10 +2931,7 @@ export const openApiDocument = createDocument({
         summary: "Report next to the system's own figures for the same club and semester",
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Report detail',
-            content: { 'application/json': { schema: envelope(PeriodicReportDetail) } },
-          },
+          '200': jsonOk('Report detail', PeriodicReportDetail),
         },
       },
     },
@@ -3773,20 +2940,11 @@ export const openApiDocument = createDocument({
         summary:
           'Accept (optionally with an observation for the evaluation) or return with structured comments (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: periodicDecisionBody } } },
+        requestBody: jsonBody(periodicDecisionBody),
         responses: {
-          '200': {
-            description: 'Decided report',
-            content: { 'application/json': { schema: envelope(PeriodicReportDetail) } },
-          },
-          '400': {
-            description: 'Missing reason or sections for a return',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'Not waiting for a decision',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Decided report', PeriodicReportDetail),
+          '400': apiError('Missing reason or sections for a return'),
+          '409': apiError('Not waiting for a decision'),
         },
       },
     },
@@ -3794,18 +2952,10 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'Record that a club did not submit on time; opens an OVERDUE_REPORT case (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: periodicMissingBody } } },
+        requestBody: jsonBody(periodicMissingBody),
         responses: {
-          '201': {
-            description: 'Opened case',
-            content: {
-              'application/json': { schema: envelope(z.object({ violationId: z.string() })) },
-            },
-          },
-          '409': {
-            description: 'Not due, already submitted or already recorded',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Opened case', z.object({ violationId: z.string() })),
+          '409': apiError('Not due, already submitted or already recorded'),
         },
       },
     },
@@ -3815,58 +2965,40 @@ export const openApiDocument = createDocument({
           'One page of compliance cases matching a tab filter, newest first, with per-tab counts (UC40, ICPDP Officer only)',
         requestParams: { query: violationListQuery },
         responses: {
-          '200': {
-            description: 'Cases',
-            content: { 'application/json': { schema: envelope(ViolationPage) } },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Cases', ViolationPage),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
       post: {
         summary: 'Open a compliance case for a club (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: violationOpenBody } } },
+        requestBody: jsonBody(violationOpenBody),
         responses: {
-          '201': {
-            description: 'Opened case',
-            content: { 'application/json': { schema: envelope(ViolationDetail) } },
-          },
-          '400': {
-            description: 'Invalid origin, severity, title or source record',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Opened case', ViolationDetail),
+          '400': apiError('Invalid origin, severity, title or source record'),
         },
       },
     },
     '/admin/violations/sources/{clubId}': {
       get: {
         summary: 'Events and budgets of a club a case can point to',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Source records',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    events: z.array(
-                      z.object({
-                        id: z.string(),
-                        title: z.string(),
-                        startAt: z.string(),
-                        state: z.string(),
-                      }),
-                    ),
-                    budgets: z.array(
-                      z.object({ id: z.string(), eventTitle: z.string(), state: z.string() }),
-                    ),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Source records',
+            z.object({
+              events: z.array(
+                z.object({
+                  id: z.string(),
+                  title: z.string(),
+                  startAt: z.string(),
+                  state: z.string(),
+                }),
+              ),
+              budgets: z.array(
+                z.object({ id: z.string(), eventTitle: z.string(), state: z.string() }),
+              ),
+            }),
+          ),
         },
       },
     },
@@ -3876,10 +3008,7 @@ export const openApiDocument = createDocument({
           'Compliance case with evidence, club response, decision, corrective actions and history',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Case detail',
-            content: { 'application/json': { schema: envelope(ViolationDetail) } },
-          },
+          '200': jsonOk('Case detail', ViolationDetail),
         },
       },
     },
@@ -3888,20 +3017,11 @@ export const openApiDocument = createDocument({
         summary:
           'Move a case forward: investigate, add evidence, ask or record the club response, decide, assign/verify corrective actions, resolve (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: violationStepBody } } },
+        requestBody: jsonBody(violationStepBody),
         responses: {
-          '200': {
-            description: 'Updated case',
-            content: { 'application/json': { schema: envelope(ViolationDetail) } },
-          },
-          '400': {
-            description: 'Missing reason, evidence, message or deadline',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'The step is not allowed in the current state',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Updated case', ViolationDetail),
+          '400': apiError('Missing reason, evidence, message or deadline'),
+          '409': apiError('The step is not allowed in the current state'),
         },
       },
     },
@@ -3910,35 +3030,20 @@ export const openApiDocument = createDocument({
         summary:
           'List school-wide events organised by ICPDP with invitation counts (UC53, ICPDP Officer only)',
         responses: {
-          '200': {
-            description: 'School events',
-            content: { 'application/json': { schema: envelope(z.array(SchoolEventSummary)) } },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('School events', z.array(SchoolEventSummary)),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
       post: {
         summary:
           'Create a school-wide event (Approved) and optionally invite clubs (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: schoolEventBody } } },
+        requestBody: jsonBody(schoolEventBody),
         responses: {
-          '201': {
-            description: 'Created event and invitation outcome',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome }),
-                ),
-              },
-            },
-          },
-          '400': {
-            description: 'Invalid time, venue, capacity, semester or reply deadline',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk(
+            'Created event and invitation outcome',
+            z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome }),
+          ),
+          '400': apiError('Invalid time, venue, capacity, semester or reply deadline'),
         },
       },
     },
@@ -3947,10 +3052,7 @@ export const openApiDocument = createDocument({
         summary: 'Approved events and bookings overlapping a room and time (BR15 warning)',
         requestParams: { query: schoolEventConflictQuery },
         responses: {
-          '200': {
-            description: 'Overlaps',
-            content: { 'application/json': { schema: envelope(z.array(ScheduleConflict)) } },
-          },
+          '200': jsonOk('Overlaps', z.array(ScheduleConflict)),
         },
       },
     },
@@ -3959,10 +3061,7 @@ export const openApiDocument = createDocument({
         summary: 'School event with conflicts, check-in code and every club invitation',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'School event',
-            content: { 'application/json': { schema: envelope(SchoolEventDetail) } },
-          },
+          '200': jsonOk('School event', SchoolEventDetail),
         },
       },
     },
@@ -3970,22 +3069,13 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Invite more clubs, or re-invite withdrawn/expired ones (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: schoolEventInviteBody } } },
+        requestBody: jsonBody(schoolEventInviteBody),
         responses: {
-          '200': {
-            description: 'Updated event and invitation outcome',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome }),
-                ),
-              },
-            },
-          },
-          '409': {
-            description: 'The event already took place',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Updated event and invitation outcome',
+            z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome }),
+          ),
+          '409': apiError('The event already took place'),
         },
       },
     },
@@ -3994,14 +3084,8 @@ export const openApiDocument = createDocument({
         summary: 'Withdraw a pending invitation before its deadline (requires CSRF token)',
         requestParams: { path: z.object({ id: z.string(), invitationId: z.string() }) },
         responses: {
-          '200': {
-            description: 'Updated event',
-            content: { 'application/json': { schema: envelope(SchoolEventDetail) } },
-          },
-          '409': {
-            description: 'Not pending or past the deadline',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Updated event', SchoolEventDetail),
+          '409': apiError('Not pending or past the deadline'),
         },
       },
     },
@@ -4011,14 +3095,8 @@ export const openApiDocument = createDocument({
           'Publish the event to students and open registration until it starts (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Published event',
-            content: { 'application/json': { schema: envelope(SchoolEventDetail) } },
-          },
-          '409': {
-            description: 'Already published or already started',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Published event', SchoolEventDetail),
+          '409': apiError('Already published or already started'),
         },
       },
     },
@@ -4028,14 +3106,8 @@ export const openApiDocument = createDocument({
           'Evaluation overview of a period: every club in scope with its latest revision (UC42/UC43, ICPDP Officer only)',
         requestParams: { query: evaluationOverviewQuery },
         responses: {
-          '200': {
-            description: 'Overview',
-            content: { 'application/json': { schema: envelope(EvaluationOverview) } },
-          },
-          '403': {
-            description: 'ICPDP Officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Overview', EvaluationOverview),
+          '403': apiError('ICPDP Officer role required'),
         },
       },
     },
@@ -4043,16 +3115,10 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'Generate a Data Ready draft from operational data for every club without one (UC42, requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: evaluationPeriodBody } } },
+        requestBody: jsonBody(evaluationPeriodBody),
         responses: {
-          '200': {
-            description: 'Overview',
-            content: { 'application/json': { schema: envelope(EvaluationOverview) } },
-          },
-          '409': {
-            description: 'No active scheme for the period',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Overview', EvaluationOverview),
+          '409': apiError('No active scheme for the period'),
         },
       },
     },
@@ -4060,16 +3126,10 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'Publish the period once every club is finalized, and notify the clubs (UC43, requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: evaluationPeriodBody } } },
+        requestBody: jsonBody(evaluationPeriodBody),
         responses: {
-          '200': {
-            description: 'Overview',
-            content: { 'application/json': { schema: envelope(EvaluationOverview) } },
-          },
-          '409': {
-            description: 'Some club is not finalized',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Overview', EvaluationOverview),
+          '409': apiError('Some club is not finalized'),
         },
       },
     },
@@ -4078,10 +3138,7 @@ export const openApiDocument = createDocument({
         summary: 'Evaluation with dimension scores, data lineage, revisions and trend',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Evaluation',
-            content: { 'application/json': { schema: envelope(EvaluationDetail) } },
-          },
+          '200': jsonOk('Evaluation', EvaluationDetail),
         },
       },
     },
@@ -4091,14 +3148,8 @@ export const openApiDocument = createDocument({
           'Generate the draft again from current data, or start a new revision of a published result (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Evaluation',
-            content: { 'application/json': { schema: envelope(EvaluationDetail) } },
-          },
-          '409': {
-            description: 'Not allowed in the current state',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Evaluation', EvaluationDetail),
+          '409': apiError('Not allowed in the current state'),
         },
       },
     },
@@ -4107,16 +3158,10 @@ export const openApiDocument = createDocument({
         summary:
           'Score a dimension by hand with a justification, or clear the manual score (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: evaluationManualBody } } },
+        requestBody: jsonBody(evaluationManualBody),
         responses: {
-          '200': {
-            description: 'Evaluation',
-            content: { 'application/json': { schema: envelope(EvaluationDetail) } },
-          },
-          '409': {
-            description: 'Not allowed in the current state',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Evaluation', EvaluationDetail),
+          '409': apiError('Not allowed in the current state'),
         },
       },
     },
@@ -4125,14 +3170,8 @@ export const openApiDocument = createDocument({
         summary: 'Finalize: compute the weighted total and classification (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Evaluation',
-            content: { 'application/json': { schema: envelope(EvaluationDetail) } },
-          },
-          '409': {
-            description: 'Not allowed in the current state',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Evaluation', EvaluationDetail),
+          '409': apiError('Not allowed in the current state'),
         },
       },
     },
@@ -4141,14 +3180,8 @@ export const openApiDocument = createDocument({
         summary: 'Reopen a finalized, unpublished evaluation for review (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Evaluation',
-            content: { 'application/json': { schema: envelope(EvaluationDetail) } },
-          },
-          '409': {
-            description: 'Not allowed in the current state',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Evaluation', EvaluationDetail),
+          '409': apiError('Not allowed in the current state'),
         },
       },
     },
@@ -4156,12 +3189,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List open board nomination tasks (ICPDP Officer only)',
         responses: {
-          '200': {
-            description: 'Board nomination queue',
-            content: {
-              'application/json': { schema: envelope(z.array(BoardNomination)) },
-            },
-          },
+          '200': jsonOk('Board nomination queue', z.array(BoardNomination)),
         },
       },
     },
@@ -4170,12 +3198,7 @@ export const openApiDocument = createDocument({
         summary: 'Read board nomination and eligibility details',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Board nomination detail',
-            content: {
-              'application/json': { schema: envelope(BoardNomination) },
-            },
-          },
+          '200': jsonOk('Board nomination detail', BoardNomination),
         },
       },
     },
@@ -4184,12 +3207,7 @@ export const openApiDocument = createDocument({
         summary: 'Claim an open board nomination task (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Claimed task',
-            content: {
-              'application/json': { schema: envelope(BoardNomination) },
-            },
-          },
+          '200': jsonOk('Claimed task', BoardNomination),
         },
       },
     },
@@ -4197,14 +3215,9 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Record one full or partial board confirmation decision',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: boardNominationDecisionBody } } },
+        requestBody: jsonBody(boardNominationDecisionBody),
         responses: {
-          '200': {
-            description: 'Decided board nomination',
-            content: {
-              'application/json': { schema: envelope(BoardNomination) },
-            },
-          },
+          '200': jsonOk('Decided board nomination', BoardNomination),
         },
       },
     },
@@ -4212,12 +3225,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List open leadership transition tasks (ICPDP Officer only)',
         responses: {
-          '200': {
-            description: 'Leadership transition queue',
-            content: {
-              'application/json': { schema: envelope(z.array(LeadershipTransition)) },
-            },
-          },
+          '200': jsonOk('Leadership transition queue', z.array(LeadershipTransition)),
         },
       },
     },
@@ -4226,10 +3234,7 @@ export const openApiDocument = createDocument({
         summary: 'Read a leadership transition plan and its carried obligations',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Transition detail',
-            content: { 'application/json': { schema: envelope(LeadershipTransition) } },
-          },
+          '200': jsonOk('Transition detail', LeadershipTransition),
         },
       },
     },
@@ -4238,10 +3243,7 @@ export const openApiDocument = createDocument({
         summary: 'Claim an open leadership transition task (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Claimed task',
-            content: { 'application/json': { schema: envelope(LeadershipTransition) } },
-          },
+          '200': jsonOk('Claimed task', LeadershipTransition),
         },
       },
     },
@@ -4249,18 +3251,10 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Approve or return a leadership transition (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: transitionDecisionBody } } },
+        requestBody: jsonBody(transitionDecisionBody),
         responses: {
-          '200': {
-            description: 'Decided transition',
-            content: {
-              'application/json': { schema: envelope(LeadershipTransition) },
-            },
-          },
-          '409': {
-            description: 'Transition held while club is suspended or source data changed',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Decided transition', LeadershipTransition),
+          '409': apiError('Transition held while club is suspended or source data changed'),
         },
       },
     },
@@ -4269,10 +3263,7 @@ export const openApiDocument = createDocument({
         summary: "Read the authenticated student's event registration context",
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Registration context',
-            content: { 'application/json': { schema: envelope(EventRegistrationContext) } },
-          },
+          '200': jsonOk('Registration context', EventRegistrationContext),
         },
       },
     },
@@ -4280,18 +3271,10 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Register the authenticated student for an event (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: eventRegistrationBody } } },
+        requestBody: jsonBody(eventRegistrationBody),
         responses: {
-          '201': {
-            description: 'Confirmed or waitlisted registration',
-            content: {
-              'application/json': { schema: envelope(EventRegistration) },
-            },
-          },
-          '409': {
-            description: 'Registration closed, duplicate, or capacity reached',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Confirmed or waitlisted registration', EventRegistration),
+          '409': apiError('Registration closed, duplicate, or capacity reached'),
         },
       },
     },
@@ -4300,28 +3283,15 @@ export const openApiDocument = createDocument({
         summary:
           'Check the authenticated student in to an event with its check-in code (requires CSRF token)',
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: eventCheckInBody } } },
+        requestBody: jsonBody(eventCheckInBody),
         responses: {
-          '200': {
-            description: 'The single attendance record (existing one when already checked in)',
-            content: {
-              'application/json': {
-                schema: envelope(Attendance.extend({ alreadyCheckedIn: z.boolean() })),
-              },
-            },
-          },
-          '400': {
-            description: 'Invalid check-in code',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'No confirmed registration or members-only event',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'Event not open for check-in or outside the check-in window',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'The single attendance record (existing one when already checked in)',
+            Attendance.extend({ alreadyCheckedIn: z.boolean() }),
+          ),
+          '400': apiError('Invalid check-in code'),
+          '403': apiError('No confirmed registration or members-only event'),
+          '409': apiError('Event not open for check-in or outside the check-in window'),
         },
       },
     },
@@ -4331,37 +3301,21 @@ export const openApiDocument = createDocument({
           'Read whether the authenticated student may give feedback, and their own submission',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Feedback context',
-            content: {
-              'application/json': { schema: envelope(EventFeedbackContext) },
-            },
-          },
+          '200': jsonOk('Feedback context', EventFeedbackContext),
         },
       },
       post: {
         summary: "Submit the student's single, immutable event feedback (requires CSRF token)",
         requestParams: { path: IdPath },
-        requestBody: { content: { 'application/json': { schema: eventFeedbackBody } } },
+        requestBody: jsonBody(eventFeedbackBody),
         responses: {
-          '201': {
-            description: 'Submitted feedback (visible with identity only to its author)',
-            content: {
-              'application/json': { schema: envelope(MyEventFeedback) },
-            },
-          },
-          '400': {
-            description: 'Rating outside 1–5 or empty/oversized comment',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'Caller did not check in to the event',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '409': {
-            description: 'Feedback already submitted or window closed',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk(
+            'Submitted feedback (visible with identity only to its author)',
+            MyEventFeedback,
+          ),
+          '400': apiError('Rating outside 1–5 or empty/oversized comment'),
+          '403': apiError('Caller did not check in to the event'),
+          '409': apiError('Feedback already submitted or window closed'),
         },
       },
     },
@@ -4369,12 +3323,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the authenticated student's own event feedback",
         responses: {
-          '200': {
-            description: 'Own feedback',
-            content: {
-              'application/json': { schema: envelope(z.array(MyEventFeedback)) },
-            },
-          },
+          '200': jsonOk('Own feedback', z.array(MyEventFeedback)),
         },
       },
     },
@@ -4382,50 +3331,29 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'UC05: approval routing rule sets, newest first (ICPDP officers)',
         responses: {
-          '200': {
-            description: 'Rule sets',
-            content: { 'application/json': { schema: envelope(z.array(RoutingRuleSet)) } },
-          },
-          '403': {
-            description: 'ICPDP officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Rule sets', z.array(RoutingRuleSet)),
+          '403': apiError('ICPDP officer role required'),
         },
       },
       post: {
         summary:
           'UC05: create a draft rule set (ICPDP officer, CSRF); overlapping rules are refused',
-        requestBody: { content: { 'application/json': { schema: routingRulesBody } } },
+        requestBody: jsonBody(routingRulesBody),
         responses: {
-          '201': {
-            description: 'Draft',
-            content: { 'application/json': { schema: envelope(RoutingRuleSet) } },
-          },
-          '400': {
-            description: 'Invalid or overlapping rules',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '403': {
-            description: 'ICPDP officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Draft', RoutingRuleSet),
+          '400': apiError('Invalid or overlapping rules'),
+          '403': apiError('ICPDP officer role required'),
         },
       },
     },
     '/admin/routing-rules/{id}': {
       put: {
         summary: 'UC05: replace the rules of a draft (ICPDP officer, CSRF)',
-        requestParams: { path: z.object({ id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: routingRulesBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(routingRulesBody),
         responses: {
-          '200': {
-            description: 'Draft',
-            content: { 'application/json': { schema: envelope(RoutingRuleSet) } },
-          },
-          '409': {
-            description: 'Not a draft',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Draft', RoutingRuleSet),
+          '409': apiError('Not a draft'),
         },
       },
     },
@@ -4433,12 +3361,9 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'UC05: activate a draft; the previous set is superseded and only new requests use it (ICPDP officer, CSRF)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Active',
-            content: { 'application/json': { schema: envelope(RoutingRuleSet) } },
-          },
+          '200': jsonOk('Active', RoutingRuleSet),
         },
       },
     },
@@ -4446,12 +3371,9 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           'UC05 A1: which rule of this set the last N decided requests would match, and their SLA (read only)',
-        requestParams: { path: z.object({ id: z.string() }), query: routingSimulationQuery },
+        requestParams: { path: IdPath, query: routingSimulationQuery },
         responses: {
-          '200': {
-            description: 'Simulation',
-            content: { 'application/json': { schema: envelope(RoutingSimulation) } },
-          },
+          '200': jsonOk('Simulation', RoutingSimulation),
         },
       },
     },
@@ -4459,20 +3381,11 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'UC50: complain about a club to ICPDP (BR38); creates an ICPDP task (requires CSRF token)',
-        requestBody: { content: { 'application/json': { schema: complaintBody } } },
+        requestBody: jsonBody(complaintBody),
         responses: {
-          '201': {
-            description: 'Submitted complaint',
-            content: { 'application/json': { schema: envelope(Complaint) } },
-          },
-          '400': {
-            description: 'Invalid type, text, evidence or unrelated event',
-            content: { 'application/json': { schema: ApiError } },
-          },
-          '404': {
-            description: 'Club not found or dissolved',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '201': jsonOk('Submitted complaint', Complaint),
+          '400': apiError('Invalid type, text, evidence or unrelated event'),
+          '404': apiError('Club not found or dissolved'),
         },
       },
     },
@@ -4480,26 +3393,17 @@ export const openApiDocument = createDocument({
       get: {
         summary: "UC50: the authenticated student's complaints with their progress",
         responses: {
-          '200': {
-            description: 'Own complaints',
-            content: { 'application/json': { schema: envelope(z.array(Complaint)) } },
-          },
+          '200': jsonOk('Own complaints', z.array(Complaint)),
         },
       },
     },
     '/complaints/{id}/withdraw': {
       post: {
         summary: 'UC50 A1: withdraw an own complaint ICPDP has not decided (requires CSRF token)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Withdrawn complaint',
-            content: { 'application/json': { schema: envelope(Complaint) } },
-          },
-          '409': {
-            description: 'Already decided or not yours',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Withdrawn complaint', Complaint),
+          '409': apiError('Already decided or not yours'),
         },
       },
     },
@@ -4509,16 +3413,11 @@ export const openApiDocument = createDocument({
           'UC51: one page of the ICPDP complaint queue, newest first, optionally by state (ICPDP officer only)',
         requestParams: { query: complaintQuery },
         responses: {
-          '200': {
-            description: 'Complaints with complainant and the complaints each can be linked to',
-            content: {
-              'application/json': { schema: envelope(ComplaintQueuePage) },
-            },
-          },
-          '403': {
-            description: 'ICPDP officer role required',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Complaints with complainant and the complaints each can be linked to',
+            ComplaintQueuePage,
+          ),
+          '403': apiError('ICPDP officer role required'),
         },
       },
     },
@@ -4526,28 +3425,19 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           'UC51: one complaint with its complainant and linked duplicates (ICPDP officer only)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Complaint',
-            content: { 'application/json': { schema: envelope(ComplaintForIcpdp) } },
-          },
+          '200': jsonOk('Complaint', ComplaintForIcpdp),
         },
       },
     },
     '/admin/complaints/{id}/open': {
       post: {
         summary: 'UC51: open a submitted complaint for triage (Submitted → Under Triage)',
-        requestParams: { path: z.object({ id: z.string() }) },
+        requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Under triage',
-            content: { 'application/json': { schema: envelope(ComplaintForIcpdp) } },
-          },
-          '409': {
-            description: 'No longer Submitted',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Under triage', ComplaintForIcpdp),
+          '409': apiError('No longer Submitted'),
         },
       },
     },
@@ -4555,17 +3445,11 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'UC51: Dismissed, Forwarded (to the club, with deadline) or Escalated (opens a UC40 case); reason required',
-        requestParams: { path: z.object({ id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: complaintTriageBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(complaintTriageBody),
         responses: {
-          '200': {
-            description: 'Triaged',
-            content: { 'application/json': { schema: envelope(ComplaintForIcpdp) } },
-          },
-          '409': {
-            description: 'Not under triage, or club dissolved',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Triaged', ComplaintForIcpdp),
+          '409': apiError('Not under triage, or club dissolved'),
         },
       },
     },
@@ -4573,43 +3457,31 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'UC50 E1: link an undecided complaint to another of the same student and club; it then follows that complaint',
-        requestParams: { path: z.object({ id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: complaintLinkBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(complaintLinkBody),
         responses: {
-          '200': {
-            description: 'Linked',
-            content: { 'application/json': { schema: envelope(ComplaintForIcpdp) } },
-          },
-          '409': {
-            description: 'Not undecided, already linked, or another student or club',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Linked', ComplaintForIcpdp),
+          '409': apiError('Not undecided, already linked, or another student or club'),
         },
       },
     },
     '/admin/complaints/{id}/close': {
       post: {
         summary: 'UC51 A1: close a complaint after a satisfying club response',
-        requestParams: { path: z.object({ id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: complaintCloseBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(complaintCloseBody),
         responses: {
-          '200': {
-            description: 'Closed',
-            content: { 'application/json': { schema: envelope(ComplaintForIcpdp) } },
-          },
+          '200': jsonOk('Closed', ComplaintForIcpdp),
         },
       },
     },
     '/admin/complaints/{id}/escalate': {
       post: {
         summary: 'UC51 A1: escalate a complaint after the club response into a UC40 violation case',
-        requestParams: { path: z.object({ id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: complaintEscalateBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(complaintEscalateBody),
         responses: {
-          '200': {
-            description: 'Escalated',
-            content: { 'application/json': { schema: envelope(ComplaintForIcpdp) } },
-          },
+          '200': jsonOk('Escalated', ComplaintForIcpdp),
         },
       },
     },
@@ -4617,18 +3489,10 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           'UC52: complaints ICPDP forwarded to this club, without the complainant (club.complaint.respond)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Forwarded complaints',
-            content: {
-              'application/json': { schema: envelope(z.array(ComplaintForClub)) },
-            },
-          },
-          '403': {
-            description: 'Missing club.complaint.respond',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Forwarded complaints', z.array(ComplaintForClub)),
+          '403': apiError('Missing club.complaint.respond'),
         },
       },
     },
@@ -4636,17 +3500,11 @@ export const openApiDocument = createDocument({
       post: {
         summary:
           'UC52: answer a forwarded complaint once, with the concrete action taken (club.complaint.respond, CSRF)',
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: complaintResponseBody } } },
+        requestParams: { path: ClubIdPath },
+        requestBody: jsonBody(complaintResponseBody),
         responses: {
-          '200': {
-            description: 'Club Responded',
-            content: { 'application/json': { schema: envelope(ComplaintForClub) } },
-          },
-          '409': {
-            description: 'Not forwarded to this club or already answered',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Club Responded', ComplaintForClub),
+          '409': apiError('Not forwarded to this club or already answered'),
         },
       },
     },
@@ -4654,12 +3512,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the authenticated student's check-ins with their feedback windows",
         responses: {
-          '200': {
-            description: 'Attendance history',
-            content: {
-              'application/json': { schema: envelope(z.array(Attendance)) },
-            },
-          },
+          '200': jsonOk('Attendance history', z.array(Attendance)),
         },
       },
     },
@@ -4667,12 +3520,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the authenticated student's event registrations",
         responses: {
-          '200': {
-            description: 'Owned event registrations',
-            content: {
-              'application/json': { schema: envelope(z.array(EventRegistration)) },
-            },
-          },
+          '200': jsonOk('Owned event registrations', z.array(EventRegistration)),
         },
       },
     },
@@ -4681,24 +3529,16 @@ export const openApiDocument = createDocument({
         summary: 'Cancel an owned event registration before event start (requires CSRF token)',
         requestParams: { path: IdPath },
         responses: {
-          '200': {
-            description: 'Cancelled registration',
-            content: { 'application/json': { schema: envelope(EventRegistration) } },
-          },
+          '200': jsonOk('Cancelled registration', EventRegistration),
         },
       },
     },
     '/clubs/{clubId}/board-nomination-context': {
       get: {
         summary: 'Read current board seats and active club members for nomination',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Nomination context',
-            content: {
-              'application/json': { schema: envelope(BoardNominationContext) },
-            },
-          },
+          '200': jsonOk('Nomination context', BoardNominationContext),
         },
       },
     },
@@ -4706,43 +3546,30 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           "List the club's recent board nominations with seat states and return reasons (UC10)",
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Club board nominations, newest first',
-            content: {
-              'application/json': { schema: envelope(z.array(BoardNomination)) },
-            },
-          },
+          '200': jsonOk('Club board nominations, newest first', z.array(BoardNomination)),
         },
       },
       post: {
         summary: 'Submit one board nomination and create one ICPDP task',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: boardNominationBody } } },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(boardNominationBody),
         responses: {
-          '201': {
-            description: 'Submitted nomination',
-            content: {
-              'application/json': { schema: envelope(BoardNomination) },
-            },
-          },
+          '201': jsonOk('Submitted nomination', BoardNomination),
         },
       },
     },
     '/clubs/{clubId}/member-space': {
       get: {
         summary: 'Read-only member space of a club for its Active or Inactive members (UC24)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Membership, roster, board, events, attendance and owed feedback',
-            content: { 'application/json': { schema: envelope(MemberSpace) } },
-          },
-          '403': {
-            description: 'Not a current member (Left, Banned or never joined)',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk(
+            'Membership, roster, board, events, attendance and owed feedback',
+            MemberSpace,
+          ),
+          '403': apiError('Not a current member (Left, Banned or never joined)'),
         },
       },
     },
@@ -4750,12 +3577,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the authenticated student's current club memberships",
         responses: {
-          '200': {
-            description: 'Memberships',
-            content: {
-              'application/json': { schema: envelope(z.array(Membership)) },
-            },
-          },
+          '200': jsonOk('Memberships', z.array(Membership)),
         },
       },
     },
@@ -4763,12 +3585,7 @@ export const openApiDocument = createDocument({
       get: {
         summary: "List the authenticated student's withdrawal requests",
         responses: {
-          '200': {
-            description: 'Withdrawal requests',
-            content: {
-              'application/json': { schema: envelope(z.array(MembershipWithdrawal)) },
-            },
-          },
+          '200': jsonOk('Withdrawal requests', z.array(MembershipWithdrawal)),
         },
       },
     },
@@ -4776,59 +3593,39 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Request to leave a club without changing membership state immediately',
         requestParams: { path: z.object({ membershipId: z.string() }) },
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: z.object({
-                reason: z.string().min(1).max(2000),
-                requestedEffectiveDate: z.string().datetime(),
-              }),
-            },
-          },
-        },
+        requestBody: jsonBody(
+          z.object({
+            reason: z.string().min(1).max(2000),
+            requestedEffectiveDate: z.string().datetime(),
+          }),
+        ),
         responses: {
-          '201': {
-            description: 'Withdrawal request',
-            content: {
-              'application/json': { schema: envelope(MembershipWithdrawal) },
-            },
-          },
+          '201': jsonOk('Withdrawal request', MembershipWithdrawal),
         },
       },
     },
     '/clubs/{clubId}/memberships': {
       get: {
         summary: 'List current members for a club manager',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Membership roster with email and currently held club roles',
-            content: {
-              'application/json': { schema: envelope(z.array(ClubRosterMember)) },
-            },
-          },
+          '200': jsonOk(
+            'Membership roster with email and currently held club roles',
+            z.array(ClubRosterMember),
+          ),
         },
       },
       post: {
         summary: 'Onboard a student manually without a recruitment application (UC20 A1)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: z.object({
-                email: z.string().max(320),
-                reason: z.string().min(1).max(2000),
-              }),
-            },
-          },
-        },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(
+          z.object({
+            email: z.string().max(320),
+            reason: z.string().min(1).max(2000),
+          }),
+        ),
         responses: {
-          '201': {
-            description: 'Created Active membership',
-            content: {
-              'application/json': { schema: envelope(Membership) },
-            },
-          },
+          '201': jsonOk('Created Active membership', Membership),
         },
       },
     },
@@ -4836,38 +3633,24 @@ export const openApiDocument = createDocument({
       patch: {
         summary: 'Activate, deactivate or ban a membership',
         requestParams: { path: z.object({ clubId: z.string(), membershipId: z.string() }) },
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: z.object({
-                state: z.enum(['Active', 'Inactive', 'Banned']),
-                effectiveDate: z.string().datetime(),
-                reason: z.string().max(2000).optional(),
-              }),
-            },
-          },
-        },
+        requestBody: jsonBody(
+          z.object({
+            state: z.enum(['Active', 'Inactive', 'Banned']),
+            effectiveDate: z.string().datetime(),
+            reason: z.string().max(2000).optional(),
+          }),
+        ),
         responses: {
-          '200': {
-            description: 'Updated membership',
-            content: {
-              'application/json': { schema: envelope(Membership) },
-            },
-          },
+          '200': jsonOk('Updated membership', Membership),
         },
       },
     },
     '/clubs/{clubId}/membership-withdrawals': {
       get: {
         summary: 'List club membership withdrawal requests',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Withdrawal requests',
-            content: {
-              'application/json': { schema: envelope(z.array(MembershipWithdrawal)) },
-            },
-          },
+          '200': jsonOk('Withdrawal requests', z.array(MembershipWithdrawal)),
         },
       },
     },
@@ -4876,101 +3659,61 @@ export const openApiDocument = createDocument({
         summary: 'Execute a withdrawal after board-seat and effective-date checks',
         requestParams: { path: z.object({ clubId: z.string(), requestId: z.string() }) },
         responses: {
-          '200': {
-            description: 'Membership marked as Left',
-            content: {
-              'application/json': { schema: envelope(Membership) },
-            },
-          },
+          '200': jsonOk('Membership marked as Left', Membership),
         },
       },
     },
     '/clubs/{clubId}/recruitment/campaigns': {
       get: {
         summary: 'List recruitment campaigns for a club with recruitment-management permission',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Recruitment campaigns',
-            content: {
-              'application/json': { schema: envelope(z.array(RecruitmentCampaign)) },
-            },
-          },
+          '200': jsonOk('Recruitment campaigns', z.array(RecruitmentCampaign)),
         },
       },
       post: {
         summary: 'Create a recruitment campaign draft',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: recruitmentCampaignBody } } },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(recruitmentCampaignBody),
         responses: {
-          '201': {
-            description: 'Draft and overlap warning',
-            content: {
-              'application/json': { schema: envelope(CampaignWithOverlaps) },
-            },
-          },
+          '201': jsonOk('Draft and overlap warning', CampaignWithOverlaps),
         },
       },
     },
     '/clubs/{clubId}/recruitment/campaigns/{campaignId}': {
       get: {
         summary: 'Read a recruitment campaign',
-        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        requestParams: { path: CampaignPath },
         responses: {
-          '200': {
-            description: 'Recruitment campaign',
-            content: {
-              'application/json': { schema: envelope(RecruitmentCampaign) },
-            },
-          },
+          '200': jsonOk('Recruitment campaign', RecruitmentCampaign),
         },
       },
       patch: {
         summary: 'Update a draft recruitment campaign',
-        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: recruitmentCampaignBody } } },
+        requestParams: { path: CampaignPath },
+        requestBody: jsonBody(recruitmentCampaignBody),
         responses: {
-          '200': {
-            description: 'Draft and overlap warning',
-            content: {
-              'application/json': { schema: envelope(CampaignWithOverlaps) },
-            },
-          },
+          '200': jsonOk('Draft and overlap warning', CampaignWithOverlaps),
         },
       },
     },
     '/clubs/{clubId}/recruitment/campaigns/{campaignId}/publish': {
       post: {
         summary: 'Publish a draft after academic-calendar and overlap validation',
-        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
-        requestBody: {
-          content: { 'application/json': { schema: z.object({ confirmOverlap: z.boolean() }) } },
-        },
+        requestParams: { path: CampaignPath },
+        requestBody: jsonBody(z.object({ confirmOverlap: z.boolean() })),
         responses: {
-          '200': {
-            description: 'Published campaign',
-            content: {
-              'application/json': { schema: envelope(CampaignWithOverlaps) },
-            },
-          },
-          '409': {
-            description: 'Overlapping campaign requires explicit confirmation',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Published campaign', CampaignWithOverlaps),
+          '409': apiError('Overlapping campaign requires explicit confirmation'),
         },
       },
     },
     '/clubs/{clubId}/recruitment/campaigns/{campaignId}/cancel': {
       post: {
         summary: 'Cancel a campaign and notify its applicants',
-        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        requestParams: { path: CampaignPath },
         responses: {
-          '200': {
-            description: 'Cancelled campaign',
-            content: {
-              'application/json': { schema: envelope(RecruitmentCampaign) },
-            },
-          },
+          '200': jsonOk('Cancelled campaign', RecruitmentCampaign),
         },
       },
     },
@@ -4978,42 +3721,28 @@ export const openApiDocument = createDocument({
       get: {
         summary: 'List recruitment applications for an authorized club reviewer',
         requestParams: {
-          path: z.object({ clubId: z.string(), campaignId: z.string() }),
+          path: CampaignPath,
           query: z.object({ state: z.string().optional() }),
         },
         responses: {
-          '200': {
-            description: 'Applications for review',
-            content: {
-              'application/json': { schema: envelope(z.array(RecruitmentApplication)) },
-            },
-          },
+          '200': jsonOk('Applications for review', z.array(RecruitmentApplication)),
         },
       },
     },
     '/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/review': {
       post: {
         summary: 'Screen applications or record campaign decisions',
-        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: z.object({
-                action: z.enum(['screen', 'shortlist', 'decide', 'promote', 'close-withdrawn']),
-                applicationIds: z.array(z.string()),
-                outcome: z.enum(['Shortlisted', 'Accepted', 'Rejected', 'Waitlisted']).optional(),
-                reason: z.string().optional(),
-              }),
-            },
-          },
-        },
+        requestParams: { path: CampaignPath },
+        requestBody: jsonBody(
+          z.object({
+            action: z.enum(['screen', 'shortlist', 'decide', 'promote', 'close-withdrawn']),
+            applicationIds: z.array(z.string()),
+            outcome: z.enum(['Shortlisted', 'Accepted', 'Rejected', 'Waitlisted']).optional(),
+            reason: z.string().optional(),
+          }),
+        ),
         responses: {
-          '200': {
-            description: 'Updated applications',
-            content: {
-              'application/json': { schema: envelope(z.array(RecruitmentApplication)) },
-            },
-          },
+          '200': jsonOk('Updated applications', z.array(RecruitmentApplication)),
         },
       },
     },
@@ -5021,25 +3750,16 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Create an Active membership for an accepted recruitment candidate',
         requestParams: {
-          path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }),
+          path: ApplicationPath,
         },
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: z.object({
-                joinedAt: z.string().datetime().optional(),
-                departmentId: z.string().optional(),
-              }),
-            },
-          },
-        },
+        requestBody: jsonBody(
+          z.object({
+            joinedAt: z.string().datetime().optional(),
+            departmentId: z.string().optional(),
+          }),
+        ),
         responses: {
-          '200': {
-            description: 'Onboarded application',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '200': jsonOk('Onboarded application', RecruitmentApplication),
         },
       },
     },
@@ -5057,14 +3777,10 @@ export const openApiDocument = createDocument({
             }),
           },
           responses: {
-            '200': {
-              description: 'Short-lived access URL',
-              content: {
-                'application/json': {
-                  schema: envelope(z.object({ url: z.string(), fileName: z.string() })),
-                },
-              },
-            },
+            '200': jsonOk(
+              'Short-lived access URL',
+              z.object({ url: z.string(), fileName: z.string() }),
+            ),
           },
         },
       },
@@ -5072,18 +3788,11 @@ export const openApiDocument = createDocument({
       post: {
         summary: 'Record a candidate declining an accepted offer',
         requestParams: {
-          path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }),
+          path: ApplicationPath,
         },
-        requestBody: {
-          content: { 'application/json': { schema: z.object({ reason: z.string().optional() }) } },
-        },
+        requestBody: jsonBody(z.object({ reason: z.string().optional() })),
         responses: {
-          '200': {
-            description: 'Declined application',
-            content: {
-              'application/json': { schema: envelope(RecruitmentApplication) },
-            },
-          },
+          '200': jsonOk('Declined application', RecruitmentApplication),
         },
       },
     },
@@ -5091,23 +3800,17 @@ export const openApiDocument = createDocument({
       get: {
         summary:
           'List candidate evaluations per application with aggregate and dispersion (club.application.review)',
-        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        requestParams: { path: CampaignPath },
         responses: {
-          '200': {
-            description: 'Evaluations grouped by application',
-            content: {
-              'application/json': {
-                schema: envelope(
-                  z.object({
-                    rubric: z.array(
-                      z.object({ key: z.string(), label: z.string(), maxScore: z.number() }),
-                    ),
-                    applications: z.array(CandidateEvaluationGroup),
-                  }),
-                ),
-              },
-            },
-          },
+          '200': jsonOk(
+            'Evaluations grouped by application',
+            z.object({
+              rubric: z.array(
+                z.object({ key: z.string(), label: z.string(), maxScore: z.number() }),
+              ),
+              applications: z.array(CandidateEvaluationGroup),
+            }),
+          ),
         },
       },
     },
@@ -5116,74 +3819,49 @@ export const openApiDocument = createDocument({
         summary:
           "Create or update the caller's evaluation of a Shortlisted application (club.application.review)",
         requestParams: {
-          path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }),
+          path: ApplicationPath,
         },
-        requestBody: { content: { 'application/json': { schema: candidateEvaluationBody } } },
+        requestBody: jsonBody(candidateEvaluationBody),
         responses: {
-          '200': {
-            description: 'Saved evaluation',
-            content: {
-              'application/json': { schema: envelope(CandidateEvaluation) },
-            },
-          },
+          '200': jsonOk('Saved evaluation', CandidateEvaluation),
         },
       },
     },
     '/clubs/{clubId}/settings': {
       get: {
         summary: 'Read club settings (Club Leader, club.profile.manage)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Club settings',
-            content: {
-              'application/json': { schema: envelope(ClubSettings) },
-            },
-          },
+          '200': jsonOk('Club settings', ClubSettings),
         },
       },
     },
     '/clubs/{clubId}/profile': {
       patch: {
         summary: 'Update club-owned profile fields (requires club.profile.manage and CSRF)',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: clubProfileBody } } },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(clubProfileBody),
         responses: {
-          '200': {
-            description: 'Updated club profile',
-            content: {
-              'application/json': { schema: envelope(ClubProfile) },
-            },
-          },
+          '200': jsonOk('Updated club profile', ClubProfile),
         },
       },
     },
     '/clubs/{clubId}/departments/template': {
       post: {
         summary: 'Apply the default department template to an empty club structure',
-        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestParams: { path: ClubPath },
         responses: {
-          '200': {
-            description: 'Current departments',
-            content: {
-              'application/json': { schema: envelope(z.array(ClubDepartment)) },
-            },
-          },
+          '200': jsonOk('Current departments', z.array(ClubDepartment)),
         },
       },
     },
     '/clubs/{clubId}/departments': {
       post: {
         summary: 'Create an internal club department',
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: clubDepartmentBody } } },
+        requestParams: { path: ClubPath },
+        requestBody: jsonBody(clubDepartmentBody),
         responses: {
-          '201': {
-            description: 'Department created',
-            content: {
-              'application/json': { schema: envelope(ClubDepartment) },
-            },
-          },
+          '201': jsonOk('Department created', ClubDepartment),
         },
       },
     },
@@ -5191,43 +3869,27 @@ export const openApiDocument = createDocument({
       patch: {
         summary: 'Update an internal club department',
         requestParams: { path: z.object({ clubId: z.string(), departmentId: z.string() }) },
-        requestBody: { content: { 'application/json': { schema: clubDepartmentBody } } },
+        requestBody: jsonBody(clubDepartmentBody),
         responses: {
-          '200': {
-            description: 'Department updated',
-            content: {
-              'application/json': { schema: envelope(ClubDepartment) },
-            },
-          },
+          '200': jsonOk('Department updated', ClubDepartment),
         },
       },
       delete: {
         summary: 'Deactivate an unused internal club department',
         requestParams: { path: z.object({ clubId: z.string(), departmentId: z.string() }) },
         responses: {
-          '200': {
-            description: 'Department deactivated',
-            content: {
-              'application/json': { schema: envelope(ClubDepartment) },
-            },
-          },
+          '200': jsonOk('Department deactivated', ClubDepartment),
         },
       },
     },
     '/admin/users/{id}/roles': {
       post: {
         summary: 'Grant a system role (ICPDP only)',
-        requestParams: { path: UserIdPath },
-        requestBody: { content: { 'application/json': { schema: RoleChange } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(RoleChange),
         responses: {
-          '200': {
-            description: 'Role granted',
-            content: { 'application/json': { schema: envelope(Changed) } },
-          },
-          '403': {
-            description: 'Forbidden',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Role granted', Changed),
+          '403': apiError('Forbidden'),
         },
       },
     },
@@ -5235,50 +3897,32 @@ export const openApiDocument = createDocument({
       delete: {
         summary: 'Revoke a system role with reason (ICPDP only)',
         requestParams: { path: RolePath },
-        requestBody: { content: { 'application/json': { schema: Reason } } },
+        requestBody: jsonBody(Reason),
         responses: {
-          '200': {
-            description: 'Role revoked',
-            content: { 'application/json': { schema: envelope(Changed) } },
-          },
-          '403': {
-            description: 'Forbidden',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Role revoked', Changed),
+          '403': apiError('Forbidden'),
         },
       },
     },
     '/admin/users/{id}/lock': {
       post: {
         summary: 'Lock account with reason, optionally under an open UC40 case (ICPDP only)',
-        requestParams: { path: UserIdPath },
-        requestBody: { content: { 'application/json': { schema: lockBody } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(lockBody),
         responses: {
-          '200': {
-            description: 'Account locked',
-            content: { 'application/json': { schema: envelope(Changed) } },
-          },
-          '403': {
-            description: 'Forbidden',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Account locked', Changed),
+          '403': apiError('Forbidden'),
         },
       },
     },
     '/admin/users/{id}/unlock': {
       post: {
         summary: 'Unlock account with reason (ICPDP only)',
-        requestParams: { path: UserIdPath },
-        requestBody: { content: { 'application/json': { schema: Reason } } },
+        requestParams: { path: IdPath },
+        requestBody: jsonBody(Reason),
         responses: {
-          '200': {
-            description: 'Account unlocked',
-            content: { 'application/json': { schema: envelope(Changed) } },
-          },
-          '403': {
-            description: 'Forbidden',
-            content: { 'application/json': { schema: ApiError } },
-          },
+          '200': jsonOk('Account unlocked', Changed),
+          '403': apiError('Forbidden'),
         },
       },
     },
