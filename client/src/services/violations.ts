@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 import type { Page } from '@/services/discovery'
 export const VIOLATION_ORIGINS = [
   'COMPLAINT',
@@ -134,10 +134,7 @@ export type ViolationStep =
   | { type: 'verifyAction'; actionId: string; outcome: 'Verified' | 'Failed'; note?: string }
   | { type: 'resolve'; note?: string }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/violations${path}`, options)
-}
+const request = apiClient('/api/v1/admin/violations')
 
 // GET một trang vi phạm của các CLB theo bộ lọc
 export function fetchViolations(
