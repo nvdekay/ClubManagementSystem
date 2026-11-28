@@ -1,10 +1,8 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubProfileRepository } from '../../domain/club-profile.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   applyClubDepartmentTemplate,
   createClubDepartment,
@@ -13,19 +11,16 @@ import {
   updateClubDepartment,
   updateClubProfile,
 } from '../../usecase/club-profile.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface ClubProfileRouteDeps {
+export interface ClubProfileRouteDeps extends SessionDeps {
   repo: ClubProfileRepository
   accessRepo: ClubAccessRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const channelBody = z
   .object({
     label: z.string().max(100),
@@ -53,10 +48,10 @@ export const clubDepartmentBody = z
 // Mount các route hồ sơ và phòng ban của CLB
 export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Lấy cài đặt hồ sơ và phòng ban của CLB
-  router.get('/clubs/:clubId/settings', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/settings', read, async (req, res) => {
     ok(
       res,
       await getClubSettings(
@@ -69,7 +64,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
     )
   })
   // Cập nhật hồ sơ CLB
-  router.patch('/clubs/:clubId/profile', authGuard(guard), async (req, res) => {
+  router.patch('/clubs/:clubId/profile', write, async (req, res) => {
     ok(
       res,
       await updateClubProfile(
@@ -84,7 +79,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
     )
   })
   // Áp dụng mẫu phòng ban cho CLB
-  router.post('/clubs/:clubId/departments/template', authGuard(guard), async (req, res) => {
+  router.post('/clubs/:clubId/departments/template', write, async (req, res) => {
     ok(
       res,
       await applyClubDepartmentTemplate(
@@ -97,7 +92,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
     )
   })
   // Tạo phòng ban của CLB
-  router.post('/clubs/:clubId/departments', authGuard(guard), async (req, res) => {
+  router.post('/clubs/:clubId/departments', write, async (req, res) => {
     ok(
       res,
       await createClubDepartment(
@@ -112,7 +107,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
     )
   })
   // Cập nhật phòng ban của CLB
-  router.patch('/clubs/:clubId/departments/:departmentId', authGuard(guard), async (req, res) => {
+  router.patch('/clubs/:clubId/departments/:departmentId', write, async (req, res) => {
     ok(
       res,
       await updateClubDepartment(
@@ -127,7 +122,7 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
     )
   })
   // Vô hiệu hoá phòng ban của CLB
-  router.delete('/clubs/:clubId/departments/:departmentId', authGuard(guard), async (req, res) => {
+  router.delete('/clubs/:clubId/departments/:departmentId', write, async (req, res) => {
     ok(
       res,
       await deactivateClubDepartment(
