@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -11,7 +10,7 @@ import {
   type PropertyType,
 } from '../../domain/property.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { found, isDuplicateKey, writeAudit } from './repo-helpers.js'
 
 // Ánh xạ document sang Property
 function propertyFrom(doc: Record<string, unknown>): Property {
@@ -41,7 +40,6 @@ function propertyFrom(doc: Record<string, unknown>): Property {
 export function mongoPropertyRepository(): PropertyRepository {
   const properties = ucmsModels.properties!
   const bookings = ucmsModels.propertyBookings!
-  const audits = ucmsModels.auditLogs!
 
   // Ghi audit log cho tài sản
   async function audit(
@@ -53,30 +51,24 @@ export function mongoPropertyRepository(): PropertyRepository {
     after: unknown,
     at: Date,
   ): Promise<void> {
-    await audits.create(
-      [
-        {
-          entityType: 'Property',
-          entityId: new Types.ObjectId(String(id)),
-          action,
-          actorId: new Types.ObjectId(actorId),
-          actorRole: 'ICPDP_OFFICER',
-          before,
-          after,
-          correlationId: randomUUID(),
-          at,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'Property',
+      entityId: new Types.ObjectId(String(id)),
+      action,
+      actorId: new Types.ObjectId(actorId),
+      actorRole: 'ICPDP_OFFICER',
+      before,
+      after,
+      at,
+    })
   }
 
   // Lấy document tài sản hiện tại, không có thì báo not_found
   async function current(id: string, session: ClientSession) {
-    const doc = await properties.findById(new Types.ObjectId(id)).session(session).lean()
-    if (!doc) {
-      throw new DomainError('property not found', 'not_found')
-    }
+    const doc = found(
+      await properties.findById(new Types.ObjectId(id)).session(session).lean(),
+      'property not found',
+    )
     return doc
   }
 
