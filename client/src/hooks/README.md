@@ -29,3 +29,14 @@ theo khung thời gian (báo trước 24/72 giờ, cửa sổ check-in) để ch
 `useWorkspacePermission(clubId, permission)` trả về người dùng có permission đó trong workspace CLB hay không (đọc từ
 `/auth/me`, chỉ để ẩn/hiện giao diện — server vẫn tự kiểm tra); `useClubWorkspace(clubId)` trả về chính workspace CLB
 khi trang cần nhiều permission hoặc tên CLB. Đừng tự viết lại `auth.data?.workspaces.find(...)` ở từng trang.
+
+`useFormat()` trả về `date`/`day`/`money` đã gắn ngôn ngữ giao diện hiện tại (bọc `formatDate`, `formatDay`,
+`formatMoney`), để trang không phải tự viết lại hàm `date(value)` gọi `formatDate(value, i18n.language)`.
+
+`useInvalidatingMutation(mutationFn, keys, seed?)` là dạng chung của mutation "gọi service rồi làm mới cache": khi thành
+công, `seed(data, vars)` (nếu có) ghi trước một mục cache từ response, rồi lần lượt invalidate từng query key trong `keys`
+(mảng, hoặc hàm `(data, vars) => keys`) theo đúng thứ tự. Dùng các key gốc đã export (`authKeyRoot`, `dashboardKeyRoot`,
+`eventRegistrationsKeyRoot`, `eventProposalKey`) thay vì viết lại `['auth']`, `['dashboard']`.
+
+`useDismissibleMenu()` giữ trạng thái mở/đóng và hai ref (`root`, `trigger`) của một menu thả xuống: bấm ra ngoài thì đóng,
+Esc thì đóng và trả focus về nút mở. Dùng ở `UserMenu` và `SidebarAccountMenu`.
