@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import { bookingIntervalsConflict } from '../../domain/facility-booking.js'
@@ -12,7 +11,7 @@ import {
 } from '../../domain/room-allocation.js'
 import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { oid, queueNotifications } from './repo-helpers.js'
+import { found, oid, queueNotifications, writeAudit } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const ALLOCATED = 'ROOM_ALLOCATED'
@@ -139,21 +138,15 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
     session: ClientSession,
     reason?: string,
   ) {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: ROOM_ALLOCATION_ENTITY,
-          entityId: id,
-          action,
-          actorId: oid(actorId),
-          after,
-          ...(reason ? { reason } : {}),
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: ROOM_ALLOCATION_ENTITY,
+      entityId: id,
+      action,
+      actorId: oid(actorId),
+      after,
+      ...(reason ? { reason } : {}),
+      at: now,
+    })
   }
   // Lấy một phân bổ phòng theo id
   async function find(id: string): Promise<RoomAllocation | null> {
@@ -369,17 +362,17 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
     // ICPDP thu hồi phân bổ phòng kèm lý do
     async revoke(id, reason, officerId, now) {
       await mongoose.connection.transaction(async (session) => {
-        const record = await m
-          .auditLogs!.findOne({
-            entityType: ROOM_ALLOCATION_ENTITY,
-            entityId: oid(id),
-            action: ALLOCATED,
-          })
-          .session(session)
-          .lean()
-        if (!record) {
-          throw new DomainError('room allocation not found', 'not_found')
-        }
+        const record = found(
+          await m
+            .auditLogs!.findOne({
+              entityType: ROOM_ALLOCATION_ENTITY,
+              entityId: oid(id),
+              action: ALLOCATED,
+            })
+            .session(session)
+            .lean(),
+          'room allocation not found',
+        )
         const item = record.after as AllocationRecord
         await lock(oid(item.propertyId), oid(item.clubId), session)
         if (
