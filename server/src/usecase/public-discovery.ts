@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { DomainError } from '../domain/errors.js'
 import {
   isDiscoverableClub,
@@ -11,15 +10,11 @@ import {
   type PublicDiscoveryRepository,
   type PublicEvent,
 } from '../domain/public-discovery.js'
-
-const objectId = z.string().regex(/^[0-9a-f]{24}$/i)
+import { parseObjectId } from './access.js'
 
 // Kiểm định dạng ObjectId
 function validId(id: string): string {
-  if (!objectId.safeParse(id).success) {
-    throw new DomainError('invalid identifier', 'validation')
-  }
-  return id
+  return parseObjectId(id, 'identifier')
 }
 
 // Khách tìm kiếm CLB công khai, gợi ý CLB mới khi không có kết quả
