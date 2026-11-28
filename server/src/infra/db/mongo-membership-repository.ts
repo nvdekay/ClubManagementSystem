@@ -13,17 +13,7 @@ import { isBeforeToday } from '../../domain/membership.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
-import { isDuplicateKey, queueNotifications } from './repo-helpers.js'
-
-// Lọc mảng, chỉ giữ phần tử là object
-function objectArray(value: unknown): Record<string, unknown>[] {
-  return Array.isArray(value)
-    ? value.filter(
-        (item): item is Record<string, unknown> =>
-          Boolean(item) && typeof item === 'object' && !Array.isArray(item),
-      )
-    : []
-}
+import { found, isDuplicateKey, queueNotifications, records, writeAudit } from './repo-helpers.js'
 
 // Ép giá trị về Date
 function date(value: unknown): Date {
@@ -32,7 +22,7 @@ function date(value: unknown): Date {
 
 // Chuẩn hóa lịch sử đổi trạng thái của thành viên
 function history(value: unknown): MembershipStatusChange[] {
-  return objectArray(value).flatMap((entry) => {
+  return records(value).flatMap((entry) => {
     // actorId được ghi dưới dạng ObjectId; các mục cũ có thể là string — chấp nhận cả hai.
     if (
       !('fromState' in entry) ||
@@ -362,22 +352,16 @@ export function mongoMembershipRepository(): MembershipRepository {
             { session },
           )
           membershipId = new Types.ObjectId(String(created!._id))
-          await audits.create(
-            [
-              {
-                entityType: 'ClubMembership',
-                entityId: membershipId,
-                action: 'CLUB_MEMBERSHIP_MANUALLY_ONBOARDED',
-                actorId,
-                actorRole: 'Club Leader',
-                after: { state: 'Active', userId, defaultRole: String(memberRole.code) },
-                reason: input.reason,
-                correlationId: randomUUID(),
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'ClubMembership',
+            entityId: membershipId,
+            action: 'CLUB_MEMBERSHIP_MANUALLY_ONBOARDED',
+            actorId,
+            actorRole: 'Club Leader',
+            after: { state: 'Active', userId, defaultRole: String(memberRole.code) },
+            reason: input.reason,
+            at: input.now,
+          })
           await notify({
             recipients: [userId],
             entityId: membershipId,
@@ -394,10 +378,7 @@ export function mongoMembershipRepository(): MembershipRepository {
         }
         duplicate(error)
       }
-      const created = await memberships.findById(membershipId).lean()
-      if (!created) {
-        throw new DomainError('membership not found', 'not_found')
-      }
+      const created = found(await memberships.findById(membershipId).lean(), 'membership not found')
       return membershipView(created)
     },
 
@@ -408,13 +389,10 @@ export function mongoMembershipRepository(): MembershipRepository {
       const actorId = new Types.ObjectId(input.actorId)
       try {
         await mongoose.connection.transaction(async (session) => {
-          const current = await memberships
-            .findOne({ _id: membershipId, clubId })
-            .session(session)
-            .lean()
-          if (!current) {
-            throw new DomainError('membership not found', 'not_found')
-          }
+          const current = found(
+            await memberships.findOne({ _id: membershipId, clubId }).session(session).lean(),
+            'membership not found',
+          )
           const fromState = String(current.state) as MembershipState
           if (fromState === 'Left' || fromState === 'Banned') {
             throw new DomainError('membership state is final', 'conflict')
@@ -467,26 +445,20 @@ export function mongoMembershipRepository(): MembershipRepository {
               { session },
             )
           }
-          await audits.create(
-            [
-              {
-                entityType: 'ClubMembership',
-                entityId: membershipId,
-                action: 'CLUB_MEMBERSHIP_STATE_CHANGED',
-                actorId,
-                actorRole: 'Club Member',
-                before: { state: fromState },
-                after: {
-                  state: input.state,
-                  effectiveDate: input.effectiveDate,
-                  ...(input.reason ? { reason: input.reason } : {}),
-                },
-                correlationId: randomUUID(),
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'ClubMembership',
+            entityId: membershipId,
+            action: 'CLUB_MEMBERSHIP_STATE_CHANGED',
+            actorId,
+            actorRole: 'Club Member',
+            before: { state: fromState },
+            after: {
+              state: input.state,
+              effectiveDate: input.effectiveDate,
+              ...(input.reason ? { reason: input.reason } : {}),
+            },
+            at: input.now,
+          })
           await notify({
             recipients: [new Types.ObjectId(String(current.userId))],
             entityId: membershipId,
@@ -500,10 +472,7 @@ export function mongoMembershipRepository(): MembershipRepository {
       } catch (error) {
         duplicate(error)
       }
-      const updated = await memberships.findById(membershipId).lean()
-      if (!updated) {
-        throw new DomainError('membership not found', 'not_found')
-      }
+      const updated = found(await memberships.findById(membershipId).lean(), 'membership not found')
       return membershipView(updated)
     },
 
@@ -514,16 +483,16 @@ export function mongoMembershipRepository(): MembershipRepository {
       let requestId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
         // Ghi __v của membership trước để hai đơn rút đồng thời tuần tự hoá trên cùng document
-        const membership = await memberships
-          .findOneAndUpdate(
-            { _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } },
-            { $inc: { __v: 1 } },
-            { session },
-          )
-          .lean()
-        if (!membership) {
-          throw new DomainError('active membership not found', 'not_found')
-        }
+        const membership = found(
+          await memberships
+            .findOneAndUpdate(
+              { _id: membershipId, userId, state: { $in: ['Active', 'Inactive'] } },
+              { $inc: { __v: 1 } },
+              { session },
+            )
+            .lean(),
+          'active membership not found',
+        )
         const exists = await requests
           .exists({ membershipId, state: { $in: ['Pending', 'Held'] } })
           .session(session)
@@ -591,10 +560,10 @@ export function mongoMembershipRepository(): MembershipRepository {
           session,
         })
       })
-      const created = await requests.findById(requestId).lean()
-      if (!created) {
-        throw new DomainError('withdrawal request not found', 'not_found')
-      }
+      const created = found(
+        await requests.findById(requestId).lean(),
+        'withdrawal request not found',
+      )
       return mapRequest(created)
     },
 
@@ -634,13 +603,13 @@ export function mongoMembershipRepository(): MembershipRepository {
       const requestId = new Types.ObjectId(input.requestId)
       const actorId = new Types.ObjectId(input.actorId)
       await mongoose.connection.transaction(async (session) => {
-        const request = await requests
-          .findOne({ _id: requestId, clubId, state: { $in: ['Pending', 'Held'] } })
-          .session(session)
-          .lean()
-        if (!request) {
-          throw new DomainError('pending withdrawal request not found', 'not_found')
-        }
+        const request = found(
+          await requests
+            .findOne({ _id: requestId, clubId, state: { $in: ['Pending', 'Held'] } })
+            .session(session)
+            .lean(),
+          'pending withdrawal request not found',
+        )
         const requestedDate = date(request.requestedEffectiveDate)
         if (requestedDate > input.now) {
           throw new DomainError('withdrawal request is not effective yet', 'conflict')
@@ -737,10 +706,10 @@ export function mongoMembershipRepository(): MembershipRepository {
         })
       })
       const request = await requests.findById(requestId).lean()
-      const membership = request ? await memberships.findById(request.membershipId).lean() : null
-      if (!membership) {
-        throw new DomainError('membership not found', 'not_found')
-      }
+      const membership = found(
+        request ? await memberships.findById(request.membershipId).lean() : null,
+        'membership not found',
+      )
       return membershipView(membership)
     },
   }
