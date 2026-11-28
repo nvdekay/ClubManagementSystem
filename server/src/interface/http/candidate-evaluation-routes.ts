@@ -1,25 +1,20 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { CandidateEvaluationRepository } from '../../domain/candidate-evaluation.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   listCandidateEvaluations,
   recordCandidateEvaluation,
 } from '../../usecase/candidate-evaluation.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface CandidateEvaluationRouteDeps {
+export interface CandidateEvaluationRouteDeps extends SessionDeps {
   repo: CandidateEvaluationRepository
   accessRepo: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const candidateEvaluationBody = z
   .object({
     scores: z.record(z.string().max(50), z.number()),
@@ -30,11 +25,11 @@ export const candidateEvaluationBody = z
 // Mount các route đánh giá ứng viên của chiến dịch tuyển thành viên
 export function candidateEvaluationRoutes(deps: CandidateEvaluationRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Liệt kê đánh giá ứng viên của một chiến dịch tuyển thành viên
   router.get(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/evaluations',
-    authGuard(guard, false),
+    read,
     async (req, res) => {
       ok(
         res,
@@ -51,7 +46,7 @@ export function candidateEvaluationRoutes(deps: CandidateEvaluationRouteDeps): R
   // Ghi hoặc cập nhật đánh giá cho một đơn ứng tuyển
   router.put(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/evaluation',
-    authGuard(guard),
+    write,
     async (req, res) => {
       const body = parse(candidateEvaluationBody, req.body, 'candidate evaluation request')
       ok(
