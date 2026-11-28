@@ -2,9 +2,48 @@ import { Types, type ClientSession } from 'mongoose'
 import {
   resolveClubPermissions,
   type ClubAccessSnapshot,
+  type ClubAssignmentAccess,
   type ClubPermission,
+  type ClubPositionAccess,
+  type ClubTermAccess,
 } from '../../domain/access.js'
 import { ucmsModels as m } from './ucms-models.js'
+
+type Doc = Record<string, unknown>
+
+// Ánh xạ nhiệm kỳ/ghế/phân công sang dạng snapshot quyền (dùng chung với club-event-access)
+export function termAccessFrom(t: Doc, clubId: Types.ObjectId): ClubTermAccess {
+  return {
+    id: String(t._id),
+    clubId: String(clubId),
+    state: String(t.state),
+    startAt: t.startAt as Date,
+    endAt: t.endAt as Date,
+  }
+}
+
+export function positionAccessFrom(p: Doc, clubId: Types.ObjectId): ClubPositionAccess {
+  return {
+    id: String(p._id),
+    clubId: String(clubId),
+    code: String(p.code),
+    isActive: p.isActive === true,
+    isLeaderRole: p.isLeaderRole === true,
+    isBoardSeat: p.isBoardSeat === true,
+  }
+}
+
+export function assignmentAccessFrom(a: Doc, clubId: Types.ObjectId): ClubAssignmentAccess {
+  return {
+    clubId: String(clubId),
+    termId: String(a.termId),
+    positionId: String(a.positionId),
+    membershipId: String(a.membershipId),
+    effectiveFrom: a.effectiveFrom as Date,
+    effectiveTo: (a.effectiveTo as Date | undefined) ?? null,
+    confirmedBy: a.confirmedBy ? String(a.confirmedBy) : null,
+  }
+}
 
 // Lấy user thành viên Active của CLB đang có permission chỉ định
 /** Id các thành viên Active của CLB hiện đang giữ `permission` — cùng quy tắc với mọi lần kiểm tra quyền. */
@@ -46,21 +85,8 @@ export async function clubUserIdsWithPermission(
     clubName: String(club.name),
     clubState: String(club.state),
     isApprovedFounder: false,
-    terms: terms.map((t) => ({
-      id: String(t._id),
-      clubId: String(clubId),
-      state: String(t.state),
-      startAt: t.startAt as Date,
-      endAt: t.endAt as Date,
-    })),
-    positions: positions.map((p) => ({
-      id: String(p._id),
-      clubId: String(clubId),
-      code: String(p.code),
-      isActive: true,
-      isLeaderRole: p.isLeaderRole === true,
-      isBoardSeat: p.isBoardSeat === true,
-    })),
+    terms: terms.map((t) => termAccessFrom(t, clubId)),
+    positions: positions.map((p) => positionAccessFrom(p, clubId)),
   }
   return memberships
     .filter((membership) => {
@@ -69,15 +95,7 @@ export async function clubUserIdsWithPermission(
         membership: { id: String(membership._id), clubId: String(clubId), state: 'Active' },
         assignments: assignments
           .filter((a) => String(a.membershipId) === String(membership._id))
-          .map((a) => ({
-            clubId: String(clubId),
-            termId: String(a.termId),
-            positionId: String(a.positionId),
-            membershipId: String(a.membershipId),
-            effectiveFrom: a.effectiveFrom as Date,
-            effectiveTo: (a.effectiveTo as Date | undefined) ?? null,
-            confirmedBy: a.confirmedBy ? String(a.confirmedBy) : null,
-          })),
+          .map((a) => assignmentAccessFrom(a, clubId)),
       }
       return resolveClubPermissions(snapshot, now).includes(permission)
     })
