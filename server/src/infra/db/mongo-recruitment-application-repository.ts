@@ -13,24 +13,15 @@ import type {
 import { validateRecruitmentAnswers } from '../../domain/recruitment-application.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey, queueNotification, queueNotifications } from './repo-helpers.js'
-
-// Lọc mảng, chỉ giữ phần tử là object
-function records(value: unknown): Record<string, unknown>[] {
-  return Array.isArray(value)
-    ? value.filter(
-        (item): item is Record<string, unknown> =>
-          Boolean(item) && typeof item === 'object' && !Array.isArray(item),
-      )
-    : []
-}
-
-// Lọc mảng, chỉ giữ phần tử là chuỗi
-function strings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : []
-}
+import {
+  found,
+  isDuplicateKey,
+  queueNotification,
+  queueNotifications,
+  records,
+  strings,
+  writeAudit,
+} from './repo-helpers.js'
 
 // Chuẩn hóa danh sách tệp đính kèm của đơn ứng tuyển
 function attachmentList(value: unknown): RecruitmentAttachment[] {
@@ -149,7 +140,6 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
   const users = ucmsModels.users!
   const memberships = ucmsModels.clubMemberships!
   const positions = ucmsModels.clubPositions!
-  const audits = ucmsModels.auditLogs!
 
   // Tìm đợt tuyển đang mở nhận đơn tại thời điểm now
   async function openCampaign(campaignId: Types.ObjectId, now: Date, session?: ClientSession) {
@@ -265,13 +255,10 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       const actorId = new Types.ObjectId(input.actorId)
       const ids = input.applicationIds.map((id) => new Types.ObjectId(id))
       return mongoose.connection.transaction(async (session) => {
-        const campaign = await campaigns
-          .findOne({ _id: campaignId, clubId })
-          .session(session)
-          .lean()
-        if (!campaign) {
-          throw new DomainError('recruitment campaign not found', 'not_found')
-        }
+        const campaign = found(
+          await campaigns.findOne({ _id: campaignId, clubId }).session(session).lean(),
+          'recruitment campaign not found',
+        )
         if (
           ['Draft', 'Cancelled'].includes(String(campaign.state)) ||
           (String(campaign.state) === 'Completed' && input.action !== 'promote')
@@ -346,22 +333,17 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
             throw new DomainError('application changed during review', 'conflict')
           }
           const correlationId = randomUUID()
-          await audits.create(
-            [
-              {
-                entityType: 'RecruitmentApplication',
-                entityId: app._id,
-                action: `RECRUITMENT_APPLICATION_${input.action.toUpperCase().replaceAll('-', '_')}`,
-                actorId,
-                actorRole: 'Club Member',
-                before: { state: fromState },
-                after: { state: nextState, ...(input.reason ? { reason: input.reason } : {}) },
-                correlationId,
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'RecruitmentApplication',
+            entityId: app._id,
+            action: `RECRUITMENT_APPLICATION_${input.action.toUpperCase().replaceAll('-', '_')}`,
+            actorId,
+            actorRole: 'Club Member',
+            before: { state: fromState },
+            after: { state: nextState, ...(input.reason ? { reason: input.reason } : {}) },
+            correlationId,
+            at: input.now,
+          })
           if (['Accepted', 'Rejected', 'Waitlisted'].includes(nextState)) {
             await queueNotification(session, {
               recipientUserId: app.userId,
@@ -510,22 +492,17 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           throw new DomainError('application changed during onboarding', 'conflict')
         }
         const correlationId = randomUUID()
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentApplication',
-              entityId: applicationId,
-              action: 'RECRUITMENT_APPLICATION_ONBOARDED',
-              actorId,
-              actorRole: 'Club Member',
-              before: { state: 'Accepted' },
-              after: { state: 'Onboarded', membershipId, defaultRole: String(memberRole.code) },
-              correlationId,
-              at: input.now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentApplication',
+          entityId: applicationId,
+          action: 'RECRUITMENT_APPLICATION_ONBOARDED',
+          actorId,
+          actorRole: 'Club Member',
+          before: { state: 'Accepted' },
+          after: { state: 'Onboarded', membershipId, defaultRole: String(memberRole.code) },
+          correlationId,
+          at: input.now,
+        })
         await queueNotification(session, {
           recipientUserId: current.userId,
           eventCode: 'RECRUITMENT_APPLICATION_ONBOARDED',
@@ -539,10 +516,10 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           now: input.now,
         })
       })
-      const updated = await applications.findById(applicationId).lean()
-      if (!updated) {
-        throw new DomainError('application not found', 'not_found')
-      }
+      const updated = found(
+        await applications.findById(applicationId).lean(),
+        'application not found',
+      )
       return mapApplication(updated)
     },
 
@@ -579,22 +556,16 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
         if (changed.modifiedCount !== 1) {
           throw new DomainError('application changed during decline', 'conflict')
         }
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentApplication',
-              entityId: applicationId,
-              action: 'RECRUITMENT_APPLICATION_DECLINED',
-              actorId,
-              actorRole: 'Club Member',
-              before: { state: 'Accepted' },
-              after: { state: 'Declined', ...(input.reason ? { reason: input.reason } : {}) },
-              correlationId: randomUUID(),
-              at: input.now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentApplication',
+          entityId: applicationId,
+          action: 'RECRUITMENT_APPLICATION_DECLINED',
+          actorId,
+          actorRole: 'Club Member',
+          before: { state: 'Accepted' },
+          after: { state: 'Declined', ...(input.reason ? { reason: input.reason } : {}) },
+          at: input.now,
+        })
         await queueNotification(session, {
           recipientUserId: current.userId,
           eventCode: 'RECRUITMENT_APPLICATION_DECLINED',
@@ -608,10 +579,10 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           now: input.now,
         })
       })
-      const updated = await applications.findById(applicationId).lean()
-      if (!updated) {
-        throw new DomainError('application not found', 'not_found')
-      }
+      const updated = found(
+        await applications.findById(applicationId).lean(),
+        'application not found',
+      )
       return mapApplication(updated)
     },
 
@@ -671,26 +642,20 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
             { session },
           )
           applicationId = new Types.ObjectId(String(created!._id))
-          await audits.create(
-            [
-              {
-                entityType: 'RecruitmentApplication',
-                entityId: applicationId,
-                action: 'RECRUITMENT_APPLICATION_DRAFT_CREATED',
-                actorId: userId,
-                actorRole: 'Student',
-                after: { campaignId, position: input.position },
-                correlationId: randomUUID(),
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'RecruitmentApplication',
+            entityId: applicationId,
+            action: 'RECRUITMENT_APPLICATION_DRAFT_CREATED',
+            actorId: userId,
+            actorRole: 'Student',
+            after: { campaignId, position: input.position },
+            at: input.now,
+          })
         })
-        const created = await applications.findById(applicationId).lean()
-        if (!created) {
-          throw new DomainError('recruitment application not found', 'not_found')
-        }
+        const created = found(
+          await applications.findById(applicationId).lean(),
+          'recruitment application not found',
+        )
         return mapApplication(created)
       } catch (error) {
         duplicate(error)
@@ -780,26 +745,20 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
         if (changed.modifiedCount !== 1) {
           throw new DomainError('application changed while saving', 'conflict')
         }
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentApplication',
-              entityId: id,
-              action: 'RECRUITMENT_APPLICATION_DRAFT_UPDATED',
-              actorId: userId,
-              actorRole: 'Student',
-              after: { position: input.position, answerKeys: Object.keys(input.answers) },
-              correlationId: randomUUID(),
-              at: input.now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentApplication',
+          entityId: id,
+          action: 'RECRUITMENT_APPLICATION_DRAFT_UPDATED',
+          actorId: userId,
+          actorRole: 'Student',
+          after: { position: input.position, answerKeys: Object.keys(input.answers) },
+          at: input.now,
+        })
       })
-      const updated = await applications.findById(id).lean()
-      if (!updated) {
-        throw new DomainError('recruitment application not found', 'not_found')
-      }
+      const updated = found(
+        await applications.findById(id).lean(),
+        'recruitment application not found',
+      )
       return mapApplication(updated)
     },
 
@@ -834,26 +793,20 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           },
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentApplication',
-              entityId: id,
-              action: 'RECRUITMENT_APPLICATION_ATTACHMENT_ADDED',
-              actorId: userId,
-              actorRole: 'Student',
-              after: { fieldKey: input.attachment.fieldKey, fileName: input.attachment.fileName },
-              correlationId: randomUUID(),
-              at: input.attachment.uploadedAt,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentApplication',
+          entityId: id,
+          action: 'RECRUITMENT_APPLICATION_ATTACHMENT_ADDED',
+          actorId: userId,
+          actorRole: 'Student',
+          after: { fieldKey: input.attachment.fieldKey, fileName: input.attachment.fileName },
+          at: input.attachment.uploadedAt,
+        })
       })
-      const updated = await applications.findById(id).lean()
-      if (!updated) {
-        throw new DomainError('recruitment application not found', 'not_found')
-      }
+      const updated = found(
+        await applications.findById(id).lean(),
+        'recruitment application not found',
+      )
       return mapApplication(updated)
     },
 
@@ -936,26 +889,21 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           throw new DomainError('application changed while submitting', 'conflict')
         }
         const correlationId = randomUUID()
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentApplication',
-              entityId: id,
-              action: 'RECRUITMENT_APPLICATION_SUBMITTED',
-              actorId,
-              actorRole: 'Student',
-              before: { state: 'Draft' },
-              after: {
-                state: 'Submitted',
-                campaignId: current.campaignId,
-                position: current.position,
-              },
-              correlationId,
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentApplication',
+          entityId: id,
+          action: 'RECRUITMENT_APPLICATION_SUBMITTED',
+          actorId,
+          actorRole: 'Student',
+          before: { state: 'Draft' },
+          after: {
+            state: 'Submitted',
+            campaignId: current.campaignId,
+            position: current.position,
+          },
+          correlationId,
+          at: now,
+        })
         await notifyReviewers({
           clubId: new Types.ObjectId(String(current.clubId)),
           applicationId: id,
@@ -965,10 +913,10 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           now,
           session,
         })
-        const updated = await applications.findById(id).session(session).lean()
-        if (!updated) {
-          throw new DomainError('recruitment application not found', 'not_found')
-        }
+        const updated = found(
+          await applications.findById(id).session(session).lean(),
+          'recruitment application not found',
+        )
         return mapApplication(updated)
       })
     },
@@ -1000,22 +948,16 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
         if (changed.modifiedCount !== 1) {
           throw new DomainError('application changed while withdrawing', 'conflict')
         }
-        await audits.create(
-          [
-            {
-              entityType: 'RecruitmentApplication',
-              entityId: id,
-              action: 'RECRUITMENT_APPLICATION_WITHDRAWN',
-              actorId,
-              actorRole: 'Student',
-              before: { state: current.state },
-              after: { state: 'Withdrawn' },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RecruitmentApplication',
+          entityId: id,
+          action: 'RECRUITMENT_APPLICATION_WITHDRAWN',
+          actorId,
+          actorRole: 'Student',
+          before: { state: current.state },
+          after: { state: 'Withdrawn' },
+          at: now,
+        })
         await notifyReviewers({
           clubId: new Types.ObjectId(String(current.clubId)),
           applicationId: id,
@@ -1025,10 +967,10 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
           now,
           session,
         })
-        const updated = await applications.findById(id).session(session).lean()
-        if (!updated) {
-          throw new DomainError('recruitment application not found', 'not_found')
-        }
+        const updated = found(
+          await applications.findById(id).session(session).lean(),
+          'recruitment application not found',
+        )
         return mapApplication(updated)
       })
     },
