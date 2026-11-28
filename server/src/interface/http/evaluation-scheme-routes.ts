@@ -1,9 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { EvaluationSchemeRepository } from '../../domain/evaluation-scheme.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   activateEvaluationScheme,
   createEvaluationScheme,
@@ -11,18 +9,15 @@ import {
   listEvaluationSchemes,
   updateEvaluationScheme,
 } from '../../usecase/evaluation-scheme.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface EvaluationSchemeRouteDeps {
+export interface EvaluationSchemeRouteDeps extends SessionDeps {
   repo: EvaluationSchemeRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const evaluationSchemeCreateBody = z
   .object({
     periodCode: z.string().min(1).max(50),
@@ -49,17 +44,17 @@ export const evaluationSchemeSettingsBody = z
 // Mount các route bộ tiêu chí đánh giá CLB của ICPDP
 export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê các bộ tiêu chí đánh giá
-  router.get('/admin/evaluation-schemes', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/evaluation-schemes', read, async (_req, res) => {
     ok(
       res,
       await listEvaluationSchemes(deps.repo, deps.policy, deps.authRepo, actor(res), new Date()),
     )
   })
   // Tạo bộ tiêu chí đánh giá
-  router.post('/admin/evaluation-schemes', authGuard(guard), async (req, res) => {
+  router.post('/admin/evaluation-schemes', write, async (req, res) => {
     ok(
       res,
       await createEvaluationScheme(
@@ -74,7 +69,7 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
     )
   })
   // Cập nhật bộ tiêu chí đánh giá
-  router.patch('/admin/evaluation-schemes/:id', authGuard(guard), async (req, res) => {
+  router.patch('/admin/evaluation-schemes/:id', write, async (req, res) => {
     ok(
       res,
       await updateEvaluationScheme(
@@ -88,7 +83,7 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
     )
   })
   // Kích hoạt bộ tiêu chí đánh giá
-  router.post('/admin/evaluation-schemes/:id/activate', authGuard(guard), async (req, res) => {
+  router.post('/admin/evaluation-schemes/:id/activate', write, async (req, res) => {
     ok(
       res,
       await activateEvaluationScheme(
@@ -101,7 +96,7 @@ export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router 
     )
   })
   // Xoá bộ tiêu chí đánh giá
-  router.delete('/admin/evaluation-schemes/:id', authGuard(guard), async (req, res) => {
+  router.delete('/admin/evaluation-schemes/:id', write, async (req, res) => {
     ok(
       res,
       await deleteEvaluationScheme(
