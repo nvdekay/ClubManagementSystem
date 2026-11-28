@@ -1,3 +1,4 @@
+import { ApiError } from '@/services/apiError'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 
@@ -12,7 +13,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useEvent } from '@/hooks/useDiscovery'
 import { useEventRegistrationContext } from '@/hooks/useEventRegistrations'
 import type { EventRegistrationContext } from '@/services/eventRegistrations'
-import { PublicApiError } from '@/services/discovery'
 import { formatDate } from '@/utils/formatDate'
 
 // Chi tiết sự kiện cho người đã đăng ký: mã check-in và hủy đăng ký
@@ -77,8 +77,7 @@ export function EventDetail() {
   const { id = '' } = useParams()
   const detail = useEvent(id)
   const auth = useAuth()
-  const hidden =
-    detail.isError && detail.error instanceof PublicApiError && detail.error.statusCode === 404
+  const hidden = detail.isError && detail.error instanceof ApiError && detail.error.status === 404
   const registered = useEventRegistrationContext(id, hidden && Boolean(auth.data))
   const locale = i18n.language === 'vi' ? 'vi' : 'en'
   return (
