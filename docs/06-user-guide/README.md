@@ -9,7 +9,7 @@ Guide book cho người dùng UCMS, theo ba không gian Student, CLB và ICPDP.
   lục, hỗ trợ màn hình điện thoại) bằng Python standard library.
 - `shrink-images.py`: giảm PNG xuống bảng 256 màu sau khi chụp lại (cần Pillow).
 
-`GUIDE_BOOK.md` đối chiếu code ngày 27/11/2026. Ảnh chụp tự động cùng ngày từ giao diện hiện tại.
+`GUIDE_BOOK.md` đối chiếu code ngày 27/11/2026. Ảnh chụp tự động ngày 27–28/11/2026 từ giao diện hiện tại.
 `GUIDE_BOOK.html` và `GUIDE_BOOK.pdf` là bản dựng, **không lưu trong repo** (có trong `.gitignore`);
 dựng lại theo các bước dưới đây mỗi khi cần gửi cho người dùng. Đối chiếu phạm vi với
 [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).

@@ -1,11 +1,10 @@
 # Ảnh hướng dẫn
 
-70 ảnh PNG chụp tự động ngày 27/11/2026 từ giao diện React hiện tại của UCMS, tiếng Việt, theme
-sáng, khung nhìn 1440 × 1000. Một số ảnh cuộn tới phần thao tác hoặc mở sẵn hộp thoại.
+73 ảnh PNG chụp tự động ngày 27/11/2026 (ảnh 14, 15, 54, 72, 73 chụp lại ngày 28/11/2026) từ giao
+diện React hiện tại của UCMS, tiếng Việt, theme sáng, khung nhìn 1440 × 1000. Một số ảnh cuộn tới phần thao tác hoặc mở sẵn hộp thoại.
 
 Ảnh do `npm run guide:screenshots` sinh ra (script ở `client/e2e/guide/`, cách chạy ở
-[`../README.md`](../README.md)); tên file cố định để `GUIDE_BOOK.md` giữ nguyên link. Số thứ tự
-bỏ trống 15 (dữ liệu mẫu không có ghế ban chủ nhiệm trống nên không có đề cử để ICPDP xác nhận).
+[`../README.md`](../README.md)); tên file cố định để `GUIDE_BOOK.md` giữ nguyên link.
 
 `manifest.json` ghi cho từng ảnh: URL, tài khoản mẫu, thao tác trước khi chụp; phần `notes` ghi
 nguồn dữ liệu. Ảnh dùng API thật trên database riêng `ucms-e2e-guide`, không chặn hay giả lập

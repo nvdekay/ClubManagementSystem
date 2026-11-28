@@ -135,7 +135,6 @@ test.describe('club leader (HEBE)', () => {
     ['06-workspace-chooser.png', '/workspace'],
     ['11-club-leader-home.png', hebe],
     ['12-club-member-home.png', `/club/${mayMua}`],
-    ['14-board-nomination.png', `${hebe}/board`],
     ['17-recruitment-campaign.png', `${hebe}/recruitment`],
     ['20-members-manage.png', `${hebe}/members`],
     ['21-members-readonly.png', `/club/${mayMua}/members`],
@@ -150,6 +149,15 @@ test.describe('club leader (HEBE)', () => {
       await shoot(page, file)
     })
   }
+
+  test('14-board-nomination', async ({ page }) => {
+    // prepare-guide.ts left one Vice Leader seat vacant; nominate a member to it. ICPDP reviews
+    // this nomination in 15-board-nomination-review.
+    await open(page, `${hebe}/board`)
+    await choose(page, /^Người được đề cử:/, 'Nguyễn Hoàng Hoa')
+    await shoot(page, '14-board-nomination.png')
+    await press(page, 'Nộp đề cử')
+  })
 
   test('19-recruitment-review', async ({ page }) => {
     await open(page, `${hebe}/recruitment`)
@@ -232,7 +240,6 @@ test.describe('ICPDP officer', () => {
     ['60-policy.png', '/workspace/policy'],
     ['61-club-fields.png', '/workspace/club-fields'],
     ['63-exports.png', '/workspace/exports'],
-    ['54-evaluations.png', '/workspace/evaluations'],
     ['64-icpdp-home.png', '/icpdp'],
     ['68-suspension-requests.png', '/workspace/suspension-requests'],
   ] as const) {
@@ -241,6 +248,41 @@ test.describe('ICPDP officer', () => {
       await shoot(page, file)
     })
   }
+
+  test('15-board-nomination-review', async ({ page }) => {
+    await open(page, '/workspace/board-nominations')
+    await press(page, 'Xem đề cử')
+    await press(page, 'Nhận quyết định')
+    await page
+      .getByRole('main')
+      .getByRole('textbox')
+      .last()
+      .fill('Thành viên tích cực, đủ điều kiện.')
+    await settle(page)
+    await shoot(page, '15-board-nomination-review.png')
+  })
+
+  test('72-live-defense-room', async ({ page }) => {
+    // The "Hackathon An toàn thông tin 24h" proposal (fixed id from seed-demo), whose defense
+    // prepare-guide.ts started five minutes before the capture.
+    await open(page, '/workspace/event-proposals/de0000000000000000000f02/defense')
+    await shoot(page, '72-live-defense-room.png')
+  })
+
+  test('54-evaluations, 73-evaluation-draft', async ({ page }) => {
+    // Accepting a periodic report generated these Summer 2026 drafts (prepare-guide.ts).
+    await open(page, '/workspace/evaluations?period=Summer%202026')
+    const draft = page.getByRole('main').getByRole('row').filter({ hasText: 'Đã có dữ liệu' })
+    await scrollTo(page, draft, 420)
+    await shoot(page, '54-evaluations.png')
+    await draft.first().getByRole('link', { name: 'Mở' }).click()
+    await settle(page)
+    // Open the data lineage of D5 (report discipline), which the accepted report feeds.
+    const d5 = page.getByRole('main').getByRole('button', { name: 'Xem dữ liệu' }).nth(4)
+    await d5.click()
+    await scrollTo(page, d5, 360)
+    await shoot(page, '73-evaluation-draft.png')
+  })
 
   test('16-transition-review', async ({ page }) => {
     await open(page, '/workspace/leadership-transitions')
