@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
 import type {
   PeriodicAchievementEntry,
   PeriodicCustomAnswer,
@@ -33,17 +33,12 @@ export interface PeriodicDraft {
   customAnswers?: PeriodicCustomAnswer[]
 }
 
-// Gọi API /clubs/:clubId/periodic-reports và trả về data, ném ApiError nếu lỗi
-async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await apiFetch(
+// Calls /clubs/:clubId/periodic-reports through the shared helper
+function request<T>(clubId: string, path: string, options?: ApiRequestOptions): Promise<T> {
+  return apiRequest<T>(
     `/api/v1/clubs/${encodeURIComponent(clubId)}/periodic-reports${path}`,
-    { credentials: 'same-origin', ...init },
+    options,
   )
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${res.status}`)
-  }
-  return ((await res.json()) as { data: T }).data
 }
 
 // GET báo cáo định kỳ của CLB
@@ -73,8 +68,8 @@ export function changePeriodicReport(
       : { revision: action.revision, ...(action.kind === 'save' ? action.input : {}) }
   return request(clubId, path, {
     method: action.kind === 'save' ? 'PUT' : 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
+    csrfToken,
+    body,
   })
 }
 
@@ -97,7 +92,8 @@ export function uploadPeriodicEvidenceImage(
 ): Promise<UploadedEvidenceImage> {
   return request(clubId, '/evidence-images', {
     method: 'POST',
-    headers: { 'Content-Type': file.type, 'X-CSRF-Token': csrfToken },
+    headers: { 'Content-Type': file.type },
+    csrfToken,
     body: file,
   })
 }
