@@ -25,6 +25,13 @@ Thay đổi sau 25/11/2026 cần biết khi đọc các mục dưới:
 - UC25/UC26 (BR63): khi ICPDP chấp nhận yêu cầu dời lịch bảo vệ của CLB, buổi bảo vệ vào thẳng
   `CONFIRMED`, CLB không phải xác nhận lại.
 - UC27: công bố sự kiện không gửi thông báo cho thành viên (nhánh này đã gỡ cùng sự kiện nội bộ).
+- Rà soát gộp code (28/11/2026, PR #75): không đổi nghiệp vụ, chỉ gom code trùng vào helper chung
+  (`infra/db/repo-helpers.ts`, `interface/http/openapi-shared.ts`, `request.ts` `objectId`,
+  `auth-routes.ts` `guards()`, `domain/errors.ts` `orNotFound`, `usecase/access.ts`
+  `requireSignedIn`/`assertClubOrOfficer`, `domain/file-signature.ts`, `usecase/upload-rollback.ts`;
+  client `apiClient`, `useInvalidatingMutation`, `useFormat`, `AppErrorNotice`, `AppField`, `AppPanel`,
+  `IcpdpOfficerGate`). Hai lỗi được sửa kèm: tải báo cáo năm (UC48) từng hỏng vì client đọc file như
+  JSON; một số lỗi API phía client mất HTTP status nên lỗi 4xx bị thử lại và 401 không đăng xuất.
 - UC27/UC53 (27/11/2026): sự kiện CLB hoặc cấp trường còn `Approved` khi tới giờ bắt đầu mà chưa
   công bố bị job vòng đời chuyển `Expired` (SCH-15): huỷ dây chuyền như UC28, lời mời cấp trường
   `Pending` hết hạn, báo ban chủ nhiệm CLB liên quan.
@@ -271,7 +278,7 @@ CLB mới nhất khi tìm không ra.
 
 ## 5. Cổng kiểm chứng
 
-Số test ngày 27/11/2026 (`npm run check` xanh): server 1040 test / 140 file vitest (unit + integration;
+Số test ngày 28/11/2026 (`npm run check` xanh): server 1072 test / 144 file vitest (unit + integration;
 integration cần `MONGO_URI` tới Mongo replica set, thiếu biến này thì bị bỏ qua — job `integration` trên CI
 chạy chúng với Mongo thật), client 110 test / 10 file; Playwright e2e 20 test / 5 file chạy riêng bằng
 `npm run test:e2e` (job `e2e` trên CI, trên bản build do API phục vụ). Các màn mới đã nghiệm thu trên trình duyệt với database QA

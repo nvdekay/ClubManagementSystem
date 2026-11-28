@@ -64,8 +64,9 @@ ICPDP dùng các queue riêng theo nghiệp vụ. Nộp lại hồ sơ/đề xu�
 repository cụ thể nằm trong ma trận UC.
 
 Repository nhận actor/time/reason qua hợp đồng nghiệp vụ và ghi `auditLogs`, `notifications`
-trong cùng transaction với thay đổi dữ liệu (thông báo nhiều người nhận đi qua `queueNotifications` ở
-`infra/db/repo-helpers.ts`). Không có một `AuditPort` hay `NotificationPort`
+trong cùng transaction với thay đổi dữ liệu qua các helper chung ở `infra/db/repo-helpers.ts`: `writeAudit`
+(tự sinh `correlationId` khi không truyền), `queueNotification`/`queueNotifications` (nhiều người nhận),
+`icpdpOfficerIds` (người nhận là ICPDP officer), `closeOpenTasks` (đóng approval task đang mở). Không có một `AuditPort` hay `NotificationPort`
 độc lập được tiêm cho mọi use case trong `main.ts`. Đây là mô tả cách code hiện tại làm; không
 đồng nhất với bản thiết kế port chung trước đây.
 
@@ -148,7 +149,8 @@ UC36/37 không hoạt động chỉ vì đã có file route hoặc entry OpenAPI
 ## 8. Client
 
 Router declarative trong `client/src/main.tsx`, mọi trang nạp lười (`lazy()` + `Suspense`). `services → hooks → component`
-(mọi service gọi API qua `services/apiRequest.ts`), React Query quản lý server state, i18next en/vi (chuỗi tách theo
+(mọi service gọi API qua `services/apiRequest.ts`: `apiClient(base, toError?)` cho JSON, `postFile` cho file tải về;
+mutation chỉ cần làm mới cache dùng `useInvalidatingMutation`), React Query quản lý server state, i18next en/vi (chuỗi tách theo
 ngôn ngữ ở `i18n/locales/{en,vi}`, nạp lười), Tailwind token theme. Khu công khai (`PublicLayout`: home, danh bạ
 CLB, sự kiện và trang chi tiết) đọc được khi chưa đăng nhập, header chỉ hiện nút đăng nhập; API `/public/*` mở. WorkspaceShell kiểm tra workspace và menu theo permission.
 
@@ -157,7 +159,7 @@ Phía CLB có thêm route UI cho UC12, UC14, UC38, UC40, UC43, UC54; UC36/37 dù
 
 ## 9. Kiểm chứng và phần còn lại
 
-Số test ngày 27/11/2026: server 1040 test / 140 file vitest (unit + integration; integration cần Mongo),
+Số test ngày 28/11/2026: server 1072 test / 144 file vitest (unit + integration; integration cần Mongo),
 client 110 test / 10 file, Playwright e2e 20 test / 5 file (`npm run test:e2e`, ngoài `npm run check`). Không thay kết quả
 OAuth/Cloudinary thật hoặc visual QA của từng feature. Trạng thái hiện hành:
 [`../current-implementation.md`](../current-implementation.md).

@@ -55,10 +55,12 @@ domain; nếu nó chỉ là dịch qua lại HTTP thì giữ ở interface.
 ## `server/src/interface/http/`
 
 **Là gì?** Biên Express: `server.ts` (lắp ráp app), `*-routes.ts` (endpoint dưới `/api/v1`, mỗi module một file),
-`request.ts` (helper parse zod, actor, query phân trang), `response.ts` (phong bì response),
+`request.ts` (helper parse zod, actor, query phân trang, schema `objectId`), `response.ts` (phong bì response),
+`auth-routes.ts` (đăng nhập, `authGuard` và `guards(deps)` trả cặp guard đọc/ghi cho mọi router),
 `middleware.ts` (request id, log request, auth guard phụ trợ, xử lý lỗi), `rate-limit.ts`,
 `security-headers.ts` (CSP và header bảo mật), `static-client.ts` (phục vụ bản build client khi có
-`CLIENT_DIST_DIR`), `openapi.ts` + `openapi-*.ts` (tài liệu API phục vụ tại `/docs`). Nó chỉ dịch
+`CLIENT_DIST_DIR`), `openapi.ts` + `openapi-*.ts` (tài liệu API phục vụ tại `/docs`; helper response/body/lỗi dùng chung ở
+`openapi-shared.ts`). Nó chỉ dịch
 qua lại giữa HTTP và lời gọi usecase, không làm gì hơn.
 
 `server/src/interface/jobs/` là biên thứ hai: mỗi job chỉ hẹn giờ (qua `schedule.ts`) rồi gọi một
@@ -82,7 +84,8 @@ liệu vào, gọi usecase, gửi response. Nếu nó phình to hơn thế thì 
 - `config/` — nơi **duy nhất** được phép đọc `process.env`. Một schema zod validate biến môi
   trường lúc khởi động; env sai → `process.exit(1)`. Mọi nơi khác nhận một `Config` đã có kiểu.
 - `db/` — `mongo-*-repository.ts` hiện thực các port repository của domain bằng Mongoose
-  (helper dùng chung ở `repo-helpers.ts`), schema sinh từ DBML (`ucms-schema.generated.ts`), `init.ts`/
+  (helper dùng chung ở `repo-helpers.ts`: `writeAudit`, `found`, `conflict`, `queueNotification(s)`,
+  `icpdpOfficerIds`, `closeOpenTasks`, các hàm ép kiểu — dùng lại, đừng chép thêm bản riêng), schema sinh từ DBML (`ucms-schema.generated.ts`), `init.ts`/
   `verify.ts` và các `seed*.ts` để tạo dữ liệu cục bộ.
 - `auth/` — Google OpenID Connect; `files/` — lưu tệp trên Cloudinary và đọc/ghi file xuất;
   `mail/` — transport email (Google SMTP hoặc chỉ ghi log).
