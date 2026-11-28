@@ -16,7 +16,6 @@ export const clubTransitionPlans = {
   submit: 'Submit saved plan',
   saved: 'Transition plan saved.',
   submitted: 'Transition plan submitted. ICPDP will review it.',
-  retry: 'Retry',
   history: 'Plan history',
   historyCreated: 'Draft created',
   historySaved: 'Draft saved',

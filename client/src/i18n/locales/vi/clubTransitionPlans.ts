@@ -19,7 +19,6 @@ export const clubTransitionPlans = {
   submit: 'Nộp kế hoạch đã lưu',
   saved: 'Đã lưu kế hoạch chuyển giao.',
   submitted: 'Đã nộp kế hoạch chuyển giao. ICPDP sẽ xem xét.',
-  retry: 'Thử lại',
   history: 'Lịch sử kế hoạch',
   historyCreated: 'Tạo bản nháp',
   historySaved: 'Lưu bản nháp',
