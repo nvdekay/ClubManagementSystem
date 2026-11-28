@@ -12,6 +12,7 @@ import type { CandidateEvaluation } from '@/services/recruitmentApplications'
 import type { RecruitmentRubricCriterion } from '@/services/recruitmentCampaigns'
 import { cn } from '@/utils/cn'
 import { formatScore } from './recruitmentReviewFormat'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface CandidateEvaluationFormProps {
   clubId: string
@@ -198,9 +199,7 @@ export function CandidateEvaluationForm({
           {formatScore(maxTotal)}
         </p>
       )}
-      <label className="block text-sm font-medium text-text-app">
-        {t('recruitmentApplications.evaluationComment')}
-        {!rubric.length && <AppRequiredMark />}
+      <AppField label={t('recruitmentApplications.evaluationComment')} required={!rubric.length}>
         <AppTextarea
           value={comment}
           onChange={(event) => setComment(event.target.value)}
@@ -212,7 +211,7 @@ export function CandidateEvaluationForm({
             'border-danger-app': Boolean(commentError),
           })}
         />
-      </label>
+      </AppField>
       {commentError && (
         <p id={id + 'comment-error'} className="-mt-2 text-sm text-danger-app">
           {commentError}
