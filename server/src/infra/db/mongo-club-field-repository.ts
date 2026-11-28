@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import {
   DEFAULT_CLUB_FIELDS,
@@ -8,7 +7,7 @@ import {
 } from '../../domain/club-field.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { found, isDuplicateKey, writeAudit } from './repo-helpers.js'
 
 // Ánh xạ document thành ClubField
 function fieldFrom(doc: Record<string, unknown>): ClubField {
@@ -25,7 +24,6 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
   const fields = ucmsModels.clubFields!
   const clubs = ucmsModels.clubs!
   const applications = ucmsModels.clubApplications!
-  const audits = ucmsModels.auditLogs!
 
   async function audit(
     session: ClientSession,
@@ -36,22 +34,16 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
     after: unknown,
     at: Date,
   ): Promise<void> {
-    await audits.create(
-      [
-        {
-          entityType: 'ClubField',
-          entityId: new Types.ObjectId(String(id)),
-          action,
-          actorId: new Types.ObjectId(actorId),
-          actorRole: 'ICPDP_OFFICER',
-          before,
-          after,
-          correlationId: randomUUID(),
-          at,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'ClubField',
+      entityId: new Types.ObjectId(String(id)),
+      action,
+      actorId: new Types.ObjectId(actorId),
+      actorRole: 'ICPDP_OFFICER',
+      before,
+      after,
+      at,
+    })
   }
 
   return {
@@ -169,31 +161,28 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
       const objectId = new Types.ObjectId(id)
       try {
         return await mongoose.connection.transaction(async (session) => {
-          const current = await fields
-            .findOne({ _id: objectId, isActive: true })
-            .session(session)
-            .lean()
-          if (!current) {
-            throw new DomainError('club field not found', 'not_found')
-          }
+          const current = found(
+            await fields.findOne({ _id: objectId, isActive: true }).session(session).lean(),
+            'club field not found',
+          )
           const previousName = String(current.name)
-          const updated = await fields
-            .findOneAndUpdate(
-              { _id: objectId, isActive: true },
-              {
-                $set: {
-                  name: input.name,
-                  normalizedName: normalizeClubFieldName(input.name),
-                  sortOrder: input.sortOrder,
-                  updatedAt: now,
+          const updated = found(
+            await fields
+              .findOneAndUpdate(
+                { _id: objectId, isActive: true },
+                {
+                  $set: {
+                    name: input.name,
+                    normalizedName: normalizeClubFieldName(input.name),
+                    sortOrder: input.sortOrder,
+                    updatedAt: now,
+                  },
                 },
-              },
-              { returnDocument: 'after', session },
-            )
-            .lean()
-          if (!updated) {
-            throw new DomainError('club field not found', 'not_found')
-          }
+                { returnDocument: 'after', session },
+              )
+              .lean(),
+            'club field not found',
+          )
           if (previousName !== input.name) {
             await clubs.updateMany(
               { field: previousName },
@@ -228,13 +217,10 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
     async remove(id, actorId, now) {
       const objectId = new Types.ObjectId(id)
       return mongoose.connection.transaction(async (session) => {
-        const current = await fields
-          .findOne({ _id: objectId, isActive: true })
-          .session(session)
-          .lean()
-        if (!current) {
-          throw new DomainError('club field not found', 'not_found')
-        }
+        const current = found(
+          await fields.findOne({ _id: objectId, isActive: true }).session(session).lean(),
+          'club field not found',
+        )
         const name = String(current.name)
         const inUse =
           Boolean(await clubs.exists({ field: name }).session(session)) ||
