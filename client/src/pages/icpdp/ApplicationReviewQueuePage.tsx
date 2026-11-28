@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -12,21 +12,19 @@ import {
   useApplicationReviewAction,
   useApplicationReviewQueue,
 } from '@/hooks/useApplicationReviews'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Hàng đợi ICPDP các hồ sơ lập CLB chờ xét duyệt
 export function ApplicationReviewQueuePage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const navigate = useNavigate()
   const auth = useAuth()
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const queue = useApplicationReviewQueue(isOfficer)
   const action = useApplicationReviewAction()
   const currentUserId = auth.data?.user.id
-
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
 
   // Nhận hồ sơ (claim) rồi mở trang xét duyệt, hoặc mở chế độ chỉ xem
   async function openReview(applicationId: string, readOnly: boolean) {
@@ -67,26 +65,15 @@ export function ApplicationReviewQueuePage() {
 
       {auth.isPending || (isOfficer && queue.isPending) ? (
         loading
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('reviews.signIn')}</p>
-          <Link
-            className="inline-block font-semibold text-primary-app hover:underline"
-            to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-          >
-            {t('reviews.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('reviews.unauthorized')}
         </AppNotice>
       ) : queue.isError ? (
-        <AppNotice tone="danger" role="alert" title={queue.error.message || t('reviews.loadError')}>
-          <AppButton variant="secondary" onClick={() => void queue.refetch()}>
-            {t('reviews.retry')}
-          </AppButton>
-        </AppNotice>
+        <AppErrorNotice
+          title={queue.error.message || t('reviews.loadError')}
+          onRetry={() => void queue.refetch()}
+        />
       ) : queue.data?.length ? (
         <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map(({ task, application }) => {
