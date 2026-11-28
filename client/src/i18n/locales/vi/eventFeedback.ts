@@ -24,7 +24,6 @@ export const eventFeedback = {
   anonymousTag: 'Ẩn danh',
   closesAt: 'Mở đến {{date}}',
   closed: 'Đã hết hạn gửi phản hồi cho sự kiện này.',
-  notAttended: 'Chỉ người đã check-in mới gửi được phản hồi.',
   error: 'Không gửi được phản hồi.',
   loadError: 'Không tải được phản hồi.',
   giveFeedback: 'Gửi phản hồi',
