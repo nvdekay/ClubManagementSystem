@@ -4,7 +4,6 @@ import { clubEventsKeyRoot } from './useClubEvents'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchClubFinances,
-  fetchFinanceDetail,
   fetchReportDetail,
   fetchReportObligations,
   financeAction,
@@ -36,14 +35,6 @@ export function useClubFinances(clubId: string, enabled: boolean) {
     queryKey: [...accountabilityKeyRoot, 'finances', clubId],
     queryFn: ({ signal }) => fetchClubFinances(clubId, signal),
     enabled,
-  })
-}
-// Query chi tiết ngân sách hoặc đối soát
-export function useFinanceDetail(context: AccountabilityContext, id: string, enabled: boolean) {
-  return useQuery({
-    queryKey: [...accountabilityKeyRoot, 'finance', context, id],
-    queryFn: ({ signal }) => fetchFinanceDetail(context, id, signal),
-    enabled: enabled && !!id,
   })
 }
 // Mutation thao tác trên báo cáo hoặc tài chính, rồi làm mới cache
