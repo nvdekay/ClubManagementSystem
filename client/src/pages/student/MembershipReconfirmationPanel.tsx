@@ -8,6 +8,7 @@ import {
   useMembershipReconfirmations,
 } from '@/hooks/useMembershipReconfirmations'
 import { formatDate } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 // Panel nhắc sinh viên xác nhận lại tư cách thành viên CLB
 export function MembershipReconfirmationPanel() {
   const { t, i18n } = useTranslation()
@@ -34,12 +35,9 @@ export function MembershipReconfirmationPanel() {
   return (
     <section className="mb-6 space-y-3">
       {query.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void query.refetch()} retryVariant="primary">
           {query.error.message}
-          <AppButton onClick={() => void query.refetch()}>
-            {t('membershipReconfirmations.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {Boolean(query.data?.length) && (
         <>
