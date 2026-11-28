@@ -10,6 +10,7 @@ import {
   publicEventDetail,
 } from '../../usecase/public-discovery.js'
 import { ok } from './response.js'
+import { parse as parseInput } from './request.js'
 
 const clubQuery = z
   .object({
@@ -29,11 +30,7 @@ const eventQuery = z
 
 // Kiểm tra query/tham số công khai bằng zod, sai thì ném DomainError validation
 function parse<T extends z.ZodTypeAny>(schema: T, value: unknown): z.output<T> {
-  const result = schema.safeParse(value)
-  if (!result.success) {
-    throw new DomainError('invalid query', 'validation', result.error.issues)
-  }
-  return result.data as z.output<T>
+  return parseInput(schema, value, 'query') as z.output<T>
 }
 
 // Ép tham số id thành chuỗi hợp lệ
