@@ -28,6 +28,7 @@ import type {
 import { formatDate } from '@/utils/formatDate'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 interface EventRegistrationPanelProps {
   eventId: string
@@ -61,12 +62,12 @@ export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps)
     body = isSignInRequired(context.error) ? (
       <SignInPrompt to={loginTarget} />
     ) : (
-      <AppNotice tone="danger" role="alert" title={t('eventRegistrations.loadError')}>
+      <AppErrorNotice
+        title={t('eventRegistrations.loadError')}
+        onRetry={() => void context.refetch()}
+      >
         <p>{context.error.message}</p>
-        <AppButton variant="secondary" onClick={() => void context.refetch()}>
-          {t('eventRegistrations.retry')}
-        </AppButton>
-      </AppNotice>
+      </AppErrorNotice>
     )
   } else {
     body = <RegistrationBody context={context.data} csrfToken={auth.data!.csrfToken} />

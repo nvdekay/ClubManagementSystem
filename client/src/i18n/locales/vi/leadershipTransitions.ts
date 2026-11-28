@@ -10,8 +10,6 @@ export const leadershipTransitions = {
   empty: 'Không có chuyển giao đang chờ',
   emptyHint: 'Kế hoạch do Chủ nhiệm CLB nộp sẽ xuất hiện tại đây.',
   loadError: 'Không thể tải danh sách chuyển giao.',
-  retry: 'Thử lại',
-  signIn: 'Đăng nhập để tiếp tục.',
   unauthorized: 'Chỉ ICPDP Officer được thẩm định chuyển giao nhiệm kỳ.',
   detailBack: 'Về hàng đợi chuyển giao',
   pending: 'Chờ xác nhận',

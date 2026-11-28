@@ -1,7 +1,5 @@
 export const clubLifecycle = {
   homeDescription: 'Suspend, reactivate or schedule the dissolution of a club.',
-  signIn: 'Sign in to manage clubs.',
-  signInLink: 'Sign in',
   forbidden: 'Only ICPDP officers can manage clubs.',
   loadError: 'Could not load clubs.',
   retry: 'Retry',
@@ -27,7 +25,6 @@ export const clubLifecycle = {
   suspendedSince: 'Suspended since {{date}}: {{reason}}',
   dissolutionScheduled:
     'Dissolution decided: dissolving during {{semester}} ({{from}} – {{to}}). Reason: {{reason}}',
-  obligations: 'Ongoing work',
   openCampaigns: 'Open recruitment',
   upcomingEvents: 'Upcoming events',
   activeTerm: 'Current term',

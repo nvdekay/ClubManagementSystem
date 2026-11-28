@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import {
   requireClubPermission,
   resolveClubPermissions,
@@ -10,9 +9,8 @@ import type {
   DashboardRepository,
   DashboardSnapshot,
 } from '../domain/dashboard.js'
-import { DomainError } from '../domain/errors.js'
-
-const mongoId = z.string().regex(/^[0-9a-f]{24}$/i)
+import { DomainError, orNotFound } from '../domain/errors.js'
+import { parseObjectId } from './access.js'
 
 export type DashboardContext =
   { workspace: 'student' } | { workspace: 'icpdp' } | { workspace: 'club'; clubId: string }
@@ -47,9 +45,7 @@ export async function getDashboard(
     }
     return repo.icpdp(now)
   }
-  if (!mongoId.safeParse(context.clubId).success) {
-    throw new DomainError('invalid club identifier', 'validation')
-  }
+  parseObjectId(context.clubId, 'club identifier')
   const snapshot = await accessRepo.findSnapshot(actor.id, context.clubId)
   const activeMember =
     snapshot?.clubId === context.clubId &&
@@ -83,9 +79,7 @@ export async function getClubBoardHistory(
   now: Date = new Date(),
 ): Promise<ClubBoardHistory> {
   assertActor(actor)
-  if (!mongoId.safeParse(clubId).success) {
-    throw new DomainError('invalid club identifier', 'validation')
-  }
+  parseObjectId(clubId, 'club identifier')
   if (!(await isOfficer(authRepo, actor))) {
     const snapshot = await accessRepo.findSnapshot(actor.id, clubId)
     if (!snapshot || snapshot.clubId !== clubId) {
@@ -93,9 +87,6 @@ export async function getClubBoardHistory(
     }
     requireClubPermission(snapshot, 'club.board.nominate', now)
   }
-  const history = await repo.boardHistory(clubId)
-  if (!history) {
-    throw new DomainError('club not found', 'not_found')
-  }
+  const history = orNotFound(await repo.boardHistory(clubId), 'club')
   return history
 }

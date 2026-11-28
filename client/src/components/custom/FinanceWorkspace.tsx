@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router'
 import { SponsoredItems } from './SponsoredItems'
 import type { accountability } from '@/i18n/locales/en/accountability'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
@@ -12,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubFinances } from '@/hooks/useAccountability'
 import type { AccountabilityContext } from '@/services/accountability'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Ánh xạ trạng thái ngân sách sang key i18n
 function stateKey(state: string): keyof typeof accountability {
@@ -88,10 +88,9 @@ export function FinanceWorkspace({
         (list.isPending ? (
           <AppSkeleton className="h-20 w-full" />
         ) : list.isError ? (
-          <AppNotice tone="danger" role="alert">
+          <AppErrorNotice onRetry={() => void list.refetch()} retryVariant="primary">
             {list.error.message}
-            <AppButton onClick={() => void list.refetch()}>{t('accountability.retry')}</AppButton>
-          </AppNotice>
+          </AppErrorNotice>
         ) : list.data?.length ? (
           <AppSelect
             className="w-full sm:max-w-xl"

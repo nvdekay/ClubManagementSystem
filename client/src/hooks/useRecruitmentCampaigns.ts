@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   cancelRecruitmentCampaign,
   createRecruitmentCampaign,
@@ -37,9 +38,8 @@ export function usePublicRecruitmentCampaign(campaignId: string | undefined) {
 
 // Mutation tạo, sửa, công khai hoặc huỷ đợt tuyển, rồi làm mới danh sách
 export function useRecruitmentCampaignAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       action:
         | { kind: 'create'; clubId: string; input: RecruitmentCampaignInput; csrfToken: string }
         | {
@@ -81,8 +81,6 @@ export function useRecruitmentCampaignAction() {
           )
       }
     },
-    onSuccess: async (_result, action) => {
-      await queryClient.invalidateQueries({ queryKey: campaignListKey(action.clubId) })
-    },
-  })
+    (_result, action) => [campaignListKey(action.clubId)],
+  )
 }

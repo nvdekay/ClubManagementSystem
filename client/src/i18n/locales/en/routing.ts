@@ -36,5 +36,4 @@ export const routing = {
   simulationTitle: '{{matched}} of {{total}} recent requests would match a rule',
   simulationEmpty: 'No decided requests yet.',
   loadError: 'Could not load routing rules.',
-  retry: 'Retry',
 }

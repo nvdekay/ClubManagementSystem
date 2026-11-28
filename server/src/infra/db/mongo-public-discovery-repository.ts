@@ -10,7 +10,7 @@ import type {
 } from '../../domain/public-discovery.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
-import { escapeRegex } from './repo-helpers.js'
+import { escapeRegex, optionalDate, storedDate } from './repo-helpers.js'
 
 const clubStates = ['Active', 'Suspended']
 const campaignStates = ['Published', 'Accepting Applications']
@@ -20,20 +20,9 @@ const historyStates = ['Completed', 'Report Submitted', 'Closed']
 function id(value: unknown): string {
   return String(value)
 }
-// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
-function date(value: unknown): Date {
-  if (!(value instanceof Date)) {
-    throw new Error('invalid public date in database')
-  }
-  return value
-}
 // Lấy giá trị nếu là chuỗi, ngược lại undefined
 function optionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined
-}
-// Lấy giá trị nếu là Date, ngược lại undefined
-function optionalDate(value: unknown): Date | undefined {
-  return value instanceof Date ? value : undefined
 }
 // Ánh xạ document CLB sang PublicClub
 function mapClub(doc: Record<string, unknown>): PublicClub {
@@ -57,8 +46,8 @@ function mapEvent(doc: Record<string, unknown>): PublicEvent {
     ...(doc.clubId ? { clubId: id(doc.clubId) } : {}),
     clubName: String(doc.clubName ?? ''),
     title: String(doc.title),
-    startAt: date(doc.startAt),
-    endAt: date(doc.endAt),
+    startAt: storedDate(doc.startAt, 'public'),
+    endAt: storedDate(doc.endAt, 'public'),
     venueText: optionalString(doc.venueText),
     objective: optionalString(doc.objective),
     coverImageUrl: optionalString(doc.coverImageUrl),
@@ -74,8 +63,8 @@ function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
     id: id(doc._id),
     title: String(doc.title),
     state: String(doc.state),
-    windowStart: date(doc.windowStart),
-    windowEnd: date(doc.windowEnd),
+    windowStart: storedDate(doc.windowStart, 'public'),
+    windowEnd: storedDate(doc.windowEnd, 'public'),
     capacity: Number(doc.capacity),
   }
 }

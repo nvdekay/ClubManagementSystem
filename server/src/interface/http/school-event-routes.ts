@@ -1,9 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import { MAX_INVITED_CLUBS, type SchoolEventRepository } from '../../domain/school-event.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   checkSchoolEventConflicts,
   createSchoolEvent,
@@ -13,18 +11,15 @@ import {
   publishSchoolEvent,
   withdrawInvitation,
 } from '../../usecase/school-event.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface SchoolEventRouteDeps {
+export interface SchoolEventRouteDeps extends SessionDeps {
   repo: SchoolEventRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const clubIds = z.array(id).max(MAX_INVITED_CLUBS)
 
 export const schoolEventBody = z
@@ -67,14 +62,14 @@ function date(value: string | undefined): Date | undefined {
 // Mount các route sự kiện cấp trường của ICPDP
 export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê sự kiện cấp trường
-  router.get('/admin/school-events', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/school-events', read, async (_req, res) => {
     ok(res, await listSchoolEvents(deps.repo, deps.authRepo, actor(res)))
   })
   // Kiểm tra xung đột lịch của sự kiện cấp trường
-  router.get('/admin/school-events/conflicts', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/school-events/conflicts', read, async (req, res) => {
     const query = parse(schoolEventConflictQuery, req.query, 'school event request')
     ok(
       res,
@@ -86,7 +81,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
     )
   })
   // Xem chi tiết sự kiện cấp trường
-  router.get('/admin/school-events/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/school-events/:id', read, async (req, res) => {
     ok(
       res,
       await getSchoolEvent(
@@ -98,7 +93,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
     )
   })
   // Tạo sự kiện cấp trường
-  router.post('/admin/school-events', authGuard(guard), async (req, res) => {
+  router.post('/admin/school-events', write, async (req, res) => {
     const body = parse(schoolEventBody, req.body, 'school event request')
     ok(
       res,
@@ -119,7 +114,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
     )
   })
   // Mời CLB tham gia sự kiện cấp trường
-  router.post('/admin/school-events/:id/invitations', authGuard(guard), async (req, res) => {
+  router.post('/admin/school-events/:id/invitations', write, async (req, res) => {
     const body = parse(schoolEventInviteBody, req.body, 'school event request')
     ok(
       res,
@@ -136,7 +131,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
   // Rút lời mời CLB khỏi sự kiện cấp trường
   router.post(
     '/admin/school-events/:id/invitations/:invitationId/withdraw',
-    authGuard(guard),
+    write,
     async (req, res) => {
       ok(
         res,
@@ -152,7 +147,7 @@ export function schoolEventRoutes(deps: SchoolEventRouteDeps): Router {
     },
   )
   // Công bố sự kiện cấp trường
-  router.post('/admin/school-events/:id/publish', authGuard(guard), async (req, res) => {
+  router.post('/admin/school-events/:id/publish', write, async (req, res) => {
     ok(
       res,
       await publishSchoolEvent(

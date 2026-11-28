@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
@@ -13,7 +11,9 @@ import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { useClubLifecycle, useClubLifecycleAction } from '@/hooks/useClubLifecycle'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { cn } from '@/utils/cn'
-import { formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 type Decision = 'suspend' | 'reactivate' | 'dissolve'
 const choiceClass =
@@ -27,7 +27,8 @@ interface ClubLifecyclePanelProps {
 
 // Panel ICPDP xem lịch sử và tạm ngưng, giải thể hoặc kích hoạt lại CLB
 export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day: date } = useFormat()
   const detail = useClubLifecycle(clubId)
   const action = useClubLifecycleAction()
   const [decision, setDecision] = useState<Decision | null>(null)
@@ -51,10 +52,6 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
         }
       : {},
   )
-
-  function date(value: string): string {
-    return formatDay(value, i18n.language)
-  }
 
   function actionLabel(value: string): string {
     switch (value) {
@@ -151,16 +148,11 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
   }
   if (detail.isError || !detail.data) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
-        className="mt-4"
+      <AppErrorNotice
         title={t('clubLifecycle.detailLoadError')}
-      >
-        <AppButton variant="secondary" onClick={() => void detail.refetch()}>
-          {t('clubLifecycle.retry')}
-        </AppButton>
-      </AppNotice>
+        className="mt-4"
+        onRetry={() => void detail.refetch()}
+      />
     )
   }
   const { club, nextSemester } = detail.data
@@ -358,9 +350,11 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
                 ))}
               </div>
               {timed && (
-                <label className="block text-sm font-medium text-text-app">
-                  {t('clubLifecycle.untilDate')}
-                  <AppRequiredMark />
+                <AppField
+                  label={t('clubLifecycle.untilDate')}
+                  required
+                  error={field.error('until')}
+                >
                   <AppInput
                     type="date"
                     className="mt-1.5 block font-normal"
@@ -368,14 +362,11 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
                     {...field.control('until')}
                     onChange={(event) => setUntil(event.target.value)}
                   />
-                  <AppFieldError message={field.error('until')} />
-                </label>
+                </AppField>
               )}
             </fieldset>
           )}
-          <label className="block text-sm font-medium text-text-app">
-            {t('clubLifecycle.reason')}
-            <AppRequiredMark />
+          <AppField label={t('clubLifecycle.reason')} required error={field.error('reason')}>
             <AppTextarea
               className="mt-1.5 min-h-24 w-full font-normal"
               maxLength={2000}
@@ -383,8 +374,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
               {...field.control('reason')}
               onChange={(event) => setReason(event.target.value)}
             />
-            <AppFieldError message={field.error('reason')} />
-          </label>
+          </AppField>
           {error && (
             <p role="alert" className="text-sm text-danger-app">
               {error}

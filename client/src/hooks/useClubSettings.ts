@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authKeyRoot } from '@/hooks/useAuth'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   applyDepartmentTemplate,
   createDepartment,
@@ -35,9 +37,8 @@ export function useClubSettings(clubId: string | undefined, enabled: boolean) {
 
 // Mutation sửa hồ sơ hoặc phòng ban CLB, rồi làm mới cache
 export function useClubSettingsAction() {
-  const queryClient = useQueryClient()
-  return useMutation<unknown, Error, ClubSettingsAction>({
-    mutationFn: (action) => {
+  return useInvalidatingMutation(
+    (action: ClubSettingsAction): Promise<unknown> => {
       switch (action.kind) {
         case 'profile':
           return saveClubProfile(action.clubId, action.input, action.csrfToken)
@@ -56,9 +57,6 @@ export function useClubSettingsAction() {
           return deactivateDepartment(action.clubId, action.departmentId, action.csrfToken)
       }
     },
-    onSuccess: async (_data, action) => {
-      await queryClient.invalidateQueries({ queryKey: [...settingsKey, action.clubId] })
-      await queryClient.invalidateQueries({ queryKey: ['auth'] })
-    },
-  })
+    (_data, action) => [[...settingsKey, action.clubId], authKeyRoot],
+  )
 }

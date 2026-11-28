@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 import type { Page } from '@/services/discovery'
 
 export interface BudgetItemCounts {
@@ -52,10 +52,7 @@ export interface BudgetDetail extends BudgetSummary {
   lines: { category: string; requestedAmount: number; approvedAmount: number; reason?: string }[]
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/budgets${path}`, options)
-}
+const request = apiClient('/api/v1/admin/budgets')
 
 // GET một trang ngân sách của các CLB cho ICPDP theo bộ lọc và CLB (clubId rỗng = mọi CLB)
 export function fetchBudgets(

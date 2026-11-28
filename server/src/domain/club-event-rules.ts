@@ -2,6 +2,7 @@ import type { ClubEventInput, EventProposalDocument, EventPublishInput } from '.
 import { DomainError } from './errors.js'
 import type { AcademicSemester } from './policy.js'
 import { semesterOf } from './school-event.js'
+import { isOoxmlZip } from './file-signature.js'
 
 // Kiểm tra thời gian sự kiện ở tương lai, kết thúc sau bắt đầu và trả về học kỳ chứa sự kiện
 export function assertEventSchedule(
@@ -181,10 +182,7 @@ function signatureMatches(mimeType: string, bytes: Buffer): boolean {
   if (mimeType === PDF) {
     return bytes.subarray(0, 5).toString('latin1') === '%PDF-'
   }
-  const zip =
-    bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) &&
-    bytes.includes(Buffer.from('[Content_Types].xml'))
-  return zip && bytes.includes(Buffer.from(mimeType === DOCX ? 'word/' : 'xl/'))
+  return isOoxmlZip(bytes) && bytes.includes(Buffer.from(mimeType === DOCX ? 'word/' : 'xl/'))
 }
 // Kiểm tra tên, dung lượng, loại và nội dung file đề xuất sự kiện, trả về tên đã cắt khoảng trắng
 /** Kiểm tra tên, dung lượng, loại khai báo, phần mở rộng và magic bytes của tài liệu đề xuất hoặc mẫu được tải lên; trả về tên đã cắt khoảng trắng. */

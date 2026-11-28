@@ -6,11 +6,8 @@ export const exports = {
   description: 'Tải dữ liệu CLB ra Excel, CSV hoặc PDF để báo cáo nhà trường.',
   homeDescription:
     'Xuất CLB, thành viên, sự kiện, tài chính, ngân sách theo CLB, tuân thủ và kết quả đánh giá ra file.',
-  signIn: 'Đăng nhập để xuất dữ liệu.',
-  signInLink: 'Đăng nhập',
   forbidden: 'Chỉ ICPDP được xuất dữ liệu.',
   loadError: 'Không tải được tuỳ chọn xuất.',
-  retry: 'Thử lại',
   dataType: 'Dữ liệu cần xuất',
   type_CLUBS: 'CLB và trạng thái',
   type_MEMBERS: 'Thành viên theo CLB',

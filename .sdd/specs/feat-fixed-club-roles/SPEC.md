@@ -24,7 +24,8 @@ Club Leader và Club Member.
 
 **Giới hạn runtime đã đối chiếu 15/10:** API UC58 vẫn yêu cầu club.booking.manage; chỉ Leader
 xem phòng được phân. Thiết lập CLB bị ẩn với Member ở UI, nhưng API GET profile/departments vẫn
-cho current member đọc qua assertClubSettingsRead; mutation luôn yêu cầu quyền Leader.
+cho current member đọc qua assertClubSettingsRead (về sau GET cũng yêu cầu `club.profile.manage` và
+hàm này đã bị xoá); mutation luôn yêu cầu quyền Leader.
 
 ## Tiêu chí nghiệm thu
 - [x] Thành viên thường không có permission nào; mọi API vận hành CLB trả 403.

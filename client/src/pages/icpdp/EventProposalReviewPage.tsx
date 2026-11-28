@@ -2,7 +2,7 @@
  * Trang xét duyệt ICPDP: tài liệu đã nộp, khác biệt giữa các phiên bản và người phụ trách.
  * ProposalDecisionPanel soạn quyết định; useEventProposalReviews gọi API và cập nhật bộ nhớ đệm.
  */
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 
 import { ProposalSectionComments } from '@/components/custom/ProposalSectionComments'
@@ -38,6 +38,7 @@ import { ProposalOverviewSection } from '@/pages/icpdp/ProposalOverviewSection'
 import { ProposalSubmissionHistory } from '@/pages/icpdp/ProposalSubmissionHistory'
 import { diffFields } from '@/utils/revisionDiff'
 import { openInNewTab } from '@/utils/openInNewTab'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 /** Kết hợp hồ sơ đề xuất và các thao tác xét duyệt cho tài khoản ICPDP đã đăng nhập. */
 export function EventProposalReviewPage() {
@@ -77,17 +78,7 @@ export function EventProposalReviewPage() {
     )
   }
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('eventReviews.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('eventReviews.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
   if (!isOfficer) {
     return (
@@ -100,15 +91,10 @@ export function EventProposalReviewPage() {
     return (
       <>
         <PageHeader title={t('eventReviews.proposal')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={resolveI18nError(review.error, t('eventReviews.loadError'))}
-        >
-          <AppButton variant="secondary" onClick={() => void review.refetch()}>
-            {t('eventReviews.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void review.refetch()}
+        />
       </>
     )
   }

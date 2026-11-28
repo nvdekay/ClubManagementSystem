@@ -178,9 +178,6 @@ export function AccountsPage() {
               pageIndex={page - 1}
               pageCount={pageCount}
               onPageChange={(index) => setQuery((current) => ({ ...current, page: index + 1 }))}
-              prevLabel={t('users.previousPage')}
-              nextLabel={t('users.nextPage')}
-              pageLabel={(value) => t('users.gotoPage', { page: value })}
               navLabel={t('users.paginationLabel')}
             />
           </>

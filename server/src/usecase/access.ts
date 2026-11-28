@@ -1,7 +1,6 @@
-import { z } from 'zod'
+import { isObjectId } from '../domain/access-denial.js'
 import {
   requireClubPermission,
-  resolveClubPermissions,
   type ClubAccessRepository,
   type ClubAccessSnapshot,
   type ClubPermission,
@@ -9,18 +8,12 @@ import {
 import type { AuthRepository } from '../domain/auth.js'
 import { DomainError } from '../domain/errors.js'
 
-const mongoId = z.string().regex(/^[0-9a-f]{24}$/i)
-const OBJECT_ID = /^[0-9a-f]{24}$/i
+export { isObjectId }
 
 export interface AccessActor {
   id: string
   accountState: 'Active' | 'Locked'
   lockReason?: string | null
-}
-
-/** True when the value is a 24-hex-digit ObjectId string. */
-export function isObjectId(value: unknown): value is string {
-  return typeof value === 'string' && OBJECT_ID.test(value)
 }
 
 /** Validates an ObjectId string; anything else is a validation error `invalid <label>`. */
@@ -32,14 +25,10 @@ export function parseObjectId(value: string, label: string): string {
 }
 
 /**
- * The one ICPDP officer guard: signed in, account Active (a Locked account is refused with its
- * lock reason), a valid id and the ICPDP_OFFICER system role. Returns the officer's id.
+ * Signed in, account Active (a Locked account is refused with its lock reason) and a valid id.
+ * Returns the actor's id.
  */
-export async function requireIcpdpOfficer(
-  auth: Pick<AuthRepository, 'systemRoleCodes'>,
-  actor: AccessActor | null,
-  deniedMessage = 'ICPDP officer role required',
-): Promise<string> {
+export function requireSignedIn(actor: AccessActor | null): string {
   if (!actor) {
     throw new DomainError('authentication required', 'unauthorized')
   }
@@ -49,10 +38,23 @@ export async function requireIcpdpOfficer(
   if (!isObjectId(actor.id)) {
     throw new DomainError('invalid actor', 'validation')
   }
-  if (!(await auth.systemRoleCodes(actor.id)).includes('ICPDP_OFFICER')) {
+  return actor.id
+}
+
+/**
+ * The one ICPDP officer guard: {@link requireSignedIn} plus the ICPDP_OFFICER system role.
+ * Returns the officer's id.
+ */
+export async function requireIcpdpOfficer(
+  auth: Pick<AuthRepository, 'systemRoleCodes'>,
+  actor: AccessActor | null,
+  deniedMessage = 'ICPDP officer role required',
+): Promise<string> {
+  const id = requireSignedIn(actor)
+  if (!(await auth.systemRoleCodes(id)).includes('ICPDP_OFFICER')) {
     throw new DomainError(deniedMessage, 'forbidden')
   }
-  return actor.id
+  return id
 }
 
 // Kiểm actor đăng nhập, chưa bị khóa và có permission yêu cầu trong CLB
@@ -69,12 +71,10 @@ export async function assertClubAccess(
   if (actor.accountState === 'Locked') {
     throw new DomainError(actor.lockReason || 'account locked', 'locked')
   }
-  const userIdResult = mongoId.safeParse(actor.id)
-  const clubIdResult = mongoId.safeParse(clubId)
-  if (!userIdResult.success || !clubIdResult.success) {
+  if (!isObjectId(actor.id) || !isObjectId(clubId)) {
     throw new DomainError('invalid identifier', 'validation')
   }
-  const snapshot = await repo.findSnapshot(userIdResult.data, clubIdResult.data)
+  const snapshot = await repo.findSnapshot(actor.id, clubId)
   if (!snapshot) {
     throw new DomainError('club access denied', 'forbidden', { requiredPermission: permission })
   }
@@ -82,33 +82,17 @@ export async function assertClubAccess(
   return snapshot
 }
 
-// Cho thành viên hiện tại hoặc founder đã duyệt xem cấu hình CLB
-/** Thành viên hiện tại được xem cài đặt; founder đã được duyệt giữ quyền thiết lập. */
-export async function assertClubSettingsRead(
-  repo: ClubAccessRepository,
+// Có clubId thì kiểm permission trong CLB, không có thì yêu cầu ICPDP officer
+export async function assertClubOrOfficer(
+  deps: { access: ClubAccessRepository; auth: Pick<AuthRepository, 'systemRoleCodes'> },
   actor: AccessActor | null,
-  clubId: string,
-  now = new Date(),
-) {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
+  clubId: string | null | undefined,
+  permission: ClubPermission,
+  now: Date,
+): Promise<void> {
+  if (clubId) {
+    await assertClubAccess(deps.access, actor, clubId, permission, now)
+  } else {
+    await requireIcpdpOfficer(deps.auth, actor)
   }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!mongoId.safeParse(actor.id).success || !mongoId.safeParse(clubId).success) {
-    throw new DomainError('invalid identifier', 'validation')
-  }
-  const snapshot = await repo.findSnapshot(actor.id, clubId)
-  if (!snapshot || snapshot.clubId !== clubId) {
-    throw new DomainError('club access denied', 'forbidden')
-  }
-  const member = snapshot.membership
-  if (
-    !(member?.clubId === clubId && ['Active', 'Inactive'].includes(member.state)) &&
-    !resolveClubPermissions(snapshot, now).includes('club.profile.manage')
-  ) {
-    throw new DomainError('club access denied', 'forbidden')
-  }
-  return snapshot
 }

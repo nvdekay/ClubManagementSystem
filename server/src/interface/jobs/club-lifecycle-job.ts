@@ -1,6 +1,6 @@
 import type { ClubLifecycleRepository } from '../../domain/club-lifecycle.js'
 import { alertClubLifecycleJobFailure, runClubLifecycleJob } from '../../usecase/club-lifecycle.js'
-import { scheduleJob, type StopJob } from './schedule.js'
+import { logCounts, scheduleJob, type StopJob } from './schedule.js'
 
 const HOUR_MS = 60 * 60 * 1000
 
@@ -14,16 +14,7 @@ export function startClubLifecycleJob(
     'club-lifecycle',
     intervalMs,
     async () => {
-      const result = await runClubLifecycleJob(repo, new Date())
-      if (
-        result.reminded ||
-        result.reactivated ||
-        result.dissolving ||
-        result.dissolved ||
-        result.failed
-      ) {
-        console.log(JSON.stringify({ job: 'club-lifecycle', ...result }))
-      }
+      logCounts('club-lifecycle', await runClubLifecycleJob(repo, new Date()))
     },
     async (message) => {
       await alertClubLifecycleJobFailure(repo, message, new Date())

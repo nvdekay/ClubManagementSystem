@@ -34,6 +34,8 @@ import {
 import { cn } from '@/utils/cn'
 import { WEEKDAYS, slotLabel, weekdayLabel } from '@/utils/roomSchedule'
 import { dateFormatter } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 const statuses = ['active', 'revoked', 'all'] as const
 type Status = (typeof statuses)[number]
@@ -432,12 +434,9 @@ export function RoomAllocationsPage() {
           {list.isPending ? (
             <AppSkeleton className="h-48 w-full" />
           ) : list.isError ? (
-            <AppNotice tone="danger" role="alert">
+            <AppErrorNotice onRetry={() => void list.refetch()} retryVariant="primary">
               <p>{list.error.message}</p>
-              <AppButton onClick={() => void list.refetch()}>
-                {t('roomAllocations.retry')}
-              </AppButton>
-            </AppNotice>
+            </AppErrorNotice>
           ) : (
             <>
               <AppTable table={table} emptyMessage={t('roomAllocations.empty')} />
@@ -445,9 +444,6 @@ export function RoomAllocationsPage() {
                 pageIndex={table.state.pagination.pageIndex}
                 pageCount={table.getPageCount()}
                 onPageChange={(index) => table.setPageIndex(index)}
-                prevLabel={t('facilityBookings.prevPage')}
-                nextLabel={t('facilityBookings.nextPage')}
-                pageLabel={(page) => t('facilityBookings.pageLabel', { page })}
                 navLabel={t('facilityBookings.pages')}
               />
             </>
@@ -682,15 +678,14 @@ export function RoomAllocationsPage() {
                 <AppFieldError message={field.error('slot')} />
               </div>
             </div>
-            <label className="block text-sm font-medium text-text-app">
-              {t('roomAllocations.note')}
+            <AppField label={t('roomAllocations.note')}>
               <AppInput
                 className="mt-1.5 w-full"
                 maxLength={500}
                 value={form.note}
                 onChange={(event) => setForm({ ...form, note: event.target.value })}
               />
-            </label>
+            </AppField>
             <p className="text-sm text-muted-app">{t('roomAllocations.rule')}</p>
             {allocate.isError && (
               <AppNotice
@@ -747,9 +742,11 @@ export function RoomAllocationsPage() {
               {slotLabel(t, revoking.slot, slotList)}
             </p>
             <p className="text-sm text-muted-app">{t('roomAllocations.revokeRule')}</p>
-            <label className="block text-sm font-medium text-text-app">
-              {t('roomAllocations.revokeReason')}
-              <AppRequiredMark />
+            <AppField
+              label={t('roomAllocations.revokeReason')}
+              required
+              error={revokeField.error('reason')}
+            >
               <AppInput
                 className="mt-1.5 w-full"
                 maxLength={2000}
@@ -757,8 +754,7 @@ export function RoomAllocationsPage() {
                 {...revokeField.control('reason')}
                 onChange={(event) => setReason(event.target.value)}
               />
-              <AppFieldError message={revokeField.error('reason')} />
-            </label>
+            </AppField>
             {revoke.isError && (
               <AppNotice tone="danger" role="alert">
                 {revoke.error.message}

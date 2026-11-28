@@ -31,6 +31,7 @@ import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { dateFormatter, formatDay } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 interface CampaignForm {
   title: string
@@ -391,11 +392,7 @@ export function RecruitmentCampaignPage() {
     return loading
   }
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('recruitmentCampaigns.signIn')}</p>
-      </AppNotice>
-    )
+    return null
   }
   if (!canManage) {
     return (
@@ -409,15 +406,10 @@ export function RecruitmentCampaignPage() {
   }
   if (campaigns.isError || !campaigns.data) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
+      <AppErrorNotice
         title={campaigns.error?.message ?? t('recruitmentCampaigns.loadError')}
-      >
-        <AppButton variant="secondary" onClick={() => void campaigns.refetch()}>
-          {t('recruitmentCampaigns.retry')}
-        </AppButton>
-      </AppNotice>
+        onRetry={() => void campaigns.refetch()}
+      />
     )
   }
 

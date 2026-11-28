@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import type {
   ApprovalRoutingRepository,
@@ -8,15 +7,10 @@ import type {
 } from '../../domain/approval-routing.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { found, isDuplicateKey, optionalDate, writeAudit } from './repo-helpers.js'
 import { withoutLegacyFields } from './approval-routing.js'
 
 type Doc = Record<string, unknown>
-
-// Trả Date nếu giá trị là Date, ngược lại undefined
-function date(value: unknown): Date | undefined {
-  return value instanceof Date ? value : undefined
-}
 
 // Ánh xạ document thành RoutingRuleSet
 function ruleSetFrom(doc: Doc): RoutingRuleSet {
@@ -29,10 +23,10 @@ function ruleSetFrom(doc: Doc): RoutingRuleSet {
     ),
     createdBy: String(doc.createdBy),
     createdAt: doc.createdAt as Date,
-    ...(date(doc.updatedAt) ? { updatedAt: date(doc.updatedAt) } : {}),
+    ...(optionalDate(doc.updatedAt) ? { updatedAt: optionalDate(doc.updatedAt) } : {}),
     ...(doc.activatedBy ? { activatedBy: String(doc.activatedBy) } : {}),
-    ...(date(doc.activatedAt) ? { activatedAt: date(doc.activatedAt) } : {}),
-    ...(date(doc.supersededAt) ? { supersededAt: date(doc.supersededAt) } : {}),
+    ...(optionalDate(doc.activatedAt) ? { activatedAt: optionalDate(doc.activatedAt) } : {}),
+    ...(optionalDate(doc.supersededAt) ? { supersededAt: optionalDate(doc.supersededAt) } : {}),
   }
 }
 
@@ -46,10 +40,7 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
   const sets = m.routingRuleSets!
 
   async function required(id: Types.ObjectId): Promise<RoutingRuleSet> {
-    const doc = await sets.findById(id).lean()
-    if (!doc) {
-      throw new DomainError('routing rule set not found', 'not_found')
-    }
+    const doc = found(await sets.findById(id).lean(), 'routing rule set not found')
     return ruleSetFrom(doc as Doc)
   }
 
@@ -122,24 +113,18 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
           { $set: { state: 'Active', activatedBy: new Types.ObjectId(actorId), activatedAt: now } },
           { session },
         )
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'RoutingRuleSet',
-              entityId: target,
-              action: 'ROUTING_RULES_ACTIVATED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'ICPDP Head',
-              before: previous
-                ? { activeVersionId: String(previous._id), versionNo: previous.versionNo }
-                : undefined,
-              after: { state: 'Active' },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'RoutingRuleSet',
+          entityId: target,
+          action: 'ROUTING_RULES_ACTIVATED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'ICPDP Head',
+          before: previous
+            ? { activeVersionId: String(previous._id), versionNo: previous.versionNo }
+            : undefined,
+          after: { state: 'Active' },
+          at: now,
+        })
         await session.commitTransaction()
       } catch (error) {
         if (session.inTransaction()) {

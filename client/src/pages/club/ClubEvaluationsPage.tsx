@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubEvaluations } from '@/hooks/useClubCompliance'
 import type { evaluations } from '@/i18n/locales/en/evaluations'
 import { formatDate } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 // Trang xem kết quả đánh giá hoạt động của CLB
 export function ClubEvaluationsPage() {
   const { clubId = '' } = useParams()
@@ -35,10 +35,9 @@ export function ClubEvaluationsPage() {
       <PageHeader title={t('clubCompliance.evaluations')} />
       {query.isPending && <AppSkeleton className="h-64 w-full" />}
       {query.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void query.refetch()} retryVariant="primary">
           {query.error.message}
-          <AppButton onClick={() => void query.refetch()}>{t('clubCompliance.retry')}</AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {query.data?.length === 0 && (
         <AppEmptyState variant="boxed" message={t('clubCompliance.empty')} />

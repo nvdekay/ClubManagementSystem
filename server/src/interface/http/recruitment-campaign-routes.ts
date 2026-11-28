@@ -1,10 +1,8 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import type { RecruitmentCampaignRepository } from '../../domain/recruitment-campaign.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   cancelRecruitmentCampaign,
   createRecruitmentCampaignDraft,
@@ -13,19 +11,16 @@ import {
   publishRecruitmentCampaign,
   updateRecruitmentCampaignDraft,
 } from '../../usecase/recruitment-campaign.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface RecruitmentCampaignRouteDeps {
+export interface RecruitmentCampaignRouteDeps extends SessionDeps {
   repo: RecruitmentCampaignRepository
   accessRepo: ClubAccessRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const selectionStep = z
   .object({
     name: z.string().max(100),
@@ -81,10 +76,10 @@ const confirmOverlapBody = z.object({ confirmOverlap: z.boolean().default(false)
 // Mount các route đợt tuyển thành viên của CLB
 export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê đợt tuyển thành viên của CLB
-  router.get('/clubs/:clubId/recruitment/campaigns', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/recruitment/campaigns', read, async (req, res) => {
     ok(
       res,
       await listRecruitmentCampaigns(
@@ -96,7 +91,7 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
     )
   })
   // Tạo bản nháp đợt tuyển thành viên
-  router.post('/clubs/:clubId/recruitment/campaigns', authGuard(guard), async (req, res) => {
+  router.post('/clubs/:clubId/recruitment/campaigns', write, async (req, res) => {
     ok(
       res,
       await createRecruitmentCampaignDraft(
@@ -111,45 +106,37 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
     )
   })
   // Xem chi tiết một đợt tuyển
-  router.get(
-    '/clubs/:clubId/recruitment/campaigns/:campaignId',
-    authGuard(guard, false),
-    async (req, res) => {
-      ok(
-        res,
-        await getRecruitmentCampaign(
-          deps.repo,
-          deps.accessRepo,
-          actor(res),
-          parse(id, req.params.clubId, 'recruitment campaign request'),
-          parse(id, req.params.campaignId, 'recruitment campaign request'),
-        ),
-      )
-    },
-  )
+  router.get('/clubs/:clubId/recruitment/campaigns/:campaignId', read, async (req, res) => {
+    ok(
+      res,
+      await getRecruitmentCampaign(
+        deps.repo,
+        deps.accessRepo,
+        actor(res),
+        parse(id, req.params.clubId, 'recruitment campaign request'),
+        parse(id, req.params.campaignId, 'recruitment campaign request'),
+      ),
+    )
+  })
   // Cập nhật bản nháp đợt tuyển
-  router.patch(
-    '/clubs/:clubId/recruitment/campaigns/:campaignId',
-    authGuard(guard),
-    async (req, res) => {
-      ok(
-        res,
-        await updateRecruitmentCampaignDraft(
-          deps.repo,
-          deps.accessRepo,
-          actor(res),
-          parse(id, req.params.clubId, 'recruitment campaign request'),
-          parse(id, req.params.campaignId, 'recruitment campaign request'),
-          parse(recruitmentCampaignBody, req.body, 'recruitment campaign request'),
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.patch('/clubs/:clubId/recruitment/campaigns/:campaignId', write, async (req, res) => {
+    ok(
+      res,
+      await updateRecruitmentCampaignDraft(
+        deps.repo,
+        deps.accessRepo,
+        actor(res),
+        parse(id, req.params.clubId, 'recruitment campaign request'),
+        parse(id, req.params.campaignId, 'recruitment campaign request'),
+        parse(recruitmentCampaignBody, req.body, 'recruitment campaign request'),
+        new Date(),
+      ),
+    )
+  })
   // Công bố đợt tuyển
   router.post(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/publish',
-    authGuard(guard),
+    write,
     async (req, res) => {
       const confirmation = parse(confirmOverlapBody, req.body ?? {}, 'recruitment campaign request')
       ok(
@@ -170,7 +157,7 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
   // Huỷ đợt tuyển
   router.post(
     '/clubs/:clubId/recruitment/campaigns/:campaignId/cancel',
-    authGuard(guard),
+    write,
     async (req, res) => {
       ok(
         res,

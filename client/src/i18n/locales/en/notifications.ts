@@ -4,7 +4,6 @@ export const notifications = {
   openUnread: 'Notifications, {{count}} unread',
   title: 'Notifications',
   markAll: 'Mark all as read',
-  markRead: 'Mark as read',
   unread: 'Unread',
   empty: 'You have no notifications yet.',
   error: 'Could not load notifications.',

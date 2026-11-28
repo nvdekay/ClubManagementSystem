@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   decidePeriodicReport,
   fetchPeriodicOverview,
@@ -23,14 +24,11 @@ export function usePeriodicOverview(period: string | undefined, enabled: boolean
 
 // Mutation lưu đợt thu báo cáo định kỳ, rồi làm mới cache
 export function useSavePeriodicCampaign() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { input: PeriodicCampaignInput; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { input: PeriodicCampaignInput; csrfToken: string }) =>
       savePeriodicCampaign(action.input, action.csrfToken),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [...periodicKey] })
-    },
-  })
+    [periodicKey],
+  )
 }
 
 // Query chi tiết một báo cáo định kỳ
@@ -44,27 +42,21 @@ export function usePeriodicReport(id: string | undefined, enabled: boolean) {
 
 // Mutation ICPDP quyết định báo cáo định kỳ, rồi làm mới tổng quan
 export function useDecidePeriodicReport() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { id: string; input: PeriodicDecisionInput; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { id: string; input: PeriodicDecisionInput; csrfToken: string }) =>
       decidePeriodicReport(action.id, action.input, action.csrfToken),
-    onSuccess: async (detail) => {
-      queryClient.setQueryData([...periodicKey, 'detail', detail.id], detail)
-      await queryClient.invalidateQueries({ queryKey: [...periodicKey, 'overview'] })
-    },
-  })
+    [[...periodicKey, 'overview']],
+    (detail) => [[...periodicKey, 'detail', detail.id], detail],
+  )
 }
 
 // Mutation ghi nhận CLB không nộp báo cáo, rồi làm mới tổng quan
 export function useRecordMissingPeriodicReport() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: {
+  return useInvalidatingMutation(
+    (action: {
       input: { clubId: string; periodCode: string; severity: Severity; note?: string }
       csrfToken: string
     }) => recordMissingPeriodicReport(action.input, action.csrfToken),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [...periodicKey, 'overview'] })
-    },
-  })
+    [[...periodicKey, 'overview']],
+  )
 }

@@ -30,7 +30,6 @@ export const eventDefense = {
   cancelButton: 'Hủy lịch bảo vệ',
   cancelTitle: 'Hủy lịch bảo vệ',
   cancelReasonLabel: 'Lý do hủy lịch',
-  confirmCancel: 'Xác nhận hủy lịch',
   startDefenseButton: 'Bắt đầu bảo vệ',
   openLiveRoomButton: 'Vào phòng bảo vệ',
   noShowButton: 'Đánh dấu vắng mặt (No-show)',

@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { EvaluationRepository } from '../../domain/evaluation.js'
 import type { EvaluationSchemeRepository } from '../../domain/evaluation-scheme.js'
 import {
@@ -10,7 +9,6 @@ import {
   type PeriodicReportRepository,
 } from '../../domain/periodic-report.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import { VIOLATION_SEVERITIES } from '../../domain/violation.js'
 import {
   decidePeriodicReport,
@@ -20,21 +18,18 @@ import {
   savePeriodicCampaign,
   type PeriodicReportDeps,
 } from '../../usecase/periodic-report.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface PeriodicReportRouteDeps {
+export interface PeriodicReportRouteDeps extends SessionDeps {
   repo: PeriodicReportRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
   evaluationRepo?: EvaluationRepository
   evaluationSchemeRepo?: EvaluationSchemeRepository
   files?: PeriodicEvidenceStorage | null
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const periodicOverviewQuery = z.object({ period: z.string().max(50).optional() }).strict()
 export const periodicCustomFieldBody = z
   .object({
@@ -75,7 +70,7 @@ export const periodicMissingBody = z
 // Mount các route ICPDP quản lý báo cáo định kỳ
 export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   const usecase: PeriodicReportDeps = {
     repo: deps.repo,
     policy: deps.policy,
@@ -94,7 +89,7 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
   }
 
   // Xem tổng quan đợt báo cáo định kỳ
-  router.get('/admin/periodic-reports', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/periodic-reports', read, async (req, res) => {
     ok(
       res,
       await periodicReportOverview(
@@ -106,7 +101,7 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
     )
   })
   // Lưu cấu hình đợt báo cáo định kỳ
-  router.put('/admin/periodic-reports/campaign', authGuard(guard), async (req, res) => {
+  router.put('/admin/periodic-reports/campaign', write, async (req, res) => {
     ok(
       res,
       await savePeriodicCampaign(
@@ -118,7 +113,7 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
     )
   })
   // Ghi nhận CLB không nộp báo cáo định kỳ
-  router.post('/admin/periodic-reports/missing', authGuard(guard), async (req, res) => {
+  router.post('/admin/periodic-reports/missing', write, async (req, res) => {
     ok(
       res,
       await recordMissingPeriodicReport(
@@ -131,7 +126,7 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
     )
   })
   // Xem chi tiết một báo cáo định kỳ
-  router.get('/admin/periodic-reports/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/periodic-reports/:id', read, async (req, res) => {
     ok(
       res,
       await getPeriodicReport(
@@ -142,7 +137,7 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
     )
   })
   // ICPDP ghi quyết định cho báo cáo định kỳ
-  router.post('/admin/periodic-reports/:id/decision', authGuard(guard), async (req, res) => {
+  router.post('/admin/periodic-reports/:id/decision', write, async (req, res) => {
     ok(
       res,
       await decidePeriodicReport(

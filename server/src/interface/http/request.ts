@@ -34,6 +34,9 @@ export function parse<T>(
   return result.data
 }
 
+/** A 24-hex MongoDB ObjectId string (path ids and id fields of request bodies). */
+export const objectId = z.string().regex(/^[0-9a-f]{24}$/i)
+
 /**
  * The shared `page` / `pageSize` query of server-side paged lists. Extend it with the list's own
  * filters and keep the result `.strict()`, so an unknown query key is a validation error.

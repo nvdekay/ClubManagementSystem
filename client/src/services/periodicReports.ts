@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
+import { apiClient } from '@/services/apiRequest'
 
 export const RETURN_SECTIONS = [
   'members',
@@ -177,28 +177,7 @@ export interface PeriodicDecisionInput {
   resubmitDueAt?: string
 }
 
-// Gọi API /admin/periodic-reports và trả về data, ném lỗi nếu thất bại
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await apiFetch(`/api/v1/admin/periodic-reports${path}`, {
-    credentials: 'same-origin',
-    ...init,
-  })
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null
-    throw new ApiError(body?.message ?? `HTTP ${response.status}`)
-  }
-  const body: { data: T } = await response.json()
-  return body.data
-}
-
-// Dựng RequestInit POST/PUT có CSRF và body JSON
-function mutation(csrfToken: string, body: object, method: 'POST' | 'PUT' = 'POST'): RequestInit {
-  return {
-    method,
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify(body),
-  }
-}
+const request = apiClient('/api/v1/admin/periodic-reports')
 
 // GET tổng quan báo cáo định kỳ theo kỳ
 export function fetchPeriodicOverview(
@@ -213,7 +192,7 @@ export function savePeriodicCampaign(
   input: PeriodicCampaignInput,
   csrfToken: string,
 ): Promise<PeriodicCampaign> {
-  return request('/campaign', mutation(csrfToken, input, 'PUT'))
+  return request('/campaign', { method: 'PUT', csrfToken, body: input })
 }
 
 // GET chi tiết một báo cáo định kỳ
@@ -230,7 +209,7 @@ export function decidePeriodicReport(
   input: PeriodicDecisionInput,
   csrfToken: string,
 ): Promise<PeriodicReportDetail> {
-  return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input))
+  return request(`/${encodeURIComponent(id)}/decision`, { method: 'POST', csrfToken, body: input })
 }
 
 // POST /missing: ghi nhận CLB không nộp báo cáo
@@ -238,7 +217,7 @@ export function recordMissingPeriodicReport(
   input: { clubId: string; periodCode: string; severity: Severity; note?: string },
   csrfToken: string,
 ): Promise<{ violationId: string }> {
-  return request('/missing', mutation(csrfToken, input))
+  return request('/missing', { method: 'POST', csrfToken, body: input })
 }
 
 /** Tiền tố tham chiếu ảnh minh chứng đã upload lên kho file của hệ thống. */

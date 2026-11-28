@@ -1,25 +1,20 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubFieldRepository } from '../../domain/club-field.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   createClubField,
   listClubFieldCatalog,
   removeClubField,
   updateClubField,
 } from '../../usecase/club-field.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface ClubFieldRouteDeps {
+export interface ClubFieldRouteDeps extends SessionDeps {
   repo: ClubFieldRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const clubFieldBody = z
   .object({
     name: z.string().max(100),
@@ -30,14 +25,14 @@ export const clubFieldBody = z
 // Mount các route danh mục lĩnh vực CLB của ICPDP
 export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê danh mục lĩnh vực CLB
-  router.get('/admin/club-fields', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/club-fields', read, async (_req, res) => {
     ok(res, await listClubFieldCatalog(deps.repo, deps.authRepo, actor(res)))
   })
   // Tạo lĩnh vực CLB mới
-  router.post('/admin/club-fields', authGuard(guard), async (req, res) => {
+  router.post('/admin/club-fields', write, async (req, res) => {
     ok(
       res,
       await createClubField(
@@ -51,7 +46,7 @@ export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
     )
   })
   // Cập nhật lĩnh vực CLB
-  router.patch('/admin/club-fields/:id', authGuard(guard), async (req, res) => {
+  router.patch('/admin/club-fields/:id', write, async (req, res) => {
     ok(
       res,
       await updateClubField(
@@ -65,7 +60,7 @@ export function clubFieldRoutes(deps: ClubFieldRouteDeps): Router {
     )
   })
   // Xoá lĩnh vực CLB
-  router.delete('/admin/club-fields/:id', authGuard(guard), async (req, res) => {
+  router.delete('/admin/club-fields/:id', write, async (req, res) => {
     ok(
       res,
       await removeClubField(

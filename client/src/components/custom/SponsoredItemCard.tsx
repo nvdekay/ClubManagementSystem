@@ -14,10 +14,11 @@ import {
   type SponsoredItem,
 } from '@/services/sponsoredItems'
 import { cn } from '@/utils/cn'
-import { formatSponsoredDateTime, formatSponsoredMoney } from '@/utils/sponsoredItems'
 import { SponsoredItemInvoiceSection } from './SponsoredItemInvoiceSection'
 import { SponsoredItemRefundSection } from './SponsoredItemRefundSection'
 import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppField } from '@/components/ui/field/AppField'
 
 export interface SponsoredItemCardProps {
   budget: SponsoredBudget
@@ -29,6 +30,7 @@ export interface SponsoredItemCardProps {
 // Card for a single sponsored budget item across advance, invoice review, refund, and payout phases
 export function SponsoredItemCard({ budget, item, clubId, csrfToken }: SponsoredItemCardProps) {
   const { t, i18n } = useTranslation()
+  const { date: formatDateTime, money } = useFormat()
   const confirm = useConfirm()
   const mutation = useSponsoredItemAction(budget.id, clubId, csrfToken)
 
@@ -74,14 +76,6 @@ export function SponsoredItemCard({ budget, item, clubId, csrfToken }: Sponsored
       Boolean(item.advanceReceivedAt) ||
       !['AwaitingAdvance', 'AdvanceSent'].includes(item.status))
   const officerDraftHidden = isOfficer && !isNotSponsored && item.status === 'Draft'
-
-  function money(value: number) {
-    return formatSponsoredMoney(value, i18n.language)
-  }
-
-  function formatDateTime(value: string) {
-    return formatSponsoredDateTime(value, i18n.language)
-  }
 
   async function act(action: ItemAction) {
     setError('')
@@ -269,23 +263,21 @@ export function SponsoredItemCard({ budget, item, clubId, csrfToken }: Sponsored
 
       {isOfficer && active && item.status === 'Submitted' && (
         <div className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app/40 p-4">
-          <label className="block text-sm font-medium text-text-app">
-            {t('sponsoredItems.valid')}
+          <AppField label={t('sponsoredItems.valid')}>
             <AppMoneyInput
               value={valid}
               onValueChange={setValid}
               className="mt-1 w-full font-normal"
             />
-          </label>
-          <label className="block text-sm font-medium text-text-app">
-            {t('sponsoredItems.reason')}
+          </AppField>
+          <AppField label={t('sponsoredItems.reason')}>
             <AppTextarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               maxLength={2000}
               className="mt-1 w-full font-normal"
             />
-          </label>
+          </AppField>
           <div className="flex flex-wrap gap-2">
             <AppButton
               type="button"

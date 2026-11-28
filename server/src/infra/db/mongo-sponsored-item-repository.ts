@@ -1,5 +1,4 @@
 import mongoose, { Types } from 'mongoose'
-import { randomUUID } from 'node:crypto'
 import { DomainError } from '../../domain/errors.js'
 import {
   changeSponsoredItem,
@@ -12,7 +11,7 @@ import {
 import { assertEventWriteAccess } from './club-event-access.js'
 import { assertAccountabilityOfficer } from './accountability-workflow.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, icpdpOfficerIds, queueNotifications, writeAudit } from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 
 const NOTIFY_ACTIONS = new Set([
@@ -201,22 +200,16 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
         if (changed.modifiedCount !== 1) {
           throw new DomainError('budget changed; reload before continuing', 'conflict')
         }
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'EventBudget',
-              entityId: budgetId,
-              action: `SPONSORED_ITEM_${action.kind.toUpperCase()}`,
-              actorId,
-              actorRole: clubId ? 'Club Leader' : 'ICPDP_OFFICER',
-              before: { item: before },
-              after: { item: updated },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'EventBudget',
+          entityId: budgetId,
+          action: `SPONSORED_ITEM_${action.kind.toUpperCase()}`,
+          actorId,
+          actorRole: clubId ? 'Club Leader' : 'ICPDP_OFFICER',
+          before: { item: before },
+          after: { item: updated },
+          at: now,
+        })
         if (NOTIFY_ACTIONS.has(action.kind)) {
           const toOfficer = CLUB_TO_OFFICER_NOTIFY_ACTIONS.has(action.kind)
           const version = await m
@@ -224,17 +217,8 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
             .sort({ revisionNo: -1 })
             .session(session)
             .lean()
-          const roles = toOfficer
-            ? await m
-                .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-                .session(session)
-                .distinct('_id')
-            : []
           const recipients = toOfficer
-            ? await m
-                .userRoleAssignments!.find({ roleId: { $in: roles }, revokedAt: null })
-                .session(session)
-                .distinct('userId')
+            ? await icpdpOfficerIds(session)
             : [
                 ...(await clubBoardUserIds(budget.clubId as Types.ObjectId, session)),
                 version?.submittedBy,
@@ -258,10 +242,7 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
           })
         }
       })
-      const result = await find(id, clubId)
-      if (!result) {
-        throw new DomainError('sponsored budget not found', 'not_found')
-      }
+      const result = found(await find(id, clubId), 'sponsored budget not found')
       return result
     },
   }

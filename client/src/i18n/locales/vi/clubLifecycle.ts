@@ -3,8 +3,6 @@ import type { clubLifecycle as en } from '../en/clubLifecycle'
 
 export const clubLifecycle = {
   homeDescription: 'Tạm ngừng, kích hoạt lại hoặc lên lịch giải thể một CLB.',
-  signIn: 'Đăng nhập để quản lý CLB.',
-  signInLink: 'Đăng nhập',
   forbidden: 'Chỉ ICPDP được quản lý CLB.',
   loadError: 'Không tải được danh sách CLB.',
   retry: 'Thử lại',
@@ -30,7 +28,6 @@ export const clubLifecycle = {
   suspendedSince: 'Tạm ngừng từ {{date}}: {{reason}}',
   dissolutionScheduled:
     'Đã quyết định giải thể: giải thể trong học kỳ {{semester}} ({{from}} – {{to}}). Lý do: {{reason}}',
-  obligations: 'Công việc đang chạy',
   openCampaigns: 'Đợt tuyển đang mở',
   upcomingEvents: 'Sự kiện sắp tới',
   activeTerm: 'Nhiệm kỳ hiện tại',

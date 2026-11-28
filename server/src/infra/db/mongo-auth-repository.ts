@@ -1,21 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
-import type { AuthRepository, AuthUser } from '../../domain/auth.js'
+import type { AuthRepository } from '../../domain/auth.js'
 import type { GoogleIdentity } from '../../domain/google-identity.js'
 import { ucmsModels } from './ucms-models.js'
-
-// Ánh xạ document user thành AuthUser
-function mapUser(doc: Record<string, unknown>): AuthUser {
-  return {
-    id: String(doc._id),
-    email: String(doc.email),
-    displayName: String(doc.displayName),
-    avatarUrl: typeof doc.avatarUrl === 'string' ? doc.avatarUrl : undefined,
-    accountState: doc.accountState === 'Locked' ? 'Locked' : 'Active',
-    lockReason: typeof doc.lockReason === 'string' ? doc.lockReason : undefined,
-  }
-}
+import { authUserFrom } from './repo-helpers.js'
 
 // Repository xác thực: tạo/tìm user Google, role hệ thống, CLB và audit đăng nhập
 /** `allowedDomain` là ALLOWED_DOMAIN của server: một domain, danh sách phân cách bằng dấu phẩy, hoặc "*". */
@@ -48,7 +37,7 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
               throw new DomainError('Google identity does not match account', 'forbidden')
             }
             if (existing?.accountState === 'Locked') {
-              return mapUser(existing)
+              return authUserFrom(existing)
             }
             let userDoc: Record<string, unknown>
             if (!existing) {
@@ -95,7 +84,7 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
               },
               { upsert: true, session },
             )
-            return mapUser(userDoc)
+            return authUserFrom(userDoc)
           })
         } catch (error) {
           if (
@@ -113,7 +102,7 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
     // Tìm user theo id
     async findUserById(userId) {
       const user = await users.findById(new Types.ObjectId(userId)).lean()
-      return user ? mapUser(user) : null
+      return user ? authUserFrom(user) : null
     },
     // Lấy mã role hệ thống đang hiệu lực của user
     async systemRoleCodes(userId) {

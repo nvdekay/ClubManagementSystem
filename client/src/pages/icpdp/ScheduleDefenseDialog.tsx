@@ -9,6 +9,7 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useAvailableDefenseRooms, useEventDefenseActions } from '@/hooks/useEventDefense'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface ScheduleDefenseDialogProps {
   open: boolean
@@ -186,9 +187,7 @@ export function ScheduleDefenseDialog({
         <AppNotice>{t('eventDefense.scheduleHint')}</AppNotice>
 
         {mode === 'schedule' && (
-          <label className="block text-sm font-medium text-text-app">
-            {t('eventDefense.defenseTitleLabel')}
-            <AppRequiredMark />
+          <AppField label={t('eventDefense.defenseTitleLabel')} required>
             <AppInput
               value={title}
               maxLength={200}
@@ -199,13 +198,11 @@ export function ScheduleDefenseDialog({
               }}
               className="mt-1.5 w-full font-normal"
             />
-          </label>
+          </AppField>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-medium text-text-app">
-            {t('eventDefense.startAtLabel')}
-            <AppRequiredMark />
+          <AppField label={t('eventDefense.startAtLabel')} required>
             <AppInput
               type="datetime-local"
               value={startLocal}
@@ -217,10 +214,8 @@ export function ScheduleDefenseDialog({
               }}
               className="mt-1.5 w-full font-normal"
             />
-          </label>
-          <label className="block text-sm font-medium text-text-app">
-            {t('eventDefense.durationLabel')}
-            <AppRequiredMark />
+          </AppField>
+          <AppField label={t('eventDefense.durationLabel')} required>
             <AppInput
               type="number"
               min={15}
@@ -235,7 +230,7 @@ export function ScheduleDefenseDialog({
               }}
               className="mt-1.5 w-full font-normal tabular-nums"
             />
-          </label>
+          </AppField>
         </div>
 
         <div className="block text-sm font-medium text-text-app">
@@ -262,8 +257,7 @@ export function ScheduleDefenseDialog({
           )}
         </div>
 
-        <label className="block text-sm font-medium text-text-app">
-          {t('eventDefense.noteLabel')}
+        <AppField label={t('eventDefense.noteLabel')}>
           <AppTextarea
             value={note}
             maxLength={2000}
@@ -274,7 +268,7 @@ export function ScheduleDefenseDialog({
             }}
             className="mt-1.5 min-h-24 w-full font-normal"
           />
-        </label>
+        </AppField>
 
         <AppFieldError
           message={validationError ?? defenseAction.error?.message ?? rooms.error?.message}

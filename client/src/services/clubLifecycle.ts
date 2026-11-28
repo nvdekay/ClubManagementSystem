@@ -1,5 +1,4 @@
-import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export interface ClubSuspension {
   reason: string
   suspendedAt: string
@@ -65,32 +64,7 @@ export interface CascadeResult {
   cancelledBookings: number
 }
 
-/** Response không phải 2xx; giữ status để phân biệt 409 (trạng thái đã đổi) với 400. */
-export class LifecycleRequestError extends ApiError {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly field?: string,
-  ) {
-    super(message)
-    this.name = 'LifecycleRequestError'
-  }
-}
-
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/clubs${path}`, { ...options, toError: toLifecycleError })
-}
-
-// Maps a failed response to this module's error type
-function toLifecycleError(failure: ApiFailure): Error {
-  const field = (failure.details as { field?: unknown } | undefined)?.field
-  return new LifecycleRequestError(
-    failure.message,
-    failure.status,
-    typeof field === 'string' ? field : undefined,
-  )
-}
+const request = apiClient('/api/v1/admin/clubs')
 
 // GET trạng thái vòng đời của các CLB cho ICPDP
 export function fetchClubLifecycles(signal: AbortSignal): Promise<{

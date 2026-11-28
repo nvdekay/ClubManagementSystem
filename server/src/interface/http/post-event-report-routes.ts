@@ -1,20 +1,18 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type { PostEventReportRepository } from '../../domain/post-event-report.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   actOnPostEventReport,
   getPostEventReport,
   listPostEventReports,
 } from '../../usecase/post-event-report.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId } from './request.js'
 export const reportPath = z.object({
-  clubId: z.string().regex(/^[0-9a-f]{24}$/i),
-  id: z.string().regex(/^[0-9a-f]{24}$/i),
+  clubId: objectId,
+  id: objectId,
 })
 const revision = z.number().int().nonnegative()
 export const reportActionBody = z.discriminatedUnion('kind', [
@@ -49,10 +47,7 @@ export const reportActionBody = z.discriminatedUnion('kind', [
       revision,
       outcome: z.enum(['accept', 'return', 'finding']),
       reason: z.string().min(1).max(2000),
-      violationId: z
-        .string()
-        .regex(/^[0-9a-f]{24}$/i)
-        .optional(),
+      violationId: objectId.optional(),
     })
     .strict(),
   z
@@ -64,14 +59,14 @@ export const reportActionBody = z.discriminatedUnion('kind', [
     .strict(),
 ])
 // Mount các route báo cáo sau sự kiện của CLB và ICPDP
-export function postEventReportRoutes(deps: {
-  repo: PostEventReportRepository
-  access: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
-}) {
+export function postEventReportRoutes(
+  deps: SessionDeps & {
+    repo: PostEventReportRepository
+    access: ClubAccessRepository
+  },
+) {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   const usecaseDeps = {
     repo: deps.repo,
     access: deps.access,
@@ -79,7 +74,7 @@ export function postEventReportRoutes(deps: {
   }
   for (const base of ['/clubs/:clubId/event-reports', '/admin/event-reports']) {
     // Liệt kê báo cáo sau sự kiện
-    router.get(base, authGuard(guard, false), async (req, res) => {
+    router.get(base, read, async (req, res) => {
       ok(
         res,
         await listPostEventReports(
@@ -93,7 +88,7 @@ export function postEventReportRoutes(deps: {
       )
     })
     // Xem chi tiết một báo cáo sau sự kiện
-    router.get(`${base}/:id`, authGuard(guard, false), async (req, res) => {
+    router.get(`${base}/:id`, read, async (req, res) => {
       ok(
         res,
         await getPostEventReport(
@@ -108,7 +103,7 @@ export function postEventReportRoutes(deps: {
       )
     })
     // Thực hiện hành động trên báo cáo sau sự kiện (lưu, nộp, duyệt...)
-    router.post(`${base}/:id/actions`, authGuard(guard), async (req, res) => {
+    router.post(`${base}/:id/actions`, write, async (req, res) => {
       ok(
         res,
         await actOnPostEventReport(

@@ -1,8 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { PropertyDetails, PropertyRepository } from '../../domain/property.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   createProperty,
   deleteProperty,
@@ -10,17 +8,14 @@ import {
   setPropertyActive,
   updateProperty,
 } from '../../usecase/property.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface PropertyRouteDeps {
+export interface PropertyRouteDeps extends SessionDeps {
   repo: PropertyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const hoursBody = z
   .object({
     day: z.number().int(),
@@ -67,14 +62,14 @@ function details(body: z.infer<typeof propertyDetailsBody>): PropertyDetails {
 // Mount các route quản lý tài sản và phòng của ICPDP
 export function propertyRoutes(deps: PropertyRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê tài sản
-  router.get('/admin/properties', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/properties', read, async (_req, res) => {
     ok(res, await listProperties(deps.repo, deps.authRepo, actor(res)))
   })
   // Tạo tài sản mới
-  router.post('/admin/properties', authGuard(guard), async (req, res) => {
+  router.post('/admin/properties', write, async (req, res) => {
     const body = parse(propertyCreateBody, req.body, 'property request')
     ok(
       res,
@@ -89,7 +84,7 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
     )
   })
   // Cập nhật tài sản
-  router.patch('/admin/properties/:id', authGuard(guard), async (req, res) => {
+  router.patch('/admin/properties/:id', write, async (req, res) => {
     ok(
       res,
       await updateProperty(
@@ -103,7 +98,7 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
     )
   })
   // Bật hoặc tắt hoạt động của tài sản
-  router.post('/admin/properties/:id/activation', authGuard(guard), async (req, res) => {
+  router.post('/admin/properties/:id/activation', write, async (req, res) => {
     ok(
       res,
       await setPropertyActive(
@@ -117,7 +112,7 @@ export function propertyRoutes(deps: PropertyRouteDeps): Router {
     )
   })
   // Xoá tài sản
-  router.delete('/admin/properties/:id', authGuard(guard), async (req, res) => {
+  router.delete('/admin/properties/:id', write, async (req, res) => {
     ok(
       res,
       await deleteProperty(

@@ -14,7 +14,7 @@ import { useNow } from '@/hooks/useNow'
 import type { EventDefenseSession } from '@/services/eventDefense'
 import { resolveI18nError } from '@/pages/icpdp/eventProposalReviewFormat'
 import { ScheduleDefenseDialog } from '@/pages/icpdp/ScheduleDefenseDialog'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
 
 // Màu nhãn trạng thái buổi bảo vệ trong khung xét duyệt
 function reviewDefenseTone(state: string): AppBadgeTone {
@@ -50,7 +50,8 @@ export function ProposalDefensePanel({
   mine,
   csrfToken,
 }: ProposalDefensePanelProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const navigate = useNavigate()
   const askConfirm = useConfirm()
   const defenseAction = useEventDefenseActions()
@@ -64,9 +65,6 @@ export function ProposalDefensePanel({
   const [modalReason, setModalReason] = useState('')
   // The 24h defense window check refreshes every minute instead of freezing at first render.
   const renderedAt = useNow()
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   // Đánh dấu buổi bảo vệ đã lên lịch khi còn dưới 24 giờ trước giờ bắt đầu.
   const confirmOverdue = Boolean(
     activeDefenseSession &&

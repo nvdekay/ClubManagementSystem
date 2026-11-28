@@ -1,6 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { dashboardKeyRoot } from '@/hooks/useDashboard'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { ApiError } from '@/services/apiError'
+import { useQuery } from '@tanstack/react-query'
 import {
-  EventRegistrationError,
   cancelEventRegistration,
   fetchEventRegistrationContext,
   fetchMyEventRegistrations,
@@ -8,12 +10,13 @@ import {
   type EventRegistrationAnswer,
 } from '@/services/eventRegistrations'
 
-const key = ['event-registrations'] as const
+export const eventRegistrationsKeyRoot = ['event-registrations'] as const
+const key = eventRegistrationsKeyRoot
 
 // Kiểm tra lỗi có phải do cần đăng nhập
 /** True khi yêu cầu đăng ký/điểm danh thất bại do khách chưa đăng nhập. */
 export function isSignInRequired(error: unknown): boolean {
-  return error instanceof EventRegistrationError && error.status === 401
+  return error instanceof ApiError && error.status === 401
 }
 
 // Query điều kiện đăng ký của một sự kiện
@@ -37,9 +40,8 @@ export function useMyEventRegistrations(enabled: boolean) {
 
 // Mutation đăng ký hoặc huỷ đăng ký sự kiện, rồi làm mới cache
 export function useEventRegistrationAction() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       action:
         | {
             kind: 'register'
@@ -52,9 +54,6 @@ export function useEventRegistrationAction() {
       action.kind === 'register'
         ? registerForEvent(action.eventId, action.answers, action.csrfToken)
         : cancelEventRegistration(action.registrationId, action.csrfToken),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key })
-      await client.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-  })
+    [key, dashboardKeyRoot],
+  )
 }

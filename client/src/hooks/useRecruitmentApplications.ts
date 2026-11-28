@@ -1,3 +1,4 @@
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   accessRecruitmentFile,
@@ -8,7 +9,6 @@ import {
   onboardRecruitmentApplication,
   reviewApplications,
   fetchMyRecruitmentApplications,
-  fetchMyRecruitmentApplication,
   saveRecruitmentApplication,
   submitRecruitmentApplication,
   uploadRecruitmentFile,
@@ -32,11 +32,6 @@ function campaignApplicationKey(campaignId: string | undefined) {
   return [...recruitmentApplicationKey, 'campaign', campaignId] as const
 }
 
-// Query key của chi tiết một đơn ứng tuyển
-function applicationDetailKey(applicationId: string | undefined) {
-  return [...recruitmentApplicationKey, 'detail', applicationId] as const
-}
-
 // Query đơn ứng tuyển CLB của tôi
 export function useMyRecruitmentApplications(enabled: boolean) {
   return useQuery({
@@ -55,15 +50,6 @@ export function useMyCampaignApplication(campaignId: string | undefined, enabled
   })
 }
 
-// Query chi tiết một đơn ứng tuyển của tôi
-export function useMyRecruitmentApplication(applicationId: string | undefined, enabled: boolean) {
-  return useQuery({
-    queryKey: applicationDetailKey(applicationId),
-    queryFn: ({ signal }) => fetchMyRecruitmentApplication(applicationId!, signal),
-    enabled: enabled && Boolean(applicationId),
-  })
-}
-
 // Query đơn ứng tuyển của đợt tuyển để CLB xét
 export function useApplicationsForReview(
   clubId: string | undefined,
@@ -78,9 +64,8 @@ export function useApplicationsForReview(
 
 // Mutation gửi kết quả xét duyệt đơn ứng tuyển, rồi làm mới cache
 export function useReviewRecruitmentApplications() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: {
+  return useInvalidatingMutation(
+    (input: {
       clubId: string
       campaignId: string
       action: Parameters<typeof reviewApplications>[2]['action']
@@ -92,17 +77,14 @@ export function useReviewRecruitmentApplications() {
       const { clubId, campaignId, ...body } = input
       return reviewApplications(clubId, campaignId, body)
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [...recruitmentApplicationKey, 'review'] })
-    },
-  })
+    [[...recruitmentApplicationKey, 'review']],
+  )
 }
 
 // Mutation nhận hoặc từ chối ứng viên, rồi làm mới cache
 export function useRecruitmentOnboardingAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: {
+  return useInvalidatingMutation(
+    (input: {
       kind: 'onboard' | 'decline'
       clubId: string
       campaignId: string
@@ -122,9 +104,8 @@ export function useRecruitmentOnboardingAction() {
             input.applicationId,
             input.csrfToken,
           ),
-    onSuccess: async () =>
-      queryClient.invalidateQueries({ queryKey: [...recruitmentApplicationKey, 'review'] }),
-  })
+    [[...recruitmentApplicationKey, 'review']],
+  )
 }
 
 // Query key của đánh giá ứng viên trong một đợt tuyển
@@ -146,9 +127,9 @@ export function useCandidateEvaluations(
 
 // Mutation lưu đánh giá một ứng viên, rồi làm mới cache
 export function useSaveCandidateEvaluation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: {
+  // Phần tóm tắt (trung bình/độ phân tán) do server tính, nên tải lại thay vì vá cache.
+  return useInvalidatingMutation(
+    (input: {
       clubId: string
       campaignId: string
       applicationId: string
@@ -163,10 +144,8 @@ export function useSaveCandidateEvaluation() {
         { scores: input.scores, ...(input.comment ? { comment: input.comment } : {}) },
         input.csrfToken,
       ),
-    // Phần tóm tắt (trung bình/độ phân tán) do server tính, nên tải lại thay vì vá cache.
-    onSuccess: async (_saved, input) =>
-      queryClient.invalidateQueries({ queryKey: evaluationsKey(input.clubId, input.campaignId) }),
-  })
+    (_saved, input) => [evaluationsKey(input.clubId, input.campaignId)],
+  )
 }
 
 // Mutation lấy link file đính kèm của ứng viên khi xét đơn
@@ -238,16 +217,7 @@ export function useRecruitmentApplicationAction() {
           return accessRecruitmentFile(action.applicationId, action.attachmentId)
       }
     },
-    onSuccess: async (_result, action) => {
-      await queryClient.invalidateQueries({ queryKey: recruitmentApplicationKey })
-      if ('applicationId' in action) {
-        await queryClient.invalidateQueries({
-          queryKey: applicationDetailKey(action.applicationId),
-        })
-      }
-      if (action.kind === 'create') {
-        await queryClient.invalidateQueries({ queryKey: campaignApplicationKey(action.campaignId) })
-      }
-    },
+    // Every application query (list, campaign, detail) sits under this root key.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recruitmentApplicationKey }),
   })
 }

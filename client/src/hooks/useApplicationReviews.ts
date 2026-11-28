@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authKeyRoot } from '@/hooks/useAuth'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   claimReview,
   decideReview,
@@ -38,9 +40,8 @@ export function useApplicationReview(id: string | undefined, enabled: boolean) {
 
 // Mutation nhận xử lý hoặc quyết định hồ sơ, rồi làm mới cache
 export function useApplicationReviewAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       action:
         | { kind: 'claim'; id: string; csrfToken: string }
         | { kind: 'decide'; id: string; input: ReviewDecisionInput; csrfToken: string },
@@ -48,10 +49,7 @@ export function useApplicationReviewAction() {
       action.kind === 'claim'
         ? claimReview(action.id, action.csrfToken)
         : decideReview(action.id, action.input, action.csrfToken),
-    onSuccess: async (detail) => {
-      queryClient.setQueryData([...reviewKey, 'detail', detail.application.id], detail)
-      await queryClient.invalidateQueries({ queryKey: reviewKey })
-      await queryClient.invalidateQueries({ queryKey: ['auth'] })
-    },
-  })
+    [reviewKey, authKeyRoot],
+    (detail) => [[...reviewKey, 'detail', detail.application.id], detail],
+  )
 }

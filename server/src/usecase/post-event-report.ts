@@ -5,26 +5,13 @@ import {
   type ReportAction,
   normalizeReport,
 } from '../domain/post-event-report.js'
-import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
+import { assertClubOrOfficer, type AccessActor } from './access.js'
 import { financeId } from './event-finance.js'
 export interface PostEventReportDeps {
   repo: PostEventReportRepository
   access: ClubAccessRepository
   auth: Pick<AuthRepository, 'systemRoleCodes'>
-}
-// Kiểm quyền: CLB có quyền nộp báo cáo, hoặc ICPDP officer tài chính
-async function authorized(
-  deps: PostEventReportDeps,
-  actor: AccessActor | null,
-  clubId: string | undefined,
-  now: Date,
-) {
-  if (clubId) {
-    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.report.submit', now)
-  } else {
-    await requireIcpdpOfficer(deps.auth, actor)
-  }
 }
 // Liệt kê báo cáo sau sự kiện theo CLB hoặc cho ICPDP
 export async function listPostEventReports(
@@ -33,7 +20,7 @@ export async function listPostEventReports(
   clubId: string | undefined,
   now: Date,
 ) {
-  await authorized(deps, actor, clubId, now)
+  await assertClubOrOfficer(deps, actor, clubId && financeId(clubId), 'club.report.submit', now)
   return deps.repo.list(clubId, now)
 }
 // Xem chi tiết báo cáo sau sự kiện
@@ -44,11 +31,8 @@ export async function getPostEventReport(
   clubId: string | undefined,
   now: Date,
 ) {
-  await authorized(deps, actor, clubId, now)
-  const detail = await deps.repo.find(financeId(eventId), clubId, now)
-  if (!detail) {
-    throw new DomainError('report event not found', 'not_found')
-  }
+  await assertClubOrOfficer(deps, actor, clubId && financeId(clubId), 'club.report.submit', now)
+  const detail = orNotFound(await deps.repo.find(financeId(eventId), clubId, now), 'report event')
   return detail
 }
 // Thực hiện thao tác báo cáo sau sự kiện (lưu, nộp, nhận, quyết định, quá hạn)
@@ -60,7 +44,7 @@ export async function actOnPostEventReport(
   action: ReportAction,
   now: Date,
 ) {
-  await authorized(deps, actor, clubId, now)
+  await assertClubOrOfficer(deps, actor, clubId && financeId(clubId), 'club.report.submit', now)
   if (
     clubId
       ? !['save', 'submit'].includes(action.kind)

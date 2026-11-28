@@ -16,6 +16,7 @@ import type {
   SchemeThresholds,
 } from '@/services/evaluationSchemes'
 import { cn } from '@/utils/cn'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface Row {
   included: boolean
@@ -202,8 +203,7 @@ export function SchemeEditor({
                 </div>
                 {row.included && (
                   <div className="flex flex-wrap items-center gap-4">
-                    <label className="block text-sm font-medium text-text-app">
-                      {t('evaluationSchemes.weight')}
+                    <AppField label={t('evaluationSchemes.weight')}>
                       <AppInput
                         className="mt-1.5 block w-24"
                         type="number"
@@ -213,7 +213,7 @@ export function SchemeEditor({
                         value={row.weight}
                         onChange={(event) => patch(dimension.code, { weight: event.target.value })}
                       />
-                    </label>
+                    </AppField>
                     <label className="flex items-center gap-2 text-sm">
                       <AppSwitch
                         checked={row.allowsManual}

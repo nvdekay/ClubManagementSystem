@@ -17,13 +17,13 @@ import type {
 import { cn } from '@/utils/cn'
 import {
   EMPTY_VENDOR,
-  formatSponsoredMoney,
   isAllowedAttachment,
   isVendorInfoComplete,
   sameVendorInfo,
   triggerUrlDownload,
 } from '@/utils/sponsoredItems'
 import { SponsoredItemAttachmentCard } from './SponsoredItemAttachmentCard'
+import { formatMoney } from '@/utils/formatMoney'
 
 export interface SponsoredItemInvoiceSectionProps {
   budgetId: string
@@ -338,7 +338,7 @@ export function SponsoredItemInvoiceSection({
                     <dt className="text-xs text-muted-app">{t('sponsoredItems.amount')}</dt>
                     <dd className="mt-1 font-semibold tabular-nums text-text-app">
                       {item.amount > 0
-                        ? formatSponsoredMoney(item.amount, i18n.language)
+                        ? formatMoney(item.amount, i18n.language)
                         : t('sponsoredItems.notEntered')}
                     </dd>
                   </div>

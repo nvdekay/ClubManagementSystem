@@ -1,6 +1,5 @@
 import { Router, raw } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type {
   ClubApplicationRepository,
   ApplicationFileStorage,
@@ -8,7 +7,6 @@ import type {
 import type { ClubFieldRepository } from '../../domain/club-field.js'
 import { DomainError } from '../../domain/errors.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import type {
   ApplicationDocument,
   ClubApplicationDraft,
@@ -29,20 +27,17 @@ import {
   withdrawApplication,
   lookupFounder,
 } from '../../usecase/club-application.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface ClubApplicationRouteDeps {
+export interface ClubApplicationRouteDeps extends SessionDeps {
   repo: ClubApplicationRepository
   policy: PolicyRepository
   fields: ClubFieldRepository
   files: ApplicationFileStorage | null
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const founderBody = z
   .object({
     userId: id,
@@ -102,15 +97,15 @@ function publicVersion(version: ClubApplicationVersion) {
 // Mount các route đơn đăng ký thành lập CLB của sinh viên
 export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Lấy cấu hình biểu mẫu đơn thành lập CLB
-  router.get('/applications/config', authGuard(guard, false), async (_req, res) => {
+  router.get('/applications/config', read, async (_req, res) => {
     ok(res, await applicationConfiguration(deps.policy, deps.fields, actor(res), new Date()))
   })
   // Tra cứu người sáng lập theo email
   // Đặt trước "/applications/:id" để "founder-lookup" không bao giờ bị parse thành id của đơn.
-  router.get('/applications/founder-lookup', authGuard(guard, false), async (req, res) => {
+  router.get('/applications/founder-lookup', read, async (req, res) => {
     ok(
       res,
       await lookupFounder(
@@ -121,11 +116,11 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     )
   })
   // Liệt kê đơn thành lập CLB của tôi
-  router.get('/applications/mine', authGuard(guard, false), async (_req, res) => {
+  router.get('/applications/mine', read, async (_req, res) => {
     ok(res, (await listMyApplications(deps.repo, actor(res))).map(publicRecord))
   })
   // Tạo bản nháp đơn thành lập CLB
-  router.post('/applications', authGuard(guard), async (req, res) => {
+  router.post('/applications', write, async (req, res) => {
     ok(
       res,
       publicRecord(
@@ -141,7 +136,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     )
   })
   // Xem chi tiết đơn của tôi cùng phiên bản, quyết định và founders
-  router.get('/applications/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/applications/:id', read, async (req, res) => {
     const detail = await getMyApplication(
       deps.repo,
       actor(res),
@@ -155,7 +150,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     })
   })
   // Xem trước đơn để kiểm tra trước khi nộp
-  router.get('/applications/:id/preview', authGuard(guard, false), async (req, res) => {
+  router.get('/applications/:id/preview', read, async (req, res) => {
     ok(
       res,
       await previewApplication(
@@ -169,7 +164,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     )
   })
   // Lưu chỉnh sửa bản nháp đơn
-  router.patch('/applications/:id/draft', authGuard(guard), async (req, res) => {
+  router.patch('/applications/:id/draft', write, async (req, res) => {
     const body = parse(applicationUpdateBody, req.body, 'application request')
     const { draftRevision, ...draft } = body
     ok(
@@ -187,7 +182,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     )
   })
   // Nộp đơn thành lập CLB, tạo phiên bản đã nộp
-  router.post('/applications/:id/submit', authGuard(guard), async (req, res) => {
+  router.post('/applications/:id/submit', write, async (req, res) => {
     const result = await submitApplication(
       deps.repo,
       deps.policy,
@@ -199,7 +194,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     ok(res, { ...result, version: publicVersion(result.version) }, 201)
   })
   // Rút đơn thành lập CLB
-  router.post('/applications/:id/withdraw', authGuard(guard), async (req, res) => {
+  router.post('/applications/:id/withdraw', write, async (req, res) => {
     ok(
       res,
       publicRecord(
@@ -215,7 +210,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   // Tải tài liệu đính kèm lên đơn
   router.post(
     '/applications/:id/documents',
-    authGuard(guard),
+    write,
     raw({ type: () => true, limit: '10mb' }),
     async (req, res) => {
       if (!Buffer.isBuffer(req.body)) {
@@ -241,7 +236,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     },
   )
   // Xoá tài liệu đính kèm khỏi đơn
-  router.delete('/applications/:id/documents/:documentId', authGuard(guard), async (req, res) => {
+  router.delete('/applications/:id/documents/:documentId', write, async (req, res) => {
     ok(
       res,
       publicRecord(
@@ -255,22 +250,18 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     )
   })
   // Lấy quyền truy cập tạm thời để mở tài liệu của đơn
-  router.get(
-    '/applications/:id/documents/:documentId/access',
-    authGuard(guard, false),
-    async (req, res) => {
-      ok(
-        res,
-        await applicationDocumentAccess(
-          deps.repo,
-          deps.files,
-          actor(res),
-          parse(id, req.params.id, 'application request'),
-          parse(z.string().uuid(), req.params.documentId, 'application request'),
-        ),
-      )
-    },
-  )
+  router.get('/applications/:id/documents/:documentId/access', read, async (req, res) => {
+    ok(
+      res,
+      await applicationDocumentAccess(
+        deps.repo,
+        deps.files,
+        actor(res),
+        parse(id, req.params.id, 'application request'),
+        parse(z.string().uuid(), req.params.documentId, 'application request'),
+      ),
+    )
+  })
 
   return router
 }

@@ -6,7 +6,7 @@ import {
   type CandidateEvaluation,
   type CandidateEvaluationRepository,
 } from '../domain/candidate-evaluation.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import { assertClubAccess, isObjectId, type AccessActor } from './access.js'
 
 // Kiểm các id truyền vào đúng định dạng ObjectId
@@ -30,10 +30,7 @@ export async function listCandidateEvaluations(
 ) {
   await assertClubAccess(access, actor, clubId, 'club.application.review', now)
   assertIds({ campaign: campaignId })
-  const found = await repo.listForCampaign(clubId, campaignId)
-  if (!found) {
-    throw new DomainError('recruitment campaign not found', 'not_found')
-  }
+  const found = orNotFound(await repo.listForCampaign(clubId, campaignId), 'recruitment campaign')
   const byApplication = new Map<string, CandidateEvaluation[]>()
   for (const evaluation of found.evaluations) {
     byApplication.set(evaluation.applicationId, [

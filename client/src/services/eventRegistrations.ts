@@ -1,5 +1,4 @@
-import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export type EventRegistrationState = 'Confirmed' | 'Waitlisted' | 'Cancelled'
 export type EventRegistrationAnswer = string | string[]
 
@@ -51,25 +50,7 @@ export interface EventRegistrationContext {
   registrationOpen: boolean
 }
 
-/** Mang theo HTTP status để màn hình phân biệt "cần đăng nhập" (401) với các lỗi thật. */
-export class EventRegistrationError extends ApiError {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message)
-  }
-}
-
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRegistrationError })
-}
-
-// Maps a failed response to this module's error type
-function toRegistrationError(failure: ApiFailure): Error {
-  return new EventRegistrationError(failure.message, failure.status)
-}
+const request = apiClient('/api/v1')
 
 // GET /events/:id/registration: điều kiện đăng ký sự kiện
 export function fetchEventRegistrationContext(eventId: string, signal: AbortSignal) {

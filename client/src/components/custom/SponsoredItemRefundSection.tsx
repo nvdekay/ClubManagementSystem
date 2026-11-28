@@ -8,13 +8,10 @@ import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useDownloadInvoiceFile, useRefundAccount } from '@/hooks/useSponsoredItems'
 import type { ItemAction, SponsoredItem } from '@/services/sponsoredItems'
-import {
-  formatSponsoredDateTime,
-  formatSponsoredMoney,
-  isAllowedAttachment,
-  triggerUrlDownload,
-} from '@/utils/sponsoredItems'
+import { isAllowedAttachment, triggerUrlDownload } from '@/utils/sponsoredItems'
 import { SponsoredItemAttachmentCard } from './SponsoredItemAttachmentCard'
+import { useFormat } from '@/hooks/useFormat'
+import { AppField } from '@/components/ui/field/AppField'
 
 export interface SponsoredItemRefundSectionProps {
   budgetId: string
@@ -46,7 +43,8 @@ export function SponsoredItemRefundSection({
   onUploadFiles,
   onError,
 }: SponsoredItemRefundSectionProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date: formatDateTime, money } = useFormat()
   const confirm = useConfirm()
   const downloadFile = useDownloadInvoiceFile(budgetId, clubId)
 
@@ -75,14 +73,6 @@ export function SponsoredItemRefundSection({
 
   if (!isBeforeEvent || !hasRefundAmount) {
     return null
-  }
-
-  function money(value: number) {
-    return formatSponsoredMoney(value, i18n.language)
-  }
-
-  function formatDateTime(value: string) {
-    return formatSponsoredDateTime(value, i18n.language)
   }
 
   async function uploadRefundProofs(files: File[]) {
@@ -316,8 +306,7 @@ export function SponsoredItemRefundSection({
                     )}
                   </div>
 
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('sponsoredItems.refundNoteLabel')}
+                  <AppField label={t('sponsoredItems.refundNoteLabel')}>
                     <AppTextarea
                       value={refundNote}
                       onChange={(event) => setRefundNote(event.target.value)}
@@ -326,7 +315,7 @@ export function SponsoredItemRefundSection({
                       disabled={busy}
                       className="mt-1 w-full font-normal"
                     />
-                  </label>
+                  </AppField>
 
                   <AppButton
                     type="button"
@@ -508,8 +497,7 @@ export function SponsoredItemRefundSection({
               )}
               {active && (
                 <div className="space-y-3 border-t border-border-app pt-3">
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('sponsoredItems.refundReviewReasonLabel')}
+                  <AppField label={t('sponsoredItems.refundReviewReasonLabel')}>
                     <AppTextarea
                       value={refundReason}
                       onChange={(event) => setRefundReason(event.target.value)}
@@ -517,7 +505,7 @@ export function SponsoredItemRefundSection({
                       disabled={busy}
                       className="mt-1 w-full font-normal"
                     />
-                  </label>
+                  </AppField>
                   <div className="flex flex-wrap gap-2">
                     <AppButton
                       type="button"

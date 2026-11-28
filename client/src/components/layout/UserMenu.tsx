@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
@@ -6,6 +6,7 @@ import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { useLogout } from '@/hooks/useAuth'
 import type { AuthUser } from '@/services/auth'
 import { cn } from '@/utils/cn'
+import { useDismissibleMenu } from '@/hooks/useDismissibleMenu'
 
 interface UserMenuProps {
   user: AuthUser
@@ -17,9 +18,7 @@ interface UserMenuProps {
 export function UserMenu({ user, csrfToken }: UserMenuProps) {
   const { t } = useTranslation()
   const logout = useLogout()
-  const [open, setOpen] = useState(false)
-  const root = useRef<HTMLDivElement>(null)
-  const trigger = useRef<HTMLButtonElement>(null)
+  const { open, setOpen, root, trigger } = useDismissibleMenu()
   const menuId = useId()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   const showImage = Boolean(user.avatarUrl) && failedUrl !== user.avatarUrl
@@ -49,29 +48,6 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
       </span>
     )
   }
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    function onPointer(event: PointerEvent) {
-      if (!root.current?.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setOpen(false)
-        trigger.current?.focus()
-      }
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
 
   // Đăng xuất và xoá workspace đã chọn
   async function signOut() {

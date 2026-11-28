@@ -2,11 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import type { BookingAction } from '@/services/facilityBookings'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface BookingCancelFormProps {
   clubId: string
@@ -44,9 +43,11 @@ export function BookingCancelForm({
       }}
     >
       <p className="text-sm text-muted-app">{t('facilityBookings.cancelNotice')}</p>
-      <label className="block text-sm font-medium text-text-app">
-        {t('facilityBookings.cancelReason')}
-        <AppRequiredMark />
+      <AppField
+        label={t('facilityBookings.cancelReason')}
+        required
+        error={cancelField.error('reason')}
+      >
         <AppInput
           className="mt-1.5 block w-full font-normal"
           {...cancelField.control('reason')}
@@ -54,8 +55,7 @@ export function BookingCancelForm({
           value={reason}
           onChange={(event) => setReason(event.target.value)}
         />
-        <AppFieldError message={cancelField.error('reason')} />
-      </label>
+      </AppField>
       <AppButton type="submit" variant="secondary" disabled={pending}>
         {t('facilityBookings.cancel')}
       </AppButton>

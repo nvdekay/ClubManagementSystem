@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -12,7 +12,6 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
-import { useAuth } from '@/hooks/useAuth'
 import { useClubLifecycles } from '@/hooks/useClubLifecycle'
 import { useProperties } from '@/hooks/useProperties'
 import {
@@ -28,7 +27,12 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
-import { dateFormatter, formatDate } from '@/utils/formatDate'
+import { dateFormatter } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { IcpdpOfficerGate } from '@/pages/icpdp/IcpdpOfficerGate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 // Dịch trạng thái sự kiện cấp trường sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
@@ -104,42 +108,6 @@ function details(value: unknown): string[] {
   return Object.values(value as Record<string, unknown>)
     .filter((item) => ['string', 'number'].includes(typeof item))
     .map(String)
-}
-
-// Cổng kiểm tra đăng nhập và quyền cho các trang sự kiện cấp trường
-function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
-  const { t } = useTranslation()
-  const auth = useAuth()
-  if (auth.isPending) {
-    return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((item) => (
-          <AppSkeleton key={item} className="h-20 w-full" />
-        ))}
-      </div>
-    )
-  }
-  if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('schoolEvents.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('schoolEvents.signInLink')}
-        </Link>
-      </AppNotice>
-    )
-  }
-  if (!auth.data.systemRoles.includes('ICPDP_OFFICER')) {
-    return (
-      <AppNotice tone="danger" role="alert">
-        {t('schoolEvents.unauthorized')}
-      </AppNotice>
-    )
-  }
-  return <>{children(auth.data.csrfToken)}</>
 }
 
 // Chọn CLB bằng checkbox, có lối tắt chọn tất cả
@@ -347,9 +315,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
             onChange={(e) => setCoordination(e.target.value)}
           />
         </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('schoolEvents.startAt')}
-          <AppRequiredMark />
+        <AppField label={t('schoolEvents.startAt')} required error={field.error('startAt')}>
           <AppInput
             type="datetime-local"
             className="mt-1.5 w-full font-normal"
@@ -357,11 +323,8 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
             {...field.control('startAt')}
             onChange={(e) => setStartAt(e.target.value)}
           />
-          <AppFieldError message={field.error('startAt')} />
-        </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('schoolEvents.endAt')}
-          <AppRequiredMark />
+        </AppField>
+        <AppField label={t('schoolEvents.endAt')} required error={field.error('endAt')}>
           <AppInput
             type="datetime-local"
             className="mt-1.5 w-full font-normal"
@@ -370,8 +333,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
             {...field.control('endAt')}
             onChange={(e) => setEndAt(e.target.value)}
           />
-          <AppFieldError message={field.error('endAt')} />
-        </label>
+        </AppField>
         <div className="block text-sm font-medium text-text-app md:col-span-2">
           {t('schoolEvents.venue')}
           <AppRequiredMark />
@@ -444,9 +406,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
             ))
           )}
         </div>
-        <label className="block text-sm font-medium text-text-app">
-          {t('schoolEvents.capacity')}
-          <AppRequiredMark />
+        <AppField label={t('schoolEvents.capacity')} required error={field.error('capacity')}>
           <AppInput
             type="number"
             min={1}
@@ -456,10 +416,8 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
             {...field.control('capacity')}
             onChange={(e) => setCapacity(e.target.value)}
           />
-          <AppFieldError message={field.error('capacity')} />
-        </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('schoolEvents.deadline')}
+        </AppField>
+        <AppField label={t('schoolEvents.deadline')}>
           <AppInput
             type="datetime-local"
             className="mt-1.5 w-full font-normal"
@@ -470,7 +428,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
           <span className="mt-1 block text-xs font-normal text-muted-app">
             {t('schoolEvents.deadlineHint')}
           </span>
-        </label>
+        </AppField>
         <div className="md:col-span-2">
           <p className="mb-1.5 text-sm font-medium text-text-app">{t('schoolEvents.invite')}</p>
           <ClubPicker all={all} onAll={setAll} chosen={chosen} onChosen={setChosen} />
@@ -495,12 +453,10 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
 
 // Danh sách sự kiện cấp trường và nút tạo mới
 function SchoolEventList({ csrfToken }: { csrfToken: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const list = useSchoolEvents(true)
   const [creating, setCreating] = useState(false)
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   return (
     <>
       {creating ? (
@@ -518,15 +474,10 @@ function SchoolEventList({ csrfToken }: { csrfToken: string }) {
           ))}
         </div>
       ) : list.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={list.error.message || t('schoolEvents.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void list.refetch()}>
-            {t('schoolEvents.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void list.refetch()}
+        />
       ) : list.data.length ? (
         <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {list.data.map((event) => (
@@ -601,14 +552,17 @@ export function SchoolEventsPage() {
   return (
     <>
       <PageHeader title={t('schoolEvents.title')} description={t('schoolEvents.description')} />
-      <Gate>{(csrfToken) => <SchoolEventList csrfToken={csrfToken} />}</Gate>
+      <IcpdpOfficerGate deniedMessage={t('schoolEvents.unauthorized')}>
+        {(csrfToken) => <SchoolEventList csrfToken={csrfToken} />}
+      </IcpdpOfficerGate>
     </>
   )
 }
 
 // Chi tiết sự kiện cấp trường và danh sách lời mời CLB
 function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const askConfirm = useConfirm()
   const query = useSchoolEvent(id, true)
   const action = useSchoolEventAction()
@@ -619,9 +573,6 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
     clubs: all || chosen.length ? null : t('schoolEvents.inviteRequired'),
   })
   const skipped = (useLocation().state as { skipped?: number } | null)?.skipped ?? 0
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   const back = { to: '/workspace/school-events', label: t('schoolEvents.back') }
   if (query.isPending) {
     return (
@@ -635,15 +586,10 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
     return (
       <>
         <PageHeader title={t('schoolEvents.event')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={query.error.message || t('schoolEvents.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void query.refetch()}>
-            {t('schoolEvents.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void query.refetch()}
+        />
       </>
     )
   }
@@ -827,8 +773,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
 
         <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
           {event.state === 'Approved' && (
-            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-              <h2 className="font-heading text-base font-semibold">{t('schoolEvents.publish')}</h2>
+            <AppPanel title={t('schoolEvents.publish')}>
               <p className="mt-1 text-sm text-muted-app">{t('schoolEvents.publishHint')}</p>
               <AppButton
                 className="mt-4 w-full"
@@ -841,7 +786,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
               >
                 {t('schoolEvents.publish')}
               </AppButton>
-            </section>
+            </AppPanel>
           )}
           {event.publishedAt && (
             <AppNotice role="status">
@@ -905,9 +850,10 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
 // Trang ICPDP chi tiết một sự kiện cấp trường
 export function SchoolEventDetailPage() {
   const { id } = useParams()
+  const { t } = useTranslation()
   return (
-    <Gate>
+    <IcpdpOfficerGate deniedMessage={t('schoolEvents.unauthorized')}>
       {(csrfToken) => (id ? <SchoolEventDetailView id={id} csrfToken={csrfToken} /> : null)}
-    </Gate>
+    </IcpdpOfficerGate>
   )
 }

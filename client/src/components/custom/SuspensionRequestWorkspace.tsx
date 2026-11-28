@@ -20,6 +20,7 @@ import {
   useSuspensionRequests,
   useSuspensionRequestAction,
 } from '@/hooks/useSuspensionRequests'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 const PAGE_SIZE = 20
 interface Props {
   clubId?: string
@@ -125,10 +126,9 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
       />
       {list.isPending && <AppSkeleton className="h-64 w-full" />}
       {list.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void list.refetch()} retryVariant="primary">
           {list.error.message}
-          <AppButton onClick={() => void list.refetch()}>{t('suspensionRequests.retry')}</AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {action.isError && (
         <AppNotice tone="danger" role="alert">
@@ -293,9 +293,6 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
           pageIndex={pageIndex}
           pageCount={pageCount}
           onPageChange={setPageIndex}
-          prevLabel={t('suspensionRequests.previousPage')}
-          nextLabel={t('suspensionRequests.nextPage')}
-          pageLabel={(value) => t('suspensionRequests.pageNumber', { page: value })}
           navLabel={t('suspensionRequests.pagination')}
         />
       )}

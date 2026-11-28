@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { createDocument } from 'zod-openapi'
+import { commonErrors, jsonOk, type OpenApiPaths } from './openapi-shared.js'
 import { financeActionBody, financePath } from './event-finance-routes.js'
 import { reportActionBody, reportPath } from './post-event-report-routes.js'
 const date = z.string().datetime()
@@ -114,29 +114,13 @@ const detail = z.object({
 // Bọc schema dữ liệu vào response 200 theo envelope chuẩn
 function responses(schema: z.ZodType) {
   return {
-    '200': {
-      description: 'Success',
-      content: {
-        'application/json': {
-          schema: z.object({
-            statusCode: z.number(),
-            message: z.string(),
-            data: schema,
-            timestamp: date,
-          }),
-        },
-      },
-    },
-    '400': { description: 'Invalid request' },
-    '401': { description: 'Authentication required' },
-    '403': { description: 'Permission required' },
+    '200': jsonOk('Success', schema, date),
+    ...commonErrors,
     '404': { description: 'Record not found' },
     '409': { description: 'State or revision conflict' },
   }
 }
-export const accountabilityOpenApiPaths: NonNullable<
-  Parameters<typeof createDocument>[0]['paths']
-> = {
+export const accountabilityOpenApiPaths: OpenApiPaths = {
   '/clubs/{clubId}/budgets': {
     get: {
       summary: 'Club expense workspace',

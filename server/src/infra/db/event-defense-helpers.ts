@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto'
 import { Types, type ClientSession } from 'mongoose'
 import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
 import { settlementDueAt } from '../../domain/budget-disbursement.js'
-import { DomainError } from '../../domain/errors.js'
 import {
   assertRevisionDeadlineBeforeDefense,
   normalizeDefenseOutcome,
@@ -21,38 +20,17 @@ import { initialPaymentChannel, initialSponsoredItemStatus } from '../../domain/
 import { cancelEventInSession } from './event-cancellation.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { queueNotification } from './repo-helpers.js'
+import {
+  conflict,
+  decimal,
+  finiteMoney,
+  oid,
+  optionalText,
+  queueNotification,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-
-// Chuyển chuỗi id thành ObjectId
-export function oid(value: string): Types.ObjectId {
-  return new Types.ObjectId(value)
-}
-
-// Ném lỗi conflict với thông báo cho trước
-export function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
-
-// Chuyển giá trị tiền sang number, mặc định 0
-export function money(value: unknown): number {
-  if (value === null || value === undefined) {
-    return 0
-  }
-  const parsed = Number(String(value))
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-// Chuyển number thành Decimal128
-export function decimal(value: number) {
-  return Types.Decimal128.fromString(String(value))
-}
-
-// Trả chuỗi không rỗng hoặc undefined
-export function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value ? value : undefined
-}
 
 // Chuẩn hóa các dòng ngân sách CLB đề xuất
 export function requestedLines(raw: unknown): RequestedBudgetLine[] {
@@ -67,7 +45,7 @@ export function requestedLines(raw: unknown): RequestedBudgetLine[] {
     return [
       {
         category: String(line.category ?? ''),
-        amount: money(line.amount),
+        amount: finiteMoney(line.amount),
         purpose: String(line.purpose ?? ''),
         ...(optionalText(line.plannedItems) ? { plannedItems: String(line.plannedItems) } : {}),
       },
@@ -82,8 +60,8 @@ export function approvedLines(raw: unknown): ApprovedBudgetLine[] {
   }
   return raw.map((item: Doc) => ({
     category: String(item.category ?? ''),
-    requestedAmount: money(item.requestedAmount),
-    approvedAmount: money(item.approvedAmount),
+    requestedAmount: finiteMoney(item.requestedAmount),
+    approvedAmount: finiteMoney(item.approvedAmount),
     ...(optionalText(item.reason) ? { reason: String(item.reason) } : {}),
   }))
 }
@@ -528,15 +506,15 @@ export async function applyProposalDecisionInSession(
       if (existingBudget.sponsoredItems) {
         conflict('funded event changes require a finance policy decision before reapproval')
       }
-      if (sponsoredItems && money(existingBudget.disbursedTotal) > 0) {
+      if (sponsoredItems && finiteMoney(existingBudget.disbursedTotal) > 0) {
         conflict('a legacy advance budget cannot be converted to sponsored item payments')
       }
       budgetId = existingBudget._id as Types.ObjectId
-      const disbursed = money(existingBudget.disbursedTotal)
+      const disbursed = finiteMoney(existingBudget.disbursedTotal)
       const existingLines = approvedLines(existingBudget.lines)
       if (
         disbursed > 0 &&
-        (approvedTotal !== money(existingBudget.approvedTotal) ||
+        (approvedTotal !== finiteMoney(existingBudget.approvedTotal) ||
           lines.length !== existingLines.length ||
           lines.some(
             (line, index) =>
@@ -594,23 +572,17 @@ export async function applyProposalDecisionInSession(
   }
 
   const action = `EVENT_PROPOSAL_${nextState.toUpperCase().replace(/ /g, '_')}`
-  await audits.create(
-    [
-      {
-        entityType: 'Event',
-        entityId: eventId,
-        action,
-        actorId,
-        actorRole: 'ICPDP_OFFICER',
-        before: { state: event.state },
-        after: { state: nextState, revisionNo: version.revisionNo, budgetId },
-        reason: input.reason,
-        correlationId: randomUUID(),
-        at: now,
-      },
-    ],
-    { session },
-  )
+  await writeAudit(session, {
+    entityType: 'Event',
+    entityId: eventId,
+    action,
+    actorId,
+    actorRole: 'ICPDP_OFFICER',
+    before: { state: event.state },
+    after: { state: nextState, revisionNo: version.revisionNo, budgetId },
+    reason: input.reason,
+    at: now,
+  })
 
   await queueNotification(session, {
     recipientUserId: version.submittedBy,

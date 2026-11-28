@@ -6,15 +6,14 @@ import { Link } from 'react-router'
 import { ClubLogo } from '@/components/custom/ClubLogo'
 import { MembershipStateBadge } from '@/components/custom/MembershipStateBadge'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
-import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useMyMemberships } from '@/hooks/useMemberSpace'
 import type { Locale } from '@/i18n'
 import { formatDay } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang danh sách CLB mà sinh viên đang là thành viên
 /** Điểm vào UC24: các CLB sinh viên đang tham gia (Active hoặc Inactive). */
@@ -37,11 +36,10 @@ export function MyClubsPage() {
           ))}
         </div>
       ) : memberships.isError ? (
-        <AppNotice tone="danger" role="alert" title={t('memberSpace.loadError')}>
-          <AppButton variant="secondary" onClick={() => void memberships.refetch()}>
-            {t('memberSpace.retry')}
-          </AppButton>
-        </AppNotice>
+        <AppErrorNotice
+          title={t('memberSpace.loadError')}
+          onRetry={() => void memberships.refetch()}
+        />
       ) : memberships.data.length === 0 ? (
         <AppEmptyState
           variant="boxed"

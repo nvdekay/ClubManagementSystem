@@ -1,4 +1,3 @@
-import { ApiError } from '@/services/apiError'
 import { apiRequest } from '@/services/apiRequest'
 export interface PublicClub {
   id: string
@@ -62,21 +61,9 @@ export interface ClubDetail {
   history: PublicEvent[]
 }
 
-export class PublicApiError extends ApiError {
-  constructor(
-    public readonly statusCode: number,
-    message: string,
-  ) {
-    super(message, statusCode)
-  }
-}
-
-// GET /public/... (no session needed) through the shared helper, failing with PublicApiError
+// GET /public/... (no session needed) through the shared helper
 function publicGet<T>(path: string, signal: AbortSignal): Promise<T> {
-  return apiRequest<T>(`/api/v1/public/${path}`, {
-    signal,
-    toError: (failure) => new PublicApiError(failure.status, failure.message),
-  })
+  return apiRequest<T>(`/api/v1/public/${path}`, { signal })
 }
 
 // GET danh sách CLB công khai, tìm theo từ khoá và lĩnh vực

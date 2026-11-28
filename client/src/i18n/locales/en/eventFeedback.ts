@@ -22,7 +22,6 @@ export const eventFeedback = {
   anonymousTag: 'Anonymous',
   closesAt: 'Open until {{date}}',
   closed: 'The feedback window for this event has closed.',
-  notAttended: 'Only people who checked in can give feedback.',
   error: 'Your feedback could not be sent.',
   loadError: 'Feedback could not be loaded.',
   giveFeedback: 'Give feedback',

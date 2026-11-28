@@ -9,18 +9,17 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useLeadershipTransitionQueue } from '@/hooks/useLeadershipTransitions'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Hàng đợi ICPDP các yêu cầu bàn giao lãnh đạo CLB
 export function LeadershipTransitionQueuePage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const navigate = useNavigate()
   const auth = useAuth()
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const queue = useLeadershipTransitionQueue(isOfficer)
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   const loading = (
     <div className="space-y-2">
       {[0, 1, 2].map((item) => (
@@ -43,22 +42,15 @@ export function LeadershipTransitionQueuePage() {
       />
       {auth.isPending ? (
         loading
-      ) : !auth.data ? (
-        <AppNotice>{t('leadershipTransitions.signIn')}</AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger">{t('leadershipTransitions.unauthorized')}</AppNotice>
       ) : queue.isPending ? (
         loading
       ) : queue.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={queue.error.message || t('leadershipTransitions.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void queue.refetch()}>
-            {t('leadershipTransitions.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void queue.refetch()}
+        />
       ) : queue.data.length ? (
         <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map((plan) => (

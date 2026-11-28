@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppButton } from '@/components/ui/button/AppButton'
@@ -28,6 +27,8 @@ import {
   type PolicySection,
 } from '@/pages/icpdp/policyEditorForm'
 import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 const deadlineFields = [
   'dueDaysAfterPeriodEnd',
@@ -235,15 +236,12 @@ function PolicyOverview({ version, language }: { version: PolicyVersion; languag
 // Trang xem chính sách hiện hành, tạo phiên bản mới và lịch sử các phiên bản
 export function PolicyPage() {
   const { t, i18n } = useTranslation()
+  const { date } = useFormat()
   const auth = useAuth()
   const isOfficer = auth.data?.systemRoles.includes('ICPDP_OFFICER') ?? false
   const policies = usePolicies(isOfficer)
   const [chosenView, setView] = useState<PolicyView | null>(null)
   const view: PolicyView = chosenView ?? (policies.data?.current ? 'current' : 'edit')
-  // Định dạng ngày giờ theo ngôn ngữ hiện tại
-  function date(value: string): string {
-    return formatDate(value, i18n.language)
-  }
   const views: { key: PolicyView; label: string; icon: 'shield' | 'filePlus' | 'history' }[] = [
     { key: 'current', label: t('policy.current'), icon: 'shield' },
     { key: 'edit', label: t('policy.formTitle'), icon: 'filePlus' },
@@ -257,33 +255,23 @@ export function PolicyPage() {
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : auth.isError ? (
-        <AppNotice tone="danger" role="alert" title={auth.error.message}>
-          <AppButton onClick={() => void auth.refetch()}>{t('policy.retry')}</AppButton>
-        </AppNotice>
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('policy.signIn')}</p>
-          <Link
-            className="font-semibold text-primary-app"
-            to="/login?returnTo=%2Fworkspace%2Fpolicy"
-          >
-            {t('policy.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+        <AppErrorNotice
+          title={auth.error.message}
+          onRetry={() => void auth.refetch()}
+          retryVariant="primary"
+        />
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('policy.forbidden')}
         </AppNotice>
       ) : policies.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : policies.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={`${t('policy.loadError')} ${policies.error.message}`}
-        >
-          <AppButton onClick={() => void policies.refetch()}>{t('policy.retry')}</AppButton>
-        </AppNotice>
+          onRetry={() => void policies.refetch()}
+          retryVariant="primary"
+        />
       ) : (
         <div className="space-y-5">
           <div

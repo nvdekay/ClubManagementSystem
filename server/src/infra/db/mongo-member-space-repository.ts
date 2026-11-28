@@ -3,14 +3,7 @@ import type { EventRegistrationState } from '../../domain/event-registration.js'
 import type { MemberSpaceRepository } from '../../domain/member-space.js'
 import type { MembershipState } from '../../domain/membership.js'
 import { ucmsModels } from './ucms-models.js'
-
-// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
-function date(value: unknown): Date {
-  if (!(value instanceof Date)) {
-    throw new Error('invalid member space date in database')
-  }
-  return value
-}
+import { storedDate } from './repo-helpers.js'
 
 /** UC24: các sự kiện đã đăng của CLB; sự kiện nội bộ xuất hiện từ PUBLIC, không bao giờ ở DRAFT hay CREATED. */
 const shownEventStates = ['Upcoming', 'Ongoing', 'Completed', 'Report Submitted', 'Closed']
@@ -191,7 +184,7 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
         membership: {
           id: String(mine._id),
           state: mine.state as MembershipState,
-          joinedAt: date(mine.joinedAt),
+          joinedAt: storedDate(mine.joinedAt, 'member space'),
           positions: positionsOf(mine._id),
           ...(pending
             ? {
@@ -201,9 +194,12 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
                   clubId: String(pending.clubId),
                   userId: String(pending.userId),
                   reason: String(pending.reason),
-                  requestedEffectiveDate: date(pending.requestedEffectiveDate),
+                  requestedEffectiveDate: storedDate(
+                    pending.requestedEffectiveDate,
+                    'member space',
+                  ),
                   state: pending.state as 'Pending' | 'Held',
-                  createdAt: date(pending.createdAt),
+                  createdAt: storedDate(pending.createdAt, 'member space'),
                 },
               }
             : {}),
@@ -213,8 +209,8 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
         upcomingEvents: eventDocs.map((event) => ({
           id: String(event._id),
           title: String(event.title),
-          startAt: date(event.startAt),
-          endAt: date(event.endAt),
+          startAt: storedDate(event.startAt, 'member space'),
+          endAt: storedDate(event.endAt, 'member space'),
           ...(typeof event.venueText === 'string' ? { venueText: event.venueText } : {}),
           registrationState: registrationByEvent.get(String(event._id)) ?? null,
         })),
@@ -225,8 +221,8 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
                 {
                   eventId: String(item.eventId),
                   eventTitle: String(event.title),
-                  checkedInAt: date(item.checkedInAt),
-                  eventEndAt: date(event.endAt),
+                  checkedInAt: storedDate(item.checkedInAt, 'member space'),
+                  eventEndAt: storedDate(event.endAt, 'member space'),
                   feedbackSubmitted: feedbackEvents.has(String(item.eventId)),
                 },
               ]

@@ -5,7 +5,7 @@ import { DomainError } from '../../domain/errors.js'
 import { isInternalClubEventState } from '../../domain/club-event.js'
 import { eventCancellationIsLate } from '../../domain/club-event-rules.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
-import { queueNotifications } from './repo-helpers.js'
+import { closeOpenTasks, queueNotifications, writeAudit } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -54,11 +54,7 @@ export async function cancelEventInSession(
     { $set: { state: 'Cancelled', cancelledAt: now }, $unset: { waitlistPosition: '' } },
     { session },
   )
-  await m.approvalTasks!.updateMany(
-    { entityType: 'EVENT_PROPOSAL', entityId: id, state: 'Open' },
-    { $set: { state: 'Closed', closedAt: now } },
-    { session },
-  )
+  await closeOpenTasks(session, 'EVENT_PROPOSAL', id, now)
   await m.eventDefenseSessions!.updateMany(
     {
       eventId: id,
@@ -97,37 +93,30 @@ export async function cancelEventInSession(
     }
   }
   const correlationId = randomUUID()
-  await m.auditLogs!.create(
-    [
-      {
-        entityType: 'Event',
-        entityId: id,
-        action: 'EVENT_CANCELLED',
-        ...(actorId
-          ? { actorId, actorRole: source.startsWith('PROPOSAL_') ? 'ICPDP_OFFICER' : 'Club Member' }
-          : { actorRole: 'SYSTEM' }),
-        before: { state: event.state },
-        after: {
-          state,
-          source,
-          sourceRefId,
-          settlementRequired:
-            budget && !budget.sponsoredItems
-              ? Number(String(budget.disbursedTotal ?? 0)) > 0
-              : false,
-          previousSettlementDueAt: budget?.settlementDueAt,
-          ...(budget?.sponsoredItems ? { sponsoredFinancePaused: true } : {}),
-          ...(budget && !budget.sponsoredItems && Number(String(budget.disbursedTotal ?? 0)) > 0
-            ? { settlementDueAt: settlementDueAt(now) }
-            : {}),
-        },
-        reason,
-        correlationId,
-        at: now,
-      },
-    ],
-    { session },
-  )
+  await writeAudit(session, {
+    entityType: 'Event',
+    entityId: id,
+    action: 'EVENT_CANCELLED',
+    ...(actorId
+      ? { actorId, actorRole: source.startsWith('PROPOSAL_') ? 'ICPDP_OFFICER' : 'Club Member' }
+      : { actorRole: 'SYSTEM' }),
+    before: { state: event.state },
+    after: {
+      state,
+      source,
+      sourceRefId,
+      settlementRequired:
+        budget && !budget.sponsoredItems ? Number(String(budget.disbursedTotal ?? 0)) > 0 : false,
+      previousSettlementDueAt: budget?.settlementDueAt,
+      ...(budget?.sponsoredItems ? { sponsoredFinancePaused: true } : {}),
+      ...(budget && !budget.sponsoredItems && Number(String(budget.disbursedTotal ?? 0)) > 0
+        ? { settlementDueAt: settlementDueAt(now) }
+        : {}),
+    },
+    reason,
+    correlationId,
+    at: now,
+  })
   await queueNotifications(
     session,
     registrations.map((r) => r.studentId),

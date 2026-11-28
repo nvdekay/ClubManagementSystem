@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 export type PropertyType = 'ROOM' | 'HALL' | 'OUTDOOR' | 'STAGE' | 'EQUIPMENT'
 
 /** `day` 1 = Thứ Hai … 7 = Chủ nhật; ngày không liệt kê thì không thể đặt. */
@@ -43,10 +43,7 @@ export class PropertyRequestError extends ApiError {
   }
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/properties${path}`, { ...options, toError: toPropertyError })
-}
+const request = apiClient('/api/v1/admin/properties', toPropertyError)
 
 // Maps a failed response to this module's error type
 function toPropertyError(failure: ApiFailure): Error {

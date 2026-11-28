@@ -2,7 +2,6 @@ import { useRef, useState, type ChangeEvent, type ClipboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppDialog } from '@/components/ui/dialog/AppDialog'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
@@ -22,6 +21,9 @@ import {
   type ReturnSection,
 } from '@/services/periodicReports'
 import { formatMoney } from '@/utils/formatMoney'
+import { EvidenceImageDialog } from '@/components/custom/EvidenceImageDialog'
+import { saveImageUrl } from '@/utils/saveFile'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface Props {
   clubId: string
@@ -56,48 +58,6 @@ async function fitEvidenceImage(file: File): Promise<Blob> {
     return file
   } finally {
     URL.revokeObjectURL(objectUrl)
-  }
-}
-
-// Tạo tên tệp an toàn cho ảnh minh chứng từ tiêu đề
-function safeFileName(title: string, url: string): string {
-  const base =
-    title
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]+/gi, '-')
-      .replace(/^-+|-+$/g, '') || 'evidence-image'
-  const match = url.match(/^data:image\/([a-z0-9.+-]+);base64,/i)
-  const rawExt = match?.[1]?.toLowerCase() ?? 'png'
-  const ext = rawExt === 'jpeg' ? 'jpg' : rawExt === 'svg+xml' ? 'svg' : rawExt
-  return `${base}.${ext}`
-}
-
-// Tải ảnh minh chứng về máy
-async function saveEvidenceImage(url: string, title: string) {
-  const filename = safeFileName(title, url)
-  if (url.startsWith('data:image/')) {
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    return
-  }
-  try {
-    const res = await fetch(url)
-    const blob = await res.blob()
-    const blobUrl = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = blobUrl
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(blobUrl)
-  } catch {
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -310,7 +270,7 @@ function EvidenceInputBlock({
                   </AppButton>
                   <AppButton
                     variant="secondary"
-                    onClick={() => void saveEvidenceImage(shownUrl, displayTitle)}
+                    onClick={() => void saveImageUrl(shownUrl, displayTitle)}
                   >
                     {t('clubPeriodicReports.saveImage')}
                   </AppButton>
@@ -638,26 +598,23 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
               key={idx}
               className="grid gap-3 rounded-xl border border-border-app bg-bg-app p-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[1fr_9rem_1fr_10rem_auto]"
             >
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.memberName')}
+              <AppField label={t('clubPeriodicReports.memberName')}>
                 <AppInput
                   className={inputBase}
                   value={member.fullName}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateMember(idx, { fullName: e.target.value })}
                 />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.memberCode')}
+              </AppField>
+              <AppField label={t('clubPeriodicReports.memberCode')}>
                 <AppInput
                   className={inputBase}
                   value={member.studentCode}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateMember(idx, { studentCode: e.target.value })}
                 />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.memberEmail')}
+              </AppField>
+              <AppField label={t('clubPeriodicReports.memberEmail')}>
                 <AppInput
                   type="email"
                   className={inputBase}
@@ -665,9 +622,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateMember(idx, { email: e.target.value })}
                 />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.memberScore')}
+              </AppField>
+              <AppField label={t('clubPeriodicReports.memberScore')}>
                 <AppInput
                   type="number"
                   min={0}
@@ -678,7 +634,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateMember(idx, { activityScore: Number(e.target.value) })}
                 />
-              </label>
+              </AppField>
               {editable && (
                 <div className="flex items-end">
                   <AppButton
@@ -753,9 +709,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                     onChange={(e) => updateEvent(idx, { title: e.target.value })}
                   />
                 </label>
-                <label className="block text-sm font-medium text-text-app">
-                  {t('clubPeriodicReports.eventHeldAt')}
-                  <AppRequiredMark />
+                <AppField label={t('clubPeriodicReports.eventHeldAt')} required>
                   <AppInput
                     type="date"
                     className={inputBase}
@@ -763,10 +717,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                     disabled={!editable || action.isPending}
                     onChange={(e) => updateEvent(idx, { heldAt: e.target.value })}
                   />
-                </label>
-                <label className="block text-sm font-medium text-text-app">
-                  {t('clubPeriodicReports.eventParticipants')}
-                  <AppRequiredMark />
+                </AppField>
+                <AppField label={t('clubPeriodicReports.eventParticipants')} required>
                   <AppInput
                     type="number"
                     min={0}
@@ -776,18 +728,16 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                     disabled={!editable || action.isPending}
                     onChange={(e) => updateEvent(idx, { participantCount: Number(e.target.value) })}
                   />
-                </label>
+                </AppField>
               </div>
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.eventDescription')}
-                <AppRequiredMark />
+              <AppField label={t('clubPeriodicReports.eventDescription')} required>
                 <AppTextarea
                   className="mt-1.5 block w-full font-normal disabled:opacity-70"
                   value={ev.description}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateEvent(idx, { description: e.target.value })}
                 />
-              </label>
+              </AppField>
               <EvidenceInputBlock
                 label={t('clubPeriodicReports.eventEvidenceUrl')}
                 required
@@ -840,26 +790,22 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         <div className="space-y-4">
           {achievements.map((ach, idx) => (
             <div key={idx} className="space-y-3 rounded-xl border border-border-app bg-bg-app p-4">
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.achievementTitle')}
-                <AppRequiredMark />
+              <AppField label={t('clubPeriodicReports.achievementTitle')} required>
                 <AppInput
                   className={inputBase}
                   value={ach.title}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateAchievement(idx, { title: e.target.value })}
                 />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('clubPeriodicReports.achievementDescription')}
-                <AppRequiredMark />
+              </AppField>
+              <AppField label={t('clubPeriodicReports.achievementDescription')} required>
                 <AppTextarea
                   className="mt-1.5 block w-full font-normal disabled:opacity-70"
                   value={ach.description}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateAchievement(idx, { description: e.target.value })}
                 />
-              </label>
+              </AppField>
               <EvidenceInputBlock
                 label={t('clubPeriodicReports.achievementEvidenceUrl')}
                 required
@@ -1030,31 +976,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         </div>
       </details>
 
-      <AppDialog
-        open={Boolean(previewImage)}
-        title={previewImage?.title ?? ''}
-        closeLabel={t('periodicReports.closeImagePreview')}
-        onClose={() => setPreviewImage(null)}
-        className="w-[min(100%-2rem,56rem)]"
-        footer={
-          previewImage && (
-            <AppButton
-              variant="secondary"
-              onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}
-            >
-              {t('clubPeriodicReports.saveImage')}
-            </AppButton>
-          )
-        }
-      >
-        {previewImage && (
-          <img
-            src={previewImage.url}
-            alt={previewImage.title}
-            className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
-          />
-        )}
-      </AppDialog>
+      <EvidenceImageDialog image={previewImage} onClose={() => setPreviewImage(null)} />
     </section>
   )
 }

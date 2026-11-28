@@ -18,12 +18,14 @@ import {
 } from '@/hooks/useLeadershipTransitions'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang ICPDP xem chi tiết bàn giao lãnh đạo CLB và ra quyết định
 export function LeadershipTransitionDetailPage() {
   const { id } = useParams()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const askConfirm = useConfirm()
   const auth = useAuth()
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
@@ -38,9 +40,6 @@ export function LeadershipTransitionDetailPage() {
   const field = useFieldValidation({
     reason: returning && !reason.trim() ? t('leadershipTransitions.returnReason') : null,
   })
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   const back = {
     to: '/workspace/leadership-transitions',
     label: t('leadershipTransitions.detailBack'),
@@ -94,7 +93,7 @@ export function LeadershipTransitionDetailPage() {
     return loading
   }
   if (!auth.data) {
-    return <AppNotice>{t('leadershipTransitions.signIn')}</AppNotice>
+    return null
   }
   if (!isOfficer) {
     return <AppNotice tone="danger">{t('leadershipTransitions.unauthorized')}</AppNotice>
@@ -106,15 +105,10 @@ export function LeadershipTransitionDetailPage() {
     return (
       <>
         <PageHeader title={t('leadershipTransitions.queueTitle')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={query.error?.message ?? t('leadershipTransitions.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void query.refetch()}>
-            {t('leadershipTransitions.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void query.refetch()}
+        />
       </>
     )
   }

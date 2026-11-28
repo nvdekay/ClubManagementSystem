@@ -3,11 +3,8 @@ export const exports = {
   description: 'Download club data as Excel, CSV or PDF for school reports.',
   homeDescription:
     'Export clubs, members, events, finance, budgets per club, compliance and evaluation results to files.',
-  signIn: 'Sign in to export data.',
-  signInLink: 'Sign in',
   forbidden: 'Only ICPDP officers can export data.',
   loadError: 'Could not load export options.',
-  retry: 'Retry',
   dataType: 'What to export',
   type_CLUBS: 'Clubs and status',
   type_MEMBERS: 'Members by club',

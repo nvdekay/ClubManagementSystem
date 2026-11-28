@@ -7,7 +7,7 @@ import {
   type SuspensionRequestInput,
   type SuspensionRequestRepository,
 } from '../domain/suspension-request.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, isObjectId, type AccessActor } from './access.js'
 // CLB xem ngữ cảnh để gửi yêu cầu tạm ngừng hoạt động
 export async function suspensionContext(
   repo: SuspensionRequestRepository,
@@ -51,11 +51,7 @@ export async function reviewSuspensions(
     throw new DomainError('ICPDP officer role required', 'forbidden')
   }
   if (action) {
-    if (
-      !/^[0-9a-f]{24}$/i.test(action.id) ||
-      !action.reason.trim() ||
-      action.reason.length > 2000
-    ) {
+    if (!isObjectId(action.id) || !action.reason.trim() || action.reason.length > 2000) {
       throw new DomainError('valid request and decision reason required', 'validation')
     }
     await repo.decide(action.id, action.outcome, action.reason.trim(), actor.id, now)

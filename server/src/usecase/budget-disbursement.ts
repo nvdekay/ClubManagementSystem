@@ -3,7 +3,7 @@ import type {
   BudgetDisbursementRepository,
   BudgetListQuery,
 } from '../domain/budget-disbursement.js'
-import { DomainError } from '../domain/errors.js'
+import { orNotFound } from '../domain/errors.js'
 import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
 // ICPDP xem một trang ngân sách được duyệt của các CLB theo bộ lọc
@@ -25,9 +25,6 @@ export async function getBudget(
   id: string,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  const detail = await repo.find(parseObjectId(id, 'budget id'))
-  if (!detail) {
-    throw new DomainError('budget not found', 'not_found')
-  }
+  const detail = orNotFound(await repo.find(parseObjectId(id, 'budget id')), 'budget')
   return detail
 }

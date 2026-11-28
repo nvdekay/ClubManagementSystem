@@ -8,7 +8,8 @@ import { AppIcon } from '@/components/ui/icon/AppIcon'
 import type { ViolationDetail, ViolationStep } from '@/services/violations'
 import { actionStateLabel, actionStateTone } from '@/pages/icpdp/violationFormat'
 import { documentHref } from '@/utils/documentLinks'
-import { formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 interface ViolationActionsSectionProps {
   item: ViolationDetail
@@ -18,13 +19,10 @@ interface ViolationActionsSectionProps {
 
 // Các hành động khắc phục đã giao: minh chứng CLB nộp và nút xác nhận đạt / không đạt
 export function ViolationActionsSection({ item, pending, run }: ViolationActionsSectionProps) {
-  const { t, i18n } = useTranslation()
-  function day(value: string) {
-    return formatDay(value, i18n.language)
-  }
+  const { t } = useTranslation()
+  const { day } = useFormat()
   return (
-    <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-      <h2 className="font-heading text-base font-semibold">{t('violations.actions')}</h2>
+    <AppPanel title={t('violations.actions')}>
       {item.actions.length ? (
         <ul className="mt-4 divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {item.actions.map((action) => (
@@ -114,6 +112,6 @@ export function ViolationActionsSection({ item, pending, run }: ViolationActions
           <AppIcon name="external" className="size-3.5" />
         </Link>
       )}
-    </section>
+    </AppPanel>
   )
 }

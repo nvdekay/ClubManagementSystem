@@ -1,7 +1,5 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
-import type { SessionService } from '../../domain/session.js'
 import type { BookingInput } from '../../domain/facility-booking.js'
 import {
   bookingAvailability,
@@ -18,11 +16,10 @@ import {
   submitBooking,
   type BookingDeps,
 } from '../../usecase/facility-booking.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const date = z.string().datetime({ offset: true })
 export const bookingBody = z
   .object({
@@ -52,18 +49,16 @@ function input(body: z.infer<typeof bookingBody>): BookingInput {
   return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) }
 }
 // Mount các route đặt phòng và cơ sở vật chất của CLB và ICPDP
-export function facilityBookingRoutes(
-  deps: BookingDeps & { authRepo: AuthRepository; sessions: SessionService },
-): Router {
+export function facilityBookingRoutes(deps: BookingDeps & SessionDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Lấy danh sách khung giờ đặt phòng
-  router.get('/booking-slots', authGuard(guard, false), (_req, res) => {
+  router.get('/booking-slots', read, (_req, res) => {
     ok(res, listBookingSlots())
   })
   const clubBase = '/clubs/:clubId/bookings'
   // Liệt kê sự kiện có thể gắn với booking của CLB
-  router.get('/clubs/:clubId/booking-events', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/booking-events', read, async (req, res) => {
     ok(
       res,
       await listBookingEvents(
@@ -75,7 +70,7 @@ export function facilityBookingRoutes(
     )
   })
   // Liệt kê phòng và tài sản có thể đặt cho CLB
-  router.get('/clubs/:clubId/booking-properties', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/booking-properties', read, async (req, res) => {
     ok(
       res,
       await listBookingProperties(
@@ -87,31 +82,27 @@ export function facilityBookingRoutes(
     )
   })
   // Xem lịch trống của một phòng
-  router.get(
-    '/clubs/:clubId/booking-properties/:id/availability',
-    authGuard(guard, false),
-    async (req, res) => {
-      const query = parse(bookingAvailabilityQuery, req.query, 'booking request')
-      ok(
-        res,
-        await bookingAvailability(
-          deps,
-          actor(res),
-          parse(id, req.params.clubId, 'booking request'),
-          input({
-            ...query,
-            propertyId: parse(id, req.params.id, 'booking request'),
-            purpose: 'Availability check',
-            headcount: 1,
-            equipment: [],
-          }),
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.get('/clubs/:clubId/booking-properties/:id/availability', read, async (req, res) => {
+    const query = parse(bookingAvailabilityQuery, req.query, 'booking request')
+    ok(
+      res,
+      await bookingAvailability(
+        deps,
+        actor(res),
+        parse(id, req.params.clubId, 'booking request'),
+        input({
+          ...query,
+          propertyId: parse(id, req.params.id, 'booking request'),
+          purpose: 'Availability check',
+          headcount: 1,
+          equipment: [],
+        }),
+        new Date(),
+      ),
+    )
+  })
   // Liệt kê booking của CLB
-  router.get(clubBase, authGuard(guard, false), async (req, res) => {
+  router.get(clubBase, read, async (req, res) => {
     ok(
       res,
       await listBookings(
@@ -123,7 +114,7 @@ export function facilityBookingRoutes(
     )
   })
   // Tạo hoặc lưu bản nháp booking
-  router.post(clubBase, authGuard(guard), async (req, res) => {
+  router.post(clubBase, write, async (req, res) => {
     ok(
       res,
       await saveBooking(
@@ -138,7 +129,7 @@ export function facilityBookingRoutes(
     )
   })
   // Xem chi tiết một booking của CLB
-  router.get(`${clubBase}/:id`, authGuard(guard, false), async (req, res) => {
+  router.get(`${clubBase}/:id`, read, async (req, res) => {
     ok(
       res,
       await getBooking(
@@ -151,7 +142,7 @@ export function facilityBookingRoutes(
     )
   })
   // Cập nhật booking của CLB
-  router.patch(`${clubBase}/:id`, authGuard(guard), async (req, res) => {
+  router.patch(`${clubBase}/:id`, write, async (req, res) => {
     const body = parse(bookingSaveBody, req.body, 'booking request')
     ok(
       res,
@@ -167,7 +158,7 @@ export function facilityBookingRoutes(
     )
   })
   // Nộp booking cho ICPDP duyệt
-  router.post(`${clubBase}/:id/submit`, authGuard(guard), async (req, res) => {
+  router.post(`${clubBase}/:id/submit`, write, async (req, res) => {
     ok(
       res,
       await submitBooking(
@@ -181,7 +172,7 @@ export function facilityBookingRoutes(
     )
   })
   // Huỷ booking của CLB
-  router.post(`${clubBase}/:id/cancel`, authGuard(guard), async (req, res) => {
+  router.post(`${clubBase}/:id/cancel`, write, async (req, res) => {
     ok(
       res,
       await cancelBooking(
@@ -195,11 +186,11 @@ export function facilityBookingRoutes(
     )
   })
   // ICPDP liệt kê các booking cần xử lý
-  router.get('/admin/bookings', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/bookings', read, async (_req, res) => {
     ok(res, await listBookings(deps, actor(res), null, new Date()))
   })
   // ICPDP xem chi tiết một booking
-  router.get('/admin/bookings/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/bookings/:id', read, async (req, res) => {
     ok(
       res,
       await getBooking(
@@ -212,7 +203,7 @@ export function facilityBookingRoutes(
     )
   })
   // ICPDP nhận xử lý (claim) một booking
-  router.post('/admin/bookings/:id/claim', authGuard(guard), async (req, res) => {
+  router.post('/admin/bookings/:id/claim', write, async (req, res) => {
     parse(z.object({}).strict(), req.body ?? {}, 'booking request')
     ok(
       res,
@@ -220,7 +211,7 @@ export function facilityBookingRoutes(
     )
   })
   // ICPDP ghi quyết định cho booking
-  router.post('/admin/bookings/:id/decision', authGuard(guard), async (req, res) => {
+  router.post('/admin/bookings/:id/decision', write, async (req, res) => {
     const body = parse(bookingDecisionBody, req.body, 'booking request')
     ok(
       res,
@@ -243,20 +234,16 @@ export function facilityBookingRoutes(
     )
   })
   // ICPDP xem xung đột booking của một tài sản
-  router.get(
-    '/admin/properties/:id/booking-conflicts',
-    authGuard(guard, false),
-    async (req, res) => {
-      ok(
-        res,
-        await propertyBookingConflicts(
-          deps,
-          actor(res),
-          parse(id, req.params.id, 'booking request'),
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.get('/admin/properties/:id/booking-conflicts', read, async (req, res) => {
+    ok(
+      res,
+      await propertyBookingConflicts(
+        deps,
+        actor(res),
+        parse(id, req.params.id, 'booking request'),
+        new Date(),
+      ),
+    )
+  })
   return router
 }

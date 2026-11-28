@@ -5,11 +5,11 @@ import {
   type ClubPeriodicReportRepository,
   type PeriodicDraftInput,
 } from '../domain/club-periodic-report.js'
+import { fileSignatureMatches } from '../domain/file-signature.js'
 import { DomainError } from '../domain/errors.js'
 import {
   EVIDENCE_IMAGE_MAX_BYTES,
   EVIDENCE_IMAGE_MIME_TYPES,
-  evidenceImageSignatureMatches,
   evidenceLinks,
   evidenceReference,
   parseEvidenceReference,
@@ -19,7 +19,7 @@ import {
   type PeriodicEvidenceStorage,
 } from '../domain/periodic-report.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import { assertClubAccess, type AccessActor } from './access.js'
+import { assertClubAccess, isObjectId, type AccessActor } from './access.js'
 
 export type WithEvidenceUrls<T> = T & { evidenceUrls: Record<string, string> }
 
@@ -59,7 +59,7 @@ export async function uploadPeriodicEvidenceImage(
     !(EVIDENCE_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType) ||
     bytes.length === 0 ||
     bytes.length > EVIDENCE_IMAGE_MAX_BYTES ||
-    !evidenceImageSignatureMatches(mimeType, bytes)
+    !fileSignatureMatches(mimeType, bytes)
   ) {
     throw new DomainError('evidence must be a PNG, JPEG or WebP image up to 5 MB', 'validation')
   }
@@ -170,7 +170,7 @@ export async function changeClubPeriodicReport(
   storage: PeriodicEvidenceStorage | null = null,
 ) {
   await assertClubAccess(access, actor, clubId, 'club.report.submit', now)
-  if (!/^[0-9a-f]{24}$/i.test(id) || !Number.isInteger(revision) || revision < 0) {
+  if (!isObjectId(id) || !Number.isInteger(revision) || revision < 0) {
     throw new DomainError('invalid report identifier or version', 'validation')
   }
   if (!input) {

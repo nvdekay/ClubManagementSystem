@@ -21,19 +21,19 @@ import {
   stateLabel,
   stateTone,
 } from '@/pages/icpdp/violationFormat'
-import { formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 // Chi tiết ca vi phạm và các bước xử lý theo quy trình
 export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day } = useFormat()
   const askConfirm = useConfirm()
   const query = useViolation(id, true)
   const step = useViolationStep()
   const [evidenceNote, setEvidenceNote] = useState('')
   const [evidenceUrl, setEvidenceUrl] = useState('')
-  function day(value: string) {
-    return formatDay(value, i18n.language)
-  }
   const back = { to: '/workspace/violations', label: t('violations.back') }
 
   if (query.isPending) {
@@ -48,15 +48,10 @@ export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: 
     return (
       <>
         <PageHeader title={t('violations.case')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={query.error.message || t('violations.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void query.refetch()}>
-            {t('violations.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void query.refetch()}
+        />
       </>
     )
   }
@@ -128,8 +123,7 @@ export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: 
             </dl>
           </section>
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('violations.evidence')}</h2>
+          <AppPanel title={t('violations.evidence')}>
             <ViolationEvidenceList items={item.evidence} names={item.names} />
             {!final && (
               <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
@@ -166,7 +160,7 @@ export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: 
                 </AppButton>
               </div>
             )}
-          </section>
+          </AppPanel>
 
           {response && (
             <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
@@ -208,8 +202,7 @@ export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: 
           )}
 
           {item.decisionReason && (
-            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-              <h2 className="font-heading text-base font-semibold">{t('violations.decide')}</h2>
+            <AppPanel title={t('violations.decide')}>
               {item.decidedAt && (
                 <p className="mt-2 text-sm text-muted-app">
                   {t('violations.decisionOn', { date: day(item.decidedAt) })}
@@ -221,15 +214,14 @@ export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: 
               {item.decisionEvidence.length > 0 && (
                 <ViolationEvidenceList items={item.decisionEvidence} names={item.names} />
               )}
-            </section>
+            </AppPanel>
           )}
 
           {(decided || item.actions.length > 0) && (
             <ViolationActionsSection item={item} pending={step.isPending} run={run} />
           )}
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('violations.history')}</h2>
+          <AppPanel title={t('violations.history')}>
             <ol className="mt-5 space-y-4 border-l-2 border-border-app pl-5">
               {item.history.map((entry, index) => (
                 <li key={index} className="relative">
@@ -246,7 +238,7 @@ export function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: 
                 </li>
               ))}
             </ol>
-          </section>
+          </AppPanel>
         </div>
 
         <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">

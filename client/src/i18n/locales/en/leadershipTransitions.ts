@@ -7,8 +7,6 @@ export const leadershipTransitions = {
   empty: 'No transitions are waiting',
   emptyHint: 'Plans submitted by club leaders will appear here.',
   loadError: 'Could not load leadership transitions.',
-  retry: 'Retry',
-  signIn: 'Sign in to continue.',
   unauthorized: 'Only ICPDP Officers can review leadership transitions.',
   detailBack: 'Back to transition queue',
   pending: 'Pending confirmation',

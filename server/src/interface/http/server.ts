@@ -278,21 +278,16 @@ export function buildApp(deps: {
   })
   mount(publicDiscoveryRoutes(deps.publicRepo))
   if (deps.auth && deps.adminRepo) {
+    // authRepo + sessions mà mọi router đã đăng nhập cần (SessionDeps)
+    const session = { authRepo: deps.auth.repo, sessions: deps.auth.sessions }
     mount(authRoutes(deps.auth))
-    mount(
-      accountAdminRoutes({
-        adminRepo: deps.adminRepo,
-        authRepo: deps.auth.repo,
-        sessions: deps.auth.sessions,
-      }),
-    )
+    mount(accountAdminRoutes({ adminRepo: deps.adminRepo, ...session }))
     if (deps.clubTransitionPlanRepo) {
       mount(
         clubTransitionPlanRoutes({
           repo: deps.clubTransitionPlanRepo,
           access: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -301,27 +296,19 @@ export function buildApp(deps: {
         suspensionRequestRoutes({
           repo: deps.suspensionRequestRepo,
           access: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
     if (deps.membershipReconfirmationRepo) {
-      mount(
-        membershipReconfirmationRoutes({
-          repo: deps.membershipReconfirmationRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(membershipReconfirmationRoutes({ repo: deps.membershipReconfirmationRepo, ...session }))
     }
     if (deps.clubViolationRepo) {
       mount(
         clubViolationRoutes({
           repo: deps.clubViolationRepo,
           access: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -330,8 +317,7 @@ export function buildApp(deps: {
         clubEvaluationRoutes({
           repo: deps.clubEvaluationRepo,
           access: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -340,8 +326,7 @@ export function buildApp(deps: {
         clubInvitationRoutes({
           repo: deps.clubInvitationRepo,
           access: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -351,8 +336,7 @@ export function buildApp(deps: {
           repo: deps.clubProfileRepo,
           accessRepo: deps.auth.accessRepo,
           policy: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -364,8 +348,7 @@ export function buildApp(deps: {
           policy: deps.policyRepo,
           access: deps.auth.accessRepo,
           auth: deps.auth.repo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -377,38 +360,24 @@ export function buildApp(deps: {
           policy: deps.policyRepo,
           access: deps.auth.accessRepo,
           auth: deps.auth.repo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
     if (deps.propertyRepo) {
-      mount(
-        propertyRoutes({
-          repo: deps.propertyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(propertyRoutes({ repo: deps.propertyRepo, ...session }))
     }
     if (deps.boardNominationRepo) {
       mount(
         boardNominationRoutes({
           repo: deps.boardNominationRepo,
           accessRepo: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
     if (deps.leadershipTransitionRepo) {
-      mount(
-        leadershipTransitionRoutes({
-          repo: deps.leadershipTransitionRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(leadershipTransitionRoutes({ repo: deps.leadershipTransitionRepo, ...session }))
     }
     if (deps.recruitmentCampaignRepo && deps.policyRepo) {
       mount(
@@ -416,8 +385,7 @@ export function buildApp(deps: {
           repo: deps.recruitmentCampaignRepo,
           accessRepo: deps.auth.accessRepo,
           policy: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -426,8 +394,7 @@ export function buildApp(deps: {
         recruitmentApplicationRoutes({
           repo: deps.recruitmentApplicationRepo,
           files: deps.recruitmentAttachmentStorage ?? null,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
           accessRepo: deps.auth.accessRepo,
         }),
       )
@@ -437,8 +404,7 @@ export function buildApp(deps: {
         candidateEvaluationRoutes({
           repo: deps.candidateEvaluationRepo,
           accessRepo: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
@@ -447,19 +413,13 @@ export function buildApp(deps: {
         membershipRoutes({
           repo: deps.membershipRepo,
           accessRepo: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
     if (deps.dashboardRepo) {
       mount(
-        dashboardRoutes({
-          repo: deps.dashboardRepo,
-          accessRepo: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
+        dashboardRoutes({ repo: deps.dashboardRepo, accessRepo: deps.auth.accessRepo, ...session }),
       )
     }
     if (deps.eventRegistrationRepo && deps.policyRepo) {
@@ -467,93 +427,45 @@ export function buildApp(deps: {
         eventRegistrationRoutes({
           repo: deps.eventRegistrationRepo,
           policy: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
+          ...session,
         }),
       )
     }
     if (deps.eventCheckInRepo && deps.policyRepo) {
       mount(
-        eventCheckInRoutes({
-          repo: deps.eventCheckInRepo,
-          policy: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
+        eventCheckInRoutes({ repo: deps.eventCheckInRepo, policy: deps.policyRepo, ...session }),
       )
     }
     if (deps.memberSpaceRepo && deps.policyRepo) {
-      mount(
-        memberSpaceRoutes({
-          repo: deps.memberSpaceRepo,
-          policy: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(memberSpaceRoutes({ repo: deps.memberSpaceRepo, policy: deps.policyRepo, ...session }))
     }
     if (deps.notificationRepo) {
-      mount(
-        notificationRoutes({
-          repo: deps.notificationRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(notificationRoutes({ repo: deps.notificationRepo, ...session }))
     }
     if (deps.approvalRoutingRepo) {
-      mount(
-        approvalRoutingRoutes({
-          repo: deps.approvalRoutingRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(approvalRoutingRoutes({ repo: deps.approvalRoutingRepo, ...session }))
     }
     if (deps.complaintRepo) {
       mount(
-        complaintRoutes({
-          repo: deps.complaintRepo,
-          accessRepo: deps.auth.accessRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
+        complaintRoutes({ repo: deps.complaintRepo, accessRepo: deps.auth.accessRepo, ...session }),
       )
     }
     if (deps.eventFeedbackRepo && deps.policyRepo) {
       mount(
-        eventFeedbackRoutes({
-          repo: deps.eventFeedbackRepo,
-          policy: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
+        eventFeedbackRoutes({ repo: deps.eventFeedbackRepo, policy: deps.policyRepo, ...session }),
       )
     }
     if (deps.policyRepo) {
-      mount(
-        policyRoutes({
-          repo: deps.policyRepo,
-          authRepo: deps.auth.repo,
-          sessions: deps.auth.sessions,
-        }),
-      )
+      mount(policyRoutes({ repo: deps.policyRepo, ...session }))
       if (deps.eventProposalReviewRepo) {
-        mount(
-          eventProposalReviewRoutes({
-            repo: deps.eventProposalReviewRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
-          }),
-        )
+        mount(eventProposalReviewRoutes({ repo: deps.eventProposalReviewRepo, ...session }))
         if (deps.eventDefenseRepo) {
           mount(
             eventDefenseRoutes({
               repo: deps.eventDefenseRepo,
               reviewRepo: deps.eventProposalReviewRepo,
               accessRepo: deps.auth.accessRepo,
-              authRepo: deps.auth.repo,
-              sessions: deps.auth.sessions,
+              ...session,
             }),
           )
         }
@@ -563,8 +475,7 @@ export function buildApp(deps: {
           eventFinanceRoutes({
             repo: deps.eventFinanceRepo,
             access: deps.auth.accessRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
       }
@@ -574,8 +485,7 @@ export function buildApp(deps: {
             repo: deps.sponsoredItemRepo,
             access: deps.auth.accessRepo,
             auth: deps.auth.repo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
             files: deps.applicationFiles ?? null,
             policy: deps.policyRepo,
           }),
@@ -586,28 +496,15 @@ export function buildApp(deps: {
           postEventReportRoutes({
             repo: deps.postEventReportRepo,
             access: deps.auth.accessRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
       }
       if (deps.budgetDisbursementRepo) {
-        mount(
-          budgetDisbursementRoutes({
-            repo: deps.budgetDisbursementRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
-          }),
-        )
+        mount(budgetDisbursementRoutes({ repo: deps.budgetDisbursementRepo, ...session }))
       }
       if (deps.violationRepo) {
-        mount(
-          violationRoutes({
-            repo: deps.violationRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
-          }),
-        )
+        mount(violationRoutes({ repo: deps.violationRepo, ...session }))
       }
       if (deps.clubPeriodicReportRepo) {
         mount(
@@ -615,8 +512,7 @@ export function buildApp(deps: {
             repo: deps.clubPeriodicReportRepo,
             policy: deps.policyRepo,
             access: deps.auth.accessRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
             files: deps.periodicEvidenceFiles ?? null,
           }),
         )
@@ -626,8 +522,7 @@ export function buildApp(deps: {
           periodicReportRoutes({
             repo: deps.periodicReportRepo,
             policy: deps.policyRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
             evaluationRepo: deps.evaluationRepo,
             evaluationSchemeRepo: deps.evaluationSchemeRepo,
             files: deps.periodicEvidenceFiles ?? null,
@@ -639,20 +534,14 @@ export function buildApp(deps: {
           clubEventRoutes({
             repo: deps.clubEventRepo,
             access: deps.auth.accessRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
             files: deps.eventProposalFiles ?? null,
           }),
         )
       }
       if (deps.schoolEventRepo) {
         mount(
-          schoolEventRoutes({
-            repo: deps.schoolEventRepo,
-            policy: deps.policyRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
-          }),
+          schoolEventRoutes({ repo: deps.schoolEventRepo, policy: deps.policyRepo, ...session }),
         )
       }
       if (deps.clubLifecycleRepo) {
@@ -660,8 +549,7 @@ export function buildApp(deps: {
           clubLifecycleRoutes({
             repo: deps.clubLifecycleRepo,
             policy: deps.policyRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
       }
@@ -671,8 +559,7 @@ export function buildApp(deps: {
             repo: deps.exportRepo,
             writer: deps.exportWriter,
             policy: deps.policyRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
       }
@@ -681,8 +568,7 @@ export function buildApp(deps: {
           evaluationSchemeRoutes({
             repo: deps.evaluationSchemeRepo,
             policy: deps.policyRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
       }
@@ -692,19 +578,12 @@ export function buildApp(deps: {
             repo: deps.evaluationRepo,
             schemes: deps.evaluationSchemeRepo,
             policy: deps.policyRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
       }
       if (deps.clubFieldRepo) {
-        mount(
-          clubFieldRoutes({
-            repo: deps.clubFieldRepo,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
-          }),
-        )
+        mount(clubFieldRoutes({ repo: deps.clubFieldRepo, ...session }))
       }
       if (deps.applicationRepo && deps.clubFieldRepo) {
         mount(
@@ -713,16 +592,14 @@ export function buildApp(deps: {
             policy: deps.policyRepo,
             fields: deps.clubFieldRepo,
             files: deps.applicationFiles ?? null,
-            authRepo: deps.auth.repo,
-            sessions: deps.auth.sessions,
+            ...session,
           }),
         )
         if (deps.applicationReviewRepo) {
           mount(
             clubApplicationReviewRoutes({
               repo: deps.applicationReviewRepo,
-              authRepo: deps.auth.repo,
-              sessions: deps.auth.sessions,
+              ...session,
               files: deps.applicationFiles ?? null,
             }),
           )

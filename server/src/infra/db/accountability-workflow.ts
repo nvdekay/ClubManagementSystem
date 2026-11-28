@@ -1,38 +1,18 @@
-import { randomUUID } from 'node:crypto'
 import { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
-import { queueNotifications } from './repo-helpers.js'
+import {
+  lockActiveUser,
+  lockIcpdpOfficerRole,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels as m } from './ucms-models.js'
 
 // Khóa tài khoản và xác nhận actor là ICPDP officer đang Active
 export async function assertAccountabilityOfficer(session: ClientSession, actorId: Types.ObjectId) {
-  if (
-    !(await m.users!.findOneAndUpdate(
-      { _id: actorId, accountState: 'Active' },
-      { $inc: { __v: 1 } },
-      { session },
-    ))
-  ) {
-    throw new DomainError('account is not active', 'locked')
-  }
-  const roles = await m
-    .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-    .session(session)
-    .lean()
-  if (
-    !(await m.userRoleAssignments!.findOneAndUpdate(
-      {
-        userId: actorId,
-        roleId: { $in: roles.map((r) => r._id) },
-        revokedAt: null,
-      },
-      { $inc: { __v: 1 } },
-      { session },
-    ))
-  ) {
-    throw new DomainError('ICPDP officer role required', 'forbidden')
-  }
+  await lockActiveUser(session, actorId)
+  await lockIcpdpOfficerRole(session, actorId)
 }
 // Ghi audit log báo cáo/quyết toán và queue thông báo cho ban chủ nhiệm
 export async function accountabilityAudit(
@@ -47,22 +27,16 @@ export async function accountabilityAudit(
   officer: boolean,
   reason?: string,
 ) {
-  await m.auditLogs!.create(
-    [
-      {
-        entityType,
-        entityId,
-        action,
-        actorId,
-        actorRole: officer ? 'ICPDP_OFFICER' : 'Club Member',
-        after,
-        reason,
-        correlationId: randomUUID(),
-        at: now,
-      },
-    ],
-    { session },
-  )
+  await writeAudit(session, {
+    entityType,
+    entityId,
+    action,
+    actorId,
+    actorRole: officer ? 'ICPDP_OFFICER' : 'Club Member',
+    after,
+    reason,
+    at: now,
+  })
   const submitted = await m
     .auditLogs!.findOne({
       entityType,

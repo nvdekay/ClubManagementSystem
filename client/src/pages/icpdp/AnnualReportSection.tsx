@@ -1,8 +1,9 @@
+import { ApiError } from '@/services/apiError'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 
-import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
+import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
@@ -13,7 +14,6 @@ import { useAnnualReportDownload, useAnnualReportPreview } from '@/hooks/useExpo
 import type { DimensionCode } from '@/services/evaluationSchemes'
 import type { Classification } from '@/services/evaluations'
 import {
-  ExportRequestError,
   MAX_ACHIEVEMENTS,
   MAX_REMARKS,
   type AnnualFormat,
@@ -24,6 +24,8 @@ import {
 import { cn } from '@/utils/cn'
 import { formatMoney } from '@/utils/formatMoney'
 import { saveFile } from '@/utils/saveFile'
+import { clubStateLabel, ratingLabel, ratingTone } from '@/pages/icpdp/clubFormat'
+import { AppField } from '@/components/ui/field/AppField'
 
 const SEASONS: Season[] = ['SPRING', 'SUMMER', 'FALL']
 const CLASSIFICATIONS: Classification[] = ['EXCELLENT', 'GOOD', 'FAIR', 'NEEDS_IMPROVEMENT']
@@ -53,49 +55,6 @@ function trendLabel(t: TFunction, trend: Trend): string {
       return t('exports.trend_DOWN')
     default:
       return t('exports.trend_STABLE')
-  }
-}
-
-// Dịch xếp loại đánh giá sang nhãn hiển thị
-function ratingLabel(t: TFunction, value: Classification): string {
-  switch (value) {
-    case 'EXCELLENT':
-      return t('evaluations.ratingEXCELLENT')
-    case 'GOOD':
-      return t('evaluations.ratingGOOD')
-    case 'FAIR':
-      return t('evaluations.ratingFAIR')
-    default:
-      return t('evaluations.ratingNEEDS_IMPROVEMENT')
-  }
-}
-
-// Chọn màu badge theo xếp loại đánh giá
-function ratingTone(value: Classification): AppBadgeTone {
-  return value === 'EXCELLENT'
-    ? 'success'
-    : value === 'GOOD'
-      ? 'info'
-      : value === 'FAIR'
-        ? 'warning'
-        : 'danger'
-}
-
-// Dịch trạng thái vòng đời CLB sang nhãn hiển thị
-function stateLabel(t: TFunction, state: string): string {
-  switch (state) {
-    case 'Active':
-      return t('clubLifecycle.state_Active')
-    case 'Suspended':
-      return t('clubLifecycle.state_Suspended')
-    case 'Dissolving':
-      return t('clubLifecycle.state_Dissolving')
-    case 'Dissolved':
-      return t('clubLifecycle.state_Dissolved')
-    case 'Pending Setup':
-      return t('clubLifecycle.state_Pending Setup')
-    default:
-      return state
   }
 }
 
@@ -255,7 +214,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
 
           {failure && (
             <AppNotice tone="danger" role="alert">
-              {failure instanceof ExportRequestError && failure.status === 404
+              {failure instanceof ApiError && failure.status === 404
                 ? t('exports.annualNotFound')
                 : `${t('exports.failed')} ${failure.message}`}
             </AppNotice>
@@ -287,7 +246,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
                     {Object.entries(report.overview.clubsByState).map(([state, count]) => (
                       <li key={state}>
                         <AppBadge>
-                          {stateLabel(t, state)}: {count}
+                          {clubStateLabel(t, state)}: {count}
                         </AppBadge>
                       </li>
                     ))}
@@ -379,7 +338,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
                             <td className="px-3 py-2.5 break-words text-muted-app">
                               {row.field ?? '—'}
                             </td>
-                            <td className="px-3 py-2.5">{stateLabel(t, row.state)}</td>
+                            <td className="px-3 py-2.5">{clubStateLabel(t, row.state)}</td>
                             {SEASONS.map((season) => {
                               const term = row.terms[season]
                               return (
@@ -490,7 +449,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
                 <ClubList
                   label={t('exports.annualSuspended')}
                   clubs={report.compliance.suspendedOrDissolving.map(
-                    (club) => `${club.clubName} (${stateLabel(t, club.state)})`,
+                    (club) => `${club.clubName} (${clubStateLabel(t, club.state)})`,
                   )}
                 />
               </Part>
@@ -548,8 +507,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
                 ) : (
                   <AppNotice role="status">{t('exports.annualNoAchievements')}</AppNotice>
                 )}
-                <label className="block text-sm font-medium text-text-app">
-                  {t('exports.annualRemarks')}
+                <AppField label={t('exports.annualRemarks')}>
                   <AppTextarea
                     className="mt-1.5 block w-full font-normal"
                     rows={5}
@@ -557,7 +515,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
                     value={remarks}
                     onChange={(event) => setRemarks(event.target.value.slice(0, MAX_REMARKS))}
                   />
-                </label>
+                </AppField>
                 <p className="text-right text-xs text-muted-app tabular-nums">
                   {t('exports.annualRemarksCount', { count: remarks.length, max: MAX_REMARKS })}
                 </p>

@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import {
   EXPORT_TYPES,
   type ExportFileWriter,
@@ -8,7 +7,6 @@ import {
   type ExportRepository,
 } from '../../domain/data-export.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   exportAnnualReport,
   exportData,
@@ -16,16 +14,14 @@ import {
   previewAnnualReport,
   previewExport,
 } from '../../usecase/data-export.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { download, ok } from './response.js'
 import { actor, parse } from './request.js'
 
-export interface ExportRouteDeps {
+export interface ExportRouteDeps extends SessionDeps {
   repo: ExportRepository
   writer: ExportFileWriter
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
 const filterBody = z
@@ -70,14 +66,14 @@ function filter(body: z.infer<typeof filterBody>): ExportFilter {
 // Mount các route xuất dữ liệu và báo cáo năm của ICPDP
 export function exportRoutes(deps: ExportRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Lấy các tuỳ chọn xuất dữ liệu
-  router.get('/admin/exports/options', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/exports/options', read, async (_req, res) => {
     ok(res, await exportOptions(deps.repo, deps.policy, deps.authRepo, actor(res), new Date()))
   })
   // Xem trước dữ liệu sẽ xuất
-  router.post('/admin/exports/preview', authGuard(guard), async (req, res) => {
+  router.post('/admin/exports/preview', write, async (req, res) => {
     const body = parse(exportPreviewBody, req.body, 'export request')
     ok(
       res,
@@ -92,7 +88,7 @@ export function exportRoutes(deps: ExportRouteDeps): Router {
     )
   })
   // Xuất dữ liệu ra file tải về
-  router.post('/admin/exports', authGuard(guard), async (req, res) => {
+  router.post('/admin/exports', write, async (req, res) => {
     const body = parse(exportBody, req.body, 'export request')
     const result = await exportData(
       deps.repo,
@@ -106,12 +102,12 @@ export function exportRoutes(deps: ExportRouteDeps): Router {
     download(res, result.file, result.fileName)
   })
   // Xem trước báo cáo năm
-  router.post('/admin/exports/annual-report/preview', authGuard(guard), async (req, res) => {
+  router.post('/admin/exports/annual-report/preview', write, async (req, res) => {
     const body = parse(annualPreviewBody, req.body, 'export request')
     ok(res, await previewAnnualReport(deps.repo, deps.authRepo, actor(res), body))
   })
   // Xuất báo cáo năm ra file tải về
-  router.post('/admin/exports/annual-report', authGuard(guard), async (req, res) => {
+  router.post('/admin/exports/annual-report', write, async (req, res) => {
     const body = parse(annualExportBody, req.body, 'export request')
     const result = await exportAnnualReport(
       deps.repo,

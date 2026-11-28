@@ -4,8 +4,6 @@ import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppDialog } from '@/components/ui/dialog/AppDialog'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
@@ -25,6 +23,7 @@ import { CandidateEvaluationPanel } from './CandidateEvaluationPanel'
 import { formatDate, stateTone } from './recruitmentReviewFormat'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
+import { AppField } from '@/components/ui/field/AppField'
 
 interface ApplicationReviewDialogProps {
   onClose: () => void
@@ -180,9 +179,11 @@ export function ApplicationReviewDialog({
             {t('recruitmentApplications.decisionSection')}
           </h3>
           {needsReason && (
-            <label className="block text-sm font-medium text-text-app">
-              {t('recruitmentApplications.actionReason')}
-              {state === 'Screening' && <AppRequiredMark />}
+            <AppField
+              label={t('recruitmentApplications.actionReason')}
+              required={state === 'Screening'}
+              error={field.error('reason')}
+            >
               {/* Chỉ bước Screening cần lý do cho mọi thao tác, nên chỉ ở đó mới kiểm tra khi blur. */}
               <AppTextarea
                 value={reason}
@@ -193,8 +194,7 @@ export function ApplicationReviewDialog({
                   : { 'aria-invalid': field.error('reason') ? true : undefined })}
                 className="mt-1.5 block min-h-16 w-full font-normal"
               />
-              <AppFieldError message={field.error('reason')} />
-            </label>
+            </AppField>
           )}
           {error && (
             <AppNotice tone="danger" role="alert">

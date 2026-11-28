@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import type {
   Complaint,
@@ -12,24 +11,24 @@ import type {
   ComplaintTriage,
 } from '../../domain/complaint.js'
 import { UNDECIDED_COMPLAINT_STATES } from '../../domain/complaint.js'
-import { DomainError } from '../../domain/errors.js'
 import { pageSkip } from '../../domain/paging.js'
 import { clubUserIdsWithPermission } from './club-permission-holders.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { oid, queueNotifications } from './repo-helpers.js'
+import {
+  closeOpenTasks,
+  conflict,
+  found,
+  icpdpOfficerIds,
+  oid,
+  optionalDate,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK = 'COMPLAINT'
 const ENTITY = 'Complaint'
 
-// Ném lỗi conflict với thông báo cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
-// Trả Date nếu giá trị là Date, ngược lại undefined
-function optionalDate(value: unknown): Date | undefined {
-  return value instanceof Date ? value : undefined
-}
 // Chuẩn hóa danh sách minh chứng của khiếu nại
 function evidenceFrom(value: unknown): ComplaintEvidence[] {
   return Array.isArray(value)
@@ -75,19 +74,6 @@ export function mongoComplaintRepository(): ComplaintRepository {
   const tasks = m.approvalTasks!
   const audits = m.auditLogs!
 
-  async function officers(session?: ClientSession): Promise<Types.ObjectId[]> {
-    const roles = await m
-      .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-      .session(session ?? null)
-      .lean()
-    const ids = await m
-      .userRoleAssignments!.distinct('userId', {
-        roleId: { $in: roles.map((role) => role._id) },
-        revokedAt: null,
-      })
-      .session(session ?? null)
-    return ids.map((value) => oid(String(value)))
-  }
   async function audit(
     session: ClientSession,
     id: Types.ObjectId,
@@ -99,30 +85,20 @@ export function mongoComplaintRepository(): ComplaintRepository {
     reason: string | undefined,
     now: Date,
   ) {
-    await audits.create(
-      [
-        {
-          entityType: ENTITY,
-          entityId: id,
-          action,
-          ...(actorId ? { actorId: oid(actorId) } : {}),
-          actorRole,
-          ...(before ? { before } : {}),
-          after,
-          ...(reason ? { reason } : {}),
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: ENTITY,
+      entityId: id,
+      action,
+      ...(actorId ? { actorId: oid(actorId) } : {}),
+      actorRole,
+      ...(before ? { before } : {}),
+      after,
+      ...(reason ? { reason } : {}),
+      at: now,
+    })
   }
   async function closeTask(session: ClientSession, ids: Types.ObjectId[], now: Date) {
-    await tasks.updateMany(
-      { entityType: TASK, entityId: { $in: ids }, state: 'Open' },
-      { $set: { state: 'Closed', closedAt: now } },
-      { session },
-    )
+    await closeOpenTasks(session, TASK, { $in: ids }, now)
   }
 
   /** Lấy tên cho một trang khiếu nại bằng ba query. */
@@ -232,10 +208,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
     }))
   }
   async function icpdpDetail(id: Types.ObjectId): Promise<ComplaintForIcpdp> {
-    const doc = await complaints.findById(id).lean()
-    if (!doc) {
-      throw new DomainError('complaint not found', 'not_found')
-    }
+    const doc = found(await complaints.findById(id).lean(), 'complaint not found')
     return (await forIcpdp([doc as Doc]))[0]!
   }
 
@@ -281,27 +254,21 @@ export function mongoComplaintRepository(): ComplaintRepository {
       ],
       { session },
     )
-    await audits.create(
-      [
-        {
-          entityType: 'Violation',
-          entityId: violationId,
-          action: 'VIOLATION_OPENED',
-          actorId: oid(officerId),
-          actorRole: 'ICPDP Officer',
-          after: {
-            state: 'Open',
-            severity,
-            originType: 'COMPLAINT',
-            originRefId: String(complaint._id),
-          },
-          reason,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'Violation',
+      entityId: violationId,
+      action: 'VIOLATION_OPENED',
+      actorId: oid(officerId),
+      actorRole: 'ICPDP Officer',
+      after: {
+        state: 'Open',
+        severity,
+        originType: 'COMPLAINT',
+        originRefId: String(complaint._id),
+      },
+      reason,
+      at: now,
+    })
     return violationId
   }
 
@@ -370,7 +337,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
           undefined,
           input.now,
         )
-        await queueNotifications(session, await officers(session), {
+        await queueNotifications(session, await icpdpOfficerIds(session), {
           eventCode: 'COMPLAINT_SUBMITTED',
           entityType: ENTITY,
           entityId: id,
@@ -537,10 +504,10 @@ export function mongoComplaintRepository(): ComplaintRepository {
     async decide(complaintId, officerId, decision, now) {
       const id = oid(complaintId)
       await mongoose.connection.transaction(async (session) => {
-        const current = await complaints.findById(id).session(session).lean()
-        if (!current) {
-          throw new DomainError('complaint not found', 'not_found')
-        }
+        const current = found(
+          await complaints.findById(id).session(session).lean(),
+          'complaint not found',
+        )
         if (current.linkedComplaintId) {
           conflict('this complaint follows a linked complaint; decide the linked complaint instead')
         }
@@ -877,7 +844,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
           .lean()
         await queueNotifications(
           session,
-          task?.assigneeId ? [task.assigneeId] : await officers(session),
+          task?.assigneeId ? [task.assigneeId] : await icpdpOfficerIds(session),
           {
             eventCode: 'COMPLAINT_CLUB_RESPONDED',
             entityType: ENTITY,
@@ -925,7 +892,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
             'UC52 E1',
             now,
           )
-          await queueNotifications(session, await officers(session), {
+          await queueNotifications(session, await icpdpOfficerIds(session), {
             eventCode: 'COMPLAINT_RESPONSE_OVERDUE',
             entityType: ENTITY,
             entityId: row._id as Types.ObjectId,

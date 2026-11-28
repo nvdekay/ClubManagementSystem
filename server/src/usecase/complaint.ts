@@ -16,25 +16,11 @@ import { DomainError } from '../domain/errors.js'
 import type { PageRequest } from '../domain/paging.js'
 import {
   assertClubAccess,
-  isObjectId,
   parseObjectId,
   requireIcpdpOfficer,
+  requireSignedIn,
   type AccessActor,
 } from './access.js'
-
-// Kiểm người dùng đã đăng nhập, chưa bị khóa và trả id
-function signedIn(actor: AccessActor | null): string {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!isObjectId(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  return actor.id
-}
 
 // Sinh viên gửi khiếu nại về một CLB hoặc sự kiện
 /** UC50: khiếu nại luôn đến ICPDP trước (BR38); CLB được chọn, sự kiện là tuỳ chọn. */
@@ -44,7 +30,7 @@ export async function submitComplaint(
   input: ComplaintInput,
   now: Date,
 ) {
-  const studentId = signedIn(actor)
+  const studentId = requireSignedIn(actor)
   if (!COMPLAINT_TYPES.includes(input.type)) {
     throw new DomainError('invalid complaint type', 'validation', { field: 'type' })
   }
@@ -67,7 +53,7 @@ export async function submitComplaint(
 
 // Sinh viên xem các khiếu nại của mình
 export async function listMyComplaints(repo: ComplaintRepository, actor: AccessActor | null) {
-  return repo.listMine(signedIn(actor))
+  return repo.listMine(requireSignedIn(actor))
 }
 
 // Sinh viên rút khiếu nại chưa được ICPDP quyết định
@@ -79,7 +65,7 @@ export async function withdrawComplaint(
   now: Date,
 ) {
   const withdrawn = await repo.withdraw(
-    signedIn(actor),
+    requireSignedIn(actor),
     parseObjectId(complaintId, 'complaint id'),
     now,
   )

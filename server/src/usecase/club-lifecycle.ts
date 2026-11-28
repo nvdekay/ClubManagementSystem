@@ -4,7 +4,7 @@ import {
   validateLifecycleReason,
   type ClubLifecycleRepository,
 } from '../domain/club-lifecycle.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import { isObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
@@ -13,10 +13,7 @@ async function club(repo: ClubLifecycleRepository, clubId: string, now: Date) {
   if (!isObjectId(clubId)) {
     throw new DomainError('invalid club id', 'validation')
   }
-  const found = await repo.detail(clubId, now)
-  if (!found) {
-    throw new DomainError('club not found', 'not_found')
-  }
+  const found = orNotFound(await repo.detail(clubId, now), 'club')
   return found
 }
 

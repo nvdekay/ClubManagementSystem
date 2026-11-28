@@ -1,9 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubLifecycleRepository } from '../../domain/club-lifecycle.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   dissolveClub,
   getClubLifecycle,
@@ -11,18 +9,15 @@ import {
   reactivateClub,
   suspendClub,
 } from '../../usecase/club-lifecycle.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface ClubLifecycleRouteDeps {
+export interface ClubLifecycleRouteDeps extends SessionDeps {
   repo: ClubLifecycleRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const lifecycleReasonBody = z.object({ reason: z.string().max(2_000) }).strict()
 export const suspendBody = lifecycleReasonBody
   .extend({
@@ -33,14 +28,14 @@ export const suspendBody = lifecycleReasonBody
 // Mount các route quản lý vòng đời CLB của ICPDP
 export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // ICPDP liệt kê các CLB cùng trạng thái vòng đời
-  router.get('/admin/clubs', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/clubs', read, async (_req, res) => {
     ok(res, await listClubLifecycles(deps.repo, deps.authRepo, actor(res), new Date()))
   })
   // ICPDP xem chi tiết vòng đời của một CLB
-  router.get('/admin/clubs/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/clubs/:id', read, async (req, res) => {
     ok(
       res,
       await getClubLifecycle(
@@ -54,7 +49,7 @@ export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
     )
   })
   // ICPDP tạm đình chỉ một CLB
-  router.post('/admin/clubs/:id/suspend', authGuard(guard), async (req, res) => {
+  router.post('/admin/clubs/:id/suspend', write, async (req, res) => {
     const body = parse(suspendBody, req.body, 'club lifecycle request')
     ok(
       res,
@@ -69,7 +64,7 @@ export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
     )
   })
   // ICPDP kích hoạt lại CLB đã bị đình chỉ
-  router.post('/admin/clubs/:id/reactivate', authGuard(guard), async (req, res) => {
+  router.post('/admin/clubs/:id/reactivate', write, async (req, res) => {
     ok(
       res,
       await reactivateClub(
@@ -83,7 +78,7 @@ export function clubLifecycleRoutes(deps: ClubLifecycleRouteDeps): Router {
     )
   })
   // ICPDP giải thể một CLB
-  router.post('/admin/clubs/:id/dissolve', authGuard(guard), async (req, res) => {
+  router.post('/admin/clubs/:id/dissolve', write, async (req, res) => {
     ok(
       res,
       await dissolveClub(

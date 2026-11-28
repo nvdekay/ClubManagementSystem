@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
-import { DomainError } from '../../domain/errors.js'
 import type {
   LeadershipTransition,
   LeadershipTransitionRepository,
@@ -13,20 +12,10 @@ import type {
   TransitionTerm,
 } from '../../domain/leadership-transition.js'
 import { LEADER_SEAT_FILTER, otherClubLeaderUserIds } from './club-board.js'
-import { queueNotifications } from './repo-helpers.js'
+import { conflict, notFound, queueNotifications, strings, writeAudit } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
-
-// Ném DomainError loại conflict với thông điệp cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
-
-// Ném DomainError loại not_found với thông điệp cho trước
-function notFound(message: string): never {
-  throw new DomainError(message, 'not_found')
-}
 
 // Ánh xạ document nhiệm kỳ sang TransitionTerm
 function term(doc: Doc): TransitionTerm {
@@ -37,13 +26,6 @@ function term(doc: Doc): TransitionTerm {
     endAt: doc.endAt as Date,
     state: String(doc.state),
   }
-}
-
-// Lọc mảng, chỉ giữ phần tử là chuỗi
-function stringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : []
 }
 
 // Lọc mảng, chỉ giữ phần tử là object
@@ -94,7 +76,7 @@ function boardRoles(value: unknown): TransitionBoardRole[] | undefined {
         ...(typeof item.unit === 'string' ? { unit: item.unit } : {}),
         isLeaderRole: item.isLeaderRole === true,
         isSingleHolder: item.isSingleHolder !== false,
-        permissionCodes: stringArray(item.permissionCodes),
+        permissionCodes: strings(item.permissionCodes),
       },
     ]
   })
@@ -126,7 +108,7 @@ export function roleSnapshot(doc: Doc) {
     isLeaderRole: doc.isLeaderRole === true,
     isDefaultMemberRole: doc.isDefaultMemberRole === true,
     isSingleHolder: doc.isSingleHolder !== false,
-    permissionCodes: stringArray(doc.permissionCodes),
+    permissionCodes: strings(doc.permissionCodes),
   }
 }
 
@@ -142,7 +124,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
   const versions = ucmsModels.clubRoleStructureVersions!
   const tasks = ucmsModels.approvalTasks!
   const decisions = ucmsModels.approvalDecisions!
-  const audits = ucmsModels.auditLogs!
 
   // Dựng chi tiết kế hoạch chuyển giao kèm approval task
   async function detail(
@@ -242,7 +223,7 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
       id: String(item._id),
       outcome: item.outcome as TransitionDecision['outcome'],
       ...(typeof item.reason === 'string' ? { reason: item.reason } : {}),
-      followUpObligationIds: stringArray((item.comments as Doc | undefined)?.followUpObligationIds),
+      followUpObligationIds: strings((item.comments as Doc | undefined)?.followUpObligationIds),
       actorId: String(item.actorId),
       at: item.at as Date,
     }))
@@ -366,20 +347,14 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
             { session },
           )
         }
-        await audits.create(
-          [
-            {
-              entityType: 'TransitionPlan',
-              entityId: id,
-              action: 'TRANSITION_PLAN_CLAIMED',
-              actorId: officer,
-              actorRole: 'ICPDP_OFFICER',
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'TransitionPlan',
+          entityId: id,
+          action: 'TRANSITION_PLAN_CLAIMED',
+          actorId: officer,
+          actorRole: 'ICPDP_OFFICER',
+          at: now,
+        })
       })
       const result = await detail(id)
       if (!result) {
@@ -444,23 +419,18 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
             { $set: { state: 'Decided', closedAt: now } },
             { session },
           )
-          await audits.create(
-            [
-              {
-                entityType: 'TransitionPlan',
-                entityId: id,
-                action: 'TRANSITION_PLAN_RETURNED',
-                actorId: officer,
-                actorRole: 'ICPDP_OFFICER',
-                before: { state: 'Pending Confirmation' },
-                after: { state: 'Returned' },
-                reason: input.reason,
-                correlationId,
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'TransitionPlan',
+            entityId: id,
+            action: 'TRANSITION_PLAN_RETURNED',
+            actorId: officer,
+            actorRole: 'ICPDP_OFFICER',
+            before: { state: 'Pending Confirmation' },
+            after: { state: 'Returned' },
+            reason: input.reason,
+            correlationId,
+            at: now,
+          })
           await queueNotifications(session, notifyUsers, {
             eventCode: 'TRANSITION_PLAN_RETURNED',
             entityType: 'TransitionPlan',
@@ -725,32 +695,27 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
           { $set: { state: 'Decided', closedAt: now } },
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'TransitionPlan',
-              entityId: id,
-              action: 'TRANSITION_PLAN_CONFIRMED',
-              actorId: officer,
-              actorRole: 'ICPDP_OFFICER',
-              before: {
-                state: 'Pending Confirmation',
-                fromTermState: 'Active',
-                toTermState: 'Planned',
-              },
-              after: {
-                state: 'Confirmed',
-                fromTermState: 'Closed',
-                toTermState: 'Active',
-                followUpObligationIds: input.followUpObligationIds,
-              },
-              reason: input.reason,
-              correlationId,
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'TransitionPlan',
+          entityId: id,
+          action: 'TRANSITION_PLAN_CONFIRMED',
+          actorId: officer,
+          actorRole: 'ICPDP_OFFICER',
+          before: {
+            state: 'Pending Confirmation',
+            fromTermState: 'Active',
+            toTermState: 'Planned',
+          },
+          after: {
+            state: 'Confirmed',
+            fromTermState: 'Closed',
+            toTermState: 'Active',
+            followUpObligationIds: input.followUpObligationIds,
+          },
+          reason: input.reason,
+          correlationId,
+          at: now,
+        })
         await queueNotifications(session, notifyUsers, {
           eventCode: 'LEADERSHIP_TRANSITION_CONFIRMED',
           entityType: 'TransitionPlan',

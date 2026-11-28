@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 
 import { ClubCover } from '@/components/custom/ClubCover'
 import { ClubLogo } from '@/components/custom/ClubLogo'
@@ -17,7 +16,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useClubLifecycles } from '@/hooks/useClubLifecycle'
 
 import { ClubManageDialog } from './ClubManageDialog'
-import { formatDay } from '@/utils/formatDate'
+import { clubStateLabel } from '@/pages/icpdp/clubFormat'
+import { useFormat } from '@/hooks/useFormat'
 
 const PAGE_SIZE = 20
 const tones: Record<string, AppBadgeTone> = {
@@ -34,7 +34,8 @@ const tones: Record<string, AppBadgeTone> = {
  * vòng đời UC15 chỉ cách một cú nhấp.
  */
 export function IcpdpClubsPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day: date } = useFormat()
   const auth = useAuth()
   const isOfficer = auth.data?.systemRoles.includes('ICPDP_OFFICER') ?? false
   const clubs = useClubLifecycles(isOfficer)
@@ -44,27 +45,6 @@ export function IcpdpClubsPage() {
   const [state, setState] = useState('')
   const [page, setPage] = useState(1)
   const [managing, setManaging] = useState<string | null>(null)
-
-  function stateLabel(value: string): string {
-    switch (value) {
-      case 'Active':
-        return t('clubLifecycle.state_Active')
-      case 'Suspended':
-        return t('clubLifecycle.state_Suspended')
-      case 'Dissolving':
-        return t('clubLifecycle.state_Dissolving')
-      case 'Dissolved':
-        return t('clubLifecycle.state_Dissolved')
-      case 'Pending Setup':
-        return t('clubLifecycle.state_Pending Setup')
-      default:
-        return value
-    }
-  }
-
-  function date(value: string): string {
-    return formatDay(value, i18n.language)
-  }
 
   // Áp dụng thay đổi bộ lọc rồi quay về trang đầu
   function filter(update: () => void) {
@@ -76,17 +56,7 @@ export function IcpdpClubsPage() {
     return <AppSkeleton className="h-72 w-full" />
   }
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('clubLifecycle.signIn')}</p>
-        <Link
-          className="font-semibold text-primary-app hover:underline"
-          to="/login?returnTo=%2Ficpdp%2Fclubs"
-        >
-          {t('clubLifecycle.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
   if (!isOfficer) {
     return (
@@ -177,7 +147,7 @@ export function IcpdpClubsPage() {
             value={state}
             options={[
               { value: '', label: t('clubLifecycle.allStates') },
-              ...states.map((value) => ({ value, label: stateLabel(value) })),
+              ...states.map((value) => ({ value, label: clubStateLabel(t, value) })),
             ]}
             onChange={(value) => filter(() => setState(value))}
           />
@@ -261,7 +231,9 @@ export function IcpdpClubsPage() {
                     {club.contactEmail ?? club.code}
                   </span>
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    <AppBadge tone={tones[club.state] ?? 'info'}>{stateLabel(club.state)}</AppBadge>
+                    <AppBadge tone={tones[club.state] ?? 'info'}>
+                      {clubStateLabel(t, club.state)}
+                    </AppBadge>
                     {club.dissolution && club.state !== 'Dissolved' && (
                       <AppBadge tone="danger">
                         {t('clubLifecycle.dissolvingFrom', {
@@ -297,9 +269,6 @@ export function IcpdpClubsPage() {
             pageIndex={page - 1}
             pageCount={Math.ceil(visible.length / PAGE_SIZE)}
             onPageChange={(index) => setPage(index + 1)}
-            prevLabel={t('discovery.prev')}
-            nextLabel={t('discovery.next')}
-            pageLabel={(number) => t('discovery.pageLabel', { page: number })}
             navLabel={t('discovery.pages')}
           />
         </>
@@ -309,7 +278,7 @@ export function IcpdpClubsPage() {
         <ClubManageDialog
           key={selected.id}
           club={selected}
-          stateLabel={stateLabel(selected.state)}
+          stateLabel={clubStateLabel(t, selected.state)}
           stateTone={tones[selected.state] ?? 'info'}
           csrfToken={auth.data.csrfToken}
           onClose={() => setManaging(null)}

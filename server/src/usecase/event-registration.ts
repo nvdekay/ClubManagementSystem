@@ -1,4 +1,4 @@
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type {
   EventRegistrationAnswer,
   EventRegistrationContext,
@@ -6,21 +6,7 @@ import type {
 } from '../domain/event-registration.js'
 import { validateEventRegistrationAnswers } from '../domain/event-registration.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import { isObjectId, parseObjectId, type AccessActor } from './access.js'
-
-// Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
-function student(actor: AccessActor | null): string {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!isObjectId(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  return actor.id
-}
+import { parseObjectId, requireSignedIn, type AccessActor } from './access.js'
 
 // Kiểm sự kiện đang mở đăng ký và sinh viên thuộc đối tượng được tham gia
 function assertOpen(context: EventRegistrationContext, now: Date): void {
@@ -47,7 +33,7 @@ export async function getEventRegistrationContext(
   eventId: string,
   now: Date,
 ) {
-  const result = await repo.context(parseObjectId(eventId, 'event id'), student(actor))
+  const result = await repo.context(parseObjectId(eventId, 'event id'), requireSignedIn(actor))
   if (!result) {
     throw new DomainError('event not found', 'not_found')
   }
@@ -67,7 +53,7 @@ export async function listMyEventRegistrations(
   repo: EventRegistrationRepository,
   actor: AccessActor | null,
 ) {
-  return repo.listMine(student(actor))
+  return repo.listMine(requireSignedIn(actor))
 }
 
 // Sinh viên đăng ký tham gia sự kiện sau khi kiểm câu trả lời form
@@ -79,12 +65,9 @@ export async function registerForEvent(
   answers: Record<string, EventRegistrationAnswer>,
   now: Date,
 ) {
-  const studentId = student(actor)
+  const studentId = requireSignedIn(actor)
   const validEventId = parseObjectId(eventId, 'event id')
-  const context = await repo.context(validEventId, studentId)
-  if (!context) {
-    throw new DomainError('event not found', 'not_found')
-  }
+  const context = orNotFound(await repo.context(validEventId, studentId), 'event')
   assertOpen(context, now)
   if (context.registration && context.registration.state !== 'Cancelled') {
     throw new DomainError('student is already registered for this event', 'conflict')
@@ -115,7 +98,7 @@ export async function cancelEventRegistration(
   registrationId: string,
   now: Date,
 ) {
-  const studentId = student(actor)
+  const studentId = requireSignedIn(actor)
   const validRegistrationId = parseObjectId(registrationId, 'registration id')
   const registration = await repo.findOwned(validRegistrationId, studentId)
   if (!registration) {

@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import {
   normalizePeriodicDraft,
@@ -6,7 +5,7 @@ import {
 } from '../../domain/club-periodic-report.js'
 import { DomainError } from '../../domain/errors.js'
 import { openAccountabilityTask } from './accountability-workflow.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, icpdpOfficerIds, queueNotifications, writeAudit } from './repo-helpers.js'
 import { assertEventWriteAccess } from './club-event-access.js'
 import {
   findPeriodicCampaign,
@@ -56,13 +55,16 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
   }
 
   async function current(session: ClientSession, clubId: string, id: string, revision: number) {
-    const report = await m
-      .periodicReports!.findOne({ _id: new Types.ObjectId(id), clubId: new Types.ObjectId(clubId) })
-      .session(session)
-      .lean()
-    if (!report) {
-      throw new DomainError('periodic report not found', 'not_found')
-    }
+    const report = found(
+      await m
+        .periodicReports!.findOne({
+          _id: new Types.ObjectId(id),
+          clubId: new Types.ObjectId(clubId),
+        })
+        .session(session)
+        .lean(),
+      'periodic report not found',
+    )
     if (!editable.includes(String(report.state)) || Number(report.__v ?? 0) !== revision) {
       throw new DomainError('report changed or is locked; reload before editing', 'conflict')
     }
@@ -77,21 +79,15 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
     after: unknown,
     now: Date,
   ) {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'PeriodicReport',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(userId),
-          actorRole: 'Club Leader',
-          after,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'PeriodicReport',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(userId),
+      actorRole: 'Club Leader',
+      after,
+      at: now,
+    })
   }
 
   return {
@@ -324,15 +320,7 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
           { snapshot },
           now,
         )
-        const roles = await m
-          .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-          .session(session)
-          .distinct('_id')
-        const officers = await m
-          .userRoleAssignments!.find({ roleId: { $in: roles }, revokedAt: null })
-          .session(session)
-          .distinct('userId')
-        await queueNotifications(session, officers, {
+        await queueNotifications(session, await icpdpOfficerIds(session), {
           eventCode: 'PERIODIC_REPORT_SUBMITTED',
           entityType: 'PeriodicReport',
           entityId: report._id as Types.ObjectId,

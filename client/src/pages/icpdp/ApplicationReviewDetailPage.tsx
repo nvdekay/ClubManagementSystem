@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -28,7 +28,10 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { openInNewTab } from '@/utils/openInNewTab'
 import { documentHref } from '@/utils/documentLinks'
-import { formatDate } from '@/utils/formatDate'
+import { applicationSectionLabel } from '@/pages/student/applicationEditorFormat'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 const sectionKeys = ['club-information', 'founders', 'documents', 'other']
 const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const
@@ -36,7 +39,8 @@ const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const
 // Trang ICPDP xem chi tiết hồ sơ lập CLB, nhận xử lý và ra quyết định
 export function ApplicationReviewDetailPage() {
   const { id } = useParams()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const askConfirm = useConfirm()
   const auth = useAuth()
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
@@ -65,21 +69,6 @@ export function ApplicationReviewDetailPage() {
       ) ?? review.data?.versions.at(-1),
     [review.data],
   )
-
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
-
-  function sectionLabel(section: string) {
-    const labels: Record<string, string> = {
-      'club-information': t('reviews.sectionClub'),
-      founders: t('reviews.sectionFounders'),
-      documents: t('reviews.sectionDocuments'),
-      'role-structure': t('reviews.sectionRoles'),
-      other: t('reviews.sectionOther'),
-    }
-    return labels[section]
-  }
 
   // Bật/tắt mục hồ sơ cần chỉnh sửa khi yêu cầu bổ sung
   function toggleSection(section: string) {
@@ -167,17 +156,7 @@ export function ApplicationReviewDetailPage() {
     )
   }
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('reviews.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('reviews.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
   if (!isOfficer) {
     return (
@@ -190,15 +169,10 @@ export function ApplicationReviewDetailPage() {
     return (
       <>
         <PageHeader title={t('reviews.application')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={review.error?.message ?? t('reviews.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void review.refetch()}>
-            {t('reviews.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void review.refetch()}
+        />
       </>
     )
   }
@@ -304,12 +278,13 @@ export function ApplicationReviewDetailPage() {
             <RevisionChanges
               previousNumber={previous.versionNo}
               changes={diffFields(previous, currentVersion, versionFields)}
-              requestedSections={revisionRequest?.sections.map(sectionLabel)}
+              requestedSections={revisionRequest?.sections.map((section) =>
+                applicationSectionLabel(t, section),
+              )}
               reason={revisionRequest?.reason}
             />
           )}
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('reviews.overview')}</h2>
+          <AppPanel title={t('reviews.overview')}>
             <dl className="mt-4 grid gap-5 sm:grid-cols-2">
               <div>
                 <dt className={label}>{t('reviews.clubName')}</dt>
@@ -365,7 +340,7 @@ export function ApplicationReviewDetailPage() {
                 </div>
               )}
             </dl>
-          </section>
+          </AppPanel>
 
           <div className="grid gap-6 2xl:grid-cols-2">
             <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
@@ -453,8 +428,7 @@ export function ApplicationReviewDetailPage() {
             </section>
           </div>
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('reviews.roles')}</h2>
+          <AppPanel title={t('reviews.roles')}>
             <p className="mt-1 text-sm text-muted-app">{t('reviews.rolesHint')}</p>
             <ul className="mt-4 flex flex-wrap gap-2">
               {founders
@@ -471,10 +445,9 @@ export function ApplicationReviewDetailPage() {
                   )
                 })}
             </ul>
-          </section>
+          </AppPanel>
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('reviews.history')}</h2>
+          <AppPanel title={t('reviews.history')}>
             <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">
               {review.data.versions.map((version) => (
                 <li key={version.id} className="relative">
@@ -489,7 +462,7 @@ export function ApplicationReviewDetailPage() {
                 </li>
               ))}
             </ol>
-          </section>
+          </AppPanel>
         </div>
 
         <aside className="min-w-0 space-y-6 xl:sticky xl:top-24">
@@ -509,8 +482,7 @@ export function ApplicationReviewDetailPage() {
               )}
             </div>
           ) : isOpen ? (
-            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-              <h2 className="font-heading text-base font-semibold">{t('reviews.decisionPanel')}</h2>
+            <AppPanel title={t('reviews.decisionPanel')}>
               <p className="mt-1 text-sm text-muted-app">{t('reviews.decisionHint')}</p>
               <div className="mt-5 grid grid-cols-3 gap-1 rounded-lg border border-border-app bg-surface-app p-1">
                 {(['Request revision', 'Approve', 'Reject'] as ReviewOutcome[]).map((value) => (
@@ -551,7 +523,7 @@ export function ApplicationReviewDetailPage() {
                           onChange={() => toggleSection(section)}
                           className="size-4 accent-primary-app"
                         />
-                        {sectionLabel(section)}
+                        {applicationSectionLabel(t, section)}
                       </label>
                     ))}
                   </div>
@@ -610,11 +582,10 @@ export function ApplicationReviewDetailPage() {
                   {t('reviews.success')}
                 </p>
               )}
-            </section>
+            </AppPanel>
           ) : null}
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('reviews.decisions')}</h2>
+          <AppPanel title={t('reviews.decisions')}>
             {decisions.length ? (
               <ol className="mt-4 space-y-4">
                 {decisions.map((decision) => (
@@ -642,7 +613,7 @@ export function ApplicationReviewDetailPage() {
                 <AppEmptyState message={t('reviews.noDecisions')} />
               </div>
             )}
-          </section>
+          </AppPanel>
         </aside>
       </div>
     </>

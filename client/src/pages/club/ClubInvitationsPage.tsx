@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
@@ -15,6 +14,8 @@ import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubInvitations, useRespondToInvitation } from '@/hooks/useClubInvitations'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { formatDate } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 // Trang CLB nhận lời mời tham gia sự kiện và phản hồi
 export function ClubInvitationsPage() {
@@ -89,10 +90,9 @@ export function ClubInvitationsPage() {
       />
       {list.isPending && <AppSkeleton className="h-64 w-full" />}
       {list.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void list.refetch()} retryVariant="primary">
           {list.error.message}
-          <AppButton onClick={() => void list.refetch()}>{t('clubInvitations.retry')}</AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {action.isError && (
         <AppNotice tone="danger" role="alert">
@@ -155,17 +155,15 @@ export function ClubInvitationsPage() {
               )}
               {editable && (
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('clubInvitations.representative')}
+                  <AppField label={t('clubInvitations.representative')}>
                     <AppInput
                       maxLength={2000}
                       className="mt-1.5 block w-full font-normal"
                       value={draft?.representative ?? ''}
                       onChange={(e) => edit(invitation.id, 'representative', e.target.value)}
                     />
-                  </label>
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('clubInvitations.members')}
+                  </AppField>
+                  <AppField label={t('clubInvitations.members')}>
                     <AppInput
                       type="number"
                       min="0"
@@ -174,9 +172,11 @@ export function ClubInvitationsPage() {
                       value={draft?.members ?? ''}
                       onChange={(e) => edit(invitation.id, 'members', e.target.value)}
                     />
-                  </label>
-                  <label className="block text-sm font-medium text-text-app">
-                    {t('clubInvitations.note')}
+                  </AppField>
+                  <AppField
+                    label={t('clubInvitations.note')}
+                    error={field.error('note:' + invitation.id)}
+                  >
                     <AppTextarea
                       maxLength={5000}
                       className="mt-1.5 block w-full font-normal"
@@ -184,8 +184,7 @@ export function ClubInvitationsPage() {
                       aria-invalid={field.error('note:' + invitation.id) ? true : undefined}
                       onChange={(e) => edit(invitation.id, 'note', e.target.value)}
                     />
-                    <AppFieldError message={field.error('note:' + invitation.id)} />
-                  </label>
+                  </AppField>
                   <div className="flex flex-wrap gap-3">
                     <AppButton
                       disabled={action.isPending}

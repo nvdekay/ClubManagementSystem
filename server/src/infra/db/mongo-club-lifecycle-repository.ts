@@ -16,7 +16,7 @@ import {
 } from '../../domain/club-lifecycle.js'
 import { DomainError } from '../../domain/errors.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { queueNotifications } from './repo-helpers.js'
+import { conflict, icpdpOfficerIds, queueNotifications, writeAudit } from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -157,11 +157,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-// Ném lỗi conflict với thông báo cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
-
 // Repository vòng đời CLB: đình chỉ, kích hoạt lại, giải thể
 export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
   const m = ucmsModels
@@ -207,39 +202,24 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
     correlationId: string,
     auditId?: Types.ObjectId,
   ): Promise<void> {
-    await m.auditLogs!.create(
-      [
-        {
-          ...(auditId ? { _id: auditId } : {}),
-          entityType: 'Club',
-          entityId: clubId,
-          action,
-          ...(actorId
-            ? { actorId: new Types.ObjectId(actorId), actorRole: 'ICPDP_OFFICER' }
-            : { actorRole: 'SYSTEM' }),
-          before,
-          after,
-          ...(reason ? { reason } : {}),
-          correlationId,
-          at,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      ...(auditId ? { _id: auditId } : {}),
+      entityType: 'Club',
+      entityId: clubId,
+      action,
+      ...(actorId
+        ? { actorId: new Types.ObjectId(actorId), actorRole: 'ICPDP_OFFICER' }
+        : { actorRole: 'SYSTEM' }),
+      before,
+      after,
+      ...(reason ? { reason } : {}),
+      correlationId,
+      at,
+    })
   }
 
   async function officerIds(): Promise<string[]> {
-    const role = await m
-      .roles!.findOne({ code: 'ICPDP_OFFICER', scope: 'system' })
-      .select('_id')
-      .lean()
-    if (!role) {
-      return []
-    }
-    const ids = await m
-      .userRoleAssignments!.find({ roleId: role._id, revokedAt: null })
-      .distinct('userId')
-    return ids.map(String)
+    return (await icpdpOfficerIds()).map(String)
   }
 
   async function memberIds(clubId: Types.ObjectId, session: ClientSession): Promise<unknown[]> {
@@ -469,22 +449,17 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
             ],
             { session },
           )
-          await m.auditLogs!.create(
-            [
-              {
-                entityType: 'SuspensionRequest',
-                entityId: requestId,
-                action: 'SUSPENSION_REQUEST_APPROVED',
-                actorId: new Types.ObjectId(actorId),
-                actorRole: 'ICPDP_OFFICER',
-                after: result,
-                reason: input.decisionReason,
-                correlationId,
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'SuspensionRequest',
+            entityId: requestId,
+            action: 'SUSPENSION_REQUEST_APPROVED',
+            actorId: new Types.ObjectId(actorId),
+            actorRole: 'ICPDP_OFFICER',
+            after: result,
+            reason: input.decisionReason,
+            correlationId,
+            at: now,
+          })
         }
         return result
       })

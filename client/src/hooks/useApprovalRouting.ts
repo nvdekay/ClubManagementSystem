@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   activateRoutingRuleSet,
   createRoutingDraft,
@@ -32,9 +33,8 @@ export function useRoutingSimulation(id: string, limit: number, enabled: boolean
 }
 // Mutation tạo, lưu hoặc kích hoạt bộ luật định tuyến, rồi làm mới cache
 export function useRoutingAction() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       input:
         | { kind: 'create'; rules: RoutingRule[]; csrfToken: string }
         | { kind: 'save'; id: string; rules: RoutingRule[]; csrfToken: string }
@@ -48,8 +48,6 @@ export function useRoutingAction() {
       }
       return activateRoutingRuleSet(input.id, input.csrfToken)
     },
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: routingKeyRoot })
-    },
-  })
+    [routingKeyRoot],
+  )
 }

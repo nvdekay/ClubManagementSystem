@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 
 import { SimilarClubHints } from '@/components/custom/SimilarClubHints'
@@ -367,17 +367,7 @@ export function ApplicationEditorPage() {
     )
   }
   if (!auth.data) {
-    return (
-      <AppNotice className="max-w-3xl">
-        <p>{t('applications.signIn')}</p>
-        <Link
-          className="inline-block font-medium text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('applications.signInLink')}
-        </Link>
-      </AppNotice>
-    )
+    return null
   }
   if (config.isError || !config.data) {
     return (

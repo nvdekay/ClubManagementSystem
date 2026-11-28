@@ -12,20 +12,15 @@ import type {
 } from '../../domain/board-nomination.js'
 import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
 import { MAX_VICE_LEADERS } from '../../domain/club-application.js'
-import { DomainError } from '../../domain/errors.js'
-import { queueNotifications } from './repo-helpers.js'
+import {
+  conflict,
+  icpdpOfficerIds,
+  notFound,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 import { LEADER_SEAT_FILTER } from './club-board.js'
-
-// Ném lỗi not_found với thông báo cho trước
-function notFound(message: string): never {
-  throw new DomainError(message, 'not_found')
-}
-
-// Ném lỗi conflict với thông báo cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
 
 // Ánh xạ document thành BoardTerm
 function mapTerm(doc: Record<string, unknown>): BoardTerm {
@@ -89,9 +84,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
   const seats = ucmsModels.boardNominationSeats!
   const tasks = ucmsModels.approvalTasks!
   const decisions = ucmsModels.approvalDecisions!
-  const roleAssignments = ucmsModels.userRoleAssignments!
-  const systemRoles = ucmsModels.roles!
-  const audits = ucmsModels.auditLogs!
 
   async function detail(
     nominationId: Types.ObjectId,
@@ -191,21 +183,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       seats: nominationSeats,
       decisions: mappedDecisions,
     }
-  }
-
-  async function officerIds(session: ClientSession): Promise<Types.ObjectId[]> {
-    const role = await systemRoles
-      .findOne({ code: 'ICPDP_OFFICER', scope: 'system' })
-      .session(session)
-      .lean()
-    if (!role) {
-      return []
-    }
-    const current = await roleAssignments
-      .find({ roleId: role._id, revokedAt: null })
-      .session(session)
-      .lean()
-    return current.map((item) => item.userId as Types.ObjectId)
   }
 
   // Id các ghế Phó chủ nhiệm của CLB, cùng cách nhận diện với quyền Club Leader (BR47)
@@ -527,7 +504,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           ],
           { session },
         )
-        const recipientIds = await officerIds(session)
+        const recipientIds = await icpdpOfficerIds(session)
         await queueNotifications(session, recipientIds, {
           eventCode: 'BOARD_NOMINATION_SUBMITTED',
           entityType: 'BoardNomination',
@@ -535,21 +512,15 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           payload: { clubId, clubName: String(club.name) },
           now,
         })
-        await audits.create(
-          [
-            {
-              entityType: 'BoardNomination',
-              entityId: nominationId,
-              action: 'BOARD_NOMINATION_SUBMITTED',
-              actorId: actorObjectId,
-              actorRole: 'CLUB_LEADER',
-              after: { clubId, termId, seats: nominationSeats },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'BoardNomination',
+          entityId: nominationId,
+          action: 'BOARD_NOMINATION_SUBMITTED',
+          actorId: actorObjectId,
+          actorRole: 'CLUB_LEADER',
+          after: { clubId, termId, seats: nominationSeats },
+          at: now,
+        })
         void seatDocs
         void taskDocs
       })
@@ -620,20 +591,14 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
         if (changed.matchedCount !== 1) {
           return conflict('board nomination was claimed')
         }
-        await audits.create(
-          [
-            {
-              entityType: 'BoardNomination',
-              entityId: id,
-              action: 'BOARD_NOMINATION_CLAIMED',
-              actorId: officerObjectId,
-              actorRole: 'ICPDP_OFFICER',
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'BoardNomination',
+          entityId: id,
+          action: 'BOARD_NOMINATION_CLAIMED',
+          actorId: officerObjectId,
+          actorRole: 'ICPDP_OFFICER',
+          at: now,
+        })
       })
       const result = await detail(id)
       if (!result) {
@@ -921,28 +886,23 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           }
         }
         const correlationId = randomUUID()
-        await audits.create(
-          [
-            {
-              entityType: 'BoardNomination',
-              entityId: id,
-              action: `BOARD_NOMINATION_${nominationState.toUpperCase().replace(' ', '_')}`,
-              actorId: officerObjectId,
-              actorRole: 'ICPDP_OFFICER',
-              before: { nominationState: 'Pending Confirmation', clubState: club.state },
-              after: {
-                nominationState,
-                clubState: foundingLeaderConfirmed ? 'Active' : club.state,
-                confirmedSeatIds: finalConfirmed.map((seat) => String(seat._id)),
-                returnedSeatIds: finalReturned.map((seat) => String(seat._id)),
-              },
-              reason: decisionReason,
-              correlationId,
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'BoardNomination',
+          entityId: id,
+          action: `BOARD_NOMINATION_${nominationState.toUpperCase().replace(' ', '_')}`,
+          actorId: officerObjectId,
+          actorRole: 'ICPDP_OFFICER',
+          before: { nominationState: 'Pending Confirmation', clubState: club.state },
+          after: {
+            nominationState,
+            clubState: foundingLeaderConfirmed ? 'Active' : club.state,
+            confirmedSeatIds: finalConfirmed.map((seat) => String(seat._id)),
+            returnedSeatIds: finalReturned.map((seat) => String(seat._id)),
+          },
+          reason: decisionReason,
+          correlationId,
+          at: now,
+        })
         const recipients = [
           String(nomination.submittedBy),
           ...pendingSeats.map((seat) =>

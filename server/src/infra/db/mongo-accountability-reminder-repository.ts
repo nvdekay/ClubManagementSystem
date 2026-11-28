@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import type { AccountabilityReminderRepository } from '../../domain/accountability-reminder.js'
 import { DomainError } from '../../domain/errors.js'
-import { queueNotifications } from './repo-helpers.js'
+import { icpdpOfficerIds, queueNotifications, writeAudit } from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { postEventDeadline } from './post-event-report-deadlines.js'
 import { ucmsModels as m } from './ucms-models.js'
@@ -36,20 +35,14 @@ async function remindOnce(
   // Chỉ khoá (tăng __v) khi thật sự gửi: nếu thực thể đổi sau khi transaction đọc, lệnh ghi này
   // xung đột và transaction chạy lại; tăng __v mỗi lượt quét làm editor đang mở bị 409.
   await lock()
-  await m.auditLogs!.create(
-    [
-      {
-        entityType: type,
-        entityId: id,
-        action: code,
-        actorRole: 'SYSTEM',
-        after: { dueAt },
-        correlationId: randomUUID(),
-        at: now,
-      },
-    ],
-    { session },
-  )
+  await writeAudit(session, {
+    entityType: type,
+    entityId: id,
+    action: code,
+    actorRole: 'SYSTEM',
+    after: { dueAt },
+    at: now,
+  })
   await queueNotifications(session, await clubBoardUserIds(clubId, session), {
     eventCode: code,
     entityType: type,
@@ -60,22 +53,13 @@ async function remindOnce(
   // Leo thang cũng gửi tới ICPDP, dưới mã riêng để hiện trong workspace của cán bộ.
   const officerCode = OFFICER_CODES[code]
   if (officerCode) {
-    const roles = await m
-      .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-      .session(session)
-      .lean()
-    const assignments = await m
-      .userRoleAssignments!.find({
-        roleId: { $in: roles.map((r) => r._id) },
-        revokedAt: null,
-      })
-      .session(session)
-      .lean()
-    await queueNotifications(
-      session,
-      assignments.map((a) => a.userId),
-      { eventCode: officerCode, entityType: type, entityId: id, payload: { dueAt }, now },
-    )
+    await queueNotifications(session, await icpdpOfficerIds(session), {
+      eventCode: officerCode,
+      entityType: type,
+      entityId: id,
+      payload: { dueAt },
+      now,
+    })
   }
   return 1
 }

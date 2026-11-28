@@ -1,6 +1,5 @@
 import { raw, Router, type Request } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import type {
   ClubEventAction,
@@ -11,7 +10,6 @@ import type {
 } from '../../domain/club-event.js'
 import { PROPOSAL_DOCUMENT_MAX_BYTES } from '../../domain/club-event-rules.js'
 import { DomainError } from '../../domain/errors.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   actOnClubEvent,
   clubEventOptions,
@@ -27,11 +25,10 @@ import {
   uploadEventProposalDocument,
   uploadEventProposalTemplate,
 } from '../../usecase/club-event.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor } from './request.js'
+import { actor, objectId, parse as parseInput } from './request.js'
 
-export const eventObjectId = z.string().regex(/^[0-9a-f]{24}$/i)
 const date = z.string().datetime()
 const expectedVersion = z.number().int().nonnegative()
 const reason = z.string().trim().min(1).max(2000)
@@ -52,7 +49,7 @@ export const clubEventBody = z
     startAt: date,
     endAt: date,
     venueText: z.string().trim().max(300).optional(),
-    propertyId: eventObjectId.optional(),
+    propertyId: objectId.optional(),
     audienceScope: z.literal('PUBLIC'),
     capacity: z.number().int().min(1).max(100000),
     riskNote: z.string().max(5000).optional(),
@@ -64,7 +61,7 @@ export const clubEventBody = z
             startAt: date,
             endAt: date,
             venueText: z.string().trim().max(300).optional(),
-            propertyId: eventObjectId.optional(),
+            propertyId: objectId.optional(),
           })
           .strict(),
       )
@@ -83,7 +80,7 @@ export const clubEventBody = z
       )
       .max(50)
       .default([]),
-    bookingIds: z.array(eventObjectId).max(50),
+    bookingIds: z.array(objectId).max(50),
     registrationForm: z.array(formField).max(30).optional(),
   })
   .strict()
@@ -108,18 +105,18 @@ export const clubEventRescheduleBody = z
     startAt: date,
     endAt: date,
     venueText: z.string().max(300).optional(),
-    propertyId: eventObjectId.optional(),
+    propertyId: objectId.optional(),
   })
   .strict()
 export const clubEventCapacityBody = z
   .object({ capacity: z.number().int().min(1).max(100000) })
   .strict()
-export const clubEventPromoteBody = z.object({ registrationId: eventObjectId }).strict()
+export const clubEventPromoteBody = z.object({ registrationId: objectId }).strict()
 export const clubEventCheckInBody = z
-  .object({ studentId: eventObjectId, reason: reason.optional() })
+  .object({ studentId: objectId, reason: reason.optional() })
   .strict()
 export const clubEventCorrectBody = z
-  .object({ studentId: eventObjectId, reason, checkedInAt: date.optional(), absent: z.boolean() })
+  .object({ studentId: objectId, reason, checkedInAt: date.optional(), absent: z.boolean() })
   .strict()
 export const clubEventReasonBody = z.object({ reason }).strict()
 export const clubEventFeedbackQuery = z.object({ eventIds: z.string().min(1).max(1000) }).strict()
@@ -134,12 +131,8 @@ export const proposalDocumentAccessQuery = z
   .strict()
 const emptyBody = z.object({}).strict()
 // Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
-function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
-  const result = schema.safeParse(raw)
-  if (!result.success) {
-    throw new DomainError('invalid event request', 'validation', result.error.issues)
-  }
-  return result.data
+function parse<T>(schema: z.ZodType<T>, value: unknown): T {
+  return parseInput(schema, value, 'event request')
 }
 // Chuyển body sự kiện sang input với các trường ngày dạng Date
 function input(body: z.input<typeof clubEventBody>): ClubEventInput {
@@ -207,17 +200,15 @@ function attachmentHeader(fileName: string): string {
     .replace(/[^\x20-\x7e]|["\\]/g, '_')
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)}`
 }
-export interface ClubEventRouteDeps {
+export interface ClubEventRouteDeps extends SessionDeps {
   repo: ClubEventRepository
   access: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
   files?: EventProposalFileStorage | null
 }
 // Mount các route sự kiện của CLB và hồ sơ đề xuất sự kiện
 export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   const usecases = {
     repo: deps.repo,
     access: deps.access,
@@ -227,77 +218,67 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   const uploadTemplate = raw({ type: () => true, limit: '10mb' })
   const base = '/clubs/:clubId/events'
   // Liệt kê sự kiện của CLB
-  router.get(base, authGuard(guard, false), async (req, res) => {
+  router.get(base, read, async (req, res) => {
     ok(
       res,
-      await listClubEvents(
-        usecases,
-        actor(res),
-        parse(eventObjectId, req.params.clubId),
-        new Date(),
-      ),
+      await listClubEvents(usecases, actor(res), parse(objectId, req.params.clubId), new Date()),
     )
   })
   // Lấy các tuỳ chọn khi tạo hoặc sửa sự kiện của CLB
-  router.get(`${base}/options`, authGuard(guard, false), async (req, res) => {
+  router.get(`${base}/options`, read, async (req, res) => {
     ok(
       res,
-      await clubEventOptions(
-        usecases,
-        actor(res),
-        parse(eventObjectId, req.params.clubId),
-        new Date(),
-      ),
+      await clubEventOptions(usecases, actor(res), parse(objectId, req.params.clubId), new Date()),
     )
   })
   // Lấy dữ liệu phản hồi của các sự kiện được chọn
-  router.get(`${base}/feedback`, authGuard(guard, false), async (req, res) => {
+  router.get(`${base}/feedback`, read, async (req, res) => {
     const query = parse(clubEventFeedbackQuery, req.query)
     ok(
       res,
       await clubEventFeedback(
         usecases,
         actor(res),
-        parse(eventObjectId, req.params.clubId),
+        parse(objectId, req.params.clubId),
         query.eventIds.split(','),
         new Date(),
       ),
     )
   })
   // Xem chi tiết một sự kiện của CLB
-  router.get(`${base}/:id`, authGuard(guard, false), async (req, res) => {
+  router.get(`${base}/:id`, read, async (req, res) => {
     ok(
       res,
       await getClubEvent(
         usecases,
         actor(res),
-        parse(eventObjectId, req.params.clubId),
-        parse(eventObjectId, req.params.id),
+        parse(objectId, req.params.clubId),
+        parse(objectId, req.params.id),
         new Date(),
       ),
     )
   })
   // Liệt kê người tham gia sự kiện
-  router.get(`${base}/:id/participants`, authGuard(guard, false), async (req, res) => {
+  router.get(`${base}/:id/participants`, read, async (req, res) => {
     ok(
       res,
       await clubEventParticipants(
         usecases,
         actor(res),
-        parse(eventObjectId, req.params.clubId),
-        parse(eventObjectId, req.params.id),
+        parse(objectId, req.params.clubId),
+        parse(objectId, req.params.id),
         new Date(),
       ),
     )
   })
   // Proposal creation: validate HTTP input and create a draft; submit is a separate action.
-  router.post(base, authGuard(guard), async (req, res) => {
+  router.post(base, write, async (req, res) => {
     ok(
       res,
       await createClubEvent(
         usecases,
         actor(res),
-        parse(eventObjectId, req.params.clubId),
+        parse(objectId, req.params.clubId),
         input(parse(clubEventBody, req.body)),
         new Date(),
       ),
@@ -368,14 +349,14 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   ]
   // Đăng ký các hành động trên sự kiện (lưu, nộp, công bố, huỷ, dời lịch, điểm danh...)
   for (const action of actions) {
-    router.post(`${base}/:id/${action.path}`, authGuard(guard), async (req, res) => {
+    router.post(`${base}/:id/${action.path}`, write, async (req, res) => {
       ok(
         res,
         await actOnClubEvent(
           usecases,
           actor(res),
-          parse(eventObjectId, req.params.clubId),
-          parse(eventObjectId, req.params.id),
+          parse(objectId, req.params.clubId),
+          parse(objectId, req.params.id),
           action.parse(req.body),
           new Date(),
         ),
@@ -383,11 +364,11 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
     })
   }
   // Proposal document endpoints: template metadata/download, evidence upload, and access URLs.
-  router.get('/events/proposal-template', authGuard(guard, false), async (_req, res) => {
+  router.get('/events/proposal-template', read, async (_req, res) => {
     ok(res, await eventProposalTemplateInfo(usecases, actor(res)))
   })
   // The use case chooses between bundled template content and an uploaded template redirect.
-  router.get('/events/proposal-template/download', authGuard(guard, false), async (_req, res) => {
+  router.get('/events/proposal-template/download', read, async (_req, res) => {
     const result = await downloadEventProposalTemplate(usecases, actor(res))
     if (result.kind === 'redirect') {
       return res.redirect(302, result.url)
@@ -398,7 +379,7 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   // Parse a raw file body under the upload size limit; the use case validates the file/state.
   router.post(
     `${base}/:id/proposal-document`,
-    authGuard(guard),
+    write,
     raw({ type: () => true, limit: PROPOSAL_DOCUMENT_MAX_BYTES }),
     async (req, res) => {
       const file = uploadedFile(req)
@@ -407,8 +388,8 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
         await uploadEventProposalDocument(
           usecases,
           actor(res),
-          parse(eventObjectId, req.params.clubId),
-          parse(eventObjectId, req.params.id),
+          parse(objectId, req.params.clubId),
+          parse(objectId, req.params.id),
           file.fileName,
           file.mimeType,
           file.bytes,
@@ -418,15 +399,15 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
     },
   )
   // Club access defaults to the editable draft unless a submitted revision is requested.
-  router.get(`${base}/:id/proposal-document/access`, authGuard(guard, false), async (req, res) => {
+  router.get(`${base}/:id/proposal-document/access`, read, async (req, res) => {
     const query = documentQuery(req.query)
     ok(
       res,
       await clubEventProposalDocumentAccess(
         usecases,
         actor(res),
-        parse(eventObjectId, req.params.clubId),
-        parse(eventObjectId, req.params.id),
+        parse(objectId, req.params.clubId),
+        parse(objectId, req.params.id),
         query.revisionNo,
         query.inline,
         new Date(),
@@ -434,43 +415,34 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
     )
   })
   // Template replacement is CSRF-protected and restricted to officers by the use case.
-  router.post(
-    '/admin/event-proposals/template',
-    authGuard(guard),
-    uploadTemplate,
-    async (req, res) => {
-      const file = uploadedFile(req)
-      ok(
-        res,
-        await uploadEventProposalTemplate(
-          usecases,
-          actor(res),
-          file.fileName,
-          file.mimeType,
-          file.bytes,
-          new Date(),
-        ),
-        201,
-      )
-    },
-  )
+  router.post('/admin/event-proposals/template', write, uploadTemplate, async (req, res) => {
+    const file = uploadedFile(req)
+    ok(
+      res,
+      await uploadEventProposalTemplate(
+        usecases,
+        actor(res),
+        file.fileName,
+        file.mimeType,
+        file.bytes,
+        new Date(),
+      ),
+      201,
+    )
+  })
   // Officer access defaults to the latest submitted revision, preserving review evidence.
-  router.get(
-    '/admin/event-proposals/:id/document/access',
-    authGuard(guard, false),
-    async (req, res) => {
-      const query = documentQuery(req.query)
-      ok(
-        res,
-        await reviewEventProposalDocumentAccess(
-          usecases,
-          actor(res),
-          parse(eventObjectId, req.params.id),
-          query.revisionNo,
-          query.inline,
-        ),
-      )
-    },
-  )
+  router.get('/admin/event-proposals/:id/document/access', read, async (req, res) => {
+    const query = documentQuery(req.query)
+    ok(
+      res,
+      await reviewEventProposalDocumentAccess(
+        usecases,
+        actor(res),
+        parse(objectId, req.params.id),
+        query.revisionNo,
+        query.inline,
+      ),
+    )
+  })
   return router
 }

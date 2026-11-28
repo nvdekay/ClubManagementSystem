@@ -1,12 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
@@ -14,7 +12,6 @@ import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
-import { useAuth } from '@/hooks/useAuth'
 import {
   useEvaluation,
   useEvaluationAction,
@@ -23,13 +20,17 @@ import {
 } from '@/hooks/useEvaluations'
 import {
   EvaluationRequestError,
-  type Classification,
   type DimensionView,
   type EvaluationState,
 } from '@/services/evaluations'
 import { useConfirm } from '@/hooks/useConfirm'
+import { ratingLabel, ratingTone } from '@/pages/icpdp/clubFormat'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
-import { formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { IcpdpOfficerGate } from '@/pages/icpdp/IcpdpOfficerGate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
+import { AppPanel } from '@/components/ui/panel/AppPanel'
 
 const metricKeys = [
   'registrations',
@@ -89,31 +90,6 @@ function stateTone(state: EvaluationState | undefined): AppBadgeTone {
         : 'neutral'
 }
 
-// Dịch xếp loại đánh giá sang nhãn hiển thị
-function ratingLabel(t: TFunction, value: Classification): string {
-  switch (value) {
-    case 'EXCELLENT':
-      return t('evaluations.ratingEXCELLENT')
-    case 'GOOD':
-      return t('evaluations.ratingGOOD')
-    case 'FAIR':
-      return t('evaluations.ratingFAIR')
-    default:
-      return t('evaluations.ratingNEEDS_IMPROVEMENT')
-  }
-}
-
-// Chọn màu badge theo xếp loại đánh giá
-function ratingTone(value: Classification): AppBadgeTone {
-  return value === 'EXCELLENT'
-    ? 'success'
-    : value === 'GOOD'
-      ? 'info'
-      : value === 'FAIR'
-        ? 'warning'
-        : 'danger'
-}
-
 // Dịch mã chỉ số dữ liệu sang nhãn hiển thị
 function metricLabel(t: TFunction, metric: string): string {
   return metricKeys.includes(metric as MetricKey)
@@ -126,42 +102,6 @@ function dimensionName(t: TFunction, dimension: DimensionView): string {
   return /^D[1-8]$/.test(dimension.code)
     ? t(`evaluationSchemes.dim_${dimension.code as DimensionCode}`)
     : dimension.name
-}
-
-// Cổng kiểm tra đăng nhập và quyền officer cho các trang đánh giá
-function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
-  const { t } = useTranslation()
-  const auth = useAuth()
-  if (auth.isPending) {
-    return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((item) => (
-          <AppSkeleton key={item} className="h-16 w-full" />
-        ))}
-      </div>
-    )
-  }
-  if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('evaluations.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('evaluations.signInLink')}
-        </Link>
-      </AppNotice>
-    )
-  }
-  if (!auth.data.systemRoles.includes('ICPDP_OFFICER')) {
-    return (
-      <AppNotice tone="danger" role="alert">
-        {t('evaluations.unauthorized')}
-      </AppNotice>
-    )
-  }
-  return <>{children(auth.data.csrfToken)}</>
 }
 
 // Tổng quan đánh giá các CLB theo kỳ và thao tác chốt/công bố hàng loạt
@@ -183,15 +123,10 @@ function Overview({ csrfToken }: { csrfToken: string }) {
   }
   if (overview.isError) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
+      <AppErrorNotice
         title={overview.error.message || t('evaluations.loadError')}
-      >
-        <AppButton variant="secondary" onClick={() => void overview.refetch()}>
-          {t('evaluations.retry')}
-        </AppButton>
-      </AppNotice>
+        onRetry={() => void overview.refetch()}
+      />
     )
   }
   const data = overview.data
@@ -361,7 +296,9 @@ export function EvaluationsPage() {
   return (
     <>
       <PageHeader title={t('evaluations.title')} description={t('evaluations.description')} />
-      <Gate>{(csrfToken) => <Overview csrfToken={csrfToken} />}</Gate>
+      <IcpdpOfficerGate deniedMessage={t('evaluations.unauthorized')}>
+        {(csrfToken) => <Overview csrfToken={csrfToken} />}
+      </IcpdpOfficerGate>
     </>
   )
 }
@@ -486,9 +423,7 @@ function DimensionRow({
       )}
       {editing && (
         <div className="mt-3 grid gap-3 rounded-xl border border-border-app p-3 sm:grid-cols-[8rem_1fr]">
-          <label className="block text-sm font-medium text-text-app">
-            {t('evaluations.manualScore')}
-            <AppRequiredMark />
+          <AppField label={t('evaluations.manualScore')} required error={field.error('score')}>
             <AppInput
               type="number"
               min={0}
@@ -499,11 +434,12 @@ function DimensionRow({
               {...field.control('score')}
               onChange={(e) => setScore(e.target.value)}
             />
-            <AppFieldError message={field.error('score')} />
-          </label>
-          <label className="block text-sm font-medium text-text-app">
-            {t('evaluations.justification')}
-            <AppRequiredMark />
+          </AppField>
+          <AppField
+            label={t('evaluations.justification')}
+            required
+            error={field.error('justification')}
+          >
             <AppTextarea
               className="mt-1.5 min-h-20 w-full font-normal"
               value={justification}
@@ -512,8 +448,7 @@ function DimensionRow({
               {...field.control('justification')}
               onChange={(e) => setJustification(e.target.value)}
             />
-            <AppFieldError message={field.error('justification')} />
-          </label>
+          </AppField>
           <div className="flex flex-wrap gap-2 sm:col-span-2">
             <AppButton disabled={busy} onClick={() => void save()}>
               {t('evaluations.saveManual')}
@@ -536,7 +471,8 @@ function DimensionRow({
 
 // Chi tiết một đánh giá CLB và các bước chốt, công bố
 function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day: date } = useFormat()
   const askConfirm = useConfirm()
   const query = useEvaluation(id, true)
   const action = useEvaluationAction()
@@ -554,15 +490,10 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
     return (
       <>
         <PageHeader title={t('evaluations.evaluation')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={query.error.message || t('evaluations.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void query.refetch()}>
-            {t('evaluations.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void query.refetch()}
+        />
       </>
     )
   }
@@ -572,10 +503,6 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
   )
   const editable = ['Draft', 'Data Ready', 'Under Review'].includes(item.state)
   const isLatest = (item.revisions[0]?.revisionNo ?? item.revisionNo) === item.revisionNo
-  function date(value: string) {
-    return formatDay(value, i18n.language)
-  }
-
   // Chạy một bước của đánh giá sau khi xác nhận nếu cần
   async function run(
     next: Parameters<typeof action.mutateAsync>[0]['action'],
@@ -692,8 +619,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
           {action.isSuccess && <AppNotice role="status">{t('evaluations.success')}</AppNotice>}
 
           {item.revisions.length > 1 && (
-            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-              <h2 className="font-heading text-base font-semibold">{t('evaluations.revisions')}</h2>
+            <AppPanel title={t('evaluations.revisions')}>
               <ul className="mt-3 space-y-2 text-sm">
                 {item.revisions.map((revision) => (
                   <li
@@ -713,11 +639,10 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
                   </li>
                 ))}
               </ul>
-            </section>
+            </AppPanel>
           )}
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            <h2 className="font-heading text-base font-semibold">{t('evaluations.trend')}</h2>
+          <AppPanel title={t('evaluations.trend')}>
             {item.trend.length ? (
               <ul className="mt-3 space-y-2 text-sm">
                 {item.trend.map((entry) => (
@@ -735,7 +660,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
                 <AppEmptyState message={t('evaluations.noTrend')} />
               </div>
             )}
-          </section>
+          </AppPanel>
         </aside>
       </div>
     </>
@@ -745,9 +670,10 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
 // Trang ICPDP chi tiết đánh giá một CLB
 export function EvaluationDetailPage() {
   const { id } = useParams()
+  const { t } = useTranslation()
   return (
-    <Gate>
+    <IcpdpOfficerGate deniedMessage={t('evaluations.unauthorized')}>
       {(csrfToken) => (id ? <EvaluationDetailView id={id} csrfToken={csrfToken} /> : null)}
-    </Gate>
+    </IcpdpOfficerGate>
   )
 }

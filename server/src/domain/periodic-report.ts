@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js'
+import { DomainError, trimmedOrUndefined } from './errors.js'
 import type { AcademicSemester, ReportDeadline } from './policy.js'
 import type { ViolationSeverity } from './violation.js'
 
@@ -228,11 +228,6 @@ export function periodicDueAt(period: Pick<AcademicSemester, 'endAt'>, dueDays: 
   return new Date(period.endAt.getTime() + dueDays * DAY_MS)
 }
 
-// Cắt khoảng trắng chuỗi, giữ undefined nếu không có
-function trimmed(value: string | undefined): string | undefined {
-  return value?.trim() || undefined
-}
-
 /** Độ dài tối đa của một link hoặc tham chiếu minh chứng khi ghi báo cáo. */
 export const EVIDENCE_LINK_MAX_LENGTH = 2_000
 /** Tiền tố tham chiếu ảnh minh chứng đã upload: `ucms-evidence:{clubId}:{assetId}`. */
@@ -302,24 +297,6 @@ export function isValidEvidenceLink(url: string): boolean {
   }
 }
 
-// Kiểm nội dung ảnh khớp magic bytes của loại MIME khai báo
-export function evidenceImageSignatureMatches(mimeType: string, bytes: Buffer): boolean {
-  if (mimeType === 'image/png') {
-    return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-  }
-  if (mimeType === 'image/jpeg') {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-  }
-  if (mimeType === 'image/webp') {
-    return (
-      bytes.length >= 12 &&
-      bytes.subarray(0, 4).toString('latin1') === 'RIFF' &&
-      bytes.subarray(8, 12).toString('latin1') === 'WEBP'
-    )
-  }
-  return false
-}
-
 interface EvidenceCarrier {
   evidence?: { url?: string }[]
   events?: { evidenceUrl?: string }[]
@@ -351,7 +328,7 @@ export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): Period
   if (!(input.dueAt instanceof Date) || Number.isNaN(input.dueAt.getTime())) {
     throw new DomainError('invalid deadline', 'validation', { field: 'dueAt' })
   }
-  const announcement = trimmed(input.announcement)
+  const announcement = trimmedOrUndefined(input.announcement)
   if (announcement && announcement.length > 5_000) {
     throw new DomainError('announcement is too long', 'validation', { field: 'announcement' })
   }
@@ -363,7 +340,7 @@ export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): Period
   const customFields = rawFields.map((field, index) => {
     const id = field.id.trim() || `field_${index + 1}`
     const label = field.label.trim()
-    const description = trimmed(field.description)
+    const description = trimmedOrUndefined(field.description)
     if (!label || label.length > 200) {
       throw new DomainError(
         'custom field label is required and must be under 200 characters',
@@ -404,8 +381,8 @@ export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): Period
 
 // Kiểm tra và chuẩn hoá quyết định duyệt báo cáo định kỳ
 export function normalizedPeriodicDecision(input: PeriodicDecisionInput): PeriodicDecisionInput {
-  const observation = trimmed(input.observation)
-  const reason = trimmed(input.reason)
+  const observation = trimmedOrUndefined(input.observation)
+  const reason = trimmedOrUndefined(input.reason)
   const sections = [...new Set(input.sections ?? [])]
   if ((observation && observation.length > 2_000) || (reason && reason.length > 5_000)) {
     throw new DomainError('review text is too long', 'validation')

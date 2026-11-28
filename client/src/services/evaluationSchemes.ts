@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 export type DimensionCode = 'D1' | 'D2' | 'D3' | 'D4' | 'D5' | 'D6' | 'D7' | 'D8'
 export type SchemeState = 'Draft' | 'Active' | 'Superseded'
 export type ActivationIssue = 'totalWeight' | 'coreWeight'
@@ -58,13 +58,7 @@ export class SchemeRequestError extends ApiError {
   }
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/evaluation-schemes${path}`, {
-    ...options,
-    toError: toSchemeError,
-  })
-}
+const request = apiClient('/api/v1/admin/evaluation-schemes', toSchemeError)
 
 // Maps a failed response to this module's error type
 function toSchemeError(failure: ApiFailure): Error {

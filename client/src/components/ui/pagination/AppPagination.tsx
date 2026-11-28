@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { AppButton } from '@/components/ui/button/AppButton'
 import { cn } from '@/utils/cn'
 
@@ -6,11 +8,11 @@ interface AppPaginationProps {
   pageIndex: number
   pageCount: number
   onPageChange: (pageIndex: number) => void
-  /** aria-label đã dịch theo ngôn ngữ — bản thân các mũi tên chỉ là icon. */
-  prevLabel: string
-  nextLabel: string
-  /** aria-label cho nút số trang, nhận số trang tính từ 1. */
-  pageLabel: (page: number) => string
+  /** aria-label đã dịch theo ngôn ngữ — bản thân các mũi tên chỉ là icon. Mặc định "Trang trước"/"Trang sau". */
+  prevLabel?: string
+  nextLabel?: string
+  /** aria-label cho nút số trang, nhận số trang tính từ 1. Mặc định "Trang {{page}}". */
+  pageLabel?: (page: number) => string
   /** aria-label cho landmark <nav>, ví dụ "Pagination". */
   navLabel: string
   className?: string
@@ -61,6 +63,7 @@ export function AppPagination({
   navLabel,
   className,
 }: AppPaginationProps) {
+  const { t } = useTranslation()
   // Không có gì để chuyển trang — một nút "1 / 1" bị vô hiệu đứng một mình chỉ gây nhiễu, không phải control.
   if (pageCount <= 1) {
     return null
@@ -70,7 +73,7 @@ export function AppPagination({
     <nav aria-label={navLabel} className={cn('flex flex-wrap items-center gap-1', className)}>
       <AppButton
         variant="secondary"
-        aria-label={prevLabel}
+        aria-label={prevLabel ?? t('common.prevPage')}
         disabled={pageIndex <= 0}
         onClick={() => onPageChange(pageIndex - 1)}
         className={CONTROL}
@@ -86,7 +89,9 @@ export function AppPagination({
           <AppButton
             key={item}
             variant="secondary"
-            aria-label={pageLabel(item + 1)}
+            aria-label={
+              pageLabel ? pageLabel(item + 1) : t('common.pageNumber', { page: item + 1 })
+            }
             aria-current={item === pageIndex ? 'page' : undefined}
             onClick={() => onPageChange(item)}
             className={cn(CONTROL, { 'border-text-app font-semibold': item === pageIndex })}
@@ -97,7 +102,7 @@ export function AppPagination({
       )}
       <AppButton
         variant="secondary"
-        aria-label={nextLabel}
+        aria-label={nextLabel ?? t('common.nextPage')}
         disabled={pageIndex + 1 >= pageCount}
         onClick={() => onPageChange(pageIndex + 1)}
         className={CONTROL}

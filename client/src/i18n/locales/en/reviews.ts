@@ -1,13 +1,10 @@
 export const reviews = {
   title: 'Club application reviews',
-  eyebrow: 'ICPDP review desk',
   description: 'Review submitted club proposals and record one final decision per submission.',
-  back: 'Back to ICPDP workspace',
   openCount: '{{count}} open',
   none: 'The review queue is clear.',
   noneHint: 'New submissions will appear here automatically.',
   loadError: 'Could not load the review queue.',
-  retry: 'Retry',
   open: 'Open review',
   unassigned: 'Unassigned',
   assignedToYou: 'Assigned to you',
@@ -66,10 +63,8 @@ export const reviews = {
   success: 'Decision recorded.',
   actionError: 'Could not complete the review action.',
   unauthorized: 'Your current account does not have the ICPDP Officer role.',
-  signIn: 'Sign in to review applications.',
   status: 'Status',
   decidedAt: 'Decided {{date}}',
-  signInLink: 'Sign in and continue',
   nameConflict:
     'An active club already uses this name: {{clubs}}. Decide whether the new club may share it.',
 }

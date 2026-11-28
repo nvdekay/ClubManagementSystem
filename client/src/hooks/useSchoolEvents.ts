@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   createSchoolEvent,
   fetchScheduleConflicts,
@@ -46,22 +47,18 @@ export function useScheduleConflicts(
 
 // Mutation tạo sự kiện của trường, rồi làm mới danh sách
 export function useCreateSchoolEvent() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { input: SchoolEventInput; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { input: SchoolEventInput; csrfToken: string }) =>
       createSchoolEvent(action.input, action.csrfToken),
-    onSuccess: async (result) => {
-      queryClient.setQueryData([...schoolEventKey, 'detail', result.detail.id], result.detail)
-      await queryClient.invalidateQueries({ queryKey: [...schoolEventKey, 'list'] })
-    },
-  })
+    [[...schoolEventKey, 'list']],
+    (result) => [[...schoolEventKey, 'detail', result.detail.id], result.detail],
+  )
 }
 
 // Mutation mời CLB, thu hồi lời mời hoặc công khai sự kiện, rồi làm mới cache
 export function useSchoolEventAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (
+  return useInvalidatingMutation(
+    async (
       action:
         | { kind: 'invite'; id: string; input: InviteInput; csrfToken: string }
         | { kind: 'withdraw'; id: string; invitationId: string; csrfToken: string }
@@ -75,9 +72,7 @@ export function useSchoolEventAction() {
       }
       return publishSchoolEvent(action.id, action.csrfToken)
     },
-    onSuccess: async (detail) => {
-      queryClient.setQueryData([...schoolEventKey, 'detail', detail.id], detail)
-      await queryClient.invalidateQueries({ queryKey: [...schoolEventKey, 'list'] })
-    },
-  })
+    [[...schoolEventKey, 'list']],
+    (detail) => [[...schoolEventKey, 'detail', detail.id], detail],
+  )
 }

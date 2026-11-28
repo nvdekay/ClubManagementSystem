@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -7,17 +6,9 @@ import {
   type MyEventFeedback,
 } from '../../domain/event-feedback.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { isDuplicateKey, storedDate, writeAudit } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-
-// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
-function date(value: unknown): Date {
-  if (!(value instanceof Date)) {
-    throw new Error('invalid feedback date in database')
-  }
-  return value
-}
 
 // Lấy điểm đánh giá tổng quát từ danh sách điểm tiêu chí
 function rating(scores: unknown): number {
@@ -40,7 +31,7 @@ function map(feedback: Doc, event: Doc): MyEventFeedback {
     rating: rating(feedback.scores),
     comment: typeof feedback.comment === 'string' ? feedback.comment : '',
     isAnonymous: feedback.isAnonymous === true,
-    submittedAt: date(feedback.submittedAt),
+    submittedAt: storedDate(feedback.submittedAt, 'feedback'),
   }
 }
 
@@ -49,7 +40,6 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
   const events = ucmsModels.events!
   const attendances = ucmsModels.attendances!
   const feedbacks = ucmsModels.eventFeedbacks!
-  const audits = ucmsModels.auditLogs!
 
   return {
     // Lấy sự kiện, điểm danh và feedback hiện có để xét điều kiện gửi phản hồi
@@ -75,8 +65,8 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
           ? {
               id: String(attendance._id),
               ...(attendance.clubId ? { clubId: String(attendance.clubId) } : {}),
-              checkedInAt: date(attendance.checkedInAt),
-              eventEndAt: date(event.endAt),
+              checkedInAt: storedDate(attendance.checkedInAt, 'feedback'),
+              eventEndAt: storedDate(event.endAt, 'feedback'),
             }
           : null,
         feedback: feedback ? map(feedback, event) : null,
@@ -106,21 +96,15 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
           )
           id = doc!._id as Types.ObjectId
           // Audit trail ghi nhận có feedback, không bao giờ ghi nội dung (BR37, A1).
-          await audits.create(
-            [
-              {
-                entityType: 'EventFeedback',
-                entityId: id,
-                action: 'EVENT_FEEDBACK_SUBMITTED',
-                actorId: studentId,
-                actorRole: 'STUDENT',
-                after: { eventId: input.eventId, isAnonymous: input.isAnonymous },
-                correlationId: randomUUID(),
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'EventFeedback',
+            entityId: id,
+            action: 'EVENT_FEEDBACK_SUBMITTED',
+            actorId: studentId,
+            actorRole: 'STUDENT',
+            after: { eventId: input.eventId, isAnonymous: input.isAnonymous },
+            at: input.now,
+          })
         })
       } catch (error) {
         if (isDuplicateKey(error)) {

@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import {
   normalizeTransitionPlan,
@@ -13,6 +12,7 @@ import { openAccountabilityTask } from './accountability-workflow.js'
 import { LEADER_SEAT_FILTER, otherClubLeaderUserIds } from './club-board.js'
 import { clubOutstandingObligations } from './club-obligations.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { found, writeAudit } from './repo-helpers.js'
 type Doc = Record<string, unknown>
 // Ánh xạ document thành TransitionTerm
 function term(d: Doc): TransitionTerm {
@@ -68,12 +68,15 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
     }
   }
   async function required(clubId: string, id: string) {
-    const d = await m
-      .transitionPlans!.findOne({ _id: new Types.ObjectId(id), clubId: new Types.ObjectId(clubId) })
-      .lean()
-    if (!d) {
-      throw new DomainError('transition plan not found', 'not_found')
-    }
+    const d = found(
+      await m
+        .transitionPlans!.findOne({
+          _id: new Types.ObjectId(id),
+          clubId: new Types.ObjectId(clubId),
+        })
+        .lean(),
+      'transition plan not found',
+    )
     return mapped(d)
   }
   async function lock(session: ClientSession, clubId: string, userId: string, now: Date) {
@@ -100,30 +103,27 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
     after: unknown,
     now: Date,
   ) {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'TransitionPlan',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(userId),
-          actorRole: 'Club Leader',
-          after,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'TransitionPlan',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(userId),
+      actorRole: 'Club Leader',
+      after,
+      at: now,
+    })
   }
   async function current(session: ClientSession, clubId: string, id: string, revision: number) {
-    const d = await m
-      .transitionPlans!.findOne({ _id: new Types.ObjectId(id), clubId: new Types.ObjectId(clubId) })
-      .session(session)
-      .lean()
-    if (!d) {
-      throw new DomainError('transition plan not found', 'not_found')
-    }
+    const d = found(
+      await m
+        .transitionPlans!.findOne({
+          _id: new Types.ObjectId(id),
+          clubId: new Types.ObjectId(clubId),
+        })
+        .session(session)
+        .lean(),
+      'transition plan not found',
+    )
     if (!['Draft', 'Returned'].includes(String(d.state)) || Number(d.__v ?? 0) !== revision) {
       throw new DomainError('plan changed or is locked', 'conflict')
     }

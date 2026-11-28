@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   checkManualScore,
   hasReportPenalty,
@@ -34,10 +34,7 @@ async function evaluation(repo: EvaluationRepository, id: string): Promise<Evalu
   if (!isObjectId(id)) {
     throw new DomainError('invalid evaluation id', 'validation')
   }
-  const found = await repo.find(id)
-  if (!found) {
-    throw new DomainError('evaluation not found', 'not_found')
-  }
+  const found = orNotFound(await repo.find(id), 'evaluation')
   return found
 }
 

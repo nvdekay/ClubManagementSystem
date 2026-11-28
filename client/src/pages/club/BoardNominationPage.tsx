@@ -17,7 +17,9 @@ import {
   useClubBoardNominations,
 } from '@/hooks/useBoardNominations'
 import type { BoardNomination } from '@/services/boardNominations'
-import { dateFormatter, formatDay } from '@/utils/formatDate'
+import { dateFormatter } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Màu badge theo trạng thái đề cử
 function nominationTone(state: string) {
@@ -126,7 +128,8 @@ function NominationHistory({ clubId }: { clubId: string }) {
 // Trang Club Leader đề cử thành viên vào các ghế ban chủ nhiệm
 export function BoardNominationPage() {
   const { clubId } = useParams()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day: date } = useFormat()
   const auth = useAuth()
   const canNominate = useWorkspacePermission(clubId, 'club.board.nominate')
   const context = useBoardNominationContext(clubId, canNominate)
@@ -135,11 +138,6 @@ export function BoardNominationPage() {
   const [submitted, setSubmitted] = useState(false)
   // Bấm đúp kích hoạt hai lần trước khi React render lại nút đã bị vô hiệu.
   const inFlight = useRef(false)
-  // Định dạng ngày theo ngôn ngữ hiện tại
-  function date(value: string) {
-    return formatDay(value, i18n.language)
-  }
-
   // Gửi đề cử các ghế đã chọn lên ICPDP
   async function submit() {
     if (!auth.data || !clubId || inFlight.current) {
@@ -170,11 +168,7 @@ export function BoardNominationPage() {
     return loading
   }
   if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('boardNominations.signIn')}</p>
-      </AppNotice>
-    )
+    return null
   }
   if (!canNominate) {
     return (
@@ -188,15 +182,10 @@ export function BoardNominationPage() {
   }
   if (context.isError || !context.data) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
+      <AppErrorNotice
         title={context.error?.message ?? t('boardNominations.loadError')}
-      >
-        <AppButton variant="secondary" onClick={() => void context.refetch()}>
-          {t('boardNominations.retry')}
-        </AppButton>
-      </AppNotice>
+        onRetry={() => void context.refetch()}
+      />
     )
   }
 

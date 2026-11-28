@@ -34,7 +34,6 @@ export const roomAllocations = {
   denied: 'Chỉ cán bộ ICPDP được phân phòng.',
   selectClub: 'Chọn CLB',
   selectRoom: 'Chọn phòng',
-  selectBuilding: 'Chọn toà nhà',
   gridTitle: 'Lịch của phòng này trong {{semester}}',
   gridHint: 'Bấm vào ô trống để chọn thứ và slot.',
   gridFree: 'Trống',
@@ -50,7 +49,6 @@ export const roomAllocations = {
   conflictTitle: 'Các ngày này phòng đã có lịch',
   conflictEvent: 'Sự kiện',
   conflictBooking: 'Lịch phòng',
-  invalidForm: 'Chọn CLB, phòng, thứ và slot.',
   revokeTitle: 'Thu hồi phân phòng',
   revokeReason: 'Lý do',
   revokeRule:

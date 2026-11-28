@@ -3,7 +3,7 @@
  * HTTP parsing lives in event-proposal-review-routes; repositories commit state changes.
  */
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound, trimmedOrUndefined } from '../domain/errors.js'
 import {
   approvedBudget,
   EVENT_REVIEW_SECTIONS,
@@ -17,24 +17,19 @@ import { parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.j
 
 const sections = new Set<string>(EVENT_REVIEW_SECTIONS)
 
-// Treat whitespace-only optional comments as absent.
-function trimmed(value: string | undefined): string | undefined {
-  return value?.trim() || undefined
-}
-
 /** Normalize review text and enforce which fields are valid for each decision outcome. */
 export function normalizedEventDecision(
   input: EventReviewDecisionInput,
   now: Date,
 ): NormalizedEventDecision {
-  const reason = trimmed(input.reason)
-  const reviewNote = trimmed(input.reviewNote)
+  const reason = trimmedOrUndefined(input.reason)
+  const reviewNote = trimmedOrUndefined(input.reviewNote)
   const chosen = [...new Set((input.sections ?? []).map((section) => section.trim()))]
   const conditions = (input.conditions ?? []).map((condition) => condition.trim()).filter(Boolean)
   const budgetLines = (input.budgetLines ?? []).map((line) => ({
     approvedAmount: line.approvedAmount,
     fundingDecision: line.fundingDecision,
-    ...(trimmed(line.reason) ? { reason: trimmed(line.reason) } : {}),
+    ...(trimmedOrUndefined(line.reason) ? { reason: trimmedOrUndefined(line.reason) } : {}),
   }))
   if (!reason && input.outcome !== 'Approve') {
     throw new DomainError('decision reason is required', 'validation', { field: 'reason' })
@@ -97,10 +92,7 @@ export async function getEventProposalReview(
   now: Date,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  const detail = await repo.find(parseObjectId(id, 'event id'), now)
-  if (!detail) {
-    throw new DomainError('event proposal not found', 'not_found')
-  }
+  const detail = orNotFound(await repo.find(parseObjectId(id, 'event id'), now), 'event proposal')
   return detail
 }
 
@@ -126,10 +118,7 @@ export async function decideEventProposalReview(
 ) {
   const officerId = await requireIcpdpOfficer(auth, actor)
   const decision = normalizedEventDecision(input, now)
-  const detail = await repo.find(parseObjectId(id, 'event id'), now)
-  if (!detail) {
-    throw new DomainError('event proposal not found', 'not_found')
-  }
+  const detail = orNotFound(await repo.find(parseObjectId(id, 'event id'), now), 'event proposal')
   if (decision.outcome === 'Approve') {
     const current =
       detail.versions.find((version) => version.revisionNo === detail.event.currentRevisionNo) ??
@@ -150,7 +139,7 @@ export async function decideEventCancellationReview(
   now: Date,
 ) {
   const officerId = await requireIcpdpOfficer(auth, actor)
-  const reason = trimmed(input.reason)
+  const reason = trimmedOrUndefined(input.reason)
   if (!input.approve && !reason) {
     throw new DomainError('decision reason is required', 'validation', { field: 'reason' })
   }

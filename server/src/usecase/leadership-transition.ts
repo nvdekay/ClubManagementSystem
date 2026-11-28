@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type {
   LeadershipTransitionRepository,
   TransitionDecisionInput,
@@ -24,10 +24,7 @@ export async function getLeadershipTransition(
   planId: string,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  const result = await repo.find(parseObjectId(planId, 'identifier'))
-  if (!result) {
-    throw new DomainError('transition plan not found', 'not_found')
-  }
+  const result = orNotFound(await repo.find(parseObjectId(planId, 'identifier')), 'transition plan')
   return result
 }
 
@@ -56,10 +53,7 @@ export async function decideLeadershipTransition(
   now: Date,
 ) {
   const officerId = await requireIcpdpOfficer(auth, actor)
-  const detail = await repo.find(parseObjectId(planId, 'identifier'))
-  if (!detail) {
-    throw new DomainError('transition plan not found', 'not_found')
-  }
+  const detail = orNotFound(await repo.find(parseObjectId(planId, 'identifier')), 'transition plan')
   if (detail.task.state !== 'Open' || detail.task.assigneeId !== officerId) {
     throw new DomainError('transition plan must be claimed before deciding', 'conflict')
   }

@@ -6,11 +6,8 @@ export const properties = {
   description: 'Phòng, hội trường và thiết bị nhà trường mở cho CLB đặt.',
   homeDescription:
     'Thêm phòng, hội trường, thiết bị CLB được đặt, kèm khung giờ và các giai đoạn khoá.',
-  signIn: 'Đăng nhập để quản lý cơ sở vật chất.',
-  signInLink: 'Đăng nhập',
   forbidden: 'Chỉ ICPDP được quản lý cơ sở vật chất.',
   loadError: 'Không tải được danh mục cơ sở vật chất.',
-  retry: 'Thử lại',
   empty: 'Chưa có cơ sở vật chất nào. Hãy thêm mục đầu tiên.',
   add: 'Thêm cơ sở vật chất',
   edit: 'Sửa',

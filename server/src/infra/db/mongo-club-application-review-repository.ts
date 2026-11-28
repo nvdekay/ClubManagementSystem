@@ -8,7 +8,7 @@ import type {
 } from '../../domain/club-application-review.js'
 import { FOUNDING_POSITIONS } from '../../domain/club-application.js'
 import { DomainError } from '../../domain/errors.js'
-import { queueNotifications } from './repo-helpers.js'
+import { conflict, found, queueNotifications, writeAudit } from './repo-helpers.js'
 import {
   applicationDraftFrom,
   mapApplicationRecord,
@@ -46,11 +46,6 @@ function decisionFrom(doc: Record<string, unknown>): ApplicationReviewDecision {
   }
 }
 
-// Ném lỗi conflict với thông báo cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
-
 // Repository ICPDP duyệt hồ sơ lập CLB (UC08)
 export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRepository {
   const applications = ucmsModels.clubApplications!
@@ -63,7 +58,6 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
   const positions = ucmsModels.clubPositions!
   const structures = ucmsModels.clubRoleStructureVersions!
   const assignments = ucmsModels.clubPositionAssignments!
-  const audits = ucmsModels.auditLogs!
   const users = ucmsModels.users!
 
   async function detail(
@@ -240,28 +234,19 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
           }
         }
         if (changed.modifiedCount === 1) {
-          await audits.create(
-            [
-              {
-                entityType: 'ClubApplication',
-                entityId: id,
-                action: 'CLUB_APPLICATION_REVIEW_CLAIMED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                before: { state: 'Submitted' },
-                after: { state: 'Under Review' },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'ClubApplication',
+            entityId: id,
+            action: 'CLUB_APPLICATION_REVIEW_CLAIMED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            before: { state: 'Submitted' },
+            after: { state: 'Under Review' },
+            at: now,
+          })
         }
       })
-      const claimed = await detail(id)
-      if (!claimed) {
-        throw new DomainError('application review not found', 'not_found')
-      }
+      const claimed = found(await detail(id), 'application review not found')
       return claimed
     },
 
@@ -509,22 +494,17 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
           { session },
         )
         const correlationId = randomUUID()
-        await audits.create(
-          [
-            {
-              entityType: 'ClubApplication',
-              entityId: id,
-              action: `CLUB_APPLICATION_${nextState.toUpperCase().replace(' ', '_')}`,
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              before: { state: 'Under Review' },
-              after: { state: nextState, createdClubId, policyVersionId: payload.policyVersionId },
-              correlationId,
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'ClubApplication',
+          entityId: id,
+          action: `CLUB_APPLICATION_${nextState.toUpperCase().replace(' ', '_')}`,
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          before: { state: 'Under Review' },
+          after: { state: nextState, createdClubId, policyVersionId: payload.policyVersionId },
+          correlationId,
+          at: now,
+        })
         const recipients =
           input.outcome === 'Approve'
             ? [...founderIds].map((userId) => new Types.ObjectId(userId))
@@ -543,10 +523,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
           now,
         })
       })
-      const decided = await detail(id)
-      if (!decided) {
-        throw new DomainError('application review not found', 'not_found')
-      }
+      const decided = found(await detail(id), 'application review not found')
       return decided
     },
   }

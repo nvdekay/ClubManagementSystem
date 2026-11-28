@@ -1,24 +1,22 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
 import {
   EVIDENCE_TYPES,
   type EventFinanceRepository,
   type FinanceAction,
 } from '../../domain/event-finance.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   actOnEventFinance,
   getEventFinance,
   listEventFinances,
 } from '../../usecase/event-finance.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId } from './request.js'
 export const financePath = z.object({
-  clubId: z.string().regex(/^[0-9a-f]{24}$/i),
-  id: z.string().regex(/^[0-9a-f]{24}$/i),
+  clubId: objectId,
+  id: objectId,
 })
 const revision = z.number().int().nonnegative()
 export const financeActionBody = z.discriminatedUnion('kind', [
@@ -26,10 +24,7 @@ export const financeActionBody = z.discriminatedUnion('kind', [
     .object({
       kind: z.literal('expense'),
       revision,
-      expenseId: z
-        .string()
-        .regex(/^[0-9a-f]{24}$/i)
-        .optional(),
+      expenseId: objectId.optional(),
       input: z
         .object({
           category: z.string().min(1).max(100),
@@ -44,7 +39,7 @@ export const financeActionBody = z.discriminatedUnion('kind', [
     .object({
       kind: z.literal('evidence'),
       revision,
-      expenseId: z.string().regex(/^[0-9a-f]{24}$/i),
+      expenseId: objectId,
       input: z
         .object({
           type: z.enum(EVIDENCE_TYPES),
@@ -70,7 +65,7 @@ export const financeActionBody = z.discriminatedUnion('kind', [
       reviews: z.array(
         z
           .object({
-            expenseId: z.string().regex(/^[0-9a-f]{24}$/i),
+            expenseId: objectId,
             outcome: z.enum(['Accepted', 'Rejected']),
             reason: z.string().min(1).max(2000),
           })
@@ -80,21 +75,21 @@ export const financeActionBody = z.discriminatedUnion('kind', [
     .strict(),
 ])
 // Mount các route tài chính sự kiện của CLB và ICPDP
-export function eventFinanceRoutes(deps: {
-  repo: EventFinanceRepository
-  access: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
-}) {
+export function eventFinanceRoutes(
+  deps: SessionDeps & {
+    repo: EventFinanceRepository
+    access: ClubAccessRepository
+  },
+) {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   const usecaseDeps = {
     repo: deps.repo,
     access: deps.access,
     auth: deps.authRepo,
   }
   // Liệt kê tài chính các sự kiện của CLB
-  router.get('/clubs/:clubId/budgets', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/budgets', read, async (req, res) => {
     ok(
       res,
       await listEventFinances(
@@ -107,7 +102,7 @@ export function eventFinanceRoutes(deps: {
   })
   for (const base of ['/clubs/:clubId/budgets/:id', '/admin/budgets/:id/reconciliation']) {
     // Xem chi tiết tài chính một sự kiện
-    router.get(base, authGuard(guard, false), async (req, res) => {
+    router.get(base, read, async (req, res) => {
       ok(
         res,
         await getEventFinance(
@@ -122,7 +117,7 @@ export function eventFinanceRoutes(deps: {
       )
     })
     // Thực hiện hành động trên tài chính sự kiện (vd ghi chi tiêu)
-    router.post(`${base}/actions`, authGuard(guard), async (req, res) => {
+    router.post(`${base}/actions`, write, async (req, res) => {
       const body = parse(financeActionBody, req.body, 'finance request')
       const action: FinanceAction =
         body.kind === 'expense'

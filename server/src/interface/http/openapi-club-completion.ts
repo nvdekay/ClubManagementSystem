@@ -1,6 +1,6 @@
 import { clubViolationResponseBody, correctiveSubmissionBody } from './club-violation-routes.js'
 import { z } from 'zod'
-import type { createDocument } from 'zod-openapi'
+import { jsonBody, type OpenApiPaths } from './openapi-shared.js'
 import {
   transitionPlanBody,
   transitionPlanSaveBody,
@@ -20,10 +20,6 @@ const responses = {
   '403': { description: 'Permission required' },
   '409': { description: 'State or revision conflict' },
 }
-// Tạo request body JSON bắt buộc từ schema
-function body(schema: z.ZodType) {
-  return { required: true, content: { 'application/json': { schema } } }
-}
 export const clubCompletionOpenApiPaths = {
   '/clubs/{clubId}/violations': {
     get: {
@@ -36,7 +32,7 @@ export const clubCompletionOpenApiPaths = {
     post: {
       summary: 'UC40 submit club explanation once (CSRF required)',
       requestParams: { path: planPath },
-      requestBody: body(clubViolationResponseBody),
+      requestBody: jsonBody(clubViolationResponseBody, true),
       responses,
     },
   },
@@ -44,7 +40,7 @@ export const clubCompletionOpenApiPaths = {
     post: {
       summary: 'UC40 submit corrective evidence for ICPDP verification (CSRF required)',
       requestParams: { path: planPath.extend({ actionId: z.string() }) },
-      requestBody: body(correctiveSubmissionBody),
+      requestBody: jsonBody(correctiveSubmissionBody, true),
       responses,
     },
   },
@@ -64,7 +60,7 @@ export const clubCompletionOpenApiPaths = {
     post: {
       summary: 'UC12 create a draft and Planned target term (CSRF required)',
       requestParams: { path: clubPath },
-      requestBody: body(transitionPlanBody),
+      requestBody: jsonBody(transitionPlanBody, true),
       responses: { ...responses, '201': { description: 'Draft created' } },
     },
   },
@@ -72,7 +68,7 @@ export const clubCompletionOpenApiPaths = {
     put: {
       summary: 'UC12 edit Draft/Returned using revision (CSRF required)',
       requestParams: { path: planPath },
-      requestBody: body(transitionPlanSaveBody),
+      requestBody: jsonBody(transitionPlanSaveBody, true),
       responses,
     },
   },
@@ -80,7 +76,7 @@ export const clubCompletionOpenApiPaths = {
     post: {
       summary: 'UC12 freeze handover and open UC13 task (CSRF required)',
       requestParams: { path: planPath },
-      requestBody: body(transitionRevisionBody),
+      requestBody: jsonBody(transitionRevisionBody, true),
       responses,
     },
   },
@@ -93,7 +89,7 @@ export const clubCompletionOpenApiPaths = {
     post: {
       summary: 'UC14 submit with acknowledged cancellation impacts (CSRF required)',
       requestParams: { path: clubPath },
-      requestBody: body(suspensionRequestBody),
+      requestBody: jsonBody(suspensionRequestBody, true),
       responses: { ...responses, '201': { description: 'Request submitted' } },
     },
   },
@@ -110,7 +106,7 @@ export const clubCompletionOpenApiPaths = {
       summary:
         'UC15 decide request and cascade suspension atomically, returns the first queue page (CSRF required)',
       requestParams: { path: itemPath },
-      requestBody: body(suspensionDecisionBody),
+      requestBody: jsonBody(suspensionDecisionBody, true),
       responses,
     },
   },
@@ -124,4 +120,4 @@ export const clubCompletionOpenApiPaths = {
       responses,
     },
   },
-} satisfies NonNullable<Parameters<typeof createDocument>[0]['paths']>
+} satisfies OpenApiPaths

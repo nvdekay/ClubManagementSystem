@@ -6,7 +6,6 @@ import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
-import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useViolations } from '@/hooks/useViolations'
@@ -23,14 +22,16 @@ import {
   type Filter,
 } from '@/pages/icpdp/violationFormat'
 import { cn } from '@/utils/cn'
-import { formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 const PAGE_SIZE = 20
 const emptyViolations: ViolationSummary[] = []
 
 // Danh sách ca vi phạm kèm bộ lọc và nút mở ca mới
 export function ViolationList({ csrfToken }: { csrfToken: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day } = useFormat()
   const [filter, setFilter] = useState<Filter>('active')
   const [opening, setOpening] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
@@ -42,10 +43,6 @@ export function ViolationList({ csrfToken }: { csrfToken: string }) {
   if (list.data && !list.isPlaceholderData && pageIndex > 0 && pageIndex >= pageCount) {
     setPageIndex(Math.max(pageCount - 1, 0))
   }
-  function day(value: string) {
-    return formatDay(value, i18n.language)
-  }
-
   return (
     <>
       {opening ? (
@@ -63,15 +60,10 @@ export function ViolationList({ csrfToken }: { csrfToken: string }) {
           ))}
         </div>
       ) : list.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={list.error.message || t('violations.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void list.refetch()}>
-            {t('violations.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void list.refetch()}
+        />
       ) : (
         <>
           <div
@@ -158,9 +150,6 @@ export function ViolationList({ csrfToken }: { csrfToken: string }) {
                 pageIndex={pageIndex}
                 pageCount={pageCount}
                 onPageChange={setPageIndex}
-                prevLabel={t('violations.previousPage')}
-                nextLabel={t('violations.nextPage')}
-                pageLabel={(value) => t('violations.pageNumber', { page: value })}
                 navLabel={t('violations.pagination')}
               />
             </>

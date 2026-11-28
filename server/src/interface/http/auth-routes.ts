@@ -68,6 +68,18 @@ function sameToken(left: string | undefined, right: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
+// Hai dependency xác thực mà mọi router đã đăng nhập cần
+export interface SessionDeps {
+  authRepo: AuthRepository
+  sessions: SessionService
+}
+
+// Cặp authGuard của một router: read không cần CSRF, write (mutation) bắt CSRF
+export function guards(deps: SessionDeps) {
+  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  return { read: authGuard(guard, false), write: authGuard(guard) }
+}
+
 // Middleware xác thực phiên cookie, kiểm tra tài khoản bị khoá và CSRF cho mutation
 export function authGuard(deps: Pick<AuthRouteDeps, 'repo' | 'sessions'>, csrfRequired = true) {
   return async function requireAuth(req: Request, _res: Response, next: NextFunction) {

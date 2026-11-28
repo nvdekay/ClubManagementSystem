@@ -9,18 +9,17 @@ import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoardNominationQueue } from '@/hooks/useBoardNominations'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Hàng đợi ICPDP các đề cử ban chủ nhiệm cần xác nhận
 export function BoardNominationQueuePage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { date } = useFormat()
   const navigate = useNavigate()
   const auth = useAuth()
   const isOfficer = Boolean(auth.data?.systemRoles.includes('ICPDP_OFFICER'))
   const queue = useBoardNominationQueue(isOfficer)
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
   const loading = (
     <div className="space-y-2">
       {[0, 1, 2].map((item) => (
@@ -43,24 +42,17 @@ export function BoardNominationQueuePage() {
       />
       {auth.isPending ? (
         loading
-      ) : !auth.data ? (
-        <AppNotice>{t('boardNominations.signIn')}</AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('boardNominations.unauthorized')}
         </AppNotice>
       ) : queue.isPending ? (
         loading
       ) : queue.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={queue.error.message || t('boardNominations.queueError')}
-        >
-          <AppButton variant="secondary" onClick={() => void queue.refetch()}>
-            {t('boardNominations.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void queue.refetch()}
+        />
       ) : queue.data.length ? (
         <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map((nomination) => (

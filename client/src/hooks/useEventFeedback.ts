@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { dashboardKeyRoot } from '@/hooks/useDashboard'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   fetchEventFeedbackContext,
   fetchMyEventFeedback,
@@ -28,17 +30,13 @@ export function useMyEventFeedback(enabled: boolean) {
 
 // Mutation gửi phản hồi sự kiện, rồi làm mới cache
 export function useSubmitEventFeedback() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (input: EventFeedbackInput & { eventId: string; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (input: EventFeedbackInput & { eventId: string; csrfToken: string }) =>
       submitEventFeedback(
         input.eventId,
         { rating: input.rating, comment: input.comment, isAnonymous: input.isAnonymous },
         input.csrfToken,
       ),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key })
-      await client.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-  })
+    [key, dashboardKeyRoot],
+  )
 }

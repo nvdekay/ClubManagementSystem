@@ -1,3 +1,4 @@
+import { ApiError } from '@/services/apiError'
 import { useId, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,7 +12,6 @@ import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
 import { useAuth } from '@/hooks/useAuth'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { useMembershipAction } from '@/hooks/useMemberSpace'
-import { MemberSpaceError } from '@/services/memberSpace'
 import { isEmail } from '@/utils/validation'
 
 interface ClubMemberOnboardDialogProps {
@@ -73,7 +73,7 @@ export function ClubMemberOnboardDialog({
     }
   }
 
-  const status = action.error instanceof MemberSpaceError ? action.error.status : 0
+  const status = action.error instanceof ApiError ? (action.error.status ?? 0) : 0
   const errorText =
     status === 404
       ? t('memberSpace.onboardNotFound')

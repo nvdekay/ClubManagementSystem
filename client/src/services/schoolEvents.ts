@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export type InvitationStatus = 'Pending' | 'Accepted' | 'Declined' | 'Expired' | 'Withdrawn'
 
 export interface InvitationCounts {
@@ -79,10 +79,7 @@ export interface InviteInput {
   deadline?: string
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/school-events${path}`, options)
-}
+const request = apiClient('/api/v1/admin/school-events')
 
 // GET danh sách sự kiện do trường tổ chức
 export function fetchSchoolEvents(signal: AbortSignal): Promise<SchoolEventSummary[]> {

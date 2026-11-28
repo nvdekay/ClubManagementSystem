@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 
 import {
   dissolveClub,
@@ -31,9 +32,8 @@ export function useClubLifecycle(id: string | null) {
 // Mutation tạm ngưng, kích hoạt lại hoặc giải thể CLB, rồi làm mới cache
 /** Một quyết định làm thay đổi CLB, các sự kiện của nó và cả danh sách, nên mọi query vòng đời đều được tải lại. */
 export function useClubLifecycleAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (
+  return useInvalidatingMutation(
+    async (
       action:
         | { kind: 'suspend'; id: string; reason: string; until?: string; csrfToken: string }
         | { kind: 'reactivate' | 'dissolve'; id: string; reason: string; csrfToken: string },
@@ -51,6 +51,6 @@ export function useClubLifecycleAction() {
           return dissolveClub(action.id, action.reason, action.csrfToken)
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: lifecycleKeyRoot }),
-  })
+    [lifecycleKeyRoot],
+  )
 }

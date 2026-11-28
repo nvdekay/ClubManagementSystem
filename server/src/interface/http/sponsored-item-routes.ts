@@ -1,9 +1,6 @@
 import { Router, raw } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
-import type { SessionService } from '../../domain/session.js'
 import { DomainError } from '../../domain/errors.js'
-import type { AccessActor } from '../../usecase/access.js'
 import {
   actOnSponsoredItem,
   getRefundAccount,
@@ -12,8 +9,9 @@ import {
   uploadInvoiceImage,
   type SponsoredItemDeps,
 } from '../../usecase/sponsored-item.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
+import { actor, parse } from './request.js'
 
 const vendorBankInfoBody = z
   .object({
@@ -64,19 +62,17 @@ export const sponsoredActionBody = z
   .strict()
 
 // Mount các route hạng mục tài trợ và hoá đơn thuộc ngân sách
-export function sponsoredItemRoutes(
-  deps: SponsoredItemDeps & { authRepo: AuthRepository; sessions: SessionService },
-) {
+export function sponsoredItemRoutes(deps: SponsoredItemDeps & SessionDeps) {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   for (const base of ['/clubs/:clubId/budgets/:id/items', '/admin/budgets/:id/items']) {
     // Xem ngân sách cùng các hạng mục tài trợ
-    router.get(base, authGuard(guard, false), async (req, res) => {
+    router.get(base, read, async (req, res) => {
       ok(
         res,
         await getSponsoredBudget(
           deps,
-          res.locals.actor as AccessActor,
+          actor(res),
           String(req.params.id),
           req.params.clubId as string | undefined,
           new Date(),
@@ -84,33 +80,30 @@ export function sponsoredItemRoutes(
       )
     })
     // Thực hiện hành động trên hạng mục tài trợ
-    router.post(`${base}/:itemId/actions`, authGuard(guard), async (req, res) => {
-      const body = sponsoredActionBody.safeParse(req.body)
-      if (!body.success) {
-        throw new DomainError('invalid sponsored item action', 'validation', body.error.issues)
-      }
+    router.post(`${base}/:itemId/actions`, write, async (req, res) => {
+      const body = parse(sponsoredActionBody, req.body, 'sponsored item action')
       ok(
         res,
         await actOnSponsoredItem(
           deps,
-          res.locals.actor as AccessActor,
+          actor(res),
           String(req.params.id),
           req.params.clubId as string | undefined,
           String(req.params.itemId),
-          body.data.revision,
-          body.data.action,
+          body.revision,
+          body.action,
           new Date(),
         ),
       )
     })
     // Lấy URL xem hoặc tải xuống tệp chứng từ của hạng mục tài trợ
-    router.get(`${base}/:itemId/images/:imageId`, authGuard(guard, false), async (req, res) => {
+    router.get(`${base}/:itemId/images/:imageId`, read, async (req, res) => {
       const download = req.query.download === '1' || req.query.download === 'true'
       ok(
         res,
         await invoiceImageUrl(
           deps,
-          res.locals.actor as AccessActor,
+          actor(res),
           String(req.params.id),
           req.params.clubId as string | undefined,
           String(req.params.itemId),
@@ -122,27 +115,23 @@ export function sponsoredItemRoutes(
     })
   }
   // Lấy thông tin tài khoản hoàn trả của nhà trường (chỉ cấp khi CLB có hạng mục đang chờ hoàn trả)
-  router.get(
-    '/clubs/:clubId/budgets/:id/items/:itemId/refund-account',
-    authGuard(guard, false),
-    async (req, res) => {
-      ok(
-        res,
-        await getRefundAccount(
-          deps,
-          res.locals.actor as AccessActor,
-          String(req.params.id),
-          String(req.params.clubId),
-          String(req.params.itemId),
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.get('/clubs/:clubId/budgets/:id/items/:itemId/refund-account', read, async (req, res) => {
+    ok(
+      res,
+      await getRefundAccount(
+        deps,
+        actor(res),
+        String(req.params.id),
+        String(req.params.clubId),
+        String(req.params.itemId),
+        new Date(),
+      ),
+    )
+  })
   // Tải ảnh/PDF chứng từ hóa đơn hoặc biên lai hoàn trả lên hạng mục tài trợ (ảnh JPG/PNG <= 5 MiB, PDF <= 10 MiB)
   router.post(
     '/clubs/:clubId/budgets/:id/items/:itemId/images',
-    authGuard(guard),
+    write,
     raw({ type: () => true, limit: '10mb' }),
     async (req, res) => {
       const revision = Number(req.query.revision)
@@ -157,7 +146,7 @@ export function sponsoredItemRoutes(
         res,
         await uploadInvoiceImage(
           deps,
-          res.locals.actor as AccessActor,
+          actor(res),
           String(req.params.id),
           String(req.params.clubId),
           String(req.params.itemId),

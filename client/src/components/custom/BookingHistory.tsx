@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 
 import type { useBooking } from '@/hooks/useFacilityBookings'
 import type { Property } from '@/services/properties'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
 
 type BookingDetailData = NonNullable<ReturnType<typeof useBooking>['data']>
 
@@ -16,10 +16,8 @@ interface BookingHistoryProps {
 
 // Lịch sử quyết định và các phiên bản đã gửi của một booking
 export function BookingHistory({ decisions, versions, properties, interval }: BookingHistoryProps) {
-  const { t, i18n } = useTranslation()
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
+  const { t } = useTranslation()
+  const { date } = useFormat()
   return (
     <>
       {!!decisions.length && (

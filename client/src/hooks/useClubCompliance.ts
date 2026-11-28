@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   fetchClubEvaluations,
   fetchClubViolations,
@@ -23,12 +24,9 @@ export function useClubEvaluations(clubId: string, enabled: boolean) {
 }
 // Mutation gửi giải trình hoặc minh chứng khắc phục, rồi làm mới vi phạm
 export function useSubmitComplianceResponse(clubId: string) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (a: {
-      action: Parameters<typeof submitComplianceResponse>[1]
-      csrfToken: string
-    }) => submitComplianceResponse(clubId, a.action, a.csrfToken),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...key, clubId, 'violations'] }),
-  })
+  return useInvalidatingMutation(
+    (a: { action: Parameters<typeof submitComplianceResponse>[1]; csrfToken: string }) =>
+      submitComplianceResponse(clubId, a.action, a.csrfToken),
+    [[...key, clubId, 'violations']],
+  )
 }

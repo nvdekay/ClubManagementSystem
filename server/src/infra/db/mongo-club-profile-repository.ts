@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import type {
   ClubDepartment,
@@ -7,7 +6,7 @@ import type {
 } from '../../domain/club-profile.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { found, isDuplicateKey, writeAudit } from './repo-helpers.js'
 
 // Ánh xạ document CLB thành ClubProfile
 function profileFrom(doc: Record<string, unknown>): ClubProfile {
@@ -75,20 +74,16 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
   const departments = ucmsModels.clubDepartments!
   const positions = ucmsModels.clubPositions!
   const memberships = ucmsModels.clubMemberships!
-  const audits = ucmsModels.auditLogs!
 
   async function findDepartment(
     clubId: Types.ObjectId,
     departmentId: Types.ObjectId,
     session: ClientSession,
   ) {
-    const department = await departments
-      .findOne({ _id: departmentId, clubId })
-      .session(session)
-      .lean()
-    if (!department) {
-      throw new DomainError('club department not found', 'not_found')
-    }
+    const department = found(
+      await departments.findOne({ _id: departmentId, clubId }).session(session).lean(),
+      'club department not found',
+    )
     return department
   }
 
@@ -135,10 +130,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
     async updateProfile(clubId, actorId, input, now) {
       const id = new Types.ObjectId(clubId)
       await mongoose.connection.transaction(async (session) => {
-        const before = await clubs.findById(id).session(session).lean()
-        if (!before) {
-          throw new DomainError('club not found', 'not_found')
-        }
+        const before = found(await clubs.findById(id).session(session).lean(), 'club not found')
         const set: Record<string, unknown> = { channels: input.channels, updatedAt: now }
         const unset: Record<string, ''> = {}
         for (const key of [
@@ -155,27 +147,18 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
           }
         }
         await clubs.updateOne({ _id: id }, { $set: set, $unset: unset }, { session })
-        await audits.create(
-          [
-            {
-              entityType: 'Club',
-              entityId: id,
-              action: 'CLUB_PROFILE_UPDATED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'Club Leader',
-              before: profileFrom(before),
-              after: input,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Club',
+          entityId: id,
+          action: 'CLUB_PROFILE_UPDATED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'Club Leader',
+          before: profileFrom(before),
+          after: input,
+          at: now,
+        })
       })
-      const updated = await clubs.findById(id).lean()
-      if (!updated) {
-        throw new DomainError('club not found', 'not_found')
-      }
+      const updated = found(await clubs.findById(id).lean(), 'club not found')
       return profileFrom(updated)
     },
 
@@ -198,21 +181,15 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
           })),
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'Club',
-              entityId: id,
-              action: 'CLUB_DEPARTMENT_TEMPLATE_APPLIED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'Club Leader',
-              after: { departments: template.map((department) => department.name) },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Club',
+          entityId: id,
+          action: 'CLUB_DEPARTMENT_TEMPLATE_APPLIED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'Club Leader',
+          after: { departments: template.map((department) => department.name) },
+          at: now,
+        })
       })
       return list(clubId)
     },
@@ -241,29 +218,23 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
             { session },
           )
           createdId = new Types.ObjectId(String(created[0]!._id))
-          await audits.create(
-            [
-              {
-                entityType: 'ClubDepartment',
-                entityId: createdId,
-                action: 'CLUB_DEPARTMENT_CREATED',
-                actorId: new Types.ObjectId(actorId),
-                actorRole: 'Club Leader',
-                after: input,
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'ClubDepartment',
+            entityId: createdId,
+            action: 'CLUB_DEPARTMENT_CREATED',
+            actorId: new Types.ObjectId(actorId),
+            actorRole: 'Club Leader',
+            after: input,
+            at: now,
+          })
         })
       } catch (error) {
         duplicate(error)
       }
-      const created = await departments.findById(createdId).lean()
-      if (!created) {
-        throw new DomainError('club department not found', 'not_found')
-      }
+      const created = found(
+        await departments.findById(createdId).lean(),
+        'club department not found',
+      )
       return departmentFrom(created)
     },
 
@@ -291,30 +262,24 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
             },
             { session },
           )
-          await audits.create(
-            [
-              {
-                entityType: 'ClubDepartment',
-                entityId: departmentObjectId,
-                action: 'CLUB_DEPARTMENT_UPDATED',
-                actorId: new Types.ObjectId(actorId),
-                actorRole: 'Club Leader',
-                before: departmentFrom(before),
-                after: input,
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'ClubDepartment',
+            entityId: departmentObjectId,
+            action: 'CLUB_DEPARTMENT_UPDATED',
+            actorId: new Types.ObjectId(actorId),
+            actorRole: 'Club Leader',
+            before: departmentFrom(before),
+            after: input,
+            at: now,
+          })
         })
       } catch (error) {
         duplicate(error)
       }
-      const updated = await departments.findById(departmentObjectId).lean()
-      if (!updated) {
-        throw new DomainError('club department not found', 'not_found')
-      }
+      const updated = found(
+        await departments.findById(departmentObjectId).lean(),
+        'club department not found',
+      )
       return departmentFrom(updated)
     },
 
@@ -333,27 +298,21 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
           { $set: { isActive: false, updatedAt: now } },
           { session },
         )
-        await audits.create(
-          [
-            {
-              entityType: 'ClubDepartment',
-              entityId: departmentObjectId,
-              action: 'CLUB_DEPARTMENT_DEACTIVATED',
-              actorId: new Types.ObjectId(actorId),
-              actorRole: 'Club Leader',
-              before: { isActive: true },
-              after: { isActive: false },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'ClubDepartment',
+          entityId: departmentObjectId,
+          action: 'CLUB_DEPARTMENT_DEACTIVATED',
+          actorId: new Types.ObjectId(actorId),
+          actorRole: 'Club Leader',
+          before: { isActive: true },
+          after: { isActive: false },
+          at: now,
+        })
       })
-      const updated = await departments.findById(departmentObjectId).lean()
-      if (!updated) {
-        throw new DomainError('club department not found', 'not_found')
-      }
+      const updated = found(
+        await departments.findById(departmentObjectId).lean(),
+        'club department not found',
+      )
       return departmentFrom(updated)
     },
   }

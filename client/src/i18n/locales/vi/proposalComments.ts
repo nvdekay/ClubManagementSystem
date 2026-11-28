@@ -15,6 +15,4 @@ export const proposalComments = {
   count: '{{count}} nhận xét',
   placeholder: 'Ghi rõ nội dung còn thiếu hoặc cần chỉnh sửa trong mục này…',
   saveError: 'Chưa lưu được nhận xét. Nội dung đã được giữ lại, bạn hãy thử gửi lại.',
-  loadError: 'Không tải được nhận xét.',
-  retry: 'Thử lại',
 } satisfies Messages<typeof en>

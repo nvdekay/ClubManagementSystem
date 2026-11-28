@@ -2,13 +2,9 @@ import { Types, type ClientSession } from 'mongoose'
 import { isInternalClubEventState, type ClubEventAction } from '../../domain/club-event.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { policyAt } from './repo-helpers.js'
+import { conflict, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Ném lỗi conflict với thông báo cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
 // Áp dụng thao tác điểm danh (check-in, sửa, chốt, mở khóa) cho sự kiện
 /** Mọi bên gọi đều giữ khoá ghi của sự kiện trước khi đọc hoặc đổi điểm danh. */
 export async function applyEventAttendanceAction(

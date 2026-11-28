@@ -4,7 +4,7 @@ import {
   type MembershipReconfirmationRepository,
 } from '../domain/membership-reconfirmation.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import type { AccessActor } from './access.js'
+import { isObjectId, parseObjectId, type AccessActor } from './access.js'
 // Kiểm người dùng đăng nhập và tài khoản đang Active
 function active(actor: AccessActor | null): string {
   if (!actor) {
@@ -13,7 +13,7 @@ function active(actor: AccessActor | null): string {
   if (actor.accountState !== 'Active') {
     throw new DomainError('account locked', 'locked')
   }
-  if (!/^[0-9a-f]{24}$/i.test(actor.id)) {
+  if (!isObjectId(actor.id)) {
     throw new DomainError('invalid user id', 'validation')
   }
   return actor.id
@@ -33,9 +33,7 @@ export async function confirmMembership(
   now: Date,
 ) {
   const userId = active(actor)
-  if (!/^[0-9a-f]{24}$/i.test(id)) {
-    throw new DomainError('invalid request id', 'validation')
-  }
+  parseObjectId(id, 'request id')
   return repo.confirm(id, userId, now)
 }
 // Job: mở yêu cầu tái xác nhận đầu học kỳ và hết hạn các yêu cầu quá hạn

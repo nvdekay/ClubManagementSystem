@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -16,7 +15,7 @@ import {
   type MetricValue,
 } from '../../domain/evaluation.js'
 import type { DimensionCode, SchemeThresholds } from '../../domain/evaluation-scheme.js'
-import { queueNotifications } from './repo-helpers.js'
+import { decimal, optionalNumber, queueNotifications, writeAudit } from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
 import { evaluationReportPenalty } from './evaluation-report-penalty.js'
@@ -25,20 +24,6 @@ import { ucmsModels } from './ucms-models.js'
 type Doc = Record<string, unknown>
 const inScopeStates = ['Active', 'Suspended', 'Dissolving']
 const COMPUTED = 'computedScore'
-
-// Chuyển number thành Decimal128
-function decimal(value: number) {
-  return Types.Decimal128.fromString(String(value))
-}
-
-// Chuyển giá trị sang number hoặc undefined nếu không hợp lệ
-function optionalNumber(value: unknown): number | undefined {
-  if (value === null || value === undefined) {
-    return undefined
-  }
-  const parsed = Number(String(value))
-  return Number.isFinite(parsed) ? parsed : undefined
-}
 
 // Lấy danh sách id dạng chuỗi từ các document
 function ids(docs: { _id?: unknown }[]): string[] {
@@ -65,22 +50,16 @@ export function mongoEvaluationRepository(): EvaluationRepository {
     now: Date,
     reason?: string,
   ): Promise<void> {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'Evaluation',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(officerId),
-          actorRole: 'ICPDP_OFFICER',
-          after,
-          ...(reason ? { reason } : {}),
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'Evaluation',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(officerId),
+      actorRole: 'ICPDP_OFFICER',
+      after,
+      ...(reason ? { reason } : {}),
+      at: now,
+    })
   }
 
   async function records(docs: Doc[]): Promise<EvaluationRecord[]> {

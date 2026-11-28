@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 import type { Property } from './properties'
 
 export interface RoomAllocationOccurrence {
@@ -58,21 +58,19 @@ export interface RoomOccupancyCell {
 export class RoomAllocationError extends ApiError {
   constructor(
     message: string,
+    status: number,
     readonly details?: unknown,
   ) {
-    super(message)
+    super(message, status)
     this.name = 'RoomAllocationError'
   }
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRoomAllocationError })
-}
+const request = apiClient('/api/v1', toRoomAllocationError)
 
 // Maps a failed response to this module's error type
 function toRoomAllocationError(failure: ApiFailure): Error {
-  return new RoomAllocationError(failure.message, failure.details)
+  return new RoomAllocationError(failure.message, failure.status, failure.details)
 }
 
 // GET /options: CLB, phòng và học kỳ có thể phân bổ

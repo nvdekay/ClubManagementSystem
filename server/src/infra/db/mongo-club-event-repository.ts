@@ -44,7 +44,15 @@ import { promoteEventWaitlist } from './event-waitlist.js'
 import { releaseFacilityBookingsInSession } from './mongo-facility-booking-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { oid, policyAt, queueNotifications } from './repo-helpers.js'
+import {
+  conflict,
+  found,
+  icpdpOfficerIds,
+  oid,
+  policyAt,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 /** Entity audit cố định cho mẫu đề xuất sự kiện của ICPDP: chỉ có một mẫu và chỉ được thay thế. */
@@ -52,10 +60,6 @@ const PROPOSAL_TEMPLATE_ENTITY = new Types.ObjectId('000000000000000000000e01')
 export interface ClubEventRules {
   proposalNoticeHours: number
   cancellationNoticeHours: number
-}
-// Ném lỗi conflict với thông báo cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
 }
 // Chuẩn hóa các trường cơ bản của sự kiện từ input
 function fields(input: ClubEventInput, semesterCode: string) {
@@ -85,22 +89,16 @@ async function audit(
   reason?: string,
 ) {
   const event = await m.events!.findById(id).select({ __v: 1 }).session(session).lean()
-  await m.auditLogs!.create(
-    [
-      {
-        entityType: 'Event',
-        entityId: id,
-        action,
-        actorId,
-        actorRole: 'Club Member',
-        after: { ...(after as Doc), eventVersion: Number(event?.__v ?? 0) },
-        reason,
-        correlationId: randomUUID(),
-        at: now,
-      },
-    ],
-    { session },
-  )
+  await writeAudit(session, {
+    entityType: 'Event',
+    entityId: id,
+    action,
+    actorId,
+    actorRole: 'Club Member',
+    after: { ...(after as Doc), eventVersion: Number(event?.__v ?? 0) },
+    reason,
+    at: now,
+  })
 }
 // Đọc payload sự kiện mới nhất trong transaction, ưu tiên audit rồi tới phiên bản đề xuất
 async function payloadInSession(session: ClientSession, id: Types.ObjectId): Promise<Doc> {
@@ -631,10 +629,7 @@ async function publishInSession(
 }
 export function mongoClubEventRepository(rules: ClubEventRules): ClubEventRepository {
   async function required(clubId: string, eventId: string) {
-    const detail = await readClubEvent(clubId, eventId)
-    if (!detail) {
-      throw new DomainError('event not found', 'not_found')
-    }
+    const detail = found(await readClubEvent(clubId, eventId), 'event not found')
     return detail
   }
   return {
@@ -989,15 +984,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
               now,
               action.reason,
             )
-            const officerRoles = await m
-              .roles!.find({ code: 'ICPDP_OFFICER', scope: 'system' })
-              .session(session)
-              .distinct('_id')
-            const officers = await m
-              .userRoleAssignments!.find({ roleId: { $in: officerRoles }, revokedAt: null })
-              .session(session)
-              .distinct('userId')
-            await queueNotifications(session, officers, {
+            await queueNotifications(session, await icpdpOfficerIds(session), {
               eventCode: 'EVENT_CANCELLATION_REQUESTED',
               entityType: 'Event',
               entityId: event._id as Types.ObjectId,

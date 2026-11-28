@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
@@ -22,6 +21,7 @@ import {
 
 import { PropertyBookingConflicts } from './PropertyBookingConflicts'
 import { PropertyEditor, dayKeys } from './PropertyEditor'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang ICPDP quản lý danh mục cơ sở vật chất cho booking
 export function PropertiesPage() {
@@ -115,30 +115,18 @@ export function PropertiesPage() {
       />
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('properties.signIn')}</p>
-          <Link
-            className="font-semibold text-primary-app hover:underline"
-            to="/login?returnTo=%2Fworkspace%2Fproperties"
-          >
-            {t('properties.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('properties.forbidden')}
         </AppNotice>
       ) : properties.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : properties.isError ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={`${t('properties.loadError')} ${properties.error.message}`}
-        >
-          <AppButton onClick={() => void properties.refetch()}>{t('properties.retry')}</AppButton>
-        </AppNotice>
+          onRetry={() => void properties.refetch()}
+          retryVariant="primary"
+        />
       ) : (
         <div className="space-y-6">
           {editing === 'new' && (

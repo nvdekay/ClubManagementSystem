@@ -39,5 +39,4 @@ export const routing = {
   simulationTitle: '{{matched}}/{{total}} hồ sơ gần đây khớp một rule',
   simulationEmpty: 'Chưa có hồ sơ nào đã quyết định.',
   loadError: 'Không tải được rule định tuyến.',
-  retry: 'Thử lại',
 } satisfies Messages<typeof en>

@@ -111,9 +111,6 @@ export function EventDirectory() {
               pageIndex={page - 1}
               pageCount={Math.ceil(events.data.total / events.data.pageSize)}
               onPageChange={(index) => setPage(index + 1)}
-              prevLabel={t('discovery.prev')}
-              nextLabel={t('discovery.next')}
-              pageLabel={(number) => t('discovery.pageLabel', { page: number })}
               navLabel={t('discovery.pages')}
             />
           </div>

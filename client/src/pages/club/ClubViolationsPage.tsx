@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
-import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppTextarea } from '@/components/ui/textarea/AppTextarea'
@@ -14,6 +12,8 @@ import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubViolations, useSubmitComplianceResponse } from '@/hooks/useClubCompliance'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { formatDate, formatDay } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 // Trang CLB xem vi phạm và gửi giải trình, hành động khắc phục
 export function ClubViolationsPage() {
   const { clubId = '' } = useParams()
@@ -72,10 +72,9 @@ export function ClubViolationsPage() {
       <PageHeader title={t('clubCompliance.violations')} />
       {query.isPending && <AppSkeleton className="h-64 w-full" />}
       {query.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void query.refetch()} retryVariant="primary">
           {query.error.message}
-          <AppButton onClick={() => void query.refetch()}>{t('clubCompliance.retry')}</AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {action.isError && (
         <AppNotice tone="danger" role="alert">
@@ -108,9 +107,11 @@ export function ClubViolationsPage() {
                 ) : (
                   v.state === 'Awaiting Club Response' && (
                     <>
-                      <label className="block text-sm font-medium text-text-app">
-                        {t('clubCompliance.response')}
-                        <AppRequiredMark />
+                      <AppField
+                        label={t('clubCompliance.response')}
+                        required
+                        error={field.error('text:' + v.id)}
+                      >
                         <AppTextarea
                           className={inputClass}
                           maxLength={5000}
@@ -118,8 +119,7 @@ export function ClubViolationsPage() {
                           value={texts[v.id] ?? ''}
                           onChange={(e) => setTexts((s) => ({ ...s, [v.id]: e.target.value }))}
                         />
-                        <AppFieldError message={field.error('text:' + v.id)} />
-                      </label>
+                      </AppField>
                       <AppButton disabled={action.isPending} onClick={() => void submit(v.id)}>
                         {t('clubCompliance.submit')}
                       </AppButton>
@@ -156,9 +156,11 @@ export function ClubViolationsPage() {
                   a.state === 'Pending' &&
                   v.state === 'Corrective Action' && (
                     <>
-                      <label className="block text-sm font-medium text-text-app">
-                        {t('clubCompliance.note')}
-                        <AppRequiredMark />
+                      <AppField
+                        label={t('clubCompliance.note')}
+                        required
+                        error={field.error('text:' + a.id)}
+                      >
                         <AppTextarea
                           className={inputClass}
                           maxLength={5000}
@@ -166,16 +168,14 @@ export function ClubViolationsPage() {
                           value={texts[a.id] ?? ''}
                           onChange={(e) => setTexts((s) => ({ ...s, [a.id]: e.target.value }))}
                         />
-                        <AppFieldError message={field.error('text:' + a.id)} />
-                      </label>
-                      <label className="block text-sm font-medium text-text-app">
-                        {t('clubCompliance.urls')}
+                      </AppField>
+                      <AppField label={t('clubCompliance.urls')}>
                         <AppTextarea
                           className={inputClass}
                           value={urls[a.id] ?? ''}
                           onChange={(e) => setUrls((s) => ({ ...s, [a.id]: e.target.value }))}
                         />
-                      </label>
+                      </AppField>
                       <AppButton
                         disabled={action.isPending}
                         onClick={() => void submit(v.id, a.id)}

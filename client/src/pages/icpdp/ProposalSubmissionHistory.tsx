@@ -1,18 +1,12 @@
 import { useTranslation } from 'react-i18next'
 
 import type { EventProposalVersion } from '@/services/eventProposalReviews'
-import { formatDate } from '@/utils/formatDate'
-import { formatMoney } from '@/utils/formatMoney'
+import { useFormat } from '@/hooks/useFormat'
 
 // Lịch sử nộp ghi số phiên bản, người nộp, thời gian và tổng kinh phí đề nghị.
 export function ProposalSubmissionHistory({ versions }: { versions: EventProposalVersion[] }) {
-  const { t, i18n } = useTranslation()
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
-  function money(value: number) {
-    return formatMoney(value, i18n.language)
-  }
+  const { t } = useTranslation()
+  const { date, money } = useFormat()
   return (
     <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       {/* Lịch sử nộp ghi số phiên bản, người nộp, thời gian và tổng kinh phí đề nghị. */}

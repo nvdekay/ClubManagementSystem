@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export interface ReportInput {
   actualResult: string
   incidents?: string
@@ -105,10 +105,7 @@ export interface FinanceDetail {
   history: { action: string; at: string; snapshot: unknown; reason?: string }[]
 }
 export type AccountabilityContext = { kind: 'club'; clubId: string } | { kind: 'admin' }
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 // Chọn đường dẫn gốc báo cáo sự kiện theo ngữ cảnh CLB hoặc admin
 function reportBase(context: AccountabilityContext) {
   return context.kind === 'club'
@@ -142,14 +139,6 @@ export function fetchReportDetail(
 // GET danh sách ngân sách của CLB
 export function fetchClubFinances(clubId: string, signal: AbortSignal): Promise<FinanceDetail[]> {
   return request(financeBase({ kind: 'club', clubId }), { signal })
-}
-// GET chi tiết ngân sách/đối soát tài chính
-export function fetchFinanceDetail(
-  context: AccountabilityContext,
-  id: string,
-  signal: AbortSignal,
-): Promise<FinanceDetail> {
-  return request(financeBase(context, id), { signal })
 }
 // POST /actions: thực hiện thao tác (nộp, quyết định...) trên báo cáo sự kiện
 export function reportAction(

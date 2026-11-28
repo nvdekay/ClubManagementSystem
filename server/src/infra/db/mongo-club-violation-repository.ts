@@ -1,9 +1,8 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import type { ClubViolationRepository } from '../../domain/club-violation.js'
 import { DomainError } from '../../domain/errors.js'
 import { assertEventWriteAccess } from './club-event-access.js'
-import { queueNotifications } from './repo-helpers.js'
+import { queueNotifications, writeAudit } from './repo-helpers.js'
 import { mongoViolationRepository } from './mongo-violation-repository.js'
 import { ucmsModels as m } from './ucms-models.js'
 const visible = [
@@ -23,21 +22,15 @@ export function mongoClubViolationRepository(): ClubViolationRepository {
     after: unknown,
     now: Date,
   ) {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'Violation',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(userId),
-          actorRole: 'Club Leader',
-          after,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'Violation',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(userId),
+      actorRole: 'Club Leader',
+      after,
+      at: now,
+    })
   }
   return {
     // Liệt kê vụ vi phạm CLB đã được thông báo (yêu cầu phản hồi hoặc quyết định)

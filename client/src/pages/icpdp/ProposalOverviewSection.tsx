@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
 import type { EventProposalDetail, EventProposalVersion } from '@/services/eventProposalReviews'
 import { occurrenceSummary, text } from '@/pages/icpdp/eventProposalReviewFormat'
-import { formatDate } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
 
 interface ProposalOverviewSectionProps {
   event: EventProposalDetail['event']
@@ -20,9 +20,7 @@ export function ProposalOverviewSection({
   current,
 }: ProposalOverviewSectionProps) {
   const { t, i18n } = useTranslation()
-  function date(value: string) {
-    return formatDate(value, i18n.language)
-  }
+  const { date } = useFormat()
   // Lấy dữ liệu chỉ đọc từ lần nộp được chọn, chấp nhận trường không có trong hồ sơ cũ.
   const payload = current?.payload ?? {}
   const occurrences = Array.isArray(payload.occurrences)

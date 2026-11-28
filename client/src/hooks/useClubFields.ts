@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 
 import {
   createClubField,
@@ -19,46 +20,29 @@ export function useClubFields(enabled: boolean) {
   })
 }
 
-// Trả về hàm làm mới cache danh mục lĩnh vực CLB
-/** Đổi tên cũng ghi đè tên lĩnh vực trong các CLB, nên mọi mutation đều tải lại danh sách có kèm số lượt dùng. */
-function useInvalidateClubFields() {
-  const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: clubFieldsKeyRoot })
-}
-
+// Đổi tên cũng ghi đè tên lĩnh vực trong các CLB, nên mọi mutation đều tải lại danh sách có kèm số lượt dùng.
 // Mutation tạo lĩnh vực CLB, rồi làm mới cache
 export function useCreateClubField() {
-  const invalidate = useInvalidateClubFields()
-  return useMutation({
-    mutationFn: ({ input, csrfToken }: { input: ClubFieldInput; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    ({ input, csrfToken }: { input: ClubFieldInput; csrfToken: string }) =>
       createClubField(input, csrfToken),
-    onSuccess: invalidate,
-  })
+    [clubFieldsKeyRoot],
+  )
 }
 
 // Mutation cập nhật lĩnh vực CLB, rồi làm mới cache
 export function useUpdateClubField() {
-  const invalidate = useInvalidateClubFields()
-  return useMutation({
-    mutationFn: ({
-      id,
-      input,
-      csrfToken,
-    }: {
-      id: string
-      input: ClubFieldInput
-      csrfToken: string
-    }) => updateClubField(id, input, csrfToken),
-    onSuccess: invalidate,
-  })
+  return useInvalidatingMutation(
+    ({ id, input, csrfToken }: { id: string; input: ClubFieldInput; csrfToken: string }) =>
+      updateClubField(id, input, csrfToken),
+    [clubFieldsKeyRoot],
+  )
 }
 
 // Mutation xoá lĩnh vực CLB, rồi làm mới cache
 export function useRemoveClubField() {
-  const invalidate = useInvalidateClubFields()
-  return useMutation({
-    mutationFn: ({ id, csrfToken }: { id: string; csrfToken: string }) =>
-      removeClubField(id, csrfToken),
-    onSuccess: invalidate,
-  })
+  return useInvalidatingMutation(
+    ({ id, csrfToken }: { id: string; csrfToken: string }) => removeClubField(id, csrfToken),
+    [clubFieldsKeyRoot],
+  )
 }

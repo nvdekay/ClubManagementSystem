@@ -1,24 +1,9 @@
 import { z } from 'zod'
-import type { createDocument } from 'zod-openapi'
+import { jsonOk, type OpenApiPaths } from './openapi-shared.js'
 import { sponsoredActionBody } from './sponsored-item-routes.js'
 
-type Paths = NonNullable<Parameters<typeof createDocument>[0]['paths']>
-const response = {
-  '200': {
-    description: 'Sponsored item result',
-    content: {
-      'application/json': {
-        schema: z.object({
-          statusCode: z.number(),
-          message: z.string(),
-          data: z.unknown(),
-          timestamp: z.string(),
-        }),
-      },
-    },
-  },
-}
-export const sponsoredItemOpenApiPaths: Paths = {}
+const response = { '200': jsonOk('Sponsored item result', z.unknown()) }
+export const sponsoredItemOpenApiPaths: OpenApiPaths = {}
 for (const base of ['/clubs/{clubId}/budgets/{id}/items', '/admin/budgets/{id}/items']) {
   sponsoredItemOpenApiPaths[base] = {
     get: { summary: 'Read sponsored item disbursement and invoice packs', responses: response },

@@ -21,8 +21,9 @@ import {
   PROPOSAL_TEMPLATE_MIME_TYPES,
   validateEventProposalFile,
 } from '../domain/club-event-rules.js'
-import { DomainError } from '../domain/errors.js'
-import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
+import { assertClubAccess, parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { removeOnFailure } from './upload-rollback.js'
 
 export interface ClubEventDeps {
   repo: ClubEventRepository
@@ -33,10 +34,7 @@ export interface ClubEventDeps {
 }
 // Kiểm định dạng id sự kiện hoặc CLB
 export function clubEventId(value: string): string {
-  if (!/^[0-9a-f]{24}$/i.test(value)) {
-    throw new DomainError('invalid event or club id', 'validation')
-  }
-  return value
+  return parseObjectId(value, 'event or club id')
 }
 // Liệt kê sự kiện của CLB, ẩn chi tiết với người chỉ có quyền điểm danh hoặc xem feedback
 export async function listClubEvents(
@@ -45,13 +43,8 @@ export async function listClubEvents(
   clubId: string,
   now: Date,
 ) {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError('account locked', 'locked')
-  }
-  const snapshot = await deps.access.findSnapshot(clubEventId(actor.id), clubEventId(clubId))
+  const signedActor = signedIn(actor)
+  const snapshot = await deps.access.findSnapshot(clubEventId(signedActor.id), clubEventId(clubId))
   const permissions = snapshot ? resolveClubPermissions(snapshot, now) : []
   if (
     !['club.event.manage', 'club.attendance.manage', 'club.feedback.view'].some((p) =>
@@ -83,10 +76,7 @@ export async function getClubEvent(
   now: Date,
 ) {
   await assertClubAccess(deps.access, actor, clubId, 'club.event.manage', now)
-  const found = await deps.repo.find(clubEventId(clubId), clubEventId(id))
-  if (!found) {
-    throw new DomainError('event not found', 'not_found')
-  }
+  const found = orNotFound(await deps.repo.find(clubEventId(clubId), clubEventId(id)), 'event')
   return found
 }
 /** Create a proposal draft; attachment and submission are separate subsequent actions. */
@@ -112,13 +102,8 @@ export async function actOnClubEvent(
   now: Date,
 ) {
   if (action.kind === 'unlock') {
-    if (!actor) {
-      throw new DomainError('authentication required', 'unauthorized')
-    }
-    if (actor.accountState === 'Locked') {
-      throw new DomainError('account locked', 'locked')
-    }
-    if (!(await deps.auth.systemRoleCodes(clubEventId(actor.id))).includes('ICPDP_OFFICER')) {
+    const officerId = clubEventId(signedIn(actor).id)
+    if (!(await deps.auth.systemRoleCodes(officerId)).includes('ICPDP_OFFICER')) {
       throw new DomainError('ICPDP officer role required', 'forbidden')
     }
   } else {
@@ -257,10 +242,7 @@ export async function uploadEventProposalDocument(
   await assertClubAccess(deps.access, actor, clubId, 'club.event.manage', now)
   const name = validateEventProposalFile(fileName, mimeType, bytes, PROPOSAL_DOCUMENT_MIME_TYPES)
   const storage = fileStorage(deps)
-  const found = await deps.repo.find(clubEventId(clubId), clubEventId(eventId))
-  if (!found) {
-    throw new DomainError('event not found', 'not_found')
-  }
+  const found = orNotFound(await deps.repo.find(clubEventId(clubId), clubEventId(eventId)), 'event')
   if (isInternalClubEventState(found.event.state)) {
     throw new DomainError('internal club events do not take a proposal document', 'validation')
   }
@@ -277,19 +259,9 @@ export async function uploadEventProposalDocument(
     bytes,
     now,
   })
-  try {
-    return await deps.repo.act(
-      clubId,
-      eventId,
-      { kind: 'attach-document', document },
-      actor!.id,
-      now,
-    )
-  } catch (error) {
-    // The write lost (state changed, version race): do not leave an orphaned asset behind.
-    await storage.remove(document.assetId).catch(() => undefined)
-    throw error
-  }
+  return removeOnFailure(storage, document.assetId, () =>
+    deps.repo.act(clubId, eventId, { kind: 'attach-document', document }, actor!.id, now),
+  )
 }
 /** Resolve a draft/submitted document and verify club ownership before issuing access. */
 export async function clubEventProposalDocumentAccess(
@@ -333,13 +305,9 @@ export async function uploadEventProposalTemplate(
     bytes,
     now,
   })
-  try {
-    return await deps.repo.saveProposalTemplate(document, officerId, now)
-  } catch (error) {
-    // The template was not saved: do not leave an orphaned asset behind.
-    await storage.remove(document.assetId).catch(() => undefined)
-    throw error
-  }
+  return removeOnFailure(storage, document.assetId, () =>
+    deps.repo.saveProposalTemplate(document, officerId, now),
+  )
 }
 /** UC26: let an officer read evidence frozen into the latest or a specified revision. */
 export async function reviewEventProposalDocumentAccess(

@@ -11,6 +11,7 @@ import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import type { BookableHours, Property, PropertyDetails, PropertyType } from '@/services/properties'
 import { cn } from '@/utils/cn'
+import { AppField } from '@/components/ui/field/AppField'
 
 const days = [1, 2, 3, 4, 5, 6, 7]
 export const dayKeys = [
@@ -207,9 +208,7 @@ export function PropertyEditor({
             </span>
           )}
         </div>
-        <label className="block text-sm font-medium text-text-app">
-          {t('properties.name')}
-          <AppRequiredMark />
+        <AppField label={t('properties.name')} required error={field.error('name')}>
           <AppInput
             className="mt-1.5 block w-full"
             maxLength={120}
@@ -217,11 +216,8 @@ export function PropertyEditor({
             {...field.control('name')}
             onChange={(event) => setName(event.target.value)}
           />
-          <AppFieldError message={field.error('name')} />
-        </label>
-        <label className="block text-sm font-medium text-text-app">
-          {t('properties.location')}
-          <AppRequiredMark />
+        </AppField>
+        <AppField label={t('properties.location')} required error={field.error('location')}>
           <AppInput
             className="mt-1.5 block w-full"
             maxLength={200}
@@ -229,12 +225,9 @@ export function PropertyEditor({
             {...field.control('location')}
             onChange={(event) => setLocation(event.target.value)}
           />
-          <AppFieldError message={field.error('location')} />
-        </label>
+        </AppField>
         {type !== 'EQUIPMENT' && (
-          <label className="block text-sm font-medium text-text-app">
-            {t('properties.capacity')}
-            <AppRequiredMark />
+          <AppField label={t('properties.capacity')} required error={field.error('capacity')}>
             <AppInput
               className="mt-1.5 block w-full"
               type="number"
@@ -244,8 +237,7 @@ export function PropertyEditor({
               {...field.control('capacity')}
               onChange={(event) => setCapacity(event.target.value)}
             />
-            <AppFieldError message={field.error('capacity')} />
-          </label>
+          </AppField>
         )}
       </div>
 
@@ -322,8 +314,7 @@ export function PropertyEditor({
               ))}
             </div>
             <div className="flex flex-wrap gap-4">
-              <label className="block text-sm font-medium text-text-app">
-                {t('properties.from')}
+              <AppField label={t('properties.from')}>
                 <AppInput
                   type="time"
                   className="mt-1.5 block"
@@ -331,9 +322,8 @@ export function PropertyEditor({
                   {...field.control('hours')}
                   onChange={(event) => setShared({ ...shared, open: event.target.value })}
                 />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('properties.to')}
+              </AppField>
+              <AppField label={t('properties.to')}>
                 <AppInput
                   type="time"
                   className="mt-1.5 block"
@@ -341,7 +331,7 @@ export function PropertyEditor({
                   {...field.control('hours')}
                   onChange={(event) => setShared({ ...shared, close: event.target.value })}
                 />
-              </label>
+              </AppField>
             </div>
           </>
         )}
@@ -407,9 +397,11 @@ export function PropertyEditor({
               key={blackout.key}
               className="flex flex-wrap items-end gap-3 rounded-xl border border-border-app p-3"
             >
-              <label className="block text-sm font-medium text-text-app">
-                {t('properties.from')}
-                <AppRequiredMark />
+              <AppField
+                label={t('properties.from')}
+                required
+                error={field.error(`blackoutStart${blackout.key}`)}
+              >
                 <AppInput
                   type="datetime-local"
                   className="mt-1.5 block"
@@ -417,11 +409,12 @@ export function PropertyEditor({
                   {...field.control(`blackoutStart${blackout.key}`)}
                   onChange={(event) => patch({ startAt: event.target.value })}
                 />
-                <AppFieldError message={field.error(`blackoutStart${blackout.key}`)} />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('properties.to')}
-                <AppRequiredMark />
+              </AppField>
+              <AppField
+                label={t('properties.to')}
+                required
+                error={field.error(`blackoutEnd${blackout.key}`)}
+              >
                 <AppInput
                   type="datetime-local"
                   className="mt-1.5 block"
@@ -429,8 +422,7 @@ export function PropertyEditor({
                   {...field.control(`blackoutEnd${blackout.key}`)}
                   onChange={(event) => patch({ endAt: event.target.value })}
                 />
-                <AppFieldError message={field.error(`blackoutEnd${blackout.key}`)} />
-              </label>
+              </AppField>
               <label className="min-w-0 flex-1 basis-48 block text-sm font-medium text-text-app">
                 {t('properties.blackoutReason')}
                 <AppRequiredMark />

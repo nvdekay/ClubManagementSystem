@@ -12,7 +12,7 @@ import { AppStackBar } from '@/components/ui/chart/AppStackBar'
 import type { ChartTone } from '@/components/ui/chart/chartScale'
 import { AppStatTile } from '@/components/ui/chart/AppStatTile'
 import type { Dashboard, IcpdpDashboardCharts } from '@/services/dashboard'
-import { formatDateWith } from '@/utils/formatDate'
+import { formatMonthAxis, formatMonthLong } from '@/utils/formatDate'
 
 const queueHref: Record<string, string> = {
   CLUB_APPLICATION: '/workspace/reviews',
@@ -45,20 +45,6 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
     notation: 'compact',
     maximumFractionDigits: 1,
   })
-  // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
-  // Nhãn trục chỉ một từ ngắn: "T5" ở tiếng Việt ("Tháng 5" bị xuống dòng trên điện thoại), "May" ở tiếng Anh.
-  function monthName(month: string) {
-    return i18n.language.startsWith('vi')
-      ? `T${Number(month.slice(5))}`
-      : formatDateWith(`${month}-01T00:00:00Z`, i18n.language, { month: 'short' })
-  }
-  // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
-  function monthLong(month: string) {
-    return formatDateWith(`${month}-01T00:00:00Z`, i18n.language, {
-      month: 'long',
-      year: 'numeric',
-    })
-  }
   const current = charts.eventsByMonth.at(-3)
   const next = charts.eventsByMonth.at(-2)
   const overdue = charts.queues.reduce((sum, queue) => sum + queue.overdue, 0)
@@ -279,7 +265,10 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
           table={{
             label: t('dashboard.tableView'),
             columns: [t('dashboard.month'), t('dashboard.publicEvents')],
-            rows: charts.eventsByMonth.map((item) => [monthLong(item.month), item.count]),
+            rows: charts.eventsByMonth.map((item) => [
+              formatMonthLong(item.month, i18n.language),
+              item.count,
+            ]),
           }}
         >
           <AppColumnChart
@@ -287,8 +276,8 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
             seriesLabels={[t('dashboard.publicEvents')]}
             points={charts.eventsByMonth.map((item) => ({
               key: item.month,
-              label: monthName(item.month),
-              title: monthLong(item.month),
+              label: formatMonthAxis(item.month, i18n.language),
+              title: formatMonthLong(item.month, i18n.language),
               values: [item.count],
               emphasized: item.month === current?.month,
             }))}

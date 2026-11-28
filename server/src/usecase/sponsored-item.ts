@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import type { ApplicationFileStorage } from '../domain/club-application.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type { PolicyRepository } from '../domain/policy.js'
 import {
   assertInvoiceEditable,
@@ -12,8 +12,9 @@ import {
   type SponsoredItemAction,
   type SponsoredItemRepository,
 } from '../domain/sponsored-item.js'
-import { assertClubAccess, requireIcpdpOfficer, type AccessActor } from './access.js'
+import { assertClubOrOfficer, type AccessActor } from './access.js'
 import { financeId, type EventFinanceDeps } from './event-finance.js'
+import { removeOnFailure } from './upload-rollback.js'
 
 export interface SponsoredItemDeps {
   repo: SponsoredItemRepository
@@ -31,15 +32,8 @@ export async function getSponsoredBudget(
   clubId: string | undefined,
   now: Date,
 ) {
-  if (clubId) {
-    await assertClubAccess(deps.access, actor, financeId(clubId), 'club.expense.record', now)
-  } else {
-    await requireIcpdpOfficer(deps.auth, actor)
-  }
-  const budget = await deps.repo.find(financeId(id), clubId)
-  if (!budget) {
-    throw new DomainError('sponsored budget not found', 'not_found')
-  }
+  await assertClubOrOfficer(deps, actor, clubId && financeId(clubId), 'club.expense.record', now)
+  const budget = orNotFound(await deps.repo.find(financeId(id), clubId), 'sponsored budget')
   return clubId ? budget : redactSponsoredBudgetForOfficer(budget)
 }
 
@@ -135,8 +129,8 @@ export async function uploadInvoiceImage(
     uploadedAt: now.toISOString(),
     uploadedBy: actor!.id,
   }
-  try {
-    return await actOnSponsoredItem(
+  return removeOnFailure(deps.files, file.assetId, () =>
+    actOnSponsoredItem(
       deps,
       actor,
       id,
@@ -147,12 +141,8 @@ export async function uploadInvoiceImage(
         ? { kind: 'refundImage', image: uploaded }
         : { kind: 'image', image: uploaded },
       now,
-    )
-  } catch (error) {
-    // The write lost (stale revision, state changed): do not leave an orphaned asset behind.
-    await deps.files.remove(file.assetId).catch(() => undefined)
-    throw error
-  }
+    ),
+  )
 }
 
 // Cấp URL tạm để xem hoặc tải xuống tệp chứng từ (hóa đơn hoặc biên lai hoàn trả) của hạng mục

@@ -7,9 +7,7 @@ import {
   type ApprovalRoutingRepository,
   type RoutingRule,
 } from '../../domain/approval-routing.js'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { PropertyType } from '../../domain/property.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   activateRoutingRuleSet,
   createRoutingDraft,
@@ -17,17 +15,14 @@ import {
   saveRoutingDraft,
   simulateRoutingRuleSet,
 } from '../../usecase/approval-routing.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface ApprovalRoutingRouteDeps {
+export interface ApprovalRoutingRouteDeps extends SessionDeps {
   repo: ApprovalRoutingRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const whole = z.number().int().min(0).max(1_000_000_000_000)
 const routingRule = z
   .object({
@@ -59,13 +54,13 @@ function rules(body: unknown): RoutingRule[] {
 // Mount các route cấu hình định tuyến phê duyệt của ICPDP
 export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Liệt kê các bộ rule định tuyến phê duyệt
-  router.get('/admin/routing-rules', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/routing-rules', read, async (_req, res) => {
     ok(res, await listRoutingRuleSets(deps.repo, deps.authRepo, actor(res)))
   })
   // Tạo bản nháp bộ rule định tuyến mới
-  router.post('/admin/routing-rules', authGuard(guard), async (req, res) => {
+  router.post('/admin/routing-rules', write, async (req, res) => {
     ok(
       res,
       await createRoutingDraft(deps.repo, deps.authRepo, actor(res), rules(req.body), new Date()),
@@ -73,7 +68,7 @@ export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
     )
   })
   // Lưu chỉnh sửa vào bản nháp bộ rule
-  router.put('/admin/routing-rules/:id', authGuard(guard), async (req, res) => {
+  router.put('/admin/routing-rules/:id', write, async (req, res) => {
     ok(
       res,
       await saveRoutingDraft(
@@ -87,7 +82,7 @@ export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
     )
   })
   // Kích hoạt bộ rule định tuyến
-  router.post('/admin/routing-rules/:id/activate', authGuard(guard), async (req, res) => {
+  router.post('/admin/routing-rules/:id/activate', write, async (req, res) => {
     ok(
       res,
       await activateRoutingRuleSet(
@@ -100,7 +95,7 @@ export function approvalRoutingRoutes(deps: ApprovalRoutingRouteDeps): Router {
     )
   })
   // Mô phỏng bộ rule trên dữ liệu hiện có trước khi kích hoạt
-  router.get('/admin/routing-rules/:id/simulation', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/routing-rules/:id/simulation', read, async (req, res) => {
     ok(
       res,
       await simulateRoutingRuleSet(

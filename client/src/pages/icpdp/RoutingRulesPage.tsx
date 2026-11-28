@@ -24,6 +24,8 @@ import type {
   RoutingRule,
   RoutingRuleSet,
 } from '@/services/approvalRouting'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 const TYPES: RoutedRequestType[] = ['CLUB_APPLICATION', 'EVENT_PROPOSAL', 'PROPERTY_BOOKING']
 const PROPERTY_TYPES: RoutedPropertyType[] = ['HALL', 'OUTDOOR', 'STAGE', 'EQUIPMENT']
@@ -82,12 +84,9 @@ export function RoutingRulesPage() {
     return (
       <>
         <PageHeader title={t('routing.title')} description={t('routing.description')} />
-        <AppNotice tone="danger" role="alert" title={t('routing.loadError')}>
+        <AppErrorNotice title={t('routing.loadError')} onRetry={() => void sets.refetch()}>
           <p>{sets.error.message}</p>
-          <AppButton variant="secondary" onClick={() => void sets.refetch()}>
-            {t('routing.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       </>
     )
   }
@@ -282,15 +281,14 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
             className="space-y-3 rounded-xl border border-border-app bg-surface-app p-4"
           >
             <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-sm font-medium text-text-app">
-                {t('routing.ruleId')}
+              <AppField label={t('routing.ruleId')}>
                 <AppInput
                   className="mt-1.5 block w-full font-normal"
                   value={rule.id}
                   maxLength={40}
                   onChange={(event) => update(index, { id: event.target.value })}
                 />
-              </label>
+              </AppField>
               <div className="min-w-0 text-sm font-medium text-text-app">
                 {t('routing.requestType')}
                 <AppSelect
@@ -308,8 +306,7 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
                   options={TYPES.map((value) => ({ value, label: t(typeKey(value)) }))}
                 />
               </div>
-              <label className="block text-sm font-medium text-text-app">
-                {t('routing.sla')}
+              <AppField label={t('routing.sla')}>
                 <AppInput
                   className="mt-1.5 block w-full font-normal"
                   type="number"
@@ -322,28 +319,26 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
                     })
                   }
                 />
-              </label>
+              </AppField>
             </div>
             {rule.requestType === 'EVENT_PROPOSAL' && (
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm font-medium text-text-app">
-                  {t('routing.minAmount')}
+                <AppField label={t('routing.minAmount')}>
                   <AppMoneyInput
                     className="mt-1.5 block w-full font-normal"
                     value={rule.minAmount ?? ''}
                     placeholder={t('routing.anyValue')}
                     onValueChange={(digits) => update(index, { minAmount: optionalNumber(digits) })}
                   />
-                </label>
-                <label className="block text-sm font-medium text-text-app">
-                  {t('routing.maxAmount')}
+                </AppField>
+                <AppField label={t('routing.maxAmount')}>
                   <AppMoneyInput
                     className="mt-1.5 block w-full font-normal"
                     value={rule.maxAmount ?? ''}
                     placeholder={t('routing.anyValue')}
                     onValueChange={(digits) => update(index, { maxAmount: optionalNumber(digits) })}
                   />
-                </label>
+                </AppField>
               </div>
             )}
             {rule.requestType === 'PROPERTY_BOOKING' && (
@@ -367,8 +362,7 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
               </fieldset>
             )}
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-text-app">
-                {t('routing.minViolations')}
+              <AppField label={t('routing.minViolations')}>
                 <AppInput
                   className="mt-1.5 block w-full font-normal"
                   type="number"
@@ -379,9 +373,8 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
                     update(index, { minOpenViolations: optionalNumber(event.target.value) })
                   }
                 />
-              </label>
-              <label className="block text-sm font-medium text-text-app">
-                {t('routing.maxViolations')}
+              </AppField>
+              <AppField label={t('routing.maxViolations')}>
                 <AppInput
                   className="mt-1.5 block w-full font-normal"
                   type="number"
@@ -392,7 +385,7 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
                     update(index, { maxOpenViolations: optionalNumber(event.target.value) })
                   }
                 />
-              </label>
+              </AppField>
             </div>
             <AppButton
               variant="secondary"

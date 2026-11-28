@@ -1,6 +1,6 @@
+import { ApiError } from '@/services/apiError'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppButton } from '@/components/ui/button/AppButton'
@@ -13,7 +13,6 @@ import { AppInput } from '@/components/ui/input/AppInput'
 import { useAuth } from '@/hooks/useAuth'
 import { useExportDownload, useExportOptions, useExportPreview } from '@/hooks/useExports'
 import {
-  ExportRequestError,
   type ExportFilter,
   type ExportFormat,
   type ExportPreview,
@@ -23,6 +22,8 @@ import { cn } from '@/utils/cn'
 import { saveFile } from '@/utils/saveFile'
 
 import { AnnualReportSection } from './AnnualReportSection'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 type PeriodMode = 'all' | 'semester' | 'range'
 const choiceClass =
@@ -103,7 +104,7 @@ export function DataExportPage() {
       )
       appToast.success(t('exports.downloaded'))
     } catch (failure) {
-      if (failure instanceof ExportRequestError && failure.status === 404) {
+      if (failure instanceof ApiError && failure.status === 404) {
         setResult({ rowCount: 0, types: [] })
       } else {
         setError(`${t('exports.failed')} ${(failure as Error).message}`)
@@ -119,30 +120,18 @@ export function DataExportPage() {
       <PageHeader title={t('exports.title')} description={t('exports.description')} />
       {auth.isPending ? (
         <AppSkeleton className="h-44 w-full" />
-      ) : !auth.data ? (
-        <AppNotice>
-          <p>{t('exports.signIn')}</p>
-          <Link
-            className="font-semibold text-primary-app hover:underline"
-            to="/login?returnTo=%2Fworkspace%2Fexports"
-          >
-            {t('exports.signInLink')}
-          </Link>
-        </AppNotice>
-      ) : !isOfficer ? (
+      ) : !auth.data ? null : !isOfficer ? (
         <AppNotice tone="danger" role="alert">
           {t('exports.forbidden')}
         </AppNotice>
       ) : options.isPending ? (
         <AppSkeleton className="h-44 w-full" />
       ) : options.isError || !data ? (
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={`${t('exports.loadError')} ${options.error?.message ?? ''}`}
-        >
-          <AppButton onClick={() => void options.refetch()}>{t('exports.retry')}</AppButton>
-        </AppNotice>
+          onRetry={() => void options.refetch()}
+          retryVariant="primary"
+        />
       ) : (
         <div className="max-w-4xl space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
           <fieldset className="space-y-3">
@@ -246,8 +235,7 @@ export function DataExportPage() {
             )}
             {mode === 'range' && (
               <div className="flex flex-wrap gap-4">
-                <label className="block text-sm font-medium text-text-app">
-                  {t('exports.from')}
+                <AppField label={t('exports.from')}>
                   <AppInput
                     type="date"
                     className="mt-1.5 block font-normal"
@@ -257,9 +245,8 @@ export function DataExportPage() {
                       reset()
                     }}
                   />
-                </label>
-                <label className="block text-sm font-medium text-text-app">
-                  {t('exports.to')}
+                </AppField>
+                <AppField label={t('exports.to')}>
                   <AppInput
                     type="date"
                     className="mt-1.5 block font-normal"
@@ -269,7 +256,7 @@ export function DataExportPage() {
                       reset()
                     }}
                   />
-                </label>
+                </AppField>
               </div>
             )}
           </fieldset>

@@ -1,6 +1,6 @@
 import type { ClubAccessRepository } from '../domain/access.js'
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   BOOKING_SLOTS,
   assertBookingNotice,
@@ -120,10 +120,7 @@ export async function getBooking(
     return owned(deps, clubId, id, now)
   }
   await requireIcpdpOfficer(deps.auth, actor)
-  const detail = await deps.repo.find(bookingId(id), now)
-  if (!detail) {
-    throw new DomainError('booking not found', 'not_found')
-  }
+  const detail = orNotFound(await deps.repo.find(bookingId(id), now), 'booking')
   return detail
 }
 // Kiểm tra slot booking còn trống hay đang xung đột

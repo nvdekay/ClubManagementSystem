@@ -11,7 +11,8 @@ import { AppStackBar } from '@/components/ui/chart/AppStackBar'
 import { AppStatTile } from '@/components/ui/chart/AppStatTile'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import type { ClubDashboardCharts, Dashboard } from '@/services/dashboard'
-import { dateFormatter, formatDateWith } from '@/utils/formatDate'
+import { dateFormatter } from '@/utils/formatDate'
+import { formatMonthAxis, formatMonthLong } from '@/utils/formatDate'
 
 interface ClubDashboardProps {
   clubId: string
@@ -34,20 +35,6 @@ export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   })
-  // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
-  // Nhãn trục chỉ một từ ngắn: "T5" ở tiếng Việt ("Tháng 5" bị xuống dòng trên điện thoại), "May" ở tiếng Anh.
-  function monthName(month: string) {
-    return i18n.language.startsWith('vi')
-      ? `T${Number(month.slice(5))}`
-      : formatDateWith(`${month}-01T00:00:00Z`, i18n.language, { month: 'short' })
-  }
-  // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
-  function monthLong(month: string) {
-    return formatDateWith(`${month}-01T00:00:00Z`, i18n.language, {
-      month: 'long',
-      year: 'numeric',
-    })
-  }
   const day = dateFormatter(i18n.language, { day: '2-digit', month: '2-digit' })
   const members = charts.membersByMonth
   const active = count('activeMembers')
@@ -209,14 +196,14 @@ export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
           table={{
             label: t('dashboard.tableView'),
             columns: [t('dashboard.month'), t('dashboard.members')],
-            rows: members.map((item) => [monthLong(item.month), item.count]),
+            rows: members.map((item) => [formatMonthLong(item.month, i18n.language), item.count]),
           }}
         >
           <AppAreaChart
             seriesLabel={t('dashboard.members')}
             points={members.map((item) => ({
               key: item.month,
-              label: monthName(item.month),
+              label: formatMonthAxis(item.month, i18n.language),
               value: item.count,
             }))}
           />

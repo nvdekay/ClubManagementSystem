@@ -1,4 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authKeyRoot } from '@/hooks/useAuth'
+import { dashboardKeyRoot } from '@/hooks/useDashboard'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   claimLeadershipTransition,
   decideLeadershipTransition,
@@ -29,9 +32,8 @@ export function useLeadershipTransition(id: string | undefined, enabled: boolean
 
 // Mutation nhận xử lý hoặc quyết định chuyển giao, rồi làm mới cache
 export function useLeadershipTransitionAction() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       action:
         | { kind: 'claim'; id: string; csrfToken: string }
         | { kind: 'decide'; id: string; csrfToken: string; input: TransitionDecisionInput },
@@ -39,11 +41,7 @@ export function useLeadershipTransitionAction() {
       action.kind === 'claim'
         ? claimLeadershipTransition(action.id, action.csrfToken)
         : decideLeadershipTransition(action.id, action.input, action.csrfToken),
-    onSuccess: async (result) => {
-      client.setQueryData([...key, 'detail', result.id], result)
-      await client.invalidateQueries({ queryKey: key })
-      await client.invalidateQueries({ queryKey: ['dashboard'] })
-      await client.invalidateQueries({ queryKey: ['auth'] })
-    },
-  })
+    [key, dashboardKeyRoot, authKeyRoot],
+    (result) => [[...key, 'detail', result.id], result],
+  )
 }

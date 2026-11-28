@@ -9,22 +9,17 @@ import type {
 import { checkInStates } from '../../domain/event-checkin.js'
 import type { EventRegistrationState } from '../../domain/event-registration.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey, policyAt, queueNotification } from './repo-helpers.js'
+import {
+  found,
+  isDuplicateKey,
+  optionalDate,
+  policyAt,
+  queueNotification,
+  storedDate,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-
-// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
-function date(value: unknown): Date {
-  if (!(value instanceof Date)) {
-    throw new Error('invalid attendance date in database')
-  }
-  return value
-}
-
-// Trả Date nếu giá trị là Date, ngược lại undefined
-function optionalDate(value: unknown): Date | undefined {
-  return value instanceof Date ? value : undefined
-}
 
 // Repository check-in sự kiện của sinh viên (UC31)
 export function mongoEventCheckInRepository(): EventCheckInRepository {
@@ -32,7 +27,6 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
   const registrations = ucmsModels.eventRegistrations!
   const attendances = ucmsModels.attendances!
   const memberships = ucmsModels.clubMemberships!
-  const audits = ucmsModels.auditLogs!
 
   function map(attendance: Doc, event: Doc): Attendance {
     return {
@@ -41,9 +35,9 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
       eventTitle: String(event.title),
       ...(attendance.clubId ? { clubId: String(attendance.clubId) } : {}),
       clubName: String(event.clubName ?? ''),
-      eventStartAt: date(event.startAt),
-      eventEndAt: date(event.endAt),
-      checkedInAt: date(attendance.checkedInAt),
+      eventStartAt: storedDate(event.startAt, 'attendance'),
+      eventEndAt: storedDate(event.endAt, 'attendance'),
+      checkedInAt: storedDate(attendance.checkedInAt, 'attendance'),
       method: attendance.method as AttendanceMethod,
       abnormalFlags: Array.isArray(attendance.abnormalFlags)
         ? attendance.abnormalFlags.filter((flag): flag is string => typeof flag === 'string')
@@ -100,8 +94,8 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
           state: String(event.state),
           audienceScope: String(event.audienceScope),
           published: event.publishedAt instanceof Date,
-          startAt: date(event.startAt),
-          endAt: date(event.endAt),
+          startAt: storedDate(event.startAt, 'attendance'),
+          endAt: storedDate(event.endAt, 'attendance'),
           ...(typeof event.checkInCode === 'string' && event.checkInCode
             ? { checkInCode: event.checkInCode }
             : {}),
@@ -229,21 +223,16 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
             { session },
           )
           const correlationId = randomUUID()
-          await audits.create(
-            [
-              {
-                entityType: 'Attendance',
-                entityId: attendance!._id,
-                action: input.method === 'walk-in' ? 'EVENT_CHECK_IN_WALK_IN' : 'EVENT_CHECK_IN',
-                actorId: studentId,
-                actorRole: 'STUDENT',
-                after: { eventId: input.eventId, method: input.method, checkedInAt: input.now },
-                correlationId,
-                at: input.now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Attendance',
+            entityId: attendance!._id,
+            action: input.method === 'walk-in' ? 'EVENT_CHECK_IN_WALK_IN' : 'EVENT_CHECK_IN',
+            actorId: studentId,
+            actorRole: 'STUDENT',
+            after: { eventId: input.eventId, method: input.method, checkedInAt: input.now },
+            correlationId,
+            at: input.now,
+          })
           await queueNotification(session, {
             recipientUserId: studentId,
             eventCode: 'EVENT_CHECKED_IN',
@@ -261,10 +250,10 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
         }
         created = false
       }
-      const attendance = await existing(eventId, studentId)
-      if (!attendance) {
-        throw new DomainError('attendance not found after check-in', 'not_found')
-      }
+      const attendance = found(
+        await existing(eventId, studentId),
+        'attendance not found after check-in',
+      )
       return { attendance, created }
     },
 

@@ -5,6 +5,13 @@ export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+/** Logs a job's counts as one JSON line, only when at least one count is non-zero. */
+export function logCounts(job: string, counts: Record<string, number>): void {
+  if (Object.values(counts).some(Boolean)) {
+    console.log(JSON.stringify({ job, ...counts }))
+  }
+}
+
 /**
  * Shared timer for every background job: runs once now and then every `intervalMs`, never
  * overlaps a slow tick with the next one, logs a failed tick (and hands it to `onError`), and

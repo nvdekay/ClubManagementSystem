@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchEventProposalPreviewFile } from '@/services/clubEvents'
 import {
   accessEventProposalDocument,
@@ -48,9 +49,8 @@ export function useClubEventFeedback(clubId: string, ids: string[], enabled: boo
 }
 // Mutation thao tác với sự kiện của CLB, rồi làm mới cache
 export function useClubEventMutation(clubId: string) {
-  const cache = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       input: { csrfToken: string } & (
         | { kind: 'create'; input: ClubEventInput }
         | { kind: 'action'; id: string; action: string; body: object }
@@ -72,10 +72,8 @@ export function useClubEventMutation(clubId: string) {
           return actOnClubEvent(clubId, input.id, input.action, input.body, input.csrfToken)
       }
     },
-    onSuccess: async () => {
-      await cache.invalidateQueries({ queryKey: clubEventsKeyRoot })
-    },
-  })
+    [clubEventsKeyRoot],
+  )
 }
 
 // Query các lựa chọn khi tạo sự kiện của CLB

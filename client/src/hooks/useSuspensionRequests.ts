@@ -1,4 +1,6 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authKeyRoot } from '@/hooks/useAuth'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   decideSuspension,
   fetchAdminSuspensions,
@@ -26,9 +28,8 @@ export function useAdminSuspensionRequests(page: number, pageSize: number, enabl
 }
 // Mutation gửi hoặc quyết định yêu cầu tạm ngưng, rồi làm mới cache
 export function useSuspensionRequestAction(clubId?: string) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: async (
+  return useInvalidatingMutation(
+    async (
       a: { csrfToken: string } & (
         | { kind: 'submit'; input: Parameters<typeof submitSuspension>[1] }
         | { kind: 'decide'; id: string; outcome: 'Approve' | 'Reject'; reason: string }
@@ -40,9 +41,6 @@ export function useSuspensionRequestAction(clubId?: string) {
         await decideSuspension(a.id, a.outcome, a.reason, a.csrfToken)
       }
     },
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key })
-      await client.invalidateQueries({ queryKey: ['auth'] })
-    },
-  })
+    [key, authKeyRoot],
+  )
 }

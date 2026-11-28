@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure } from '@/services/apiRequest'
 export interface RecruitmentSelectionStep {
   name: string
   description?: string
@@ -74,21 +74,17 @@ export interface CampaignResult {
 }
 
 export class CampaignApiError extends ApiError {
-  readonly status: number
-  readonly details: unknown
-
-  constructor(message: string, status: number, details: unknown) {
-    super(message)
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly details: unknown,
+  ) {
+    super(message, status)
     this.name = 'CampaignApiError'
-    this.status = status
-    this.details = details
   }
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toCampaignError })
-}
+const request = apiClient('/api/v1', toCampaignError)
 
 // Maps a failed response to this module's error type
 function toCampaignError(failure: ApiFailure): Error {

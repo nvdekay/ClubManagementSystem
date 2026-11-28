@@ -1,3 +1,4 @@
+import { ApiError } from '@/services/apiError'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 
@@ -10,7 +11,6 @@ import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useClub } from '@/hooks/useDiscovery'
 import { useAuth } from '@/hooks/useAuth'
-import { PublicApiError } from '@/services/discovery'
 import { formatDate } from '@/utils/formatDate'
 
 // Trang chi tiết CLB công khai
@@ -36,9 +36,7 @@ export function ClubDetail() {
           <AppSkeleton className="h-40 w-full" />
           <AppSkeleton className="h-36 w-full" />
         </div>
-      ) : detail.isError &&
-        detail.error instanceof PublicApiError &&
-        detail.error.statusCode === 404 ? (
+      ) : detail.isError && detail.error instanceof ApiError && detail.error.status === 404 ? (
         <p className="mt-8" role="alert">
           {t('discovery.notFound')}
         </p>

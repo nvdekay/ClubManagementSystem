@@ -29,6 +29,7 @@ import type {
 } from '@/services/recruitmentApplications'
 import { ApplicationReviewDialog } from './ApplicationReviewDialog'
 import { formatDate, formatScore, stateTone } from './recruitmentReviewFormat'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 interface ReviewRow {
   application: RecruitmentApplication
@@ -287,11 +288,11 @@ export function RecruitmentReviewPage() {
     return (
       <>
         {header}
-        <AppNotice tone="danger" role="alert" title={query.error.message}>
-          <AppButton variant="secondary" onClick={() => void query.refetch()}>
-            {t('recruitmentApplications.retry')}
-          </AppButton>
-        </AppNotice>
+        <AppErrorNotice
+          title={query.error.message}
+          onRetry={() => void query.refetch()}
+          retryLabel={t('recruitmentApplications.retry')}
+        />
       </>
     )
   }
@@ -349,10 +350,7 @@ export function RecruitmentReviewPage() {
         pageIndex={pagination.pageIndex}
         pageCount={table.getPageCount()}
         onPageChange={(index) => table.setPageIndex(index)}
-        prevLabel={t('recruitmentApplications.prevPage')}
-        nextLabel={t('recruitmentApplications.nextPage')}
         navLabel={t('recruitmentApplications.pagination')}
-        pageLabel={(page) => t('recruitmentApplications.pageNumber', { page })}
       />
       {/* Thanh thao tác hàng loạt nằm sau danh sách và dính ở đáy màn hình, nên tick một dòng không đẩy bảng xuống (trên điện thoại thì nằm trong luồng bình thường vì nếu dính sẽ che danh sách). */}
       {selected.length > 0 && (

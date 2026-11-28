@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js'
+import { DomainError, invalidField as invalid } from './errors.js'
 import type { Page, PageRequest } from './paging.js'
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from './violation.js'
 
@@ -26,12 +26,6 @@ export const TRIAGE_VALIDITIES = ['VALID', 'PARTLY_VALID', 'UNFOUNDED'] as const
 export type TriageValidity = (typeof TRIAGE_VALIDITIES)[number]
 /** Các trạng thái sinh viên còn được rút khiếu nại (UC50 A1) và ICPDP được liên kết thành một sự việc (UC50 E1). */
 export const UNDECIDED_COMPLAINT_STATES: readonly ComplaintState[] = ['Submitted', 'Under Triage']
-export const OPEN_COMPLAINT_STATES: readonly ComplaintState[] = [
-  'Submitted',
-  'Under Triage',
-  'Forwarded',
-  'Club Responded',
-]
 export const MAX_COMPLAINT_TEXT = 4_000
 export const MAX_COMPLAINT_EVIDENCE = 5
 export const COMPLAINT_RESPONSE_DAYS = 7
@@ -168,11 +162,6 @@ export interface ComplaintRepository {
   ): Promise<ComplaintForClub>
   /** UC52 E1: đánh dấu mỗi khiếu nại Forwarded quá hạn một lần (audit + thông báo ICPDP); trả về số lượng. */
   flagOverdueResponses(now: Date): Promise<number>
-}
-
-// Ném lỗi validation cho trường khiếu nại không hợp lệ
-function invalid(message: string, field: string): never {
-  throw new DomainError(message, 'validation', { field })
 }
 
 // Cắt khoảng trắng và kiểm tra độ dài nội dung khiếu nại

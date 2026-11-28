@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import { ComplaintCard } from '@/components/custom/ComplaintCard'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppButton } from '@/components/ui/button/AppButton'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
@@ -16,6 +15,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useWorkspacePermission } from '@/hooks/useWorkspacePermission'
 import { useClubComplaints, useRespondToComplaint } from '@/hooks/useComplaints'
 import type { ComplaintEvidence, ComplaintForClub } from '@/services/complaints'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
+import { AppField } from '@/components/ui/field/AppField'
 
 // Trang Club Leader xem và phản hồi khiếu nại nhắm vào CLB
 /** UC52: các khiếu nại ICPDP chuyển cho CLB này (không bao giờ kèm người khiếu nại, D5), mỗi khiếu nại chỉ được phản hồi một lần. */
@@ -38,12 +39,9 @@ export function ClubComplaintsPage() {
       ) : inbox.isPending ? (
         <AppSkeleton className="h-48 w-full" />
       ) : inbox.isError ? (
-        <AppNotice tone="danger" role="alert" title={t('complaints.loadError')}>
+        <AppErrorNotice title={t('complaints.loadError')} onRetry={() => void inbox.refetch()}>
           <p>{inbox.error.message}</p>
-          <AppButton variant="secondary" onClick={() => void inbox.refetch()}>
-            {t('complaints.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       ) : inbox.data.length === 0 ? (
         <AppEmptyState variant="boxed" message={t('complaints.clubEmpty')} />
       ) : (
@@ -106,9 +104,7 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
               void send()
             }}
           >
-            <label className="block text-sm font-medium text-text-app">
-              {t('complaints.answerText')}
-              <AppRequiredMark />
+            <AppField label={t('complaints.answerText')} required>
               <AppTextarea
                 className="mt-1.5 block w-full font-normal"
                 rows={3}
@@ -116,10 +112,8 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
                 value={text}
                 onChange={(event) => setText(event.target.value)}
               />
-            </label>
-            <label className="block text-sm font-medium text-text-app">
-              {t('complaints.answerAction')}
-              <AppRequiredMark />
+            </AppField>
+            <AppField label={t('complaints.answerAction')} required>
               <AppTextarea
                 className="mt-1.5 block w-full font-normal"
                 rows={2}
@@ -127,7 +121,7 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
               />
-            </label>
+            </AppField>
             <fieldset className="space-y-2">
               <legend className="text-sm font-semibold">{t('complaints.evidenceLabel')}</legend>
               <p className="text-xs text-muted-app">{t('complaints.evidenceHint')}</p>

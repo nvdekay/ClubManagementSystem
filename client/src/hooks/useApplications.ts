@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 import {
   createDraft,
@@ -57,9 +58,8 @@ export function useApplicationPreview(id: string | undefined, enabled: boolean) 
 
 // Mutation tạo, lưu, nộp, rút hồ sơ và quản lý tài liệu, rồi làm mới cache
 export function useApplicationAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (
+  return useInvalidatingMutation(
+    async (
       action:
         | { kind: 'create'; input: DraftInput; csrfToken: string }
         | { kind: 'save'; id: string; input: DraftInput; draftRevision: number; csrfToken: string }
@@ -88,10 +88,8 @@ export function useApplicationAction() {
           return removeDocument(action.id, action.documentId, action.csrfToken)
       }
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: applicationsKey })
-    },
-  })
+    [applicationsKey],
+  )
 }
 
 // Mutation tra cứu thành viên sáng lập theo email

@@ -1,5 +1,4 @@
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
-import { EventRegistrationError } from '@/services/eventRegistrations'
+import { apiClient } from '@/services/apiRequest'
 
 export interface MyEventFeedback {
   id: string
@@ -26,15 +25,7 @@ export interface EventFeedbackInput {
   isAnonymous: boolean
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRegistrationError })
-}
-
-// Maps a failed response to this module's error type
-function toRegistrationError(failure: ApiFailure): Error {
-  return new EventRegistrationError(failure.message, failure.status)
-}
+const request = apiClient('/api/v1')
 
 // GET /events/:id/feedback: điều kiện và form phản hồi sự kiện
 export function fetchEventFeedbackContext(eventId: string, signal: AbortSignal) {

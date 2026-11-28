@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import {
@@ -11,7 +10,7 @@ import {
   type SchemeThresholds,
 } from '../../domain/evaluation-scheme.js'
 import { ucmsModels } from './ucms-models.js'
-import { isDuplicateKey } from './repo-helpers.js'
+import { isDuplicateKey, writeAudit } from './repo-helpers.js'
 
 const catalogue = new Map<string, (typeof EVALUATION_DIMENSIONS)[number]>(
   EVALUATION_DIMENSIONS.map((dimension) => [dimension.code, dimension]),
@@ -29,7 +28,6 @@ function total(settings: SchemeSettings): number {
 export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
   const schemes = ucmsModels.evaluationSchemes!
   const dimensions = ucmsModels.evaluationDimensions!
-  const audits = ucmsModels.auditLogs!
 
   function schemeFrom(
     doc: Record<string, unknown>,
@@ -98,21 +96,15 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
     after: unknown,
     at: Date,
   ): Promise<void> {
-    await audits.create(
-      [
-        {
-          entityType: 'EvaluationScheme',
-          entityId: id,
-          action,
-          actorId: new Types.ObjectId(actorId),
-          actorRole: 'ICPDP_OFFICER',
-          after,
-          correlationId: randomUUID(),
-          at,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'EvaluationScheme',
+      entityId: id,
+      action,
+      actorId: new Types.ObjectId(actorId),
+      actorRole: 'ICPDP_OFFICER',
+      after,
+      at,
+    })
   }
 
   async function draft(id: string, session: ClientSession) {

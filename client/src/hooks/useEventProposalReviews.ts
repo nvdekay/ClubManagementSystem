@@ -1,3 +1,4 @@
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
 /** Điều phối API xét duyệt; trang quản lý trạng thái giao diện, service quản lý yêu cầu HTTP. */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { eventProposalTemplateKey } from '@/hooks/useClubEvents'
@@ -14,7 +15,7 @@ import {
 } from '@/services/eventProposalReviews'
 
 // Tách dữ liệu đệm danh sách và chi tiết dưới cùng nhóm khóa xét duyệt.
-const eventProposalKey = ['event-proposal-reviews'] as const
+export const eventProposalKey = ['event-proposal-reviews'] as const
 
 /** Tải các hồ sơ đang chờ xử lý khi nơi gọi bật quyền truy cập cho ICPDP. */
 export function useEventProposalQueue(enabled: boolean, view: 'pending' | 'approved' = 'pending') {
@@ -36,10 +37,10 @@ export function useEventProposal(id: string | undefined, enabled: boolean) {
 
 /** Gửi thao tác xét duyệt, thay chi tiết bằng kết quả server và làm mới danh sách chờ. */
 export function useEventProposalAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    // Loại thao tác xác định service cần gọi; trang dùng chung trạng thái ghi dữ liệu của hook.
-    mutationFn: (
+  // Loại thao tác xác định service cần gọi; trang dùng chung trạng thái ghi dữ liệu của hook.
+  // Cập nhật ngay người phụ trách và trạng thái mới; danh sách chờ cũng có thể đã thay đổi.
+  return useInvalidatingMutation(
+    (
       action:
         | { kind: 'claim'; id: string; csrfToken: string }
         | { kind: 'decide'; id: string; input: EventReviewDecisionInput; csrfToken: string }
@@ -58,12 +59,9 @@ export function useEventProposalAction() {
       }
       return decideEventProposal(action.id, action.input, action.csrfToken)
     },
-    onSuccess: async (detail) => {
-      // Cập nhật ngay người phụ trách và trạng thái mới; danh sách chờ cũng có thể đã thay đổi.
-      queryClient.setQueryData([...eventProposalKey, 'detail', detail.event.id], detail)
-      await queryClient.invalidateQueries({ queryKey: [...eventProposalKey, 'queue'] })
-    },
-  })
+    [[...eventProposalKey, 'queue']],
+    (detail) => [[...eventProposalKey, 'detail', detail.event.id], detail],
+  )
 }
 
 /** Thay mẫu đề xuất và cập nhật bộ nhớ đệm dùng chung giữa CLB và ICPDP. */

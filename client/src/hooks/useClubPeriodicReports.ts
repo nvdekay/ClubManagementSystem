@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   changePeriodicReport,
   fetchClubPeriodicReports,
@@ -15,14 +16,11 @@ export function useClubPeriodicReports(clubId: string, enabled: boolean) {
 }
 // Mutation tạo, lưu hoặc nộp báo cáo định kỳ, rồi làm mới cache
 export function useChangePeriodicReport(clubId: string) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (input: {
-      action: Parameters<typeof changePeriodicReport>[1]
-      csrfToken: string
-    }) => changePeriodicReport(clubId, input.action, input.csrfToken),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...key, clubId] }),
-  })
+  return useInvalidatingMutation(
+    (input: { action: Parameters<typeof changePeriodicReport>[1]; csrfToken: string }) =>
+      changePeriodicReport(clubId, input.action, input.csrfToken),
+    [[...key, clubId]],
+  )
 }
 // Mutation tải ảnh minh chứng; chưa đổi báo cáo nên không làm mới cache
 export function useUploadPeriodicEvidence(clubId: string) {

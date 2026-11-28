@@ -1,27 +1,22 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { EventRegistrationRepository } from '../../domain/event-registration.js'
 import type { PolicyRepository } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   cancelEventRegistration,
   getEventRegistrationContext,
   listMyEventRegistrations,
   registerForEvent,
 } from '../../usecase/event-registration.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface EventRegistrationRouteDeps {
+export interface EventRegistrationRouteDeps extends SessionDeps {
   repo: EventRegistrationRepository
   policy: PolicyRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 const answer = z.union([z.string().max(2_000), z.array(z.string().max(2_000)).max(30)])
 export const eventRegistrationBody = z
   .object({
@@ -32,9 +27,9 @@ export const eventRegistrationBody = z
 // Mount các route đăng ký tham gia sự kiện của sinh viên
 export function eventRegistrationRoutes(deps: EventRegistrationRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Lấy ngữ cảnh đăng ký của sự kiện
-  router.get('/events/:id/registration', authGuard(guard, false), async (req, res) => {
+  router.get('/events/:id/registration', read, async (req, res) => {
     ok(
       res,
       await getEventRegistrationContext(
@@ -46,7 +41,7 @@ export function eventRegistrationRoutes(deps: EventRegistrationRouteDeps): Route
     )
   })
   // Sinh viên đăng ký tham gia sự kiện
-  router.post('/events/:id/registrations', authGuard(guard), async (req, res) => {
+  router.post('/events/:id/registrations', write, async (req, res) => {
     const body = parse(eventRegistrationBody, req.body, 'event registration request')
     ok(
       res,
@@ -62,11 +57,11 @@ export function eventRegistrationRoutes(deps: EventRegistrationRouteDeps): Route
     )
   })
   // Liệt kê đăng ký sự kiện của tôi
-  router.get('/event-registrations/mine', authGuard(guard, false), async (_req, res) => {
+  router.get('/event-registrations/mine', read, async (_req, res) => {
     ok(res, await listMyEventRegistrations(deps.repo, actor(res)))
   })
   // Sinh viên huỷ đăng ký sự kiện
-  router.post('/event-registrations/:id/cancel', authGuard(guard), async (req, res) => {
+  router.post('/event-registrations/:id/cancel', write, async (req, res) => {
     ok(
       res,
       await cancelEventRegistration(

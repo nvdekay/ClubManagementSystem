@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ViolationDetailView } from '@/pages/icpdp/ViolationDetailView'
-import { ViolationGate } from '@/pages/icpdp/ViolationGate'
+import { IcpdpOfficerGate } from '@/pages/icpdp/IcpdpOfficerGate'
 import { ViolationList } from '@/pages/icpdp/ViolationList'
 
 // Trang ICPDP danh sách ca vi phạm của CLB
@@ -12,7 +12,9 @@ export function ViolationsPage() {
   return (
     <>
       <PageHeader title={t('violations.title')} description={t('violations.description')} />
-      <ViolationGate>{(csrfToken) => <ViolationList csrfToken={csrfToken} />}</ViolationGate>
+      <IcpdpOfficerGate deniedMessage={t('violations.unauthorized')}>
+        {(csrfToken) => <ViolationList csrfToken={csrfToken} />}
+      </IcpdpOfficerGate>
     </>
   )
 }
@@ -20,9 +22,10 @@ export function ViolationsPage() {
 // Trang ICPDP chi tiết một ca vi phạm
 export function ViolationDetailPage() {
   const { id } = useParams()
+  const { t } = useTranslation()
   return (
-    <ViolationGate>
+    <IcpdpOfficerGate deniedMessage={t('violations.unauthorized')}>
       {(csrfToken) => (id ? <ViolationDetailView id={id} csrfToken={csrfToken} /> : null)}
-    </ViolationGate>
+    </IcpdpOfficerGate>
   )
 }

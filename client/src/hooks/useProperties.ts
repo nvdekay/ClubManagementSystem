@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 
 import {
   createProperty,
@@ -24,9 +25,8 @@ export function useProperties(enabled: boolean) {
 // Mutation tạo, sửa, bật/tắt hoặc xoá cơ sở vật chất, rồi làm mới cache
 /** Danh sách được sắp xếp ở server (đang bật trước, rồi theo mã), nên mọi thay đổi đều tải lại. */
 export function usePropertyAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (
+  return useInvalidatingMutation(
+    async (
       action:
         | { kind: 'create'; input: PropertyDetails & { type: PropertyType }; csrfToken: string }
         | { kind: 'update'; id: string; details: PropertyDetails; csrfToken: string }
@@ -44,6 +44,6 @@ export function usePropertyAction() {
           return deleteProperty(action.id, action.csrfToken)
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: propertiesKeyRoot }),
-  })
+    [propertiesKeyRoot],
+  )
 }

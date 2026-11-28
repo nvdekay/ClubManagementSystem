@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 export interface BoardTerm {
   id: string
   name: string
@@ -78,10 +78,7 @@ export interface BoardNominationDecisionInput {
   reason?: string
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 
 // GET ngữ cảnh đề cử ban chủ nhiệm của CLB
 export function fetchBoardNominationContext(

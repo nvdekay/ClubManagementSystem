@@ -1,5 +1,4 @@
-import { ApiError, apiFetch } from '@/services/apiError'
-import { apiRequest, readApiFailure, type ApiFailure } from '@/services/apiRequest'
+import { apiRequest, postFile, type DownloadedFile } from '@/services/apiRequest'
 import type { DimensionCode } from '@/services/evaluationSchemes'
 import type { Classification } from '@/services/evaluations'
 
@@ -106,38 +105,14 @@ export interface AnnualReport {
   achievements: AnnualAchievement[]
 }
 
-/** Response không phải 2xx; 404 nghĩa là không có gì khớp bộ lọc (không tạo file). */
-export class ExportRequestError extends ApiError {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message, status)
-    this.name = 'ExportRequestError'
-  }
-}
-
-// Maps a failed response to ExportRequestError
-function toExportError(failure: ApiFailure): Error {
-  return new ExportRequestError(failure.message, failure.status)
-}
-
-// CSRF-protected POST to /admin/exports that unwraps `{ data }`
+// CSRF-protected POST to /admin/exports that unwraps `{ data }`; a 404 means nothing matches the filter
 function post<T>(path: string, csrfToken: string, body: object): Promise<T> {
-  return apiRequest<T>(`/api/v1/admin/exports${path}`, {
-    method: 'POST',
-    csrfToken,
-    body,
-    toError: toExportError,
-  })
+  return apiRequest<T>(`/api/v1/admin/exports${path}`, { method: 'POST', csrfToken, body })
 }
 
 // GET /admin/exports/options: các loại dữ liệu và bộ lọc có thể xuất
 export async function fetchExportOptions(signal: AbortSignal): Promise<ExportOptions> {
-  return apiRequest<ExportOptions>('/api/v1/admin/exports/options', {
-    signal,
-    toError: toExportError,
-  })
+  return apiRequest<ExportOptions>('/api/v1/admin/exports/options', { signal })
 }
 
 export interface ExportPreview {
@@ -155,35 +130,19 @@ export async function previewExport(
   return post<ExportPreview>('/preview', csrfToken, { types, filter })
 }
 
-// Đọc response thành blob và tên file từ Content-Disposition
-/** File được tạo ra; tên lấy từ Content-Disposition của server. */
-async function file(
-  response: Response,
-  fallbackName: string,
-): Promise<{ blob: Blob; fileName: string }> {
-  if (!response.ok) {
-    throw toExportError(await readApiFailure(response))
-  }
-  const disposition = response.headers.get('Content-Disposition') ?? ''
-  const fileName = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? fallbackName
-  return { blob: await response.blob(), fileName }
-}
-
 // POST /admin/exports: tải file dữ liệu xuất
 export async function downloadExport(
   types: ExportType[],
   filter: ExportFilter,
   format: ExportFormat,
   csrfToken: string,
-): Promise<{ blob: Blob; fileName: string }> {
-  // The file comes back as a raw download, not a JSON envelope, so this one call stays on apiFetch.
-  const response = await apiFetch('/api/v1/admin/exports', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify({ types, filter, format }),
-  })
-  return file(response, `ucms-export.${format}`)
+): Promise<DownloadedFile> {
+  return postFile(
+    '/api/v1/admin/exports',
+    { types, filter, format },
+    csrfToken,
+    `ucms-export.${format}`,
+  )
 }
 
 // POST /annual-report/preview: xem trước báo cáo đánh giá năm
@@ -196,9 +155,11 @@ export async function previewAnnualReport(year: number, csrfToken: string): Prom
 export async function downloadAnnualReport(
   input: { year: number; format: AnnualFormat; remarks?: string; achievementKeys?: string[] },
   csrfToken: string,
-): Promise<{ blob: Blob; fileName: string }> {
-  return file(
-    await post('/annual-report', csrfToken, input),
+): Promise<DownloadedFile> {
+  return postFile(
+    '/api/v1/admin/exports/annual-report',
+    input,
+    csrfToken,
     `bao-cao-danh-gia-clb-${input.year}.${input.format}`,
   )
 }

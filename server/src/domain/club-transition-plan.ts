@@ -1,5 +1,6 @@
 import { DomainError } from './errors.js'
 import type { TransitionObligation, TransitionTerm } from './leadership-transition.js'
+import { isObjectId } from './access-denial.js'
 export interface TransitionPlanInput {
   toTerm: { name: string; startAt: Date; endAt: Date }
   candidates: { positionCode: string; membershipId: string }[]
@@ -63,7 +64,7 @@ export function normalizeTransitionPlan(input: TransitionPlanInput): TransitionP
   if (
     input.candidates.length > 30 ||
     new Set(input.candidates.map((c) => c.membershipId)).size !== input.candidates.length ||
-    input.candidates.some((c) => !c.positionCode.trim() || !/^[0-9a-f]{24}$/i.test(c.membershipId))
+    input.candidates.some((c) => !c.positionCode.trim() || !isObjectId(c.membershipId))
   ) {
     throw new DomainError('invalid or duplicate transition candidates', 'validation')
   }
@@ -74,7 +75,7 @@ export function normalizeTransitionPlan(input: TransitionPlanInput): TransitionP
     ) ||
     new Set(input.handoverItems.map((i) => i.id)).size !== input.handoverItems.length ||
     Object.keys(input.assignees).length > 500 ||
-    Object.values(input.assignees).some((id) => !/^[0-9a-f]{24}$/i.test(id))
+    Object.values(input.assignees).some((id) => !isObjectId(id))
   ) {
     throw new DomainError('invalid handover items or assignees', 'validation')
   }

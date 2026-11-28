@@ -1,9 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
 import type { BoardNominationRepository } from '../../domain/board-nomination.js'
 import type { ClubAccessRepository } from '../../domain/access.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   claimBoardNomination,
   decideBoardNomination,
@@ -13,18 +11,15 @@ import {
   listClubBoardNominations,
   submitBoardNomination,
 } from '../../usecase/board-nomination.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface BoardNominationRouteDeps {
+export interface BoardNominationRouteDeps extends SessionDeps {
   repo: BoardNominationRepository
   accessRepo: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 export const boardNominationBody = z
   .object({
     seats: z
@@ -46,26 +41,22 @@ export const boardNominationDecisionBody = z
 // Mount các route đề cử ban chủ nhiệm của CLB và ICPDP
 export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
   // Lấy ngữ cảnh đề cử ban chủ nhiệm của CLB
-  router.get(
-    '/clubs/:clubId/board-nomination-context',
-    authGuard(guard, false),
-    async (req, res) => {
-      ok(
-        res,
-        await getBoardNominationContext(
-          deps.repo,
-          deps.accessRepo,
-          actor(res),
-          parse(id, req.params.clubId, 'board nomination request'),
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.get('/clubs/:clubId/board-nomination-context', read, async (req, res) => {
+    ok(
+      res,
+      await getBoardNominationContext(
+        deps.repo,
+        deps.accessRepo,
+        actor(res),
+        parse(id, req.params.clubId, 'board nomination request'),
+        new Date(),
+      ),
+    )
+  })
   // Liệt kê các lần đề cử ban chủ nhiệm của CLB
-  router.get('/clubs/:clubId/board-nominations', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/board-nominations', read, async (req, res) => {
     ok(
       res,
       await listClubBoardNominations(
@@ -78,7 +69,7 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
     )
   })
   // Club Leader gửi đề cử các ghế ban chủ nhiệm
-  router.post('/clubs/:clubId/board-nominations', authGuard(guard), async (req, res) => {
+  router.post('/clubs/:clubId/board-nominations', write, async (req, res) => {
     const body = parse(boardNominationBody, req.body, 'board nomination request')
     ok(
       res,
@@ -94,11 +85,11 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
     )
   })
   // ICPDP liệt kê hàng đợi đề cử ban chủ nhiệm
-  router.get('/admin/board-nominations', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/board-nominations', read, async (_req, res) => {
     ok(res, await listBoardNominations(deps.repo, deps.authRepo, actor(res)))
   })
   // ICPDP xem chi tiết một đề cử ban chủ nhiệm
-  router.get('/admin/board-nominations/:id', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/board-nominations/:id', read, async (req, res) => {
     ok(
       res,
       await getBoardNomination(
@@ -110,7 +101,7 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
     )
   })
   // ICPDP nhận xử lý (claim) một đề cử
-  router.post('/admin/board-nominations/:id/claim', authGuard(guard), async (req, res) => {
+  router.post('/admin/board-nominations/:id/claim', write, async (req, res) => {
     ok(
       res,
       await claimBoardNomination(
@@ -123,7 +114,7 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
     )
   })
   // ICPDP ghi quyết định xác nhận từng ghế ban chủ nhiệm
-  router.post('/admin/board-nominations/:id/decision', authGuard(guard), async (req, res) => {
+  router.post('/admin/board-nominations/:id/decision', write, async (req, res) => {
     ok(
       res,
       await decideBoardNomination(

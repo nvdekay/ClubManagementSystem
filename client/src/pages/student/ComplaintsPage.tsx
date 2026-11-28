@@ -21,6 +21,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useClub, useClubs } from '@/hooks/useDiscovery'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { COMPLAINT_TYPES, type ComplaintEvidence, type ComplaintType } from '@/services/complaints'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 const MAX_TEXT = 4000
 const MAX_EVIDENCE = 5
@@ -318,11 +319,7 @@ export function ComplaintsPage() {
           {mine.isPending ? (
             <AppSkeleton className="h-40 w-full" />
           ) : mine.isError ? (
-            <AppNotice tone="danger" role="alert" title={t('complaints.loadError')}>
-              <AppButton variant="secondary" onClick={() => void mine.refetch()}>
-                {t('complaints.retry')}
-              </AppButton>
-            </AppNotice>
+            <AppErrorNotice title={t('complaints.loadError')} onRetry={() => void mine.refetch()} />
           ) : mine.data.length === 0 ? (
             <AppEmptyState variant="boxed" message={t('complaints.mineEmpty')} />
           ) : (

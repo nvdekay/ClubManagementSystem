@@ -35,6 +35,7 @@ import { ClubMemberOnboardDialog } from './ClubMemberOnboardDialog'
 import { ClubMemberStateDialog } from './ClubMemberStateDialog'
 import { exportClubMembers } from './exportClubMembers'
 import { useConfirm } from '@/hooks/useConfirm'
+import { MemberRosterItem } from '@/components/custom/MemberRosterItem'
 
 const EMPTY: ClubRosterMember[] = []
 const helper = createColumnHelper<AppTableFeatures, ClubRosterMember>()
@@ -423,9 +424,6 @@ export function ClubMembersPage() {
                     pageIndex={pageIndex}
                     pageCount={table.getPageCount()}
                     onPageChange={(index) => table.setPageIndex(index)}
-                    prevLabel={t('memberSpace.prevPage')}
-                    nextLabel={t('memberSpace.nextPage')}
-                    pageLabel={(page) => t('memberSpace.pageLabel', { page })}
                     navLabel={t('memberSpace.pages')}
                   />
                 </div>
@@ -503,26 +501,11 @@ function ClubRosterReadOnly({ clubId }: { clubId: string }) {
       ) : (
         <ul className="grid gap-x-6 gap-y-1 rounded-2xl border border-border-app bg-bg-app p-3 shadow-xs sm:grid-cols-2">
           {space.data.members.map((member, index) => (
-            <li
+            <MemberRosterItem
               key={`${member.displayName}-${index}`}
-              className="flex items-center gap-3 rounded-lg px-2 py-2"
-            >
-              <span
-                aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app"
-              >
-                {member.displayName.trim().charAt(0).toUpperCase()}
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate font-medium" title={member.displayName}>
-                  {member.displayName}
-                </span>
-                <span className="block text-xs text-muted-app">
-                  {member.positions.join(', ') || t('memberSpace.noPosition')}
-                  {member.state === 'Inactive' && ` · ${t('memberSpace.stateInactive')}`}
-                </span>
-              </span>
-            </li>
+              member={member}
+              className="rounded-lg px-2 py-2"
+            />
           ))}
         </ul>
       )}

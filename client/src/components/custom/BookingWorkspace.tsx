@@ -31,6 +31,7 @@ import type { Booking, BookingAction } from '@/services/facilityBookings'
 import { cn } from '@/utils/cn'
 import { BOOKING_STATES, bookingTone, slotNumber } from '@/utils/facilityBooking'
 import { formatDate } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 interface BookingWorkspaceProps {
   clubId: string | null
@@ -247,9 +248,6 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   pageIndex={table.state.pagination.pageIndex}
                   pageCount={table.getPageCount()}
                   onPageChange={(index) => table.setPageIndex(index)}
-                  prevLabel={t('facilityBookings.prevPage')}
-                  nextLabel={t('facilityBookings.nextPage')}
-                  pageLabel={(page) => t('facilityBookings.pageLabel', { page })}
                   navLabel={t('facilityBookings.pages')}
                 />
               </div>
@@ -278,12 +276,9 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
             ) : selected && detail.isPending ? (
               <AppSkeleton className="h-64 w-full" />
             ) : detail.isError ? (
-              <AppNotice tone="danger" role="alert">
+              <AppErrorNotice onRetry={() => void detail.refetch()} retryVariant="primary">
                 {detail.error.message}
-                <AppButton onClick={() => void detail.refetch()}>
-                  {t('facilityBookings.retry')}
-                </AppButton>
-              </AppNotice>
+              </AppErrorNotice>
             ) : (
               booking &&
               detail.data && (

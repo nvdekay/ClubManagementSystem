@@ -1,4 +1,6 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { dashboardKeyRoot } from '@/hooks/useDashboard'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   decideComplaint,
   fetchClubComplaints,
@@ -55,15 +57,8 @@ export function useClubComplaints(clubId: string, enabled: boolean) {
 
 // Bọc mutation khiếu nại và làm mới cache khiếu nại, dashboard
 function useComplaintMutation<T>(run: (input: T) => Promise<unknown>) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: run,
-    onSuccess: async () => {
-      // Danh sách được lọc ở server, nên mọi danh sách khiếu nại đều được tải lại.
-      await client.invalidateQueries({ queryKey: complaintsKeyRoot })
-      await client.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-  })
+  // Danh sách được lọc ở server, nên mọi danh sách khiếu nại đều được tải lại.
+  return useInvalidatingMutation(run, [complaintsKeyRoot, dashboardKeyRoot])
 }
 
 // Mutation gửi khiếu nại mới

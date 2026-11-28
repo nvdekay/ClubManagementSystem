@@ -7,7 +7,6 @@ export const notifications = {
   openUnread: 'Thông báo, {{count}} chưa đọc',
   title: 'Thông báo',
   markAll: 'Đánh dấu tất cả đã đọc',
-  markRead: 'Đánh dấu đã đọc',
   unread: 'Chưa đọc',
   empty: 'Bạn chưa có thông báo nào.',
   error: 'Không tải được thông báo.',

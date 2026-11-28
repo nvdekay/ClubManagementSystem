@@ -1,4 +1,5 @@
-import { DomainError } from '../domain/errors.js'
+import { fileSignatureMatches } from '../domain/file-signature.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import type {
   RecruitmentAnswer,
   RecruitmentApplication,
@@ -6,7 +7,7 @@ import type {
   RecruitmentAttachmentStorage,
 } from '../domain/recruitment-application.js'
 import { validateRecruitmentAnswers } from '../domain/recruitment-application.js'
-import { isObjectId, parseObjectId, type AccessActor } from './access.js'
+import { parseObjectId, requireSignedIn, type AccessActor } from './access.js'
 
 const allowedMimeTypes = new Set([
   'application/pdf',
@@ -15,20 +16,6 @@ const allowedMimeTypes = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
 const maxFileBytes = 10 * 1024 * 1024
-
-// Kiểm actor đăng nhập, chưa bị khóa và trả id chủ đơn
-function owner(actor: AccessActor | null): string {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!isObjectId(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  return actor.id
-}
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -40,32 +27,14 @@ function validAttachmentId(value: string): string {
   return value
 }
 
-// Kiểm nội dung file khớp magic bytes của loại MIME khai báo
-function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
-  if (mimeType === 'application/pdf') {
-    return bytes.subarray(0, 5).toString() === '%PDF-'
-  }
-  if (mimeType === 'image/png') {
-    return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-  }
-  if (mimeType === 'image/jpeg') {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-  }
-  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    return (
-      bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) &&
-      bytes.includes(Buffer.from('[Content_Types].xml'))
-    )
-  }
-  return false
-}
-
-// Đảm bảo đơn ứng tuyển tồn tại, không có thì báo not_found
-function ownedApplication(application: RecruitmentApplication | null): RecruitmentApplication {
-  if (!application) {
-    throw new DomainError('recruitment application not found', 'not_found')
-  }
-  return application
+// Đơn ứng tuyển của chính sinh viên, không có thì báo not_found
+async function ownedApplication(
+  repo: RecruitmentApplicationRepository,
+  applicationId: string,
+  userId: string,
+): Promise<RecruitmentApplication> {
+  const application = await repo.findOwned(parseObjectId(applicationId, 'application id'), userId)
+  return orNotFound(application, 'recruitment application')
 }
 
 // Chỉ cho sửa đơn ứng tuyển ở trạng thái Draft
@@ -126,21 +95,12 @@ function normalizedAnswers(
   return result
 }
 
-// Lấy form ứng tuyển của đợt tuyển đang mở
-export async function publicRecruitmentApplicationForm(
-  repo: RecruitmentApplicationRepository,
-  campaignId: string,
-  now: Date,
-) {
-  return openCampaign(repo, campaignId, now)
-}
-
 // Sinh viên xem các đơn ứng tuyển của mình
 export async function listMyRecruitmentApplications(
   repo: RecruitmentApplicationRepository,
   actor: AccessActor | null,
 ) {
-  return repo.listMine(owner(actor))
+  return repo.listMine(requireSignedIn(actor))
 }
 
 // Sinh viên xem chi tiết một đơn ứng tuyển của mình
@@ -149,9 +109,11 @@ export async function getMyRecruitmentApplication(
   actor: AccessActor | null,
   applicationId: string,
 ) {
-  return ownedApplication(
-    await repo.findOwned(parseObjectId(applicationId, 'application id'), owner(actor)),
+  const application = await repo.findOwned(
+    parseObjectId(applicationId, 'application id'),
+    requireSignedIn(actor),
   )
+  return orNotFound(application, 'recruitment application')
 }
 
 // Sinh viên xem đơn của mình trong một đợt tuyển
@@ -161,7 +123,7 @@ export async function getMyCampaignApplication(
   campaignId: string,
 ) {
   const campaign = parseObjectId(campaignId, 'campaign id')
-  return repo.findMineForCampaign(campaign, owner(actor))
+  return repo.findMineForCampaign(campaign, requireSignedIn(actor))
 }
 
 // Sinh viên tạo bản nháp đơn ứng tuyển cho một vị trí của đợt tuyển
@@ -172,7 +134,7 @@ export async function createRecruitmentApplicationDraft(
   position: string,
   now: Date,
 ) {
-  const userId = owner(actor)
+  const userId = requireSignedIn(actor)
   const campaign = await openCampaign(repo, campaignId, now)
   await eligible(repo, userId, campaign.clubId!)
   const normalizedPosition = position.trim()
@@ -194,10 +156,8 @@ export async function saveRecruitmentApplicationDraft(
   input: { position: string; answers: Record<string, RecruitmentAnswer> },
   now: Date,
 ) {
-  const userId = owner(actor)
-  const application = ownedApplication(
-    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
-  )
+  const userId = requireSignedIn(actor)
+  const application = await ownedApplication(repo, applicationId, userId)
   editable(application)
   const campaign = await openCampaign(repo, application.campaignId, now)
   await eligible(repo, userId, campaign.clubId!)
@@ -230,10 +190,8 @@ export async function uploadRecruitmentAttachment(
   bytes: Buffer,
   now: Date,
 ) {
-  const userId = owner(actor)
-  const application = ownedApplication(
-    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
-  )
+  const userId = requireSignedIn(actor)
+  const application = await ownedApplication(repo, applicationId, userId)
   editable(application)
   const campaign = await openCampaign(repo, application.campaignId, now)
   const field = campaign.formSchema?.find((item) => item.key === fieldKey && item.type === 'file')
@@ -281,7 +239,7 @@ export async function recruitmentAttachmentAccess(
 ) {
   const attachment = await repo.attachmentAccess(
     parseObjectId(applicationId, 'application id'),
-    owner(actor),
+    requireSignedIn(actor),
     validAttachmentId(attachmentId),
   )
   if (!attachment) {
@@ -300,10 +258,8 @@ export async function submitRecruitmentApplication(
   applicationId: string,
   now: Date,
 ) {
-  const userId = owner(actor)
-  const application = ownedApplication(
-    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
-  )
+  const userId = requireSignedIn(actor)
+  const application = await ownedApplication(repo, applicationId, userId)
   editable(application)
   const campaign = await openCampaign(repo, application.campaignId, now)
   await eligible(repo, userId, campaign.clubId!)
@@ -323,10 +279,8 @@ export async function withdrawRecruitmentApplication(
   applicationId: string,
   now: Date,
 ) {
-  const userId = owner(actor)
-  const application = ownedApplication(
-    await repo.findOwned(parseObjectId(applicationId, 'application id'), userId),
-  )
+  const userId = requireSignedIn(actor)
+  const application = await ownedApplication(repo, applicationId, userId)
   if (!['Submitted', 'Screening', 'Shortlisted'].includes(application.state)) {
     throw new DomainError('recruitment application cannot be withdrawn in this state', 'conflict')
   }

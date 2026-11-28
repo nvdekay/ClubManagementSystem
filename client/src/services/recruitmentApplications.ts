@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, apiRequest } from '@/services/apiRequest'
 import type { RecruitmentFormField, RecruitmentRubricCriterion } from './recruitmentCampaigns'
 
 export type RecruitmentAnswer = string | string[]
@@ -43,10 +43,7 @@ export interface RecruitmentApplication {
 export type RecruitmentReviewAction =
   'screen' | 'shortlist' | 'decide' | 'promote' | 'close-withdrawn'
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 
 // GET đơn ứng tuyển CLB của tôi
 export function fetchMyRecruitmentApplications(signal: AbortSignal) {
@@ -57,14 +54,6 @@ export function fetchMyRecruitmentApplications(signal: AbortSignal) {
 export function fetchMyCampaignApplication(campaignId: string, signal: AbortSignal) {
   return request<RecruitmentApplication | null>(
     `/applications/recruitment/by-campaign/${encodeURIComponent(campaignId)}`,
-    { signal },
-  )
-}
-
-// GET chi tiết một đơn ứng tuyển của tôi
-export function fetchMyRecruitmentApplication(applicationId: string, signal: AbortSignal) {
-  return request<RecruitmentApplication>(
-    `/applications/recruitment/${encodeURIComponent(applicationId)}`,
     { signal },
   )
 }

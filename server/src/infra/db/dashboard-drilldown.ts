@@ -1,13 +1,9 @@
 import { Types } from 'mongoose'
 import { type BoardSeatSource, type ClubBoardHistory } from '../../domain/dashboard.js'
 import { ucmsModels as m } from './ucms-models.js'
+import { optionalText } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-
-// Trả chuỗi không rỗng hoặc undefined
-function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value ? value : undefined
-}
 
 // Lịch sử ban điều hành của CLB: các nhiệm kỳ và ghế đã xác nhận
 export async function clubBoardHistory(clubId: string): Promise<ClubBoardHistory | null> {
