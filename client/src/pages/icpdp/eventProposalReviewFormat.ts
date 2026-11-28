@@ -77,23 +77,8 @@ export function reviewStateTone(state: string): AppBadgeTone {
   return state === 'Revision Requested' ? 'warning' : 'info'
 }
 
-/** Dịch mã các mục cần chỉnh sửa trong yêu cầu sửa và lịch sử xét duyệt. */
-export function reviewSectionLabel(t: TFunction, value: string) {
-  switch (value) {
-    case 'schedule':
-      return t('eventReviews.sectionschedule')
-    case 'venue':
-      return t('eventReviews.sectionvenue')
-    case 'content':
-      return t('eventReviews.sectioncontent')
-    case 'risk':
-      return t('eventReviews.sectionrisk')
-    case 'budget':
-      return t('eventReviews.sectionbudget')
-    default:
-      return t('eventReviews.sectionother')
-  }
-}
+/** Dịch mã các mục cần chỉnh sửa trong yêu cầu sửa và lịch sử xét duyệt (dùng chung với trang CLB). */
+export { sectionLabel as reviewSectionLabel } from '@/pages/club/clubEventFormat'
 
 /** Hiển thị tên nghĩa vụ quyết toán, hoàn tiền hoặc báo cáo còn tồn đọng của CLB. */
 export function obligationLabel(t: TFunction, value: ClubObligation) {
