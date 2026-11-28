@@ -19,13 +19,9 @@ import {
   openAccountabilityTask,
 } from './accountability-workflow.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { money, oid } from './repo-helpers.js'
+import { decimal, found, money, oid } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Chuyển number thành Decimal128
-function decimal(value: number) {
-  return Types.Decimal128.fromString(String(value))
-}
 // Repository quyết toán ngân sách sự kiện: CLB ghi chi, nộp minh chứng, ICPDP duyệt
 export function mongoEventFinanceRepository(rules: {
   recoveryDueDays: number
@@ -176,17 +172,17 @@ export function mongoEventFinanceRepository(rules: {
       await mongoose.connection.transaction(async (session) => {
         const actorId = oid(actor)
         const budgetId = oid(id)
-        const found = await m
-          .eventBudgets!.findOne({
-            _id: budgetId,
-            ...(clubId ? { clubId: oid(clubId) } : {}),
-          })
-          .session(session)
-          .lean()
-        if (!found) {
-          throw new DomainError('budget not found', 'not_found')
-        }
-        if (found.sponsoredItems) {
+        const budget = found(
+          await m
+            .eventBudgets!.findOne({
+              _id: budgetId,
+              ...(clubId ? { clubId: oid(clubId) } : {}),
+            })
+            .session(session)
+            .lean(),
+          'budget not found',
+        )
+        if (budget.sponsoredItems) {
           throw new DomainError('use the sponsored item invoice workflow', 'conflict')
         }
         if (clubId) {
@@ -204,12 +200,12 @@ export function mongoEventFinanceRepository(rules: {
         if (!locked) {
           throw new DomainError('budget changed; reload before continuing', 'conflict')
         }
-        const event = await m
-          .events!.findOneAndUpdate({ _id: found.eventId }, { $inc: { __v: 1 } }, { session })
-          .lean()
-        if (!event) {
-          throw new DomainError('event not found', 'not_found')
-        }
+        const event = found(
+          await m
+            .events!.findOneAndUpdate({ _id: budget.eventId }, { $inc: { __v: 1 } }, { session })
+            .lean(),
+          'event not found',
+        )
         const current = (await detail(id, clubId, session))!
         const eventClub = oid(current.clubId)
         let after: unknown = {}
@@ -283,16 +279,16 @@ export function mongoEventFinanceRepository(rules: {
           after = { expenseId, before: existing, input: action.input }
         } else if (action.kind === 'evidence') {
           assertFinanceEditable(current.state)
-          const expense = await m
-            .expenses!.findOne({
-              _id: oid(action.expenseId),
-              eventBudgetId: budgetId,
-            })
-            .session(session)
-            .lean()
-          if (!expense) {
-            throw new DomainError('expense not found', 'not_found')
-          }
+          const expense = found(
+            await m
+              .expenses!.findOne({
+                _id: oid(action.expenseId),
+                eventBudgetId: budgetId,
+              })
+              .session(session)
+              .lean(),
+            'expense not found',
+          )
           await m.financialEvidences!.create(
             [
               {
