@@ -55,7 +55,6 @@ export const complaints = {
   clubAction: 'Action taken',
   closureReason: 'Closing note',
   loadError: 'Could not load complaints.',
-  retry: 'Retry',
   // ICPDP
   queueTitle: 'Complaints',
   queueDescription:
@@ -63,9 +62,6 @@ export const complaints = {
   filterState: 'Status',
   filterAll: 'All statuses',
   queueEmpty: 'No complaints.',
-  previousPage: 'Previous page',
-  nextPage: 'Next page',
-  pageNumber: 'Page {{page}}',
   pagination: 'Complaint queue pages',
   from: 'From {{name}}',
   open: 'Start review',
@@ -100,7 +96,6 @@ export const complaints = {
     'Complaints ICPDP forwarded to the club. Answer each one once, with the action taken.',
   clubEmpty: 'No forwarded complaints.',
   forwardNote: 'ICPDP note',
-  answer: 'Answer',
   answerText: 'Your answer',
   answerAction: 'Action the club took or will take',
   answerSubmit: 'Send answer',
