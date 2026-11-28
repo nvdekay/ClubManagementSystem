@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { ClubDashboard } from '@/components/custom/ClubDashboard'
@@ -9,6 +8,7 @@ import { IcpdpDashboard } from '@/components/custom/IcpdpDashboard'
 import { useDashboard } from '@/hooks/useDashboard'
 import type { DashboardContext, DashboardPanelKey } from '@/services/dashboard'
 import { formatDate } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Chọn trang đích khi bấm vào một panel dashboard
 function panelHref(key: DashboardPanelKey, context: DashboardContext): string | null {
@@ -114,12 +114,13 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
 
   if (dashboard.isError) {
     return (
-      <AppNotice tone="danger" role="alert" title={t('dashboard.loadError')} className="mt-8">
+      <AppErrorNotice
+        title={t('dashboard.loadError')}
+        className="mt-8"
+        onRetry={() => void dashboard.refetch()}
+      >
         <p>{dashboard.error.message}</p>
-        <AppButton variant="secondary" onClick={() => void dashboard.refetch()}>
-          {t('dashboard.retry')}
-        </AppButton>
-      </AppNotice>
+      </AppErrorNotice>
     )
   }
 
