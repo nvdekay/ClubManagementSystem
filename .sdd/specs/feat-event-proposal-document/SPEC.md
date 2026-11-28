@@ -1,6 +1,6 @@
 # SPEC: feat-event-proposal-document
 
-> Nguồn: `docs/05-implementation/EVENT_PROPOSAL_TEMPLATE_PLAN.md` (đã xoá khỏi repo; nội dung còn hiệu lực nằm trong SPEC này và `event-proposal-import.md`)
+> Nguồn: `docs/03-implementation/EVENT_PROPOSAL_TEMPLATE_PLAN.md` (đã xoá khỏi repo; nội dung còn hiệu lực nằm trong SPEC này và `event-proposal-import.md`)
 > (quy tắc đã chốt ngày 2026-11-14). SPEC này là hợp đồng giữa server và client; chỗ nào plan lệch với
 > code thì mục "Điều chỉnh so với plan" là bản được áp dụng.
 

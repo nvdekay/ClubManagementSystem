@@ -6,7 +6,7 @@ import type { Locator, Page } from '@playwright/test'
 import { clientDir } from '../setup/env'
 
 /** Where guide-book.md links its screenshots. */
-export const imagesDir = path.resolve(clientDir, '../docs/06-user-guide/images')
+export const imagesDir = path.resolve(clientDir, '../docs/04-user-guide/images')
 
 /** Switches the app to Vietnamese; runs after the shared fixture has set English. */
 export async function useVietnamese(page: Page): Promise<void> {
@@ -63,7 +63,7 @@ export async function scrollTo(page: Page, target: Locator, offset = 96): Promis
   await settle(page)
 }
 
-/** Saves the visible window as docs/06-user-guide/images/<file>. */
+/** Saves the visible window as docs/04-user-guide/images/<file>. */
 export async function shoot(page: Page, file: string): Promise<void> {
   await settle(page)
   // Let success toasts fade so they do not cover the page.

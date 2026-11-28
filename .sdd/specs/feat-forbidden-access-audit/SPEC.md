@@ -3,7 +3,7 @@
 ## Vấn đề
 SEC-08 và AC17 yêu cầu mọi lần một người dùng đã đăng nhập cố làm việc ngoài quyền bị từ chối **và
 được ghi audit bền vững**. Code hiện trả 403 nhưng không ghi gì vào `auditLogs` (khoảng lệch S3 trong
-`docs/05-implementation/CODE_DIAGRAM_GAPS.md`). Ví dụ của AC17: người không phải ICPDP cố quyết định
+`docs/03-implementation/CODE_DIAGRAM_GAPS.md`). Ví dụ của AC17: người không phải ICPDP cố quyết định
 một booking.
 
 ## Truy vết

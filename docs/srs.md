@@ -50,7 +50,7 @@
 > (Club Leader thay Club Member ở các bước chỉ Club Leader có quyền) và các bước F1, F4, F6–F10. §6 bổ
 > sung các chuyển trạng thái do scheduler và các nhánh còn thiếu (Club, đợt tuyển, đơn ứng tuyển,
 > sự kiện, buổi bảo vệ, booking, vi phạm, khiếu nại, đánh giá, lời mời). §3.3 và Phụ lục C viết lại
-> theo route thật trong `server/src/interface/http`; Phụ lục B theo các file trong `03-diagrams/`;
+> theo route thật trong `server/src/interface/http`; Phụ lục B theo các file trong `01-diagrams/`;
 > §12.1 sửa điều kiện cờ `Secure` và kiểm tra tệp tải lên.
 >
 > **Thay đổi 2026-11-26 — đối chiếu với code trên `main`:** ICPDP chấp thuận xin dời lịch bảo vệ thì
@@ -186,17 +186,17 @@ theo vai trò.
 | R2 | `02-use-cases/UCMS_UseCase_Model_v2.md` (đã xoá khỏi repo ngày 28/11/2026) | Use case model tham khảo; các đoạn khôi phục UC23 là lịch sử và bị quyết định role cố định ngày 07/11/2026 thay thế |
 | R3 | `02-use-cases/UCMS_UseCase_Specification_v2.md` (đã xoá khỏi repo ngày 28/11/2026) | Đặc tả chi tiết tham khảo; UC23 không còn trong phạm vi |
 | R4 | `02-use-cases/UCMS_Review_Issues.md` (đã xoá khỏi repo ngày 27/11/2026) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
-| R5 | [`03-diagrams/context-diagram.drawio`](03-diagrams/context-diagram.drawio) | Biên hệ thống, 45 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
-| R6 | [`03-diagrams/usecase-by-actor.drawio`](03-diagrams/usecase-by-actor.drawio) | Use case diagram ngày 19/10/2026; các oval quản lý role của UC23 đã cũ. Quyết định mới hơn nằm ở `organization-and-flows.drawio` ngày 02/11/2026: chỉ hai role cố định, không có custom role |
-| R7 | [`03-diagrams/state-diagrams.drawio`](03-diagrams/state-diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
-| R8 | [`04-design/high-level-design.md`](04-design/high-level-design.md) | Container, bản đồ module → code, thiết kế approval/notification/audit, định danh, thiết kế dữ liệu, bề mặt API, client, triển khai |
-| R9 | [`04-design/design-guidelines.md`](04-design/design-guidelines.md) | Quy tắc giao diện (màu, typography, spacing, công thức component, checklist accessibility) |
+| R5 | [`01-diagrams/context-diagram.drawio`](01-diagrams/context-diagram.drawio) | Biên hệ thống, 45 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
+| R6 | [`01-diagrams/usecase-by-actor.drawio`](01-diagrams/usecase-by-actor.drawio) | Use case diagram ngày 19/10/2026; các oval quản lý role của UC23 đã cũ. Quyết định mới hơn nằm ở `organization-and-flows.drawio` ngày 02/11/2026: chỉ hai role cố định, không có custom role |
+| R7 | [`01-diagrams/state-diagrams.drawio`](01-diagrams/state-diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
+| R8 | [`02-design/high-level-design.md`](02-design/high-level-design.md) | Container, bản đồ module → code, thiết kế approval/notification/audit, định danh, thiết kế dữ liệu, bề mặt API, client, triển khai |
+| R9 | [`02-design/design-guidelines.md`](02-design/design-guidelines.md) | Quy tắc giao diện (màu, typography, spacing, công thức component, checklist accessibility) |
 | R10 | [`../.rules/README.md`](../.rules/README.md), [`architecture.md`](../.rules/architecture.md), [`backend.md`](../.rules/backend.md), [`frontend.md`](../.rules/frontend.md) | Quy tắc kỹ thuật ràng buộc phần triển khai |
 | R11 | [`../.sdd/rfcs/ADR-001-clean-architecture-layers.md`](../.sdd/rfcs/ADR-001-clean-architecture-layers.md), [`ADR-002`](../.sdd/rfcs/ADR-002-client-architecture.md) | Các quyết định kiến trúc đã chốt |
-| R12 | [`03-diagrams/erd.drawio`](03-diagrams/erd.drawio) | ERD khái niệm, 33 thực thể, 188 thuộc tính, mỗi ký pháp đúng một hình: trang *ERD Chen* (ký pháp Chen, bản số chân quạ, 53 quan hệ) và trang *ERD Crow's Foot* (ký pháp Crow's Foot, hai quan hệ N:M thành thực thể liên kết, 55 đường nối), mỗi trang kèm bản *(no legend)* để dán vào report; không có Role / Permission (role đã cố định) và không có bảng kỹ thuật (approval, notification, audit); đối chiếu từ `05-implementation/database-design.dbml` |
-| R13 | [`03-diagrams/package-diagrams.drawio`](03-diagrams/package-diagrams.drawio) | Package diagram Front-end (`client/src`) và Back-end (`server/src`) theo đúng cấu trúc code |
-| R14 | [`03-diagrams/screen-flow.drawio`](03-diagrams/screen-flow.drawio) | Screen flow gộp một trang cho mọi role, đối chiếu router `client/src/main.tsx` và sidebar `WorkspaceShell.tsx`; hộp tô màu theo actor (xám User, vàng Student, cam Club Member, hồng Club Leader, xanh lá ICPDP Officer), không có Guest; ảnh `03-diagrams/img/screen-flow-01-screen-flow.png` |
-| R15 | [`03-diagrams/main-workflow.drawio`](03-diagrams/main-workflow.drawio) | Main workflow: hai swimlane tổng quát (quản trị CLB và thành viên; quản lý sự kiện và nghiệp vụ hỗ trợ). Swimlane chi tiết từng luồng của §2.5 ở [`swimlane-flows.drawio`](03-diagrams/swimlane-flows.drawio) |
+| R12 | [`01-diagrams/erd.drawio`](01-diagrams/erd.drawio) | ERD khái niệm, 33 thực thể, 188 thuộc tính, mỗi ký pháp đúng một hình: trang *ERD Chen* (ký pháp Chen, bản số chân quạ, 53 quan hệ) và trang *ERD Crow's Foot* (ký pháp Crow's Foot, hai quan hệ N:M thành thực thể liên kết, 55 đường nối), mỗi trang kèm bản *(no legend)* để dán vào report; không có Role / Permission (role đã cố định) và không có bảng kỹ thuật (approval, notification, audit); đối chiếu từ `03-implementation/database-design.dbml` |
+| R13 | [`01-diagrams/package-diagrams.drawio`](01-diagrams/package-diagrams.drawio) | Package diagram Front-end (`client/src`) và Back-end (`server/src`) theo đúng cấu trúc code |
+| R14 | [`01-diagrams/screen-flow.drawio`](01-diagrams/screen-flow.drawio) | Screen flow gộp một trang cho mọi role, đối chiếu router `client/src/main.tsx` và sidebar `WorkspaceShell.tsx`; hộp tô màu theo actor (xám User, vàng Student, cam Club Member, hồng Club Leader, xanh lá ICPDP Officer), không có Guest; ảnh `01-diagrams/img/screen-flow-01-screen-flow.png` |
+| R15 | [`01-diagrams/main-workflow.drawio`](01-diagrams/main-workflow.drawio) | Main workflow: hai swimlane tổng quát (quản trị CLB và thành viên; quản lý sự kiện và nghiệp vụ hỗ trợ). Swimlane chi tiết từng luồng của §2.5 ở [`swimlane-flows.drawio`](01-diagrams/swimlane-flows.drawio) |
 
 ## 1.5 Quy ước tài liệu — hệ thống mã định danh
 
@@ -253,7 +253,7 @@ khác.
 ```
 
 Biên hệ thống và toàn bộ 45 luồng dữ liệu được vẽ ở R5
-([`img/context-diagram-v2.1-01-context-diagram-v2.1.png`](03-diagrams/img/context-diagram-v2.1-01-context-diagram-v2.1.png)).
+([`img/context-diagram-v2.1-01-context-diagram-v2.1.png`](01-diagrams/img/context-diagram-v2.1-01-context-diagram-v2.1.png)).
 Mỗi luồng là một **nhóm dữ liệu**, không phải một use case; một hồ sơ gửi lên ICPDP chỉ vẽ một
 lần (`Submissions for review`) thay vì lặp lại ở cả chiều CMB → hệ thống và hệ thống → ICPDP.
 Mọi luồng đều được tạo ra hoặc tiêu thụ bởi ít nhất một use case; bảng ánh xạ luồng → use case
@@ -427,8 +427,8 @@ quản lý; Club Member chỉ có tập khả năng thành viên cố định.
 
 Mục này mô tả **bộ máy thật** mà UCMS phục vụ: ai đứng ở đâu, ai quyết định gì, và mỗi vị trí
 ánh xạ sang actor / role nào trong hệ thống. Sơ đồ: trang *Organization structure* của
-[`03-diagrams/organization-and-flows.drawio`](03-diagrams/organization-and-flows.drawio)
-([PNG](03-diagrams/img/organization-and-flows-01-organization-structure.png)).
+[`01-diagrams/organization-and-flows.drawio`](01-diagrams/organization-and-flows.drawio)
+([PNG](01-diagrams/img/organization-and-flows-01-organization-structure.png)).
 
 ```text
 Nhà trường
@@ -473,11 +473,11 @@ kiện, người gửi phản hồi / khiếu nại, người đứng đơn thà
 
 Mười một luồng end-to-end dưới đây là xương sống của hệ thống; cấu hình tài khoản và chính sách (UC03–UC05) và xuất dữ liệu (UC55) hỗ trợ mọi luồng, mọi use case còn lại thuộc ít nhất một luồng.
 Mỗi bước ghi use case (hoặc scheduler) điều khiển nó và trạng thái mà nó để lại. Main workflow chín
-trang (01–09, luồng happy case) ở [`03-diagrams/main-workflow.drawio`](03-diagrams/main-workflow.drawio). Sơ đồ tổng quan: trang
+trang (01–09, luồng happy case) ở [`01-diagrams/main-workflow.drawio`](01-diagrams/main-workflow.drawio). Sơ đồ tổng quan: trang
 *Main business flows* của
-[`03-diagrams/organization-and-flows.drawio`](03-diagrams/organization-and-flows.drawio)
-([PNG](03-diagrams/img/organization-and-flows-02-main-business-flows.png)). Swimlane chi tiết từng luồng
-(tiếng Anh): [`03-diagrams/swimlane-flows.drawio`](03-diagrams/swimlane-flows.drawio). Đăng nhập (UC01)
+[`01-diagrams/organization-and-flows.drawio`](01-diagrams/organization-and-flows.drawio)
+([PNG](01-diagrams/img/organization-and-flows-02-main-business-flows.png)). Swimlane chi tiết từng luồng
+(tiếng Anh): [`01-diagrams/swimlane-flows.drawio`](01-diagrams/swimlane-flows.drawio). Đăng nhập (UC01)
 và dashboard (UC02) là điểm vào chung của mọi luồng nên không lặp lại.
 
 | # | Luồng | Actor tham gia | Use case |
@@ -2676,8 +2676,8 @@ cầu thật — xem quyết định còn mở D2. Danh sách hằng số: đi�
 Mỗi chuyển trạng thái đều nêu rõ **tác nhân điều khiển**: một use case, hoặc scheduler. Một
 chuyển trạng thái không có trong đây là không tồn tại, và không chuyển trạng thái nào được điều
 khiển bởi một "Hệ thống" không giải thích được. Sơ đồ nằm ở
-[`03-diagrams/state-diagrams.drawio`](03-diagrams/state-diagrams.drawio)
-(bản PNG ở `03-diagrams/img/`).
+[`01-diagrams/state-diagrams.drawio`](01-diagrams/state-diagrams.drawio)
+(bản PNG ở `01-diagrams/img/`).
 
 ## 6.1 Club Application (hồ sơ thành lập CLB)
 
@@ -3805,7 +3805,7 @@ feedback bất biến, tổng hợp hiển thị ngay khi đủ `feedbackMinResp
 | Hạng mục | Việc cần làm |
 |---|---|
 | `01-business-analysis/UCMS_Business_System_Analysis.md` (đã xoá khỏi repo ngày 28/11/2026) dùng cách đánh số v1 (UC01–UC57) và BR01–BR39, và bản tiếng Anh song song đã bị xoá | Giữ làm lịch sử. **SRS này thay thế §8–§11, §14–§15, §21–§22 của nó**; chỉ dùng §1–§7, §12–§13, §16–§20, §23–§24 làm nền tảng tham khảo |
-| Các file PNG trong `03-diagrams/img/` được xuất từ nguồn `.drawio` | Xuất lại sau mỗi lần sửa sơ đồ, giữ quy ước tên `<file>_<số-trang>_<tên-trang>.png` |
+| Các file PNG trong `01-diagrams/img/` được xuất từ nguồn `.drawio` | Xuất lại sau mỗi lần sửa sơ đồ, giữ quy ước tên `<file>_<số-trang>_<tên-trang>.png` |
 
 ---
 
@@ -3895,27 +3895,27 @@ feedback bất biến, tổng hợp hiển thị ngay khi đủ `feedbackMinResp
 
 # Phụ lục B — Chỉ mục sơ đồ
 
-Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagrams/img/`
+Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `01-diagrams/img/`
 (`<file>_<số-trang>_<tên-trang>.png`; ngoại lệ: class, sequence và security dùng tiền tố rút gọn
 `UCMS_Class_`, `UCMS_Sequence_` (kèm `_p<k>`), `UCMS_Security_`; các trang Slide dùng
 `UCMS_Main_Workflow_Slide_<số>_…`).
 
 | Sơ đồ | Các trang | File |
 |---|---|---|
-| **Context diagram v2.1** (45 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/context-diagram.drawio`](03-diagrams/context-diagram.drawio) |
-| **Use case diagram theo actor** (UC01–UC55, UC58) | User · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 - Access & club lifecycle · ICPDP 2 - Events, bookings & finance · ICPDP 3 - Compliance & evaluation | [`03-diagrams/usecase-by-actor.drawio`](03-diagrams/usecase-by-actor.drawio) |
-| **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/organization-and-flows.drawio`](03-diagrams/organization-and-flows.drawio) |
-| **Main workflow** (chín swimlane theo luồng happy case, tiếng Anh; khối hoạt động màu xám, hình thoi quyết định màu vàng; ba trang Slide là bản ngang dùng cho thuyết trình) | 01 Club establishment · 02 Member recruitment · 03 Periodic reports submission · 04 Term transition · 05 Club suspension · 06 Facilities request · 07 Event proposal and approval · 08 Event run and close · 09 Event disbursement · Slide 01 · Slide 07 · Slide 09 | [`03-diagrams/main-workflow.drawio`](03-diagrams/main-workflow.drawio) |
-| Swimlane chi tiết từng luồng (§2.5, tiếng Anh) | Club Founding · Leadership Transition · Member Recruitment · Event Proposal · Event Execution · Event Finance · Room Allocation · Facility Request · Complaint Handling · Periodic Report · Violation Case · Club Evaluation · Suspension and Dissolution · Club Leader and Club Member | [`03-diagrams/swimlane-flows.drawio`](03-diagrams/swimlane-flows.drawio) |
-| **State diagram** (một màu xám cho mọi trạng thái, nhãn chuyển trạng thái ngắn, không ghi chú) | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking · Event Defense Session | [`03-diagrams/state-diagrams.drawio`](03-diagrams/state-diagrams.drawio) |
-| **ERD** (mô hình khái niệm, 34 thực thể và 2 thực thể liên kết, 58 quan hệ có tên, cùng một màu xám, mỗi ký pháp một hình) | ERD Chen · ERD Crow's Foot · ERD Chen (no legend) · ERD Crow's Foot (no legend) | [`03-diagrams/erd.drawio`](03-diagrams/erd.drawio) |
-| **Database schema** (mô hình vật lý MongoDB, Crow's Foot, 55 collection) | Schema overview · 10 trang theo module (M01 … M12) · Enums | [`03-diagrams/database-schema.drawio`](03-diagrams/database-schema.drawio) |
-| **System architecture** | System architecture | [`03-diagrams/system-architecture.drawio`](03-diagrams/system-architecture.drawio) |
-| **Kiến trúc bảo mật** (các lớp phòng thủ của request `/api/v1`, §12.1) | Security architecture | [`03-diagrams/security-architecture.drawio`](03-diagrams/security-architecture.drawio) |
-| **Package diagram** | Front-end packages · Back-end packages | [`03-diagrams/package-diagrams.drawio`](03-diagrams/package-diagrams.drawio) |
-| **Class diagram theo use case** | 00 Notation · 18 trang theo luồng (đến 18 Sponsored-Item-Disbursement-and-Refund) | [`03-diagrams/class-diagrams.drawio`](03-diagrams/class-diagrams.drawio) |
-| **Sequence diagram tiêu biểu** (22 trang) | 01 Sign-in and workspace · 02 Submit club application · 03 Decide club application · 04 Membership application and decision · 05 Submit event proposal · 06 Decide event proposal, Event defense session, Proposal template and document · 07 Event registration and waitlist · 08 Facility booking request and review · 09 Invoice review and one-time payment | [`03-diagrams/sequence-diagrams.drawio`](03-diagrams/sequence-diagrams.drawio) |
-| **Screen flow** (gộp một trang cho mọi role, màu theo actor) | Screen flow | [`03-diagrams/screen-flow.drawio`](03-diagrams/screen-flow.drawio) |
+| **Context diagram v2.1** (45 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`01-diagrams/context-diagram.drawio`](01-diagrams/context-diagram.drawio) |
+| **Use case diagram theo actor** (UC01–UC55, UC58) | User · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 - Access & club lifecycle · ICPDP 2 - Events, bookings & finance · ICPDP 3 - Compliance & evaluation | [`01-diagrams/usecase-by-actor.drawio`](01-diagrams/usecase-by-actor.drawio) |
+| **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`01-diagrams/organization-and-flows.drawio`](01-diagrams/organization-and-flows.drawio) |
+| **Main workflow** (chín swimlane theo luồng happy case, tiếng Anh; khối hoạt động màu xám, hình thoi quyết định màu vàng; ba trang Slide là bản ngang dùng cho thuyết trình) | 01 Club establishment · 02 Member recruitment · 03 Periodic reports submission · 04 Term transition · 05 Club suspension · 06 Facilities request · 07 Event proposal and approval · 08 Event run and close · 09 Event disbursement · Slide 01 · Slide 07 · Slide 09 | [`01-diagrams/main-workflow.drawio`](01-diagrams/main-workflow.drawio) |
+| Swimlane chi tiết từng luồng (§2.5, tiếng Anh) | Club Founding · Leadership Transition · Member Recruitment · Event Proposal · Event Execution · Event Finance · Room Allocation · Facility Request · Complaint Handling · Periodic Report · Violation Case · Club Evaluation · Suspension and Dissolution · Club Leader and Club Member | [`01-diagrams/swimlane-flows.drawio`](01-diagrams/swimlane-flows.drawio) |
+| **State diagram** (một màu xám cho mọi trạng thái, nhãn chuyển trạng thái ngắn, không ghi chú) | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking · Event Defense Session | [`01-diagrams/state-diagrams.drawio`](01-diagrams/state-diagrams.drawio) |
+| **ERD** (mô hình khái niệm, 34 thực thể và 2 thực thể liên kết, 58 quan hệ có tên, cùng một màu xám, mỗi ký pháp một hình) | ERD Chen · ERD Crow's Foot · ERD Chen (no legend) · ERD Crow's Foot (no legend) | [`01-diagrams/erd.drawio`](01-diagrams/erd.drawio) |
+| **Database schema** (mô hình vật lý MongoDB, Crow's Foot, 55 collection) | Schema overview · 10 trang theo module (M01 … M12) · Enums | [`01-diagrams/database-schema.drawio`](01-diagrams/database-schema.drawio) |
+| **System architecture** | System architecture | [`01-diagrams/system-architecture.drawio`](01-diagrams/system-architecture.drawio) |
+| **Kiến trúc bảo mật** (các lớp phòng thủ của request `/api/v1`, §12.1) | Security architecture | [`01-diagrams/security-architecture.drawio`](01-diagrams/security-architecture.drawio) |
+| **Package diagram** | Front-end packages · Back-end packages | [`01-diagrams/package-diagrams.drawio`](01-diagrams/package-diagrams.drawio) |
+| **Class diagram theo use case** | 00 Notation · 18 trang theo luồng (đến 18 Sponsored-Item-Disbursement-and-Refund) | [`01-diagrams/class-diagrams.drawio`](01-diagrams/class-diagrams.drawio) |
+| **Sequence diagram tiêu biểu** (22 trang) | 01 Sign-in and workspace · 02 Submit club application · 03 Decide club application · 04 Membership application and decision · 05 Submit event proposal · 06 Decide event proposal, Event defense session, Proposal template and document · 07 Event registration and waitlist · 08 Facility booking request and review · 09 Invoice review and one-time payment | [`01-diagrams/sequence-diagrams.drawio`](01-diagrams/sequence-diagrams.drawio) |
+| **Screen flow** (gộp một trang cho mọi role, màu theo actor) | Screen flow | [`01-diagrams/screen-flow.drawio`](01-diagrams/screen-flow.drawio) |
 
 Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
 

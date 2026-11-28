@@ -1,4 +1,4 @@
-// Captures the screenshots of the user guide (docs/06-user-guide/images) from the real app:
+// Captures the screenshots of the user guide (docs/04-user-guide/images) from the real app:
 // `npm run guide:screenshots`. Not part of `npm run test:e2e` or `npm run check`; see guide/README.md.
 // It reuses the e2e stack (seeded throwaway database, minted sessions, built client) on its own
 // database and ports, set in guide/defaults.ts before the shared env is read.

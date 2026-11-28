@@ -1,7 +1,7 @@
 # UCMS — Thiết kế mức cao đối chiếu implementation
 
 > Đối chiếu code ngày 27/11/2026 (các bản trước: `main` 14/11/2026; 15/10/2026, commit `60fc2db`). Mapping UC đầy đủ:
-> [`../05-implementation/uc-code-mapping.md`](../05-implementation/uc-code-mapping.md).
+> [`../03-implementation/uc-code-mapping.md`](../03-implementation/uc-code-mapping.md).
 > Phạm vi đã có và còn thiếu: [`../current-implementation.md`](../current-implementation.md).
 
 ## 1. Các container và phụ thuộc

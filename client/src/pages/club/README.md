@@ -83,7 +83,7 @@ hiển thị đầy đủ đoạn văn và bảng theo thứ tự nguồn, giữ
 Link trong Word hoặc URL viết trực tiếp đều bấm được ở bản xem và phần trích xuất, mở tab mới.
 Hyperlink có tên hiển thị được giữ đúng đích từng lần xuất hiện; dùng primitive `AppLinkedText`.
 sửa Word rồi import lại để đổi thông tin. Thiếu field hoặc dữ liệu không hợp lệ thì chặn lưu/nộp;
-không hỗ trợ trích xuất PDF/scan. Xem `docs/05-implementation/event-proposal-import.md`.
+không hỗ trợ trích xuất PDF/scan. Xem `docs/03-implementation/event-proposal-import.md`.
 Giao diện tạo mới chỉ có nút "Tạo đề xuất sự kiện"; sự kiện nội bộ của CLB đã bị gỡ khỏi hệ thống (không còn
 trang hay route nào cho chúng).
 `ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route

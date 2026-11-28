@@ -4,7 +4,7 @@
 Diagram đã duyệt (trang *Club Member - Events & bookings*) và SRS baseline 02/11/2026 cho mọi thành
 viên `Active` quản lý danh sách chờ, chốt điểm danh (UC30, UC32) và xem phòng ICPDP đã phân cho CLB
 (UC58). Code hiện chỉ cấp hai việc này cho Club Leader, và xem phòng lại đòi `club.booking.manage`
-(quyền tạo booking UC45). Khoảng lệch G2 trong `docs/05-implementation/CODE_DIAGRAM_GAPS.md`.
+(quyền tạo booking UC45). Khoảng lệch G2 trong `docs/03-implementation/CODE_DIAGRAM_GAPS.md`.
 
 ## Truy vết
 - BR54 (khôi phục 02/11): mọi thành viên `Active` tự có `club.attendance.manage`, `club.room.view`.
