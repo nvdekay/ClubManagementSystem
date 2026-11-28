@@ -5,7 +5,6 @@ import { eventCancellationRequest } from './club-event-readers.js'
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import { publicEventPayload } from '../../domain/club-event.js'
-import { DomainError } from '../../domain/errors.js'
 import { ACTIVE_DEFENSE_STATES } from '../../domain/event-defense.js'
 import {
   type ClubObligation,
@@ -20,15 +19,21 @@ import {
 import {
   applyProposalDecisionInSession,
   approvedLines,
-  conflict,
   mapDefenseSession,
-  money,
-  optionalText,
   requestedLines,
 } from './event-defense-helpers.js'
 import { ucmsModels } from './ucms-models.js'
 import { overduePeriodicReports } from './periodic-report-obligations.js'
-import { queueNotification, queueNotifications } from './repo-helpers.js'
+import {
+  closeOpenTasks,
+  conflict,
+  finiteMoney,
+  found,
+  optionalText,
+  queueNotification,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 const TASK_TYPE = 'EVENT_PROPOSAL'
@@ -75,8 +80,8 @@ function budgetFrom(doc: Doc, eventTitle?: string): EventBudgetSummary {
     eventId: String(doc.eventId),
     ...(eventTitle ? { eventTitle } : {}),
     state: String(doc.state),
-    requestedTotal: money(doc.requestedTotal),
-    approvedTotal: money(doc.approvedTotal),
+    requestedTotal: finiteMoney(doc.requestedTotal),
+    approvedTotal: finiteMoney(doc.approvedTotal),
     lines: approvedLines(doc.lines),
   }
 }
@@ -209,7 +214,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       revisionNo: Number(version.revisionNo),
       payload: publicEventPayload((version.payload ?? {}) as Record<string, unknown>),
       budgetLines: requestedLines(version.budgetLines),
-      requestedBudgetTotal: money(version.requestedBudgetTotal),
+      requestedBudgetTotal: finiteMoney(version.requestedBudgetTotal),
       conflictResult: optionalText(version.conflictResult),
       submittedBy: String(version.submittedBy),
       submittedByName: nameById.get(String(version.submittedBy)),
@@ -280,11 +285,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   }
 
   async function required(eventId: Types.ObjectId, now: Date) {
-    const found = await detail(eventId, now)
-    if (!found) {
-      throw new DomainError('event proposal not found', 'not_found')
-    }
-    return found
+    return found(await detail(eventId, now), 'event proposal not found')
   }
 
   // Chuyển trạng thái theo lịch của các sự kiện khớp bộ lọc và ghi audit từng sự kiện như luồng hết hạn
@@ -352,27 +353,17 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           { session },
         )
         // Yêu cầu huỷ đang chờ ICPDP không còn gì để quyết
-        await tasks.updateMany(
-          { entityType: CANCELLATION_TASK_TYPE, entityId: _id, state: 'Open' },
-          { $set: { state: 'Closed', closedAt: now } },
-          { session },
-        )
-        await audits.create(
-          [
-            {
-              entityType: 'Event',
-              entityId: _id,
-              action: 'EVENT_EXPIRED_UNPUBLISHED',
-              actorRole: 'SYSTEM',
-              before: { state: 'Approved' },
-              after: { state: 'Expired' },
-              reason: UNPUBLISHED_EXPIRY_REASON,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await closeOpenTasks(session, CANCELLATION_TASK_TYPE, _id, now)
+        await writeAudit(session, {
+          entityType: 'Event',
+          entityId: _id,
+          action: 'EVENT_EXPIRED_UNPUBLISHED',
+          actorRole: 'SYSTEM',
+          before: { state: 'Approved' },
+          after: { state: 'Expired' },
+          reason: UNPUBLISHED_EXPIRY_REASON,
+          at: now,
+        })
         if (event.organizerType === 'ICPDP') {
           // Sự kiện cấp trường: lời mời chưa trả lời hết hạn, báo mọi CLB đã được mời hoặc đã nhận lời
           const invitations = await m
@@ -446,7 +437,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       const totals = new Map(
         versionDocs.map((version) => [
           `${String(version.eventId)}:${String(version.revisionNo)}`,
-          money(version.requestedBudgetTotal),
+          finiteMoney(version.requestedBudgetTotal),
         ]),
       )
       const byId = new Map(eventDocs.map((event) => [String(event._id), event]))
@@ -548,22 +539,16 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           return conflict('event proposal cannot be reviewed in its current state')
         }
         if (changed.modifiedCount === 1) {
-          await audits.create(
-            [
-              {
-                entityType: 'Event',
-                entityId: id,
-                action: 'EVENT_PROPOSAL_REVIEW_CLAIMED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                before: { state: 'Pending Approval' },
-                after: { state: 'Under Review' },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Event',
+            entityId: id,
+            action: 'EVENT_PROPOSAL_REVIEW_CLAIMED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            before: { state: 'Pending Approval' },
+            after: { state: 'Under Review' },
+            at: now,
+          })
         }
       })
       return required(id, now)
@@ -616,50 +601,38 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         )
         if (input.approve) {
           await cancelEventInSession(session, event, requestedReason, now, 'CMB', 24, actorId)
-          await audits.create(
-            [
-              {
-                entityType: 'Event',
-                entityId: id,
-                action: 'EVENT_CANCELLATION_APPROVED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                reason: input.reason,
-                after: {
-                  reason: requestedReason,
-                  requestedAt,
-                  reviewReason: input.reason,
-                  decidedAt: now,
-                },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Event',
+            entityId: id,
+            action: 'EVENT_CANCELLATION_APPROVED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            reason: input.reason,
+            after: {
+              reason: requestedReason,
+              requestedAt,
+              reviewReason: input.reason,
+              decidedAt: now,
+            },
+            at: now,
+          })
         } else {
           await events.updateOne({ _id: id }, { $inc: { __v: 1 } }, { session })
-          await audits.create(
-            [
-              {
-                entityType: 'Event',
-                entityId: id,
-                action: 'EVENT_CANCELLATION_REJECTED',
-                actorId,
-                actorRole: 'ICPDP_OFFICER',
-                reason: input.reason,
-                after: {
-                  reason: requestedReason,
-                  requestedAt,
-                  reviewReason: input.reason,
-                  decidedAt: now,
-                },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Event',
+            entityId: id,
+            action: 'EVENT_CANCELLATION_REJECTED',
+            actorId,
+            actorRole: 'ICPDP_OFFICER',
+            reason: input.reason,
+            after: {
+              reason: requestedReason,
+              requestedAt,
+              reviewReason: input.reason,
+              decidedAt: now,
+            },
+            at: now,
+          })
         }
         if (event.clubId) {
           const recipients = await clubBoardUserIds(event.clubId as Types.ObjectId, session)
@@ -734,21 +707,15 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
               )
             }
           }
-          await audits.create(
-            [
-              {
-                entityType: 'Event',
-                entityId: event._id,
-                action: 'EVENT_PROPOSAL_EXPIRED',
-                actorRole: 'SYSTEM',
-                before: { state: 'Revision Requested' },
-                after: { state: 'Expired' },
-                correlationId: randomUUID(),
-                at: now,
-              },
-            ],
-            { session },
-          )
+          await writeAudit(session, {
+            entityType: 'Event',
+            entityId: event._id,
+            action: 'EVENT_PROPOSAL_EXPIRED',
+            actorRole: 'SYSTEM',
+            before: { state: 'Revision Requested' },
+            after: { state: 'Expired' },
+            at: now,
+          })
           const version = await versions
             .findOne({ eventId: event._id, revisionNo: event.currentRevisionNo ?? 1 })
             .session(session)
