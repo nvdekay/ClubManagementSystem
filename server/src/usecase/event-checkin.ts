@@ -1,4 +1,4 @@
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   checkInCodesMatch,
   checkInStates,
@@ -8,24 +8,14 @@ import {
   type EventCheckInRepository,
 } from '../domain/event-checkin.js'
 import type { PolicyRepository } from '../domain/policy.js'
-import { isObjectId, type AccessActor } from './access.js'
+import { parseObjectId, requireSignedIn, type AccessActor } from './access.js'
 
-// Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
-function student(actor: AccessActor | null): string {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!isObjectId(actor.id)) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  return actor.id
-}
-
-// The feedback window comes from the policy in force when the event ended, not the current one.
-async function feedbackHours(policy: PolicyRepository, eventEndAt: Date): Promise<number | null> {
+// The feedback window comes from the policy in force when the event ended, not the current one,
+// so a later policy edit cannot reopen or cut short the window of an event that already finished.
+export async function feedbackHours(
+  policy: PolicyRepository,
+  eventEndAt: Date,
+): Promise<number | null> {
   return (await policy.findEffective(eventEndAt))?.feedbackWindowHours ?? null
 }
 
@@ -43,14 +33,9 @@ export async function checkInToEvent(
   code: string,
   now: Date,
 ) {
-  const studentId = student(actor)
-  if (!isObjectId(eventId)) {
-    throw new DomainError('invalid event id', 'validation')
-  }
-  const target = await repo.target(eventId, studentId)
-  if (!target) {
-    throw new DomainError('event not found', 'not_found')
-  }
+  const studentId = requireSignedIn(actor)
+  parseObjectId(eventId, 'event id')
+  const target = orNotFound(await repo.target(eventId, studentId), 'event')
   // E1: check-in lặp lại trả về bản ghi đầu tiên không đổi (BR18), kể cả sau khung giờ.
   if (target.attendance) {
     return {
@@ -94,7 +79,7 @@ export async function listMyAttendances(
   policy: PolicyRepository,
   actor: AccessActor | null,
 ) {
-  const studentId = student(actor)
+  const studentId = requireSignedIn(actor)
   const items = await repo.listMine(studentId)
   // One policy lookup per distinct event end time.
   const hoursByEnd = new Map<number, Promise<number | null>>()
