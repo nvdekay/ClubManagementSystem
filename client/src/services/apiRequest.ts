@@ -57,3 +57,42 @@ export async function apiRequest<T>(url: string, options: ApiRequestOptions = {}
   const text = await response.text()
   return text ? (JSON.parse(text) as { data: T }).data : (undefined as T)
 }
+
+/** A request function bound to one base path (and optionally one error mapper). */
+export type ApiClient = <T>(path: string, options?: ApiRequestOptions) => Promise<T>
+
+// Builds a service's `request` helper: prefixes the base path and applies the module's error mapper
+export function apiClient(base: string, toError?: ApiRequestOptions['toError']): ApiClient {
+  return function request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+    return apiRequest<T>(`${base}${path}`, toError ? { ...options, toError } : options)
+  }
+}
+
+/** A downloaded file; the name comes from the server's Content-Disposition header. */
+export interface DownloadedFile {
+  blob: Blob
+  fileName: string
+}
+
+// POSTs JSON to an endpoint that answers with a raw file (not a `{ data }` envelope)
+export async function postFile(
+  url: string,
+  body: object,
+  csrfToken: string,
+  fallbackName: string,
+  toError?: ApiRequestOptions['toError'],
+): Promise<DownloadedFile> {
+  const response = await apiFetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) {
+    const failure = await readApiFailure(response)
+    throw toError ? toError(failure) : new ApiError(failure.message, failure.status)
+  }
+  const disposition = response.headers.get('Content-Disposition') ?? ''
+  const fileName = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? fallbackName
+  return { blob: await response.blob(), fileName }
+}
