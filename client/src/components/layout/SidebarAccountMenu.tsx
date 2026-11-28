@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import type { AuthUser } from '@/services/auth'
 import { cn } from '@/utils/cn'
+import { useDismissibleMenu } from '@/hooks/useDismissibleMenu'
 
 interface SidebarAccountMenuProps {
   user: AuthUser
@@ -25,33 +26,8 @@ export function SidebarAccountMenu({
   onSignOut,
 }: SidebarAccountMenuProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const root = useRef<HTMLDivElement>(null)
-  const trigger = useRef<HTMLButtonElement>(null)
+  const { open, setOpen, root, trigger } = useDismissibleMenu()
   const menuId = useId()
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    function onPointer(event: PointerEvent) {
-      if (!root.current?.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setOpen(false)
-        trigger.current?.focus()
-      }
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
 
   const label = t('common.accountMenu', { name: user.displayName })
   return (
