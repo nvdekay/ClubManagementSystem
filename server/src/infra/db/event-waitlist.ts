@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto'
 import { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { queueNotification } from './repo-helpers.js'
+import { queueNotification, writeAudit } from './repo-helpers.js'
 
 // Chuyển người đầu danh sách chờ thành đăng ký Confirmed khi có chỗ trống
 /** UC30 A1: chỉ người đứng đầu mới được nhận chỗ vừa nhả; mọi bên ghi đều giữ document sự kiện. */
@@ -54,20 +53,14 @@ export async function promoteEventWaitlist(
         { $set: { state: 'Cancelled', cancelledAt: now }, $unset: { waitlistPosition: '' } },
         { session },
       )
-      await m.auditLogs!.create(
-        [
-          {
-            entityType: 'EventRegistration',
-            entityId: head._id,
-            action: 'EVENT_WAITLIST_INELIGIBLE',
-            actorRole: 'SYSTEM',
-            after: { state: 'Cancelled' },
-            correlationId: randomUUID(),
-            at: now,
-          },
-        ],
-        { session },
-      )
+      await writeAudit(session, {
+        entityType: 'EventRegistration',
+        entityId: head._id,
+        action: 'EVENT_WAITLIST_INELIGIBLE',
+        actorRole: 'SYSTEM',
+        after: { state: 'Cancelled' },
+        at: now,
+      })
       continue
     }
     const changed = await m.events!.updateOne(
@@ -87,21 +80,15 @@ export async function promoteEventWaitlist(
       { $set: { state: 'Confirmed', promotedAt: now }, $unset: { waitlistPosition: '' } },
       { session },
     )
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'EventRegistration',
-          entityId: head._id,
-          action: 'EVENT_REGISTRATION_PROMOTED',
-          ...(actorId ? { actorId, actorRole: 'Club Member' } : { actorRole: 'SYSTEM' }),
-          before: { state: 'Waitlisted', waitlistPosition: head.waitlistPosition },
-          after: { state: 'Confirmed' },
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'EventRegistration',
+      entityId: head._id,
+      action: 'EVENT_REGISTRATION_PROMOTED',
+      ...(actorId ? { actorId, actorRole: 'Club Member' } : { actorRole: 'SYSTEM' }),
+      before: { state: 'Waitlisted', waitlistPosition: head.waitlistPosition },
+      after: { state: 'Confirmed' },
+      at: now,
+    })
     await queueNotification(session, {
       recipientUserId: head.studentId,
       eventCode: 'EVENT_REGISTRATION_PROMOTED',
