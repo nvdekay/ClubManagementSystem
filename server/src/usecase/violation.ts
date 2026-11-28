@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { orNotFound } from '../domain/errors.js'
 import {
   normalizedOpenInput,
   type OpenViolationInput,
@@ -29,10 +29,7 @@ export async function getViolation(
   now: Date,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  const found = await repo.find(parseObjectId(id, 'case id'), now)
-  if (!found) {
-    throw new DomainError('violation case not found', 'not_found')
-  }
+  const found = orNotFound(await repo.find(parseObjectId(id, 'case id'), now), 'violation case')
   return found
 }
 
@@ -44,10 +41,7 @@ export async function getViolationSources(
   clubId: string,
 ) {
   await requireIcpdpOfficer(auth, actor)
-  const found = await repo.sources(parseObjectId(clubId, 'club id'))
-  if (!found) {
-    throw new DomainError('club not found', 'not_found')
-  }
+  const found = orNotFound(await repo.sources(parseObjectId(clubId, 'club id')), 'club')
   return found
 }
 
