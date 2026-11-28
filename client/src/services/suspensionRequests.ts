@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 import type { Page } from '@/services/discovery'
 export interface SuspensionRequest {
   id: string
@@ -16,10 +16,7 @@ export interface SuspensionContext {
   requests: SuspensionRequest[]
   impacts: { id: string; kind: string; title: string; startAt: string }[]
 }
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 // GET yêu cầu tạm ngưng và tác động hiện tại của một CLB
 export function fetchSuspensions(clubId: string, signal: AbortSignal): Promise<SuspensionContext> {
   return request(`/clubs/${encodeURIComponent(clubId)}/suspension-requests`, { signal })
