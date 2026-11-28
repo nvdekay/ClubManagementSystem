@@ -16,26 +16,13 @@ import {
   type SponsoredItem,
 } from '../../domain/sponsored-item.js'
 import { ucmsModels } from './ucms-models.js'
+import { finiteMoney, optionalText } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
-// Chuyển giá trị tiền sang number, mặc định 0
-function money(value: unknown): number {
-  if (value === null || value === undefined) {
-    return 0
-  }
-  const parsed = Number(String(value))
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
 // Chuyển giá trị tiền sang number hoặc undefined nếu trống
 function optionalMoney(value: unknown): number | undefined {
-  return value === null || value === undefined ? undefined : money(value)
-}
-
-// Trả chuỗi không rỗng hoặc undefined
-function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value ? value : undefined
+  return value === null || value === undefined ? undefined : finiteMoney(value)
 }
 
 // Đếm số lượng hạng mục cần xử lý theo trạng thái cho ngân sách tài trợ mới
@@ -97,16 +84,16 @@ function summaryFrom(
     clubName: clubName ?? String(event?.clubName ?? ''),
     state: String(doc.state),
     ...(optionalText(doc.periodCode) ? { periodCode: String(doc.periodCode) } : {}),
-    requestedTotal: money(doc.requestedTotal),
-    approvedTotal: money(doc.approvedTotal),
-    disbursedTotal: money(doc.disbursedTotal),
-    refundedTotal: money(doc.refundedTotal),
+    requestedTotal: finiteMoney(doc.requestedTotal),
+    approvedTotal: finiteMoney(doc.approvedTotal),
+    disbursedTotal: finiteMoney(doc.disbursedTotal),
+    refundedTotal: finiteMoney(doc.refundedTotal),
     ...(doc.settlementDueAt instanceof Date ? { settlementDueAt: doc.settlementDueAt } : {}),
     ...(optionalMoney(doc.settlementBalance) !== undefined
-      ? { settlementBalance: money(doc.settlementBalance) }
+      ? { settlementBalance: finiteMoney(doc.settlementBalance) }
       : {}),
     ...(optionalMoney(doc.recoveryAmount) !== undefined
-      ? { recoveryAmount: money(doc.recoveryAmount) }
+      ? { recoveryAmount: finiteMoney(doc.recoveryAmount) }
       : {}),
     ...(doc.recoveryDueAt instanceof Date ? { recoveryDueAt: doc.recoveryDueAt } : {}),
     ...(itemCounts ? { itemCounts } : {}),
@@ -204,7 +191,7 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
     const mapped: BudgetFlow[] = flowDocs.map((flow) => ({
       id: String(flow._id),
       kind: flow.kind as BudgetFlowKind,
-      amount: money(flow.amount),
+      amount: finiteMoney(flow.amount),
       disbursedAt: flow.disbursedAt as Date,
       ...(optionalText(flow.paymentReference)
         ? { paymentReference: String(flow.paymentReference) }
@@ -216,8 +203,8 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
     const lines = Array.isArray(doc.lines)
       ? doc.lines.map((line: Doc) => ({
           category: String(line.category ?? ''),
-          requestedAmount: money(line.requestedAmount),
-          approvedAmount: money(line.approvedAmount),
+          requestedAmount: finiteMoney(line.requestedAmount),
+          approvedAmount: finiteMoney(line.approvedAmount),
           ...(optionalText(line.reason) ? { reason: String(line.reason) } : {}),
         }))
       : []
