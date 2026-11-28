@@ -5,6 +5,7 @@ import type {
   AnnualSource,
 } from './annual-report.js'
 import { DomainError } from './errors.js'
+import { isObjectId } from './access-denial.js'
 
 /** Danh mục xuất dữ liệu cố định (UC55 FR-01). */
 export const EXPORT_TYPES = [
@@ -160,8 +161,6 @@ export interface ExportFileWriter {
   ): Promise<ExportFile>
 }
 
-const objectId = /^[0-9a-f]{24}$/i
-
 // Kiểm tra bộ lọc kỳ hoặc khoảng ngày khi xuất dữ liệu
 export function validateExportFilter(type: ExportType, filter: ExportFilter): ExportFilter {
   if (filter.periodCode !== undefined && (filter.from || filter.to)) {
@@ -176,7 +175,7 @@ export function validateExportFilter(type: ExportType, filter: ExportFilter): Ex
   ) {
     throw new DomainError('invalid export date range', 'validation', { field: 'period' })
   }
-  if (filter.clubId !== undefined && !objectId.test(filter.clubId)) {
+  if (filter.clubId !== undefined && !isObjectId(filter.clubId)) {
     throw new DomainError('invalid export club', 'validation', { field: 'clubId' })
   }
   if (filter.status !== undefined && !EXPORT_STATUSES[type].includes(filter.status)) {
