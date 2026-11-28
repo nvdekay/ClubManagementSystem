@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   fetchBookingSlots,
   changeBooking,
@@ -67,13 +68,10 @@ export function useBlackoutBookings(propertyId: string | null, blackoutKey: stri
 }
 // Mutation lưu, nộp, huỷ hoặc quyết định booking, rồi làm mới cache
 export function useBookingAction(csrfToken: string) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (action: BookingAction) => changeBooking(action, csrfToken),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: bookingKey })
-    },
-  })
+  return useInvalidatingMutation(
+    (action: BookingAction) => changeBooking(action, csrfToken),
+    [bookingKey],
+  )
 }
 
 // Query các ca đặt phòng
