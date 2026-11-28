@@ -1,5 +1,6 @@
 import type { PublicCampaign } from './public-discovery.js'
 import { DomainError } from './errors.js'
+import { isObjectId } from './access-denial.js'
 
 export type RecruitmentAnswer = string | string[]
 
@@ -138,8 +139,6 @@ export interface RecruitmentAttachmentStorage {
   accessUrl(assetId: string): Promise<string>
 }
 
-const objectId = /^[0-9a-f]{24}$/i
-
 // Kiểm tra vị trí, câu trả lời và file đính kèm của hồ sơ ứng tuyển theo đợt tuyển
 export function validateRecruitmentAnswers(input: {
   campaign: PublicCampaign
@@ -224,7 +223,7 @@ export function validateRecruitmentAnswers(input: {
   if (attachmentKeys.size !== input.attachments.length) {
     throw new DomainError('only one attachment is allowed per file question', 'validation')
   }
-  if (!objectId.test(input.campaign.id) || !objectId.test(input.campaign.clubId ?? '')) {
+  if (!isObjectId(input.campaign.id) || !isObjectId(input.campaign.clubId)) {
     throw new DomainError('invalid recruitment campaign', 'validation')
   }
 }
