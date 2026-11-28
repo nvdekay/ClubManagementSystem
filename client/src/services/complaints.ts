@@ -1,4 +1,4 @@
-import { apiRequest, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient } from '@/services/apiRequest'
 import type { Page } from '@/services/discovery'
 export const COMPLAINT_TYPES = ['CONDUCT', 'EVENT', 'FINANCE', 'SAFETY', 'OTHER'] as const
 export type ComplaintType = (typeof COMPLAINT_TYPES)[number]
@@ -103,10 +103,7 @@ export type ComplaintDecisionInput =
   | { kind: 'escalate'; severity: Severity; reason: string }
   | { kind: 'link'; targetId: string; reason: string }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, options)
-}
+const request = apiClient('/api/v1')
 
 // GET /complaints/mine: khiếu nại của tôi
 export function fetchMyComplaints(signal: AbortSignal) {
