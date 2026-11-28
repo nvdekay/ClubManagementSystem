@@ -1,14 +1,12 @@
 import { Router, json } from 'express'
 import { z } from 'zod'
 import type { ClubAccessRepository } from '../../domain/access.js'
-import type { AuthRepository } from '../../domain/auth.js'
 import {
   MAX_DEFENSE_DURATION_MINUTES,
   MIN_DEFENSE_DURATION_MINUTES,
   type EventDefenseRepository,
 } from '../../domain/event-defense.js'
 import type { EventProposalReviewRepository } from '../../domain/event-proposal-review.js'
-import type { SessionService } from '../../domain/session.js'
 import {
   cancelEventDefense,
   confirmClubEventDefense,
@@ -24,20 +22,16 @@ import {
   scheduleEventDefense,
   startEventDefense,
 } from '../../usecase/event-defense.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { eventReviewDecisionBody } from './event-proposal-review-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId as id } from './request.js'
 
-export interface EventDefenseRouteDeps {
+export interface EventDefenseRouteDeps extends SessionDeps {
   repo: EventDefenseRepository
   reviewRepo: EventProposalReviewRepository
   accessRepo: ClubAccessRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
-
-const id = z.string().regex(/^[0-9a-f]{24}$/i)
 
 export const defenseRoomsQuery = z
   .object({
@@ -102,10 +96,10 @@ export const defenseNoteBody = z
 // Mount các route phiên bảo vệ đề xuất sự kiện của ICPDP và CLB
 export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê phòng còn trống cho phiên bảo vệ
-  router.get('/admin/event-defense/rooms', authGuard(guard, false), async (req, res) => {
+  router.get('/admin/event-defense/rooms', read, async (req, res) => {
     const query = parse(defenseRoomsQuery, req.query, 'event defense request')
     ok(
       res,
@@ -121,7 +115,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // ICPDP lên lịch phiên bảo vệ đề xuất sự kiện
-  router.post('/admin/event-proposals/:id/defense/schedule', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/defense/schedule', write, async (req, res) => {
     const body = parse(defenseScheduleBody, req.body, 'event defense request')
     ok(
       res,
@@ -143,7 +137,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // ICPDP huỷ phiên bảo vệ kèm lý do
-  router.post('/admin/event-proposals/:id/defense/cancel', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/defense/cancel', write, async (req, res) => {
     const body = parse(defenseReasonBody, req.body, 'event defense request')
     ok(
       res,
@@ -159,37 +153,31 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // ICPDP phản hồi yêu cầu dời lịch bảo vệ của CLB
-  router.post(
-    '/admin/event-proposals/:id/defense/respond-reschedule',
-    authGuard(guard),
-    async (req, res) => {
-      const body = parse(defenseRespondRescheduleBody, req.body, 'event defense request')
-      ok(
-        res,
-        await respondDefenseReschedule(
-          deps.repo,
-          deps.reviewRepo,
-          deps.authRepo,
-          actor(res),
-          parse(id, req.params.id, 'event defense request'),
-          {
-            accept: body.accept,
-            ...(body.startAt ? { startAt: new Date(body.startAt) } : {}),
-            ...(body.durationMinutes !== undefined
-              ? { durationMinutes: body.durationMinutes }
-              : {}),
-            ...(body.propertyId ? { propertyId: body.propertyId } : {}),
-            ...(body.note !== undefined ? { note: body.note } : {}),
-            ...(body.reason !== undefined ? { reason: body.reason } : {}),
-          },
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.post('/admin/event-proposals/:id/defense/respond-reschedule', write, async (req, res) => {
+    const body = parse(defenseRespondRescheduleBody, req.body, 'event defense request')
+    ok(
+      res,
+      await respondDefenseReschedule(
+        deps.repo,
+        deps.reviewRepo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'event defense request'),
+        {
+          accept: body.accept,
+          ...(body.startAt ? { startAt: new Date(body.startAt) } : {}),
+          ...(body.durationMinutes !== undefined ? { durationMinutes: body.durationMinutes } : {}),
+          ...(body.propertyId ? { propertyId: body.propertyId } : {}),
+          ...(body.note !== undefined ? { note: body.note } : {}),
+          ...(body.reason !== undefined ? { reason: body.reason } : {}),
+        },
+        new Date(),
+      ),
+    )
+  })
 
   // ICPDP bắt đầu phiên bảo vệ
-  router.post('/admin/event-proposals/:id/defense/start', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/defense/start', write, async (req, res) => {
     ok(
       res,
       await startEventDefense(
@@ -203,27 +191,23 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // Lấy trạng thái phiên bảo vệ đang diễn ra
-  router.get(
-    '/admin/event-proposals/:id/defense/session',
-    authGuard(guard, false),
-    async (req, res) => {
-      ok(
-        res,
-        await getLiveDefenseSession(
-          deps.repo,
-          deps.authRepo,
-          actor(res),
-          parse(id, req.params.id, 'event defense request'),
-        ),
-      )
-    },
-  )
+  router.get('/admin/event-proposals/:id/defense/session', read, async (req, res) => {
+    ok(
+      res,
+      await getLiveDefenseSession(
+        deps.repo,
+        deps.authRepo,
+        actor(res),
+        parse(id, req.params.id, 'event defense request'),
+      ),
+    )
+  })
 
   // Lưu ghi chú của phiên bảo vệ
   // Ghi chú tới 50.000 ký tự nên vượt giới hạn JSON 100kb chung.
   router.put(
     '/admin/event-proposals/:id/defense/notes',
-    authGuard(guard),
+    write,
     json({ limit: '256kb' }),
     async (req, res) => {
       const body = parse(defenseNoteBody, req.body, 'event defense request')
@@ -242,7 +226,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   )
 
   // ICPDP kết thúc phiên bảo vệ
-  router.post('/admin/event-proposals/:id/defense/end', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/defense/end', write, async (req, res) => {
     ok(
       res,
       await endEventDefense(
@@ -256,7 +240,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // Đánh dấu CLB vắng mặt tại phiên bảo vệ
-  router.post('/admin/event-proposals/:id/defense/no-show', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/defense/no-show', write, async (req, res) => {
     const body = parse(defenseOptionalReasonBody, req.body, 'event defense request')
     ok(
       res,
@@ -272,7 +256,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // ICPDP ghi quyết định sau phiên bảo vệ
-  router.post('/admin/event-proposals/:id/defense/decision', authGuard(guard), async (req, res) => {
+  router.post('/admin/event-proposals/:id/defense/decision', write, async (req, res) => {
     const body = parse(eventReviewDecisionBody, req.body, 'event defense request')
     ok(
       res,
@@ -294,7 +278,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // CLB xem lịch bảo vệ của sự kiện
-  router.get('/clubs/:clubId/events/:id/defense', authGuard(guard, false), async (req, res) => {
+  router.get('/clubs/:clubId/events/:id/defense', read, async (req, res) => {
     ok(
       res,
       await getClubEventDefense(
@@ -309,7 +293,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // CLB xác nhận tham dự phiên bảo vệ
-  router.post('/clubs/:clubId/events/:id/defense/confirm', authGuard(guard), async (req, res) => {
+  router.post('/clubs/:clubId/events/:id/defense/confirm', write, async (req, res) => {
     ok(
       res,
       await confirmClubEventDefense(
@@ -324,25 +308,21 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   })
 
   // CLB yêu cầu dời lịch phiên bảo vệ
-  router.post(
-    '/clubs/:clubId/events/:id/defense/reschedule-request',
-    authGuard(guard),
-    async (req, res) => {
-      const body = parse(defenseReasonBody, req.body, 'event defense request')
-      ok(
-        res,
-        await requestClubDefenseReschedule(
-          deps.repo,
-          deps.accessRepo,
-          actor(res),
-          parse(id, req.params.clubId, 'event defense request'),
-          parse(id, req.params.id, 'event defense request'),
-          body.reason,
-          new Date(),
-        ),
-      )
-    },
-  )
+  router.post('/clubs/:clubId/events/:id/defense/reschedule-request', write, async (req, res) => {
+    const body = parse(defenseReasonBody, req.body, 'event defense request')
+    ok(
+      res,
+      await requestClubDefenseReschedule(
+        deps.repo,
+        deps.accessRepo,
+        actor(res),
+        parse(id, req.params.clubId, 'event defense request'),
+        parse(id, req.params.id, 'event defense request'),
+        body.reason,
+        new Date(),
+      ),
+    )
+  })
 
   return router
 }
