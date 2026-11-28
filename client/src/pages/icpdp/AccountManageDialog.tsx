@@ -5,7 +5,6 @@ import { AppBadge } from '@/components/ui/badge/AppBadge'
 import { AppButton } from '@/components/ui/button/AppButton'
 import { AppDialog } from '@/components/ui/dialog/AppDialog'
 import { AppFieldError } from '@/components/ui/field/AppFieldError'
-import { AppRequiredMark } from '@/components/ui/field/AppRequiredMark'
 import { AppInput } from '@/components/ui/input/AppInput'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSelect } from '@/components/ui/select/AppSelect'
@@ -13,6 +12,7 @@ import { useAccountAction } from '@/hooks/useAccounts'
 import { useAuth } from '@/hooks/useAuth'
 import { useViolations } from '@/hooks/useViolations'
 import type { AccountAction, AdminUserPage, SystemRoleCode } from '@/services/accounts'
+import { AppField } from '@/components/ui/field/AppField'
 
 type AccountRow = AdminUserPage['items'][number]
 
@@ -202,9 +202,7 @@ export function AccountManageDialog({
                         }
                       }}
                     >
-                      <label className="block text-sm font-medium text-text-app">
-                        {t('auth.revokeReason')}
-                        <AppRequiredMark />
+                      <AppField label={t('auth.revokeReason')} required>
                         <AppInput
                           className="mt-1.5 block w-full font-normal"
                           value={revokeReason}
@@ -213,7 +211,7 @@ export function AccountManageDialog({
                           aria-invalid={revokeError ? true : undefined}
                           onChange={(event) => setRevokeReason(event.target.value)}
                         />
-                      </label>
+                      </AppField>
                       <AppFieldError message={revokeError} />
                       <div className="flex flex-wrap gap-2">
                         <AppButton type="submit" disabled={action.isPending}>
@@ -272,9 +270,7 @@ export function AccountManageDialog({
               )
             }}
           >
-            <label className="block text-sm font-medium text-text-app">
-              {locked ? t('auth.unlockReason') : t('auth.lockReason')}
-              <AppRequiredMark />
+            <AppField label={locked ? t('auth.unlockReason') : t('auth.lockReason')} required>
               <AppInput
                 className="mt-1.5 block w-full font-normal"
                 value={lockReason}
@@ -282,7 +278,7 @@ export function AccountManageDialog({
                 aria-invalid={lockError ? true : undefined}
                 onChange={(event) => setLockReason(event.target.value)}
               />
-            </label>
+            </AppField>
             <AppFieldError message={lockError} />
             {!locked && (
               <div className="text-sm font-medium text-text-app">
