@@ -18,9 +18,6 @@ export function ClubEventTablePager({
       pageIndex={pageIndex}
       pageCount={pageCount}
       onPageChange={onChange}
-      prevLabel={t('clubEvents.previous')}
-      nextLabel={t('clubEvents.next')}
-      pageLabel={(page) => t('clubEvents.page', { page })}
       navLabel={t('clubEvents.pagination')}
     />
   )
