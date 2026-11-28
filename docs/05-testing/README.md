@@ -22,11 +22,11 @@ Bảng này đánh số liền mạch `UC01–UC55`, khác với SRS và Final R
 
 ## Kiểm thử tự động
 
-Bảng trên là tài liệu nộp bài; test chạy được nằm trong code (số liệu ngày 27/11/2026):
+Bảng trên là tài liệu nộp bài; test chạy được nằm trong code (số liệu ngày 28/11/2026):
 
 | Bộ test | Lệnh | Quy mô |
 |---|---|---|
-| Server unit + integration (vitest) | `npm test -w server` (integration cần Mongo và `MONGO_URI`) | 140 file, 1040 test |
+| Server unit + integration (vitest) | `npm test -w server` (integration cần Mongo và `MONGO_URI`) | 144 file, 1072 test |
 | Client unit (vitest, logic thuần) | `npm test -w client` | 10 file, 110 test |
 | Giao diện end-to-end (Playwright) | `npm run test:e2e` | 5 file, 20 test |
 

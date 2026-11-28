@@ -343,3 +343,9 @@ Sửa có chọn lọc theo các thay đổi hành vi trong code từ 24/11/2026
 - **Database schema:** trang `Schema M10` thêm `notifications.clubId` (inbox CLB phân trang trong Mongo).
 - **Security architecture:** tầng 2 thêm CSP, HSTS sau proxy tin cậy (`TRUST_PROXY`), Permissions-Policy (`security-headers.ts`); tầng 3 thêm request id (`X-Request-Id`), rate limit theo IP (auth 20, API 300 request/phút → 429) và giới hạn JSON 100 KB; tầng 6 bỏ `ICPDP_HEAD`.
 - **System architecture:** `interface/http` ghi thêm việc phục vụ bản build client (`client/dist`) khi chạy một container.
+
+## Đồng bộ sơ đồ sau đợt gộp code (28/11/2026)
+
+PR #75 chỉ gom code trùng vào helper chung, không đổi nghiệp vụ nên các sơ đồ trạng thái, luồng và class giữ nguyên.
+
+- **Sequence:** trang `01 Sign-in and workspace (2/3)` bước 41 đổi tên hàm ánh xạ user thành `authUserFrom(existing)` (helper chung ở `infra/db/repo-helpers.ts`); đã xuất lại `img/sequence-01-sign-in-and-workspace-p2.png`.
