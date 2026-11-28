@@ -1,6 +1,7 @@
 import { DomainError } from './errors.js'
 import type { FoundingRequirements } from './policy.js'
 import type { SimilarityCandidate } from './similar-club.js'
+import { isObjectId } from './access-denial.js'
 
 export const FOUNDER_ROLES = ['LEADER', 'VICE_LEADER', 'MEMBER'] as const
 export type FounderRole = (typeof FOUNDER_ROLES)[number]
@@ -190,8 +191,6 @@ export interface ApplicationFileStorage {
   remove(assetId: string): Promise<void>
 }
 
-const objectId = /^[0-9a-f]{24}$/i
-
 export type FoundingIssue =
   | 'clubName'
   | 'field'
@@ -221,7 +220,7 @@ export function foundingSubmissionIssues(
   if (!draft.clubName.trim()) {
     issues.push('clubName')
   }
-  if (!objectId.test(draft.fieldId)) {
+  if (!isObjectId(draft.fieldId)) {
     issues.push('field')
   }
   for (const field of ['summary', 'objectives', 'fanpageUrl', 'contactEmail'] as const) {
