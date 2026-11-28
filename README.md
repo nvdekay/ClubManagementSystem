@@ -48,7 +48,7 @@ cp .env.example .env
 
 Trong Google Cloud Console, thêm **Authorized redirect URI** `http://localhost:3000/api/v1/auth/callback`.
 Khi OAuth app còn ở chế độ *Testing*, thêm email của bạn vào *Test users*. Chi tiết:
-[`docs/05-implementation/auth-setup.md`](docs/05-implementation/auth-setup.md).
+[`docs/03-implementation/auth-setup.md`](docs/03-implementation/auth-setup.md).
 
 > Chưa có Google OAuth? Để trống **toàn bộ** biến Auth (`GOOGLE_*`, `SESSION_SECRET`,
 > `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL`, `APP_BASE_URL`, `CLIENT_BASE_URL`): server vẫn chạy
@@ -254,7 +254,7 @@ Baseline yêu cầu là **[`docs/srs.md`](docs/srs.md)** — danh mục UC và q
 vòng đời thực thể, mô hình dữ liệu, yêu cầu phi chức năng và ma trận truy vết. Mọi tài liệu
 khác nằm trong [`docs/`](docs/README.md). Mapping code và phần còn thiếu xem
 [`docs/current-implementation.md`](docs/current-implementation.md), và kế hoạch triển khai kèm thiết kế cơ sở dữ liệu ở
-[`docs/05-implementation/`](docs/05-implementation/README.md).
+[`docs/03-implementation/`](docs/03-implementation/README.md).
 
 ## Quy tắc
 

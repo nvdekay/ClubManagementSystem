@@ -1,8 +1,8 @@
 # client/e2e/guide/
 
-Chụp lại ảnh của hướng dẫn sử dụng (`docs/06-user-guide/images/`) từ app thật bằng Playwright:
+Chụp lại ảnh của hướng dẫn sử dụng (`docs/04-user-guide/images/`) từ app thật bằng Playwright:
 `npm run guide:screenshots` (từ thư mục gốc). **Không** thuộc `npm run test:e2e` hay `npm run check`.
-Cách dùng đầy đủ và bước dựng HTML/PDF: [`docs/06-user-guide/README.md`](../../../docs/06-user-guide/README.md).
+Cách dùng đầy đủ và bước dựng HTML/PDF: [`docs/04-user-guide/README.md`](../../../docs/04-user-guide/README.md).
 
 Dùng lại stack e2e (`../setup/`): seed database bằng `prepare-db.ts`, cấp phiên thật cho từng vai
 bằng `mint-sessions.ts`, chạy API + bản build client. Khác với bộ test:

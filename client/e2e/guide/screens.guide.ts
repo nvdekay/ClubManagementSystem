@@ -1,4 +1,4 @@
-// One test per screenshot of docs/06-user-guide (file names match images/manifest.json). Tests run
+// One test per screenshot of docs/04-user-guide (file names match images/manifest.json). Tests run
 // in file order on one worker: a few steps act on shared records (open a review, schedule a
 // defense) and later captures rely on that. Selectors use the Vietnamese UI text.
 import type { Page } from '@playwright/test'

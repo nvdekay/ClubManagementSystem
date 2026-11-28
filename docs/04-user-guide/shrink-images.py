@@ -1,6 +1,6 @@
 """Reduces the guide screenshots to a 256-colour palette so the repo and guide-book.html stay light.
 
-Run after `npm run guide:screenshots`: python3 docs/06-user-guide/shrink-images.py
+Run after `npm run guide:screenshots`: python3 docs/04-user-guide/shrink-images.py
 Needs Pillow (pip install Pillow). Already-reduced images (palette mode) are left as they are.
 """
 from pathlib import Path

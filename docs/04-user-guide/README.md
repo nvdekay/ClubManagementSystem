@@ -23,7 +23,7 @@ dựng lại theo các bước dưới đây mỗi khi cần gửi cho người 
 docker compose up -d --wait                  # Mongo replica set
 npx playwright install chromium              # một lần cho mỗi máy, trong client/
 npm run guide:screenshots                    # từ thư mục gốc, khoảng 5 phút
-python3 docs/06-user-guide/shrink-images.py  # giảm dung lượng ảnh
+python3 docs/04-user-guide/shrink-images.py  # giảm dung lượng ảnh
 ```
 
 Lệnh tự dựng database riêng `ucms-e2e-guide` (xoá rồi seed lại, xoá khi xong), API ở cổng 3400 và
@@ -36,7 +36,7 @@ và `guide-book.md`.
 ## Dựng HTML và PDF
 
 ```bash
-python3 docs/06-user-guide/build-guide.py    # → docs/06-user-guide/guide-book.html
+python3 docs/04-user-guide/build-guide.py    # → docs/04-user-guide/guide-book.html
 ```
 
 Script dừng với lỗi nếu `guide-book.md` trỏ tới ảnh không có hoặc ảnh không có trong manifest. Mở

@@ -19,7 +19,7 @@ tới Mongoose.
 Danh sách UC26 hỗ trợ `pending` (task Open) và `approved` (task đề án Decided, sự kiện đã duyệt hoặc
 đã chuyển sang vận hành/hoàn thành). Mỗi sự kiện đã duyệt chỉ hiện một lần, theo task mới nhất.
 
-`ucms-schema.generated.ts` được sinh từ `docs/05-implementation/database-design.dbml`
+`ucms-schema.generated.ts` được sinh từ `docs/03-implementation/database-design.dbml`
 qua `python3 server/src/infra/db/generate-ucms-schema.py`. `ucms-models.ts` ánh xạ các kiểu,
 enum và index DBML sang Mongoose; `init.ts` là lệnh `npm run db:init` idempotent, còn `verify.ts`
 kiểm tra kết nối và schema bằng `npm run db:verify`. Cột DBML
@@ -97,7 +97,7 @@ Chạy từ gốc repo: `node --env-file=.env --import tsx server/src/infra/db/s
 (báo cáo sau sự kiện, tài chính) nằm ở `seed-wave4.ts`.
 Chạy lại giữ các version báo cáo đã sửa và ngân sách đã được đối soát; không reset thao tác demo.
 Hồ sơ Returned, Submitted, khoản thiếu chứng từ, task, điểm danh và phản hồi phục vụ
-[guide book](../../../../docs/06-user-guide/README.md).
+[guide book](../../../../docs/04-user-guide/README.md).
 
 Seed đăng ký festival xử lý từng cặp event/student bằng `$setOnInsert`; đổi owner hoặc chạy lại
 sau một lần seed dở không tạo trùng các sinh viên đã đăng ký. Tổng confirmed lấy từ dữ liệu thật.

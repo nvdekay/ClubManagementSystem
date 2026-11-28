@@ -1,4 +1,4 @@
-// Generated from docs/05-implementation/database-design.dbml.
+// Generated from docs/03-implementation/database-design.dbml.
 // Run python3 server/src/infra/db/generate-ucms-schema.py after DBML changes.
 // Do not edit by hand.
 export const ucmsEnums = {
