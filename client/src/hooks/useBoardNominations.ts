@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authKeyRoot } from '@/hooks/useAuth'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   claimBoardNomination,
   decideBoardNomination,
@@ -50,9 +52,8 @@ export function useBoardNomination(id: string | undefined, enabled: boolean) {
 
 // Mutation nộp, nhận xử lý hoặc quyết định đề cử, rồi làm mới cache
 export function useBoardNominationAction() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       action:
         | {
             kind: 'submit'
@@ -72,17 +73,9 @@ export function useBoardNominationAction() {
           return decideBoardNomination(action.id, action.input, action.csrfToken)
       }
     },
-    onSuccess: async (result, action) => {
-      if (action.kind !== 'submit') {
-        queryClient.setQueryData([...boardNominationKey, 'detail', result.id], result)
-      }
-      await queryClient.invalidateQueries({ queryKey: boardNominationKey })
-      await queryClient.invalidateQueries({ queryKey: ['auth'] })
-      if (action.kind === 'submit') {
-        await queryClient.invalidateQueries({
-          queryKey: [...boardNominationKey, 'context', action.clubId],
-        })
-      }
-    },
-  })
+    // The context query sits under boardNominationKey, so it is refreshed too.
+    [boardNominationKey, authKeyRoot],
+    (result, action) =>
+      action.kind === 'submit' ? null : [[...boardNominationKey, 'detail', result.id], result],
+  )
 }
