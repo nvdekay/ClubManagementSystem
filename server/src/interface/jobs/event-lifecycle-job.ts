@@ -4,7 +4,7 @@ import type { SchoolEventRepository } from '../../domain/school-event.js'
 import { runDefenseConfirmationAlertJob } from '../../usecase/event-defense.js'
 import { runEventLifecycleJob } from '../../usecase/event-proposal-review.js'
 import { runInvitationExpiryJob } from '../../usecase/school-event.js'
-import { errorMessage, scheduleJob, type StopJob } from './schedule.js'
+import { errorMessage, logCounts, scheduleJob, type StopJob } from './schedule.js'
 
 const HOUR_MS = 60 * 60 * 1000
 
@@ -45,15 +45,6 @@ export function startEventLifecycleJob(
           0,
         )
       : 0
-    const result = { ...lifecycle, expiredInvitations, overdueDefenseAlerts }
-    if (
-      result.expired ||
-      result.started ||
-      result.completed ||
-      result.expiredInvitations ||
-      result.overdueDefenseAlerts
-    ) {
-      console.log(JSON.stringify({ job: 'event-lifecycle', ...result }))
-    }
+    logCounts('event-lifecycle', { ...lifecycle, expiredInvitations, overdueDefenseAlerts })
   })
 }
