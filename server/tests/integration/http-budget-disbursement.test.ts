@@ -1,5 +1,5 @@
 // Event budget disbursement (UC38) over HTTP: the paged ICPDP budget queue with tab counts and the
-// club scope, budget detail, and recording money flows, on the real app with Mongo and sessions.
+// club scope and budget detail (with legacy money flows), on the real app with Mongo and sessions.
 import { Types } from 'mongoose'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ucmsModels as m } from '../../src/infra/db/ucms-models.js'
@@ -115,87 +115,19 @@ describe.skipIf(!process.env.MONGO_URI)('HTTP: budget disbursement routes', () =
   })
 
   describe('GET /admin/budgets/:id', () => {
-    it('shows a budget with the flow it allows next', async () => {
+    it('shows a budget with its lines and recorded flows', async () => {
       const detail = dataOf(await h.call(h.officer, 'GET', `/admin/budgets/${budgets.open}`))
       expect(detail).toMatchObject({
         id: budgets.open,
         state: 'Approved',
         approvedTotal: 4_000_000,
-        allowed: { kind: 'Advance', max: 4_000_000 },
+        lines: [{ category: 'Logistics', approvedAmount: 4_000_000 }],
+        flows: [],
       })
+      expect(detail.allowed).toBeUndefined()
       expect((await h.call(h.officer, 'GET', `/admin/budgets/${missingId()}`)).status).toBe(404)
       expect((await h.call(h.officer, 'GET', '/admin/budgets/bad')).status).toBe(400)
       expect((await h.call(leader, 'GET', `/admin/budgets/${budgets.open}`)).status).toBe(403)
-    })
-  })
-
-  describe('POST /admin/budgets/:id/flows', () => {
-    function path() {
-      return `/admin/budgets/${budgets.open}/flows`
-    }
-
-    it('validates the flow', async () => {
-      const advance = { kind: 'Advance', amount: 1_000_000 }
-      expect((await h.call(h.officer, 'POST', path(), { ...advance, amount: 0 })).status).toBe(400)
-      expect((await h.call(h.officer, 'POST', path(), { ...advance, amount: 1.5 })).status).toBe(
-        400,
-      )
-      expect((await h.call(h.officer, 'POST', path(), { ...advance, kind: 'Gift' })).status).toBe(
-        400,
-      )
-      expect((await h.call(h.officer, 'POST', path(), { ...advance, tip: 1 })).status).toBe(400)
-      expect(
-        (
-          await h.call(h.officer, 'POST', path(), {
-            ...advance,
-            disbursedAt: new Date(Date.now() + DAY).toISOString(),
-          })
-        ).status,
-      ).toBe(400)
-      expect(
-        (await h.call(h.officer, 'POST', path(), { ...advance, amount: 9_000_000 })).status,
-      ).toBe(400)
-      expect((await h.call(h.officer, 'POST', path(), { kind: 'Refund', amount: 1 })).status).toBe(
-        409,
-      )
-      expect(
-        (await h.call(h.officer, 'POST', `/admin/budgets/${missingId()}/flows`, advance)).status,
-      ).toBe(404)
-      expect((await h.call(h.officer, 'POST', '/admin/budgets/bad/flows', advance)).status).toBe(
-        400,
-      )
-    })
-
-    it('needs an officer and a CSRF token', async () => {
-      const advance = { kind: 'Advance', amount: 1_000_000 }
-      expect((await h.call(leader, 'POST', path(), advance)).status).toBe(403)
-      expect((await h.call(h.officer, 'POST', path(), advance, { noCsrf: true })).status).toBe(403)
-      expect((await h.call(null, 'POST', path(), advance)).status).toBe(401)
-    })
-
-    it('records advances until the approved total is paid out', async () => {
-      const first = dataOf(
-        await h.call(h.officer, 'POST', path(), {
-          kind: 'Advance',
-          amount: 1_500_000,
-          paymentReference: 'UNC-01',
-          note: 'First tranche',
-        }),
-      )
-      expect(first).toMatchObject({
-        state: 'Disbursed',
-        disbursedTotal: 1_500_000,
-        allowed: { kind: 'Advance', max: 2_500_000 },
-      })
-      expect(first.flows[0]).toMatchObject({ kind: 'Advance', paymentReference: 'UNC-01' })
-      const second = dataOf(
-        await h.call(h.officer, 'POST', path(), { kind: 'Advance', amount: 2_500_000 }),
-      )
-      expect(second.disbursedTotal).toBe(4_000_000)
-      expect(second.allowed).toBeUndefined()
-      expect((await h.call(h.officer, 'POST', path(), { kind: 'Advance', amount: 1 })).status).toBe(
-        409,
-      )
     })
   })
 })

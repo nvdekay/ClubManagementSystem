@@ -1,12 +1,6 @@
-import { assertAccountabilityOfficer } from './accountability-workflow.js'
-import { randomUUID } from 'node:crypto'
-import mongoose, { Types } from 'mongoose'
+import { Types } from 'mongoose'
 import {
   BUDGET_FILTERS,
-  allowedFlow,
-  checkFlow,
-  settlementDueAt,
-  stateAfterFlow,
   type BudgetDetail,
   type BudgetDisbursementRepository,
   type BudgetFilter,
@@ -15,15 +9,12 @@ import {
   type BudgetItemCounts,
   type BudgetSummary,
 } from '../../domain/budget-disbursement.js'
-import { DomainError } from '../../domain/errors.js'
 import { pageSkip } from '../../domain/paging.js'
 import {
   DIRECT_VENDOR_THRESHOLD_VND,
   resolvePaymentChannel,
   type SponsoredItem,
 } from '../../domain/sponsored-item.js'
-import { queueNotifications } from './repo-helpers.js'
-import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 
 type Doc = Record<string, unknown>
@@ -40,11 +31,6 @@ function money(value: unknown): number {
 // Chuyển giá trị tiền sang number hoặc undefined nếu trống
 function optionalMoney(value: unknown): number | undefined {
   return value === null || value === undefined ? undefined : money(value)
-}
-
-// Chuyển number thành Decimal128
-function decimal(value: number) {
-  return Types.Decimal128.fromString(String(value))
 }
 
 // Trả chuỗi không rỗng hoặc undefined
@@ -235,8 +221,7 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
           ...(optionalText(line.reason) ? { reason: String(line.reason) } : {}),
         }))
       : []
-    const allowed = doc.sponsoredItems ? undefined : allowedFlow(summary!)
-    return { ...summary!, lines, flows: mapped, ...(allowed ? { allowed } : {}) }
+    return { ...summary!, lines, flows: mapped }
   }
 
   return {
@@ -286,111 +271,6 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
     // Tìm chi tiết ngân sách theo id
     async find(id) {
       return detail(new Types.ObjectId(id))
-    },
-
-    // ICPDP ghi nhận một khoản giải ngân hoặc hoàn tiền và thông báo CLB
-    async record(id, officerId, flow, now) {
-      const budgetObjectId = new Types.ObjectId(id)
-      const actorId = new Types.ObjectId(officerId)
-      await mongoose.connection.transaction(async (session) => {
-        await assertAccountabilityOfficer(session, actorId)
-        const doc = await budgets.findById(budgetObjectId).session(session).lean()
-        if (!doc) {
-          throw new DomainError('budget not found', 'not_found')
-        }
-        if (doc.sponsoredItems) {
-          throw new DomainError('use the sponsored item payment workflow', 'conflict')
-        }
-        const event = await m
-          .events!.findOneAndUpdate({ _id: doc.eventId }, { $inc: { __v: 1 } }, { session })
-          .lean()
-        const current = summaryFrom(doc, event as Doc | undefined, undefined)
-        checkFlow(current, flow)
-        const nextState = stateAfterFlow(current, flow)
-        const flowId = new Types.ObjectId()
-        await flows.create(
-          [
-            {
-              _id: flowId,
-              eventBudgetId: budgetObjectId,
-              kind: flow.kind,
-              amount: decimal(flow.amount),
-              disbursedAt: flow.disbursedAt,
-              paymentReference: flow.paymentReference,
-              recordedBy: actorId,
-              note: flow.note,
-            },
-          ],
-          { session },
-        )
-        const due =
-          flow.kind === 'Advance' && !current.settlementDueAt && event?.endAt instanceof Date
-            ? settlementDueAt(event.endAt)
-            : undefined
-        await budgets.updateOne(
-          { _id: budgetObjectId },
-          {
-            $set: {
-              state: nextState,
-              ...(flow.kind === 'Refund'
-                ? { refundedTotal: decimal(current.refundedTotal + flow.amount) }
-                : { disbursedTotal: decimal(current.disbursedTotal + flow.amount) }),
-              ...(due ? { settlementDueAt: due } : {}),
-            },
-            $inc: { __v: 1 },
-          },
-          { session },
-        )
-        // BR26: đối soát được xem là đã tất toán khi khoản bù thêm đã trả hoặc khoản hoàn trả đã xong.
-        if (nextState === 'Closed') {
-          await m.financialReconciliations!.updateOne(
-            { eventBudgetId: budgetObjectId },
-            { $set: { closedBy: actorId, closedAt: now } },
-            { session },
-          )
-        }
-        const action = `BUDGET_${flow.kind.toUpperCase()}_RECORDED`
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'EventBudget',
-              entityId: budgetObjectId,
-              action,
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              before: { state: current.state },
-              after: { state: nextState, flowId, kind: flow.kind, amount: flow.amount },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
-        const version = await m
-          .eventProposalVersions!.findOne({ eventId: doc.eventId })
-          .sort({ revisionNo: -1 })
-          .session(session)
-          .lean()
-        const recipients = [
-          ...(await clubBoardUserIds(doc.clubId as Types.ObjectId, session)),
-          version?.submittedBy,
-        ]
-        await queueNotifications(session, recipients, {
-          eventCode: action,
-          entityType: 'EventBudget',
-          entityId: budgetObjectId,
-          payload: {
-            eventTitle: event?.title,
-            kind: flow.kind,
-            amount: flow.amount,
-            disbursedAt: flow.disbursedAt,
-            settlementDueAt: due ?? current.settlementDueAt,
-            state: nextState,
-          },
-          now,
-        })
-      })
-      return (await detail(budgetObjectId))!
     },
   }
 }

@@ -347,9 +347,6 @@ const stubBudgets: BudgetDisbursementRepository = {
     clubs: [],
   }),
   find: async () => null,
-  record: async () => {
-    throw new Error('unused')
-  },
 }
 const stubViolations: ViolationRepository = {
   list: async () => ({
