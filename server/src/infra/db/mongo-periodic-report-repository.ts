@@ -1,6 +1,4 @@
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
-import { DomainError } from '../../domain/errors.js'
 import {
   CUSTOM_FIELD_TYPES,
   RETURN_SECTIONS,
@@ -20,7 +18,15 @@ import {
   type PeriodFigures,
   type ReturnSection,
 } from '../../domain/periodic-report.js'
-import { queueNotifications } from './repo-helpers.js'
+import {
+  conflict,
+  finiteMoney,
+  found,
+  optionalNumber,
+  optionalText,
+  queueNotifications,
+  writeAudit,
+} from './repo-helpers.js'
 import { clubBoardUserIds } from './club-board.js'
 import { ucmsModels } from './ucms-models.js'
 import { insertViolationCase } from './violation-case.js'
@@ -31,34 +37,6 @@ const TASK_TYPE = 'PERIODIC_REPORT'
 const owingStates = ['Active', 'Suspended', 'Dissolving']
 const submittedStates = ['Submitted', 'Accepted', 'Returned for correction']
 const heldEventStates = ['Completed', 'Report Submitted', 'Closed', 'FINISH']
-
-// Lấy chuỗi không rỗng, ngược lại undefined
-function optionalText(value: unknown): string | undefined {
-  return typeof value === 'string' && value ? value : undefined
-}
-
-// Chuyển giá trị tiền thành số, mặc định 0
-function money(value: unknown): number {
-  if (value === null || value === undefined) {
-    return 0
-  }
-  const parsed = Number(String(value))
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-// Chuyển sang số hữu hạn, không hợp lệ thì undefined
-function optionalNumber(value: unknown): number | undefined {
-  if (value === null || value === undefined) {
-    return undefined
-  }
-  const parsed = Number(String(value))
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-// Ném DomainError loại conflict với thông điệp cho trước
-function conflict(message: string): never {
-  throw new DomainError(message, 'conflict')
-}
 
 // Suy ra mã sinh viên từ email khi dữ liệu thiếu mã
 function fallbackStudentCode(email: string, index: number): string {
@@ -313,8 +291,8 @@ export async function periodicLiveFigures(
     attendance: { total },
     finance: {
       budgets: budgetDocs.length,
-      approvedTotal: budgetDocs.reduce((sum, item) => sum + money(item.approvedTotal), 0),
-      disbursedTotal: budgetDocs.reduce((sum, item) => sum + money(item.disbursedTotal), 0),
+      approvedTotal: budgetDocs.reduce((sum, item) => sum + finiteMoney(item.approvedTotal), 0),
+      disbursedTotal: budgetDocs.reduce((sum, item) => sum + finiteMoney(item.disbursedTotal), 0),
     },
   }
 }
@@ -561,11 +539,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
 
   // Lấy chi tiết báo cáo định kỳ, không có thì báo not_found
   async function required(id: Types.ObjectId): Promise<PeriodicReportDetail> {
-    const found = await detail(id)
-    if (!found) {
-      throw new DomainError('periodic report not found', 'not_found')
-    }
-    return found
+    return found(await detail(id), 'periodic report not found')
   }
 
   return {
@@ -579,27 +553,21 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       const actorId = new Types.ObjectId(officerId)
       const entityId = new Types.ObjectId()
       await mongoose.connection.transaction(async (session) => {
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'PeriodicCampaign',
-              entityId,
-              action: 'PERIODIC_REPORT_CAMPAIGN_SAVED',
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              after: {
-                periodCode: input.periodCode,
-                isOpen: input.isOpen,
-                dueAt: input.dueAt,
-                ...(input.announcement ? { announcement: input.announcement } : {}),
-                customFields: input.customFields,
-              },
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'PeriodicCampaign',
+          entityId,
+          action: 'PERIODIC_REPORT_CAMPAIGN_SAVED',
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          after: {
+            periodCode: input.periodCode,
+            isOpen: input.isOpen,
+            dueAt: input.dueAt,
+            ...(input.announcement ? { announcement: input.announcement } : {}),
+            customFields: input.customFields,
+          },
+          at: now,
+        })
 
         await reports.updateMany(
           { periodCode: input.periodCode, state: 'Draft' },
@@ -722,29 +690,23 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
         )
         const action =
           input.outcome === 'Accept' ? 'PERIODIC_REPORT_ACCEPTED' : 'PERIODIC_REPORT_RETURNED'
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'PeriodicReport',
-              entityId: id,
-              action,
-              actorId,
-              actorRole: 'ICPDP_OFFICER',
-              before: { state: 'Submitted' },
-              after: {
-                state: nextState,
-                versionNo: report.versionNo ?? 1,
-                ...(input.sections ? { sections: input.sections } : {}),
-                ...(input.observation ? { observation: input.observation } : {}),
-                ...(input.resubmitDueAt ? { resubmitDueAt: input.resubmitDueAt } : {}),
-              },
-              reason: input.reason,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'PeriodicReport',
+          entityId: id,
+          action,
+          actorId,
+          actorRole: 'ICPDP_OFFICER',
+          before: { state: 'Submitted' },
+          after: {
+            state: nextState,
+            versionNo: report.versionNo ?? 1,
+            ...(input.sections ? { sections: input.sections } : {}),
+            ...(input.observation ? { observation: input.observation } : {}),
+            ...(input.resubmitDueAt ? { resubmitDueAt: input.resubmitDueAt } : {}),
+          },
+          reason: input.reason,
+          at: now,
+        })
         await queueNotifications(
           session,
           [
@@ -776,13 +738,13 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       let violationId: Types.ObjectId | undefined
       await mongoose.connection.transaction(async (session) => {
         // Ghi __v của CLB trước để hai lần ghi nhận thiếu báo cáo đồng thời tuần tự hoá
-        const found = await m
-          .clubs!.findOneAndUpdate({ _id: club }, { $inc: { __v: 1 } }, { session })
-          .select({ name: 1 })
-          .lean()
-        if (!found) {
-          throw new DomainError('club not found', 'not_found')
-        }
+        found(
+          await m
+            .clubs!.findOneAndUpdate({ _id: club }, { $inc: { __v: 1 } }, { session })
+            .select({ name: 1 })
+            .lean(),
+          'club not found',
+        )
         const report = await reports.findOne({ clubId: club, periodCode }).session(session).lean()
         if (report && submittedStates.includes(String(report.state))) {
           return conflict('the club has already submitted this report')
@@ -812,22 +774,16 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
           officerId,
           now,
         )
-        await m.auditLogs!.create(
-          [
-            {
-              entityType: 'Club',
-              entityId: club,
-              action: 'PERIODIC_REPORT_MISSING',
-              actorId: new Types.ObjectId(officerId),
-              actorRole: 'ICPDP_OFFICER',
-              after: { periodCode, violationId, dueAt },
-              reason: input.note,
-              correlationId: randomUUID(),
-              at: now,
-            },
-          ],
-          { session },
-        )
+        await writeAudit(session, {
+          entityType: 'Club',
+          entityId: club,
+          action: 'PERIODIC_REPORT_MISSING',
+          actorId: new Types.ObjectId(officerId),
+          actorRole: 'ICPDP_OFFICER',
+          after: { periodCode, violationId, dueAt },
+          reason: input.note,
+          at: now,
+        })
         await queueNotifications(session, await clubBoardUserIds(club, session), {
           eventCode: 'PERIODIC_REPORT_MISSING',
           entityType: 'Club',
