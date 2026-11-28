@@ -7,9 +7,8 @@ import {
 } from '../domain/account-admin.js'
 import { DomainError } from '../domain/errors.js'
 import type { SessionService } from '../domain/session.js'
-import type { AccessActor } from './access.js'
+import { isObjectId, parseObjectId, requireIcpdpOfficer, type AccessActor } from './access.js'
 
-const objectId = z.string().regex(/^[0-9a-f]{24}$/i)
 const reasonSchema = z.string().trim().min(1).max(1000)
 const searchSchema = z.string().trim().max(100)
 const pageSchema = z.object({
@@ -18,33 +17,9 @@ const pageSchema = z.object({
 })
 
 // Kiểm actor là ICPDP officer được quản trị tài khoản
-async function requireAdmin(
-  repo: AccountAdminRepository,
-  actor: AccessActor | null,
-): Promise<string> {
-  if (!actor) {
-    throw new DomainError('authentication required', 'unauthorized')
-  }
-  if (actor.accountState === 'Locked') {
-    throw new DomainError(actor.lockReason || 'account locked', 'locked')
-  }
-  if (!objectId.safeParse(actor.id).success) {
-    throw new DomainError('invalid actor', 'validation')
-  }
-  const roles = await repo.systemRoles(actor.id)
-  if (!roles.includes('ICPDP_OFFICER')) {
-    throw new DomainError('account administration denied', 'forbidden')
-  }
-  return actor.id
-}
-
-// Kiểm id người dùng đích hợp lệ
-function parseTarget(targetId: string): string {
-  const parsed = objectId.safeParse(targetId)
-  if (!parsed.success) {
-    throw new DomainError('invalid target user', 'validation')
-  }
-  return parsed.data
+function requireAdmin(repo: AccountAdminRepository, actor: AccessActor | null): Promise<string> {
+  const auth = { systemRoleCodes: (id: string) => repo.systemRoles(id) }
+  return requireIcpdpOfficer(auth, actor, 'account administration denied')
 }
 
 // Kiểm mã role thuộc nhóm role hệ thống được quản lý
@@ -83,7 +58,7 @@ export async function changeSystemRole(
   now: Date,
 ): Promise<void> {
   const actorId = await requireAdmin(repo, actor)
-  const target = parseTarget(targetId)
+  const target = parseObjectId(targetId, 'target user')
   const role = parseRole(roleCode)
   const reason = action === 'revoke' ? reasonSchema.safeParse(rawReason) : null
   if (reason && !reason.success) {
@@ -118,7 +93,7 @@ export async function setAccountLock(
   violationId?: string,
 ): Promise<void> {
   const actorId = await requireAdmin(repo, actor)
-  const target = parseTarget(targetId)
+  const target = parseObjectId(targetId, 'target user')
   const reason = reasonSchema.safeParse(rawReason)
   if (!reason.success) {
     throw new DomainError('reason is required', 'validation')
@@ -129,7 +104,7 @@ export async function setAccountLock(
   if (locked && target === actorId) {
     throw new DomainError('cannot lock your own account', 'forbidden')
   }
-  if (violationId !== undefined && (!locked || !/^[0-9a-f]{24}$/i.test(violationId))) {
+  if (violationId !== undefined && (!locked || !isObjectId(violationId))) {
     throw new DomainError('a violation case can only be linked to a lock', 'validation')
   }
   await repo.setLock({
