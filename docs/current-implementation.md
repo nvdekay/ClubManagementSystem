@@ -267,7 +267,7 @@ CLB mới nhất khi tìm không ra.
   nhiệm); ghế khác mang cờ này không cấp quyền (BR55).
 - UC09: cả GET thiết lập (`getClubSettings`) lẫn mutation đều yêu cầu `club.profile.manage`
   ([club-profile.ts](../server/src/usecase/club-profile.ts#L137)), tức chỉ Leader (hoặc founder khi
-  `Pending Setup`). `assertClubSettingsRead` trong `usecase/access.ts` không còn được gọi.
+  `Pending Setup`). Hàm `assertClubSettingsRead` cũ đã bị xoá khỏi `usecase/access.ts`.
 
 ## 5. Cổng kiểm chứng
 
