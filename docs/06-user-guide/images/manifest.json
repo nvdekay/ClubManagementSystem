@@ -4,6 +4,7 @@
   "generator": "client/e2e/guide/screens.guide.ts (npm run guide:screenshots)",
   "notes": [
     "Chụp tự động bằng Playwright từ app thật (API + bản build client), tiếng Việt, theme sáng, khung nhìn 1440 × 1000.",
+    "Ảnh 14, 15, 54, 72 và 73 chụp lại ngày 28/11/2026 sau khi thêm dữ liệu guide: ghế Phó chủ nhiệm còn trống ở HEBE Club, buổi bảo vệ đề án đang diễn ra, bản nháp đánh giá sinh khi chấp nhận báo cáo định kỳ.",
     "Database riêng ucms-e2e-guide được xoá và seed lại mỗi lần chụp: seed, seed:demo, seed:dashboard, seed:periodic-reports (client/e2e/setup/prepare-db.ts) cộng client/e2e/guide/prepare-guide.ts.",
     "Không qua Google OAuth: phiên thật được cấp cho từng tài khoản mẫu bằng session service của server (client/e2e/setup/mint-sessions.ts). Không chặn hay giả lập request API.",
     "Tài khoản e2e.officer@fpt.edu.vn vừa là cán bộ ICPDP vừa là Chủ nhiệm HEBE Club và thành viên Mây Mưa Club; tên hiển thị được đặt là \"Lê Thu Hằng\". Mọi tên sinh viên là dữ liệu mẫu.",
@@ -146,7 +147,17 @@
       "url": "/club/a10000000000000000000013/board",
       "source": "guide-capture",
       "account": "Lê Thu Hằng (Club Leader, HEBE Club)",
-      "action": "Mở màn hình (không còn ghế trống)",
+      "action": "Chọn \"Nguyễn Hoàng Hoa\" cho ghế Phó chủ nhiệm còn trống (chụp), rồi bấm \"Nộp đề cử\"",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "15-board-nomination-review.png",
+      "url": "/workspace/board-nominations/:id",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Sau ảnh 14, bấm \"Xem đề cử\", \"Nhận quyết định\", nhập ghi chú quyết định",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -533,10 +544,10 @@
     },
     {
       "file": "54-evaluations.png",
-      "url": "/workspace/evaluations",
+      "url": "/workspace/evaluations?period=Summer%202026",
       "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
-      "action": "Mở màn hình",
+      "action": "Mở học kỳ Summer 2026, cuộn tới dòng có bản nháp (sinh khi chấp nhận báo cáo định kỳ)",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
@@ -707,6 +718,26 @@
       "source": "guide-capture",
       "account": "Lê Thu Hằng (Cán bộ ICPDP)",
       "action": "Tab \"Phiên bản chính sách mới\", sửa một số, bấm \"Tổng quan\" ở thanh bên",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "72-live-defense-room.png",
+      "url": "/workspace/event-proposals/:id/defense",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Mở phòng bảo vệ của \"Hackathon An toàn thông tin 24h\" (buổi bảo vệ đang diễn ra)",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "73-evaluation-draft.png",
+      "url": "/workspace/evaluations/:id",
+      "source": "guide-capture",
+      "account": "Lê Thu Hằng (Cán bộ ICPDP)",
+      "action": "Sau ảnh 54, bấm \"Mở\" ở dòng \"Đã có dữ liệu\", bấm \"Xem dữ liệu\" của D5",
       "viewport": "1440 × 1000",
       "locale": "vi",
       "theme": "light"
