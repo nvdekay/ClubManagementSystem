@@ -4,7 +4,6 @@ import {
   CLUB_PROFILE_FORM_FIELDS,
   FOUNDING_FORM_FIELDS,
   type AcademicSemester,
-  type ClubProfileFormField,
   type FormRequirements,
   type FoundingRequirements,
   type PolicyManagementRepository,
@@ -208,14 +207,6 @@ export async function foundingRequirementsAt(
     minFoundingMembers: policy.minFoundingMembers,
     required: policy.formRequirements.clubFounding,
   }
-}
-
-// Lấy các trường hồ sơ CLB bắt buộc theo chính sách tại một thời điểm
-export async function clubProfileRequirementsAt(
-  repo: PolicyRepository,
-  at: Date,
-): Promise<Readonly<Record<ClubProfileFormField, boolean>>> {
-  return (await resolvePolicyAt(repo, at)).formRequirements.clubProfile
 }
 
 // ICPDP xem chính sách hiện hành và các phiên bản gần đây
