@@ -1,12 +1,11 @@
 import { VICE_LEADER_SEAT_CODES } from '../../domain/access.js'
-import { randomUUID } from 'node:crypto'
 import mongoose, { Types, type ClientSession } from 'mongoose'
 import { DomainError } from '../../domain/errors.js'
 import type {
   MembershipReconfirmation,
   MembershipReconfirmationRepository,
 } from '../../domain/membership-reconfirmation.js'
-import { queueNotifications } from './repo-helpers.js'
+import { found, queueNotifications, writeAudit } from './repo-helpers.js'
 import { ucmsModels as m } from './ucms-models.js'
 type Doc = Record<string, unknown>
 // Repository xác nhận lại tư cách thành viên theo kỳ
@@ -87,22 +86,16 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
     now: Date,
     actorId?: string,
   ) {
-    await m.auditLogs!.create(
-      [
-        {
-          entityType: 'ClubMembership',
-          entityId: member._id,
-          action,
-          ...(actorId
-            ? { actorId: new Types.ObjectId(actorId), actorRole: 'Student' }
-            : { actorRole: 'SYSTEM' }),
-          after,
-          correlationId: randomUUID(),
-          at: now,
-        },
-      ],
-      { session },
-    )
+    await writeAudit(session, {
+      entityType: 'ClubMembership',
+      entityId: member._id,
+      action,
+      ...(actorId
+        ? { actorId: new Types.ObjectId(actorId), actorRole: 'Student' }
+        : { actorRole: 'SYSTEM' }),
+      after,
+      at: now,
+    })
   }
   // Đóng yêu cầu quá hạn: miễn cho Leader, ngược lại hết hạn và chuyển thành viên Inactive
   /** Miễn cho Leader hiện tại, nếu không thì yêu cầu hết hạn và membership chuyển sang Inactive. */
@@ -190,13 +183,10 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
         if (!actor) {
           throw new DomainError('account locked', 'locked')
         }
-        const request = await m
-          .membershipReconfirmations!.findOne({ _id: requestId })
-          .session(session)
-          .lean()
-        if (!request) {
-          throw new DomainError('reconfirmation request not found', 'not_found')
-        }
+        const request = found(
+          await m.membershipReconfirmations!.findOne({ _id: requestId }).session(session).lean(),
+          'reconfirmation request not found',
+        )
         const member = await m
           .clubMemberships!.findOneAndUpdate(
             { _id: request.membershipId, userId: new Types.ObjectId(userId), state: 'Active' },
