@@ -1,7 +1,7 @@
 import type { MembershipReconfirmationRepository } from '../../domain/membership-reconfirmation.js'
 import type { PolicyRepository } from '../../domain/policy.js'
 import { runMembershipReconfirmation } from '../../usecase/membership-reconfirmation.js'
-import { scheduleJob, type StopJob } from './schedule.js'
+import { logCounts, scheduleJob, type StopJob } from './schedule.js'
 
 // Hẹn giờ chạy job tái xác nhận thành viên mỗi giờ
 export function startMembershipReconfirmationJob(
@@ -10,9 +10,9 @@ export function startMembershipReconfirmationJob(
   intervalMs = 3600000,
 ): StopJob {
   return scheduleJob('membership-reconfirmation', intervalMs, async () => {
-    const result = await runMembershipReconfirmation(repo, policy, new Date())
-    if (result.opened || result.expired || result.exempt) {
-      console.log(JSON.stringify({ job: 'membership-reconfirmation', ...result }))
-    }
+    logCounts(
+      'membership-reconfirmation',
+      await runMembershipReconfirmation(repo, policy, new Date()),
+    )
   })
 }
