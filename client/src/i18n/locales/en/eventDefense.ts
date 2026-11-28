@@ -27,7 +27,6 @@ export const eventDefense = {
   cancelButton: 'Cancel Defense',
   cancelTitle: 'Cancel Defense Session',
   cancelReasonLabel: 'Cancellation Reason',
-  confirmCancel: 'Cancel Defense',
   startDefenseButton: 'Start Defense',
   openLiveRoomButton: 'Open Live Defense Room',
   noShowButton: 'Mark No-Show',
