@@ -1,5 +1,6 @@
 import { ApiError } from '@/services/apiError'
 import { apiRequest } from '@/services/apiRequest'
+import type { SchoolRefundAccount } from '@/services/policy'
 
 export type FundingDecision = 'NOT_SPONSORED' | 'BEFORE_EVENT' | 'AFTER_EVENT'
 export type PaymentChannel = 'VIA_OFFICER_ADVANCE' | 'VIA_OFFICER_REIMBURSE' | 'DIRECT_VENDOR'
@@ -9,14 +10,6 @@ export const MAX_INVOICE_PDF_BYTES = 10 * 1024 * 1024
 
 export interface VendorBankInfo {
   vendorName: string
-  accountHolder: string
-  accountNumber: string
-  bankName: string
-  bankBranch?: string
-  transferNote?: string
-}
-
-export interface SchoolRefundAccount {
   accountHolder: string
   accountNumber: string
   bankName: string
