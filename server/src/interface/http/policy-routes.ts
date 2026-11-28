@@ -1,18 +1,13 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import type { AuthRepository } from '../../domain/auth.js'
-import { DomainError } from '../../domain/errors.js'
 import type { PolicyManagementRepository, PolicySettings } from '../../domain/policy.js'
-import type { SessionService } from '../../domain/session.js'
 import { createPolicyVersion, listPolicyVersions } from '../../usecase/policy.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor } from './request.js'
+import { actor, parse } from './request.js'
 
-export interface PolicyRouteDeps {
+export interface PolicyRouteDeps extends SessionDeps {
   repo: PolicyManagementRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
 const deadlineBody = z
@@ -89,20 +84,20 @@ export const policyCreateBody = policySettingsBody
 // Mount các route chính sách hệ thống của ICPDP
 export function policyRoutes(deps: PolicyRouteDeps): Router {
   const router = Router()
-  const guard = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Liệt kê các phiên bản chính sách
-  router.get('/admin/policies', authGuard(guard, false), async (_req, res) => {
+  router.get('/admin/policies', read, async (_req, res) => {
     ok(res, await listPolicyVersions(deps.repo, deps.authRepo, actor(res), new Date()))
   })
 
   // Tạo phiên bản chính sách mới
-  router.post('/admin/policies', authGuard(guard), async (req, res) => {
-    const parsed = policyCreateBody.safeParse(req.body)
-    if (!parsed.success) {
-      throw new DomainError('invalid policy request', 'validation', parsed.error.issues)
-    }
-    const { effectiveFrom, reason, academicCalendar, ...fields } = parsed.data
+  router.post('/admin/policies', write, async (req, res) => {
+    const { effectiveFrom, reason, academicCalendar, ...fields } = parse(
+      policyCreateBody,
+      req.body,
+      'policy request',
+    )
     const settings: PolicySettings = {
       ...fields,
       academicCalendar: academicCalendar.map((semester) => ({
