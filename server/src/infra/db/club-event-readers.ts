@@ -10,13 +10,9 @@ import {
 } from '../../domain/club-event.js'
 import { DomainError } from '../../domain/errors.js'
 import { ucmsModels as m } from './ucms-models.js'
-import { oid, policyAt } from './repo-helpers.js'
+import { found, money, oid, policyAt } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
-// Chuyển giá trị tiền (Decimal/chuỗi) sang number
-export function eventMoney(value: unknown): number {
-  return Number(String(value ?? 0))
-}
 // Ánh xạ document sự kiện + payload thành ClubEvent của domain
 export function clubEventFrom(
   doc: Doc,
@@ -223,7 +219,7 @@ export async function readClubEvent(
         budgetLines,
         requestedBudgetTotal:
           v.requestedBudgetTotal !== undefined
-            ? eventMoney(v.requestedBudgetTotal)
+            ? money(v.requestedBudgetTotal)
             : budgetLines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0),
         ...(v.conflictResult ? { conflictResult: String(v.conflictResult) } : {}),
         ...(submittedBy ? { submittedBy } : {}),
@@ -252,8 +248,8 @@ export async function readClubEvent(
           budget: {
             id: String(budget._id),
             state: String(budget.state),
-            approvedTotal: eventMoney(budget.approvedTotal),
-            disbursedTotal: eventMoney(budget.disbursedTotal),
+            approvedTotal: money(budget.approvedTotal),
+            disbursedTotal: money(budget.disbursedTotal),
           },
         }
       : {}),
@@ -264,13 +260,13 @@ export async function readEventParticipants(
   clubId: string,
   eventId: string,
 ): Promise<EventParticipant[]> {
-  const event = await m
-    .events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: 'CLUB' })
-    .select({ endAt: 1 })
-    .lean()
-  if (!event) {
-    throw new DomainError('event not found', 'not_found')
-  }
+  const event = found(
+    await m
+      .events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: 'CLUB' })
+      .select({ endAt: 1 })
+      .lean(),
+    'event not found',
+  )
   // Đăng ký đã xác nhận mà không check-in chỉ tính là vắng mặt khi sự kiện đã kết thúc.
   const ended = (event.endAt as Date) <= new Date()
   const [registrations, attendances] = await Promise.all([
