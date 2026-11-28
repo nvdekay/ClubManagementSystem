@@ -40,7 +40,7 @@ function actor(res: Response): AuthUser {
   return value
 }
 
-// Mount các route dashboard và sự kiện nội bộ theo workspace
+// Mount các route dashboard theo workspace
 export function dashboardRoutes(deps: DashboardRouteDeps): Router {
   const router = Router()
   const guard = { repo: deps.authRepo, sessions: deps.sessions }
@@ -61,7 +61,6 @@ export function dashboardRoutes(deps: DashboardRouteDeps): Router {
       ),
     )
   })
-  // Liệt kê sự kiện nội bộ trên dashboard
   // Drill-down UC02: ICPDP mở một con số trên dashboard thành các bản ghi phía sau nó (FR-UC02-02/03).
   // Xem lịch sử ban chủ nhiệm của một CLB
   router.get(
