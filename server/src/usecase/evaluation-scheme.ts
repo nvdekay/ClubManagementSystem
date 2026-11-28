@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   DEFAULT_SCHEME_SETTINGS,
   EVALUATION_DIMENSIONS,
@@ -16,10 +16,7 @@ async function existing(repo: EvaluationSchemeRepository, id: string) {
   if (!isObjectId(id)) {
     throw new DomainError('invalid evaluation scheme id', 'validation')
   }
-  const scheme = await repo.find(id)
-  if (!scheme) {
-    throw new DomainError('evaluation scheme not found', 'not_found')
-  }
+  const scheme = orNotFound(await repo.find(id), 'evaluation scheme')
   return scheme
 }
 
