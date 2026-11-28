@@ -243,15 +243,6 @@ export function actOnClubEvent(
   })
 }
 
-/** Sự kiện tự túc chỉ dành cho thành viên (DRAFT → CREATED → PUBLIC → ONGOING → FINISH): không chọn đối tượng, không có ngân sách. */
-export interface EventPublishInput {
-  registrationOpenAt?: string
-  registrationCloseAt?: string
-  checkInOpenAt: string
-  checkInCloseAt: string
-  allowWalkIn: boolean
-  waitlistEnabled: boolean
-}
 export interface ClubEventOptions {
   properties: { id: string; name: string }[]
   bookings: {
@@ -304,10 +295,7 @@ export function accessEventProposalDocument(
   revisionNo?: number,
   inline = false,
 ): Promise<FileAccess> {
-  const query = new URLSearchParams({
-    inline: String(inline),
-    ...(revisionNo ? { revisionNo: String(revisionNo) } : {}),
-  })
+  const query = documentAccessQuery(revisionNo, inline)
   return request(clubId, `/${encodeURIComponent(id)}/proposal-document/access?${query}`, {})
 }
 
@@ -317,7 +305,19 @@ export async function fetchEventProposalPreviewFile(
   id: string,
   signal: AbortSignal,
 ): Promise<File> {
-  const access = await accessEventProposalDocument(clubId, id)
+  return downloadSignedFile(await accessEventProposalDocument(clubId, id), signal)
+}
+
+/** Query of a proposal-document access link; no `revisionNo` means the current file. */
+export function documentAccessQuery(revisionNo: number | undefined, inline: boolean) {
+  return new URLSearchParams({
+    inline: String(inline),
+    ...(revisionNo ? { revisionNo: String(revisionNo) } : {}),
+  })
+}
+
+// Downloads a stored proposal document through its signed URL (no cookies, capped at 10 MB)
+export async function downloadSignedFile(access: FileAccess, signal: AbortSignal): Promise<File> {
   const response = await fetch(access.url, { signal, credentials: 'omit' })
   if (!response.ok) {
     throw new ApiError(`HTTP ${response.status}`, response.status)
