@@ -284,6 +284,21 @@ async function request<T>(url: string, options: ApiRequestOptions = {}): Promise
   }
 }
 
+// Sends a CSRF-protected ICPDP defense action to /admin/event-proposals/:eventId/defense/<step>
+function defenseStep<T = EventDefenseSession>(
+  eventId: string,
+  step: string,
+  csrfToken: string,
+  body: object = {},
+  method: 'POST' | 'PUT' = 'POST',
+): Promise<T> {
+  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/${step}`, {
+    method,
+    csrfToken,
+    body,
+  })
+}
+
 // GET /admin/event-defense/rooms: phòng còn trống cho buổi bảo vệ
 export function fetchAvailableDefenseRooms(
   startAt: string,
@@ -305,11 +320,7 @@ export function scheduleEventDefense(
   input: ScheduleDefenseInput,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/schedule`, {
-    method: 'POST',
-    csrfToken,
-    body: input,
-  })
+  return defenseStep(eventId, 'schedule', csrfToken, input)
 }
 
 // POST /defense/cancel: huỷ lịch bảo vệ
@@ -318,11 +329,7 @@ export function cancelEventDefense(
   reason: string,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/cancel`, {
-    method: 'POST',
-    csrfToken,
-    body: { reason },
-  })
+  return defenseStep(eventId, 'cancel', csrfToken, { reason })
 }
 
 // POST /defense/respond-reschedule: ICPDP phản hồi yêu cầu đổi lịch của CLB
@@ -331,10 +338,7 @@ export function respondDefenseReschedule(
   input: RespondRescheduleInput,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(
-    `/admin/event-proposals/${encodeURIComponent(eventId)}/defense/respond-reschedule`,
-    { method: 'POST', csrfToken, body: input },
-  )
+  return defenseStep(eventId, 'respond-reschedule', csrfToken, input)
 }
 
 // POST /defense/start: bắt đầu buổi bảo vệ
@@ -342,11 +346,7 @@ export function startEventDefense(
   eventId: string,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/start`, {
-    method: 'POST',
-    csrfToken,
-    body: {},
-  })
+  return defenseStep(eventId, 'start', csrfToken)
 }
 
 // GET /defense/session: phiên bảo vệ đang diễn ra
@@ -365,20 +365,12 @@ export function saveDefenseNote(
   content: string,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/notes`, {
-    method: 'PUT',
-    csrfToken,
-    body: { content },
-  })
+  return defenseStep(eventId, 'notes', csrfToken, { content }, 'PUT')
 }
 
 // POST /defense/end: kết thúc buổi bảo vệ
 export function endEventDefense(eventId: string, csrfToken: string): Promise<EventDefenseSession> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/end`, {
-    method: 'POST',
-    csrfToken,
-    body: {},
-  })
+  return defenseStep(eventId, 'end', csrfToken)
 }
 
 // POST /defense/no-show: ghi nhận CLB vắng mặt
@@ -387,11 +379,7 @@ export function markDefenseNoShow(
   reason: string | undefined,
   csrfToken: string,
 ): Promise<EventDefenseSession> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/no-show`, {
-    method: 'POST',
-    csrfToken,
-    body: reason ? { reason } : {},
-  })
+  return defenseStep(eventId, 'no-show', csrfToken, reason ? { reason } : {})
 }
 
 // POST /defense/decision: quyết định đề xuất sau bảo vệ
@@ -400,11 +388,7 @@ export function decideAfterDefense(
   input: EventReviewDecisionInput,
   csrfToken: string,
 ): Promise<EventProposalDetail> {
-  return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/decision`, {
-    method: 'POST',
-    csrfToken,
-    body: input,
-  })
+  return defenseStep(eventId, 'decision', csrfToken, input)
 }
 
 // GET thông tin buổi bảo vệ của sự kiện phía CLB
