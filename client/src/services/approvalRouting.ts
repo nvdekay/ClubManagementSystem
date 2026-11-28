@@ -1,5 +1,5 @@
 import { ApiError } from '@/services/apiError'
-import { apiRequest, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
+import { apiClient, type ApiFailure, type ApiRequestOptions } from '@/services/apiRequest'
 export type RoutedRequestType = 'CLUB_APPLICATION' | 'EVENT_PROPOSAL' | 'PROPERTY_BOOKING'
 export type RoutedPropertyType = 'HALL' | 'OUTDOOR' | 'STAGE' | 'EQUIPMENT'
 
@@ -36,10 +36,7 @@ export interface RoutingSimulation {
   }>
 }
 
-// Calls the API through the shared helper
-function request<T>(path: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(`/api/v1${path}`, { ...options, toError: toRoutingError })
-}
+const request = apiClient('/api/v1', toRoutingError)
 
 // Maps a failed response to this module's error type
 function toRoutingError(failure: ApiFailure): Error {
