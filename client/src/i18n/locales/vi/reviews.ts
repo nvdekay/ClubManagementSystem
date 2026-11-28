@@ -3,14 +3,11 @@ import type { reviews as en } from '../en/reviews'
 
 export const reviews = {
   title: 'Thẩm định hồ sơ thành lập CLB',
-  eyebrow: 'Bàn thẩm định ICPDP',
   description: 'Thẩm định đề xuất thành lập CLB và ghi đúng một quyết định cho mỗi lần nộp.',
-  back: 'Về không gian ICPDP',
   openCount: '{{count}} hồ sơ đang mở',
   none: 'Hàng đợi thẩm định đang trống.',
   noneHint: 'Hồ sơ mới sẽ tự xuất hiện tại đây.',
   loadError: 'Không tải được hàng đợi thẩm định.',
-  retry: 'Thử lại',
   open: 'Mở thẩm định',
   unassigned: 'Chưa phân công',
   assignedToYou: 'Bạn đang xử lý',
@@ -68,10 +65,8 @@ export const reviews = {
   success: 'Đã ghi quyết định.',
   actionError: 'Không thể hoàn tất thao tác thẩm định.',
   unauthorized: 'Tài khoản hiện tại không có role ICPDP Officer.',
-  signIn: 'Đăng nhập để thẩm định hồ sơ.',
   status: 'Trạng thái',
   decidedAt: 'Quyết định lúc {{date}}',
-  signInLink: 'Đăng nhập và tiếp tục',
   nameConflict:
     'Đã có CLB đang hoạt động trùng tên: {{clubs}}. Cân nhắc có chấp nhận CLB mới trùng tên hay không.',
 } satisfies Messages<typeof en>
