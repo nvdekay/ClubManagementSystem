@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { useQuery } from '@tanstack/react-query'
 import {
   createRoomAllocation,
   fetchClubRoomAllocations,
@@ -45,23 +46,17 @@ export function useClubRoomAllocations(clubId: string, enabled: boolean) {
 }
 // Mutation tạo phân bổ phòng, rồi làm mới cache
 export function useAllocateRoom() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { input: RoomAllocationInput; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { input: RoomAllocationInput; csrfToken: string }) =>
       createRoomAllocation(action.input, action.csrfToken),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: allocationKey })
-    },
-  })
+    [allocationKey],
+  )
 }
 // Mutation thu hồi phân bổ phòng, rồi làm mới cache
 export function useRevokeRoomAllocation() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (action: { id: string; reason: string; csrfToken: string }) =>
+  return useInvalidatingMutation(
+    (action: { id: string; reason: string; csrfToken: string }) =>
       revokeRoomAllocation(action.id, action.reason, action.csrfToken),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: allocationKey })
-    },
-  })
+    [allocationKey],
+  )
 }
