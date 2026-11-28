@@ -53,7 +53,7 @@ async function officerRole(officerId: Types.ObjectId): Promise<void> {
         .roles!.findOneAndUpdate(
           { code: 'ICPDP_OFFICER', scope: 'system' },
           { $setOnInsert: { name: 'ICPDP OFFICER', isSystem: true, permissionCodes: [] } },
-          { upsert: true, new: true },
+          { upsert: true, returnDocument: 'after' },
         )
         .lean()
   const held =

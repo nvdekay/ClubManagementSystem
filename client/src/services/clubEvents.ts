@@ -252,15 +252,6 @@ export interface EventPublishInput {
   allowWalkIn: boolean
   waitlistEnabled: boolean
 }
-// Dựng RequestInit JSON có CSRF cho phương thức và body cho trước
-
-// POST tạo sự kiện nội bộ của CLB
-
-// PUT cập nhật sự kiện nội bộ kèm expectedVersion
-
-// POST /create: chuyển sự kiện nội bộ từ DRAFT sang CREATED
-/** DRAFT → CREATED; server áp dụng quy tắc báo trước 24 giờ. */
-
 export interface ClubEventOptions {
   properties: { id: string; name: string }[]
   bookings: {

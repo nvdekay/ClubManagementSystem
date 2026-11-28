@@ -21,7 +21,7 @@ EXT-02, ES2, SCH-10, NTF-07, SEC-04 (bí mật), SRS §8.2 (ma trận sự kiệ
   `Failed` sau lần cuối. Cổng 587 bắt buộc nâng TLS. Không log mật khẩu, token hay nội dung thư.
 - `main.ts` chọn transport; outbox, lease (hai worker không gửi trùng), delivery log giữ nguyên.
 - `.env.example` thêm `MAIL_TRANSPORT`, `SMTP_*`, `MAIL_FROM` (đã duyệt); hướng dẫn Gmail App Password ở
-  `docs/05-implementation/AUTH_SETUP.md`.
+  `docs/05-implementation/auth-setup.md`.
 
 ## Tiêu chí nghiệm thu
 - [x] Cấu hình đủ tạo SMTP transport; thiếu một biến thì fail fast, thông báo không lộ giá trị.

@@ -21,7 +21,9 @@ test.describe('ICPDP officer workspace', () => {
     await expect(page.getByRole('link', { name: /School policy/ }).first()).toBeVisible()
   })
 
-  test('event proposal queue opens a proposal review page', async ({ page }) => {
+  test('event proposal queue opens a proposal review page', async ({ page, pageIssues }) => {
+    // Without Cloudinary the stored proposal document can't be fetched (503); the page still renders.
+    pageIssues.allow(/status of 503/)
     await page.goto('/workspace/event-proposals')
     await expect(
       page.getByRole('heading', { level: 1, name: 'Event proposal reviews' }),

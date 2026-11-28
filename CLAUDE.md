@@ -69,7 +69,7 @@ Cơ chế xuyên suốt:
 - **Thông báo:** inbox lọc theo workspace bằng danh sách audience ở `domain/notification.ts`; mã sự
   kiện chưa có trong danh sách sẽ âm thầm rơi vào inbox sinh viên. Email đi qua outbox +
   `notification-delivery-job`; Google SMTP khi đủ `SMTP_*` (bắt buộc ở production), log transport khi dev (`infra/mail/`).
-- **Schema:** `docs/05-implementation/UCMS_Database_Design.dbml` →
+- **Schema:** `docs/05-implementation/database-design.dbml` →
   `infra/db/ucms-schema.generated.ts` (sinh tự động, không sửa tay) → `infra/db/ucms-models.ts`.
   Đổi số bảng hoặc enum thì cập nhật guard trong generator và `tests/unit/ucms-models.test.ts`.
 - **Sắp xếp tên tiếng Việt** trong Mongo cần `.collation({ locale: "vi" })`.
@@ -88,7 +88,7 @@ Cơ chế xuyên suốt:
 
 ## Tra cứu nghiệp vụ
 
-- `docs/SRS.md`: baseline yêu cầu (UC, BR, vòng đời thực thể).
-- `docs/05-implementation/UC_CODE_MAPPING.md`: từ mã UC ra route server và trang client.
-- `docs/CURRENT_IMPLEMENTATION.md`: phạm vi đã có trong code và khoảng trống còn lại.
+- `docs/srs.md`: baseline yêu cầu (UC, BR, vòng đời thực thể).
+- `docs/05-implementation/uc-code-mapping.md`: từ mã UC ra route server và trang client.
+- `docs/current-implementation.md`: phạm vi đã có trong code và khoảng trống còn lại.
 - `.sdd/specs/feat-*/` và `.sdd/rfcs/ADR-*.md`: spec từng tính năng và quyết định kiến trúc.

@@ -1,16 +1,15 @@
 # 05 — Triển khai
 
-Trạng thái hiện hành: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+Trạng thái hiện hành: [`../current-implementation.md`](../current-implementation.md).
 
 Cách biến baseline yêu cầu thành code: phân rã công việc và thiết kế cơ sở dữ liệu.
 
 | File | Là gì |
 |---|---|
-| [`UC_CODE_MAPPING.md`](UC_CODE_MAPPING.md) | Ma trận 56 mã UC (55 trong phạm vi, UC23 đã rút) → route server, UI client, mount và khoảng trống triển khai (đối chiếu code 27/11/2026) |
-| [`CODE_DIAGRAM_GAPS.md`](CODE_DIAGRAM_GAPS.md) | Những chỗ code từng lệch so với use case / context diagram đã duyệt và SRS, cách đã khớp lại (G1–G5, S3 xong 07/11/2026) và trạng thái các diagram phụ (14/11/2026) |
-| [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên, MongoDB local cho Auth và Google SMTP gửi email |
-| [`EVENT_PROPOSAL_IMPORT.md`](EVENT_PROPOSAL_IMPORT.md) | Cách điền Word và import đề án UC25, mapping field và thông tin thiếu |
-| [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 55 bảng (collection MongoDB; `uploadedAssets` thêm 26/11/2026), 28 enum, nhóm theo module; code có thêm `authSessions` (tổng 56 collection). Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
+| [`uc-code-mapping.md`](uc-code-mapping.md) | Ma trận 56 mã UC (55 trong phạm vi, UC23 đã rút) → route server, UI client, mount và khoảng trống triển khai (đối chiếu code 27/11/2026) |
+| [`auth-setup.md`](auth-setup.md) | Cấu hình Google OAuth, cookie phiên, MongoDB local cho Auth và Google SMTP gửi email |
+| [`event-proposal-import.md`](event-proposal-import.md) | Cách điền Word và import đề án UC25, mapping field và thông tin thiếu |
+| [`database-design.dbml`](database-design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 55 bảng (collection MongoDB; `uploadedAssets` thêm 26/11/2026), 28 enum, nhóm theo module; code có thêm `authSessions` (tổng 56 collection). Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML
 
@@ -41,14 +40,14 @@ lại được, không nhân đôi; nó chỉ xoá bộ demo hư cấu cũ theo 
 đụng dữ liệu khác. Dữ liệu demo nghiệp vụ được nạp riêng bằng
 `npm run seed:demo -- --owner=<email>`; từ `655cad3` lệnh này cũng tạo hội trường, sân, sân khấu và bộ
 thiết bị (HALL/OUTDOOR/STAGE/EQUIPMENT) để thử UC45. Chi tiết và giới hạn ở `server/src/infra/db/README.md`. Sau khi cấu hình Auth theo
-[`AUTH_SETUP.md`](AUTH_SETUP.md), chạy backend bằng `npm run dev -w server`;
+[`auth-setup.md`](auth-setup.md), chạy backend bằng `npm run dev -w server`;
 `GET <APP_BASE_URL>/api/v1/health` phải trả `200` với
 `{"ok":true}`. Nếu Compass dùng MongoDB Atlas, backend cũng cần chính URI Atlas đó (không đưa
 credential vào source hoặc commit `.env`).
 
 ## Giữ đồng bộ với yêu cầu
 
-`../SRS.md` là nguồn chân lý. Khi một yêu cầu thay đổi: sửa SRS trước, rồi tới DBML, rồi tới
+`../srs.md` là nguồn chân lý. Khi một yêu cầu thay đổi: sửa SRS trước, rồi tới DBML, rồi tới
 danh sách công việc. Mọi giá trị trạng thái trong các enum của DBML đều lấy từ SRS §6, và mọi
 khoá duy nhất cùng index lấy từ SRS §7.4 — nếu một trong hai thứ đó đổi thì enum hoặc index ở
 đây đổi theo.

@@ -34,7 +34,7 @@ cho current member đọc qua assertClubSettingsRead; mutation luôn yêu cầu 
 - [x] API quản lý role không còn; client không còn màn phân quyền.
 
 ## Ngoài phạm vi
-Xoá collection/field role trong DBML. Diagram đã bỏ UC23; xem ma trận runtime tại docs/CURRENT_IMPLEMENTATION.md.
+Xoá collection/field role trong DBML. Diagram đã bỏ UC23; xem ma trận runtime tại docs/current-implementation.md.
 
 ## Changelog
 - v1.0.0 (2026-10-13) — người dùng chốt: Phó chủ nhiệm = Club Leader; Club Member chỉ xem và tham gia; gỡ UI + API, giữ collection.

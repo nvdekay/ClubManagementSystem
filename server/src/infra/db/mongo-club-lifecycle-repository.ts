@@ -114,20 +114,18 @@ async function outstandingObligations(
   now: Date,
   session: ClientSession,
 ): Promise<OutstandingObligations> {
-  const [overdue, drafts, completed, budgets] = await Promise.all([
-    overduePeriodicReports(clubId, now, session),
-    ucmsModels
-      .periodicReports!.find({ clubId, state: { $in: ['Draft', 'Returned for correction'] } })
-      .select('periodCode')
-      .session(session)
-      .lean(),
-    ucmsModels
-      .events!.find({ clubId, organizerType: { $ne: 'ICPDP' }, state: 'Completed' })
-      .select('title audienceScope')
-      .session(session)
-      .lean(),
-    unreconciledBudgets(clubId, session),
-  ])
+  const overdue = await overduePeriodicReports(clubId, now, session)
+  const drafts = await ucmsModels
+    .periodicReports!.find({ clubId, state: { $in: ['Draft', 'Returned for correction'] } })
+    .select('periodCode')
+    .session(session)
+    .lean()
+  const completed = await ucmsModels
+    .events!.find({ clubId, organizerType: { $ne: 'ICPDP' }, state: 'Completed' })
+    .select('title audienceScope')
+    .session(session)
+    .lean()
+  const budgets = await unreconciledBudgets(clubId, session)
   const postEventReports: OutstandingObligations['postEventReports'] = []
   for (const event of completed) {
     // Sự kiện chỉ dành cho thành viên chỉ nợ báo cáo khi có ngân sách (cùng quy tắc với kiểm tra quá hạn).

@@ -185,27 +185,25 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
     }
     const property = new Types.ObjectId(propertyId)
     const overlap = { startAt: { $lt: endAt }, endAt: { $gt: startAt } }
-    const [eventDocs, bookingDocs] = await Promise.all([
-      events
-        .find({
-          propertyId: property,
-          state: { $in: busyEventStates },
-          ...overlap,
-          ...(excludeEventId ? { _id: { $ne: new Types.ObjectId(excludeEventId) } } : {}),
-        })
-        .select({ title: 1, startAt: 1, endAt: 1 })
-        .session(session ?? null)
-        .lean(),
-      m
-        .propertyBookings!.find({
-          propertyId: property,
-          state: { $in: busyBookingStates },
-          ...overlap,
-        })
-        .select({ purpose: 1, clubName: 1, startAt: 1, endAt: 1 })
-        .session(session ?? null)
-        .lean(),
-    ])
+    const eventDocs = await events
+      .find({
+        propertyId: property,
+        state: { $in: busyEventStates },
+        ...overlap,
+        ...(excludeEventId ? { _id: { $ne: new Types.ObjectId(excludeEventId) } } : {}),
+      })
+      .select({ title: 1, startAt: 1, endAt: 1 })
+      .session(session ?? null)
+      .lean()
+    const bookingDocs = await m
+      .propertyBookings!.find({
+        propertyId: property,
+        state: { $in: busyBookingStates },
+        ...overlap,
+      })
+      .select({ purpose: 1, clubName: 1, startAt: 1, endAt: 1 })
+      .session(session ?? null)
+      .lean()
     return [
       ...eventDocs.map((item) => ({
         kind: 'event' as const,
@@ -472,7 +470,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
               deadline: { $gt: now },
             },
             { $set: { status: 'Withdrawn', updatedAt: now } },
-            { session, new: true },
+            { session, returnDocument: 'after' },
           )
           .lean()
         if (!invitation) {

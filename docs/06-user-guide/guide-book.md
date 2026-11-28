@@ -1,9 +1,9 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
-> **Đối chiếu code ngày 27/11/2026.** Toàn bộ ảnh được chụp tự động ngày 27/11/2026 từ giao diện hiện
+> **Đối chiếu code ngày 27/11/2026.** Toàn bộ ảnh được chụp tự động ngày 27–28/11/2026 từ giao diện hiện
 > tại (tông cam FPT) bằng `npm run guide:screenshots`, trên database mẫu riêng; xem **Phụ lục**.
-> `GUIDE_BOOK.html` và `GUIDE_BOOK.pdf` không lưu trong repo, dựng lại theo [README.md](README.md).
-> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+> `guide-book.html` và `guide-book.pdf` không lưu trong repo, dựng lại theo [README.md](README.md).
+> Trạng thái API/UI và khoảng trống triển khai: [current-implementation.md](../current-implementation.md).
 
 Hướng dẫn mọi màn hình đang có trong app, theo ba không gian làm việc: Sinh viên, CLB và
 ICPDP. Mỗi luồng ghi nơi bắt đầu, vai trò cần có, từng bước thao tác với đúng tên nút trên
@@ -207,7 +207,7 @@ cơ cấu, không gắn quyền.
 **Kết quả:** phải chọn ít nhất một ghế. App chặn người có nhiệm kỳ Chủ nhiệm bị chồng lấn.
 Quyền của người được đề cử chỉ có hiệu lực sau khi ICPDP xác nhận.
 
-![Trang đề cử ban chủ nhiệm khi không còn ghế trống](images/14-board-nomination.png)
+![Club Leader chọn thành viên cho ghế Phó chủ nhiệm còn trống](images/14-board-nomination.png)
 
 ### ICPDP xác nhận ban chủ nhiệm
 
@@ -219,8 +219,9 @@ Quyền của người được đề cử chỉ có hiệu lực sau khi ICPDP 
 
 **Kết quả:** ghế chuyển sang Đã xác nhận hoặc Đã trả để đề cử lại. Mỗi đề cử chỉ nhận một
 quyết định; trả lại tất cả các ghế thì bắt buộc có ghi chú. Nếu officer khác đã nhận, app báo
-và không cho thao tác trùng. (Màn này chưa có ảnh: dữ liệu mẫu dùng để chụp không có ghế trống
-nên không có đề cử nào chờ xác nhận.)
+và không cho thao tác trùng.
+
+![ICPDP nhận quyết định một đề cử và chọn xác nhận hoặc trả từng ghế](images/15-board-nomination-review.png)
 
 ### ICPDP duyệt chuyển giao nhiệm kỳ
 
@@ -368,6 +369,8 @@ huỷ. CLB bị tạm ngừng thì các lịch bảo vệ chưa diễn ra cũng 
 ![ICPDP tạo lịch bảo vệ: chọn giờ, thời lượng và phòng học còn trống](images/69-defense-schedule.png)
 
 ![Thẻ lịch hẹn bảo vệ đề án ở trang Sự kiện CLB](images/70-club-defense-card.png)
+
+![Phòng bảo vệ đề án trực tiếp: đề án bên trái, ghi chú hội đồng bên phải](images/72-live-defense-room.png)
 
 ### Công bố, sức chứa, đổi lịch và huỷ
 
@@ -578,7 +581,8 @@ kiện không tự tất toán ngân sách.
 5. Bấm **Xác nhận quyết định**.
 
 **Kết quả:** báo cáo chuyển Đã chấp nhận hoặc Đã trả về; báo cáo được chấp nhận là đầu vào
-đánh giá CLB. Loại báo cáo và các mốc hạn nộp/nhắc/quá hạn cấu hình trong chính sách.
+đánh giá CLB: nếu kỳ đã có tiêu chí đánh giá đang áp dụng, app tự sinh bản nháp đánh giá của CLB đó
+cho kỳ (xem mục 18.2). Loại báo cáo và các mốc hạn nộp/nhắc/quá hạn cấu hình trong chính sách.
 
 **Phía CLB:** Club Leader mở **Báo cáo định kỳ** (`/club/:clubId/periodic-reports`), chọn kỳ đang mở
 nhận báo cáo và điền theo biểu mẫu ICPDP: danh sách thành viên hoạt động trong kỳ (kèm điểm phong
@@ -724,7 +728,8 @@ Trạng thái: Bản nháp → Đang áp dụng → Đã thay thế.
 **Nơi bắt đầu:** **Đánh giá CLB** (`/workspace/evaluations`).
 
 1. Chọn học kỳ; cần có scheme đang áp dụng (nếu chưa, dùng link mở tiêu chí đánh giá).
-2. Bấm **Sinh bản nháp** cho mọi CLB đang hoạt động.
+2. Bấm **Sinh bản nháp** cho mọi CLB đang hoạt động (CLB có báo cáo định kỳ đã được chấp nhận
+   thường đã có sẵn bản nháp, trạng thái **Đã có dữ liệu**).
 3. **Mở** từng CLB, xem dữ liệu nguồn của từng tiêu chí. Với tiêu chí cho chấm tay, nhập điểm
    0–100 và lý giải (bắt buộc), **Lưu điểm**.
 4. Bấm **Chốt kết quả** (hoặc **Sinh lại từ dữ liệu hiện tại**); có thể **Mở lại để xem
@@ -734,7 +739,9 @@ Trạng thái: Bản nháp → Đang áp dụng → Đã thay thế.
 **Kết quả:** xếp loại Xuất sắc / Tốt / Khá / Cần cải thiện. Tiêu chí thiếu dữ liệu ghi "chưa
 đủ dữ liệu", không tính 0. Kết quả đã công bố không sửa trực tiếp; dùng **Tạo bản sửa**.
 
-![Bảng đánh giá CLB theo học kỳ](images/54-evaluations.png)
+![Bảng đánh giá CLB theo học kỳ, có bản nháp sinh khi báo cáo định kỳ được chấp nhận](images/54-evaluations.png)
+
+![Bản nháp đánh giá một CLB: điểm và dữ liệu nguồn của từng tiêu chí](images/73-evaluation-draft.png)
 
 ## 19. Khiếu nại và định tuyến phê duyệt
 
@@ -893,17 +900,18 @@ liệu và lối tắt.
 
 ## Phụ lục — Dữ liệu và nguồn ảnh
 
-- Toàn bộ 70 ảnh chụp tự động ngày 27/11/2026 bằng `npm run guide:screenshots` (Playwright), giao
+- Toàn bộ 73 ảnh chụp tự động bằng `npm run guide:screenshots` (Playwright) ngày 27/11/2026 (ảnh 14,
+  15, 54, 72 và 73 chụp lại ngày 28/11/2026), giao
   diện tiếng Việt, theme sáng, khung nhìn 1440 × 1000. Cách chụp lại ở [README.md](README.md).
 - Ảnh chụp từ app thật (API + bản build client) chạy trên database riêng `ucms-e2e-guide`, được seed
   lại mỗi lần chụp từ các seed có sẵn của repo cộng dữ liệu riêng cho guide (hồ sơ thành lập chờ
   duyệt, báo cáo sau sự kiện ở từng trạng thái, kinh phí "Đêm nhạc gây quỹ HEBE", yêu cầu cơ sở vật
-  chất, khiếu nại đã chuyển CLB). Không chặn hay giả lập request API.
+  chất, khiếu nại đã chuyển CLB, một ghế Phó chủ nhiệm còn trống ở HEBE Club, buổi bảo vệ đề án
+  "Hackathon An toàn thông tin 24h" đang diễn ra, hai báo cáo định kỳ Summer 2026 được chấp nhận để
+  sinh bản nháp đánh giá). Không chặn hay giả lập request API.
 - Tài khoản dùng để chụp: "Lê Thu Hằng" (`e2e.officer@fpt.edu.vn`, vừa là cán bộ ICPDP, vừa là
   Chủ nhiệm HEBE Club và thành viên Mây Mưa Club), Nguyễn Văn Lan (sinh viên chưa vào CLB nào) và Võ
   Ngọc Hà (thành viên HEBE Club). Mọi tên, email và liên kết trong ảnh là dữ liệu mẫu.
 - Sự kiện "Wave 3 demo" / "Wave 4 demo" là dữ liệu mẫu. Khi chụp không có kho tệp Cloudinary nên
   ô xem trước tệp đính kèm (đề án, hoá đơn) báo không tải được; trên hệ thống thật tệp hiển thị bình thường.
-- Chưa có ảnh: ICPDP xác nhận đề cử ban chủ nhiệm (dữ liệu mẫu không có ghế trống) và phòng bảo vệ
-  đề án trực tiếp (chỉ mở được trong khung giờ của buổi bảo vệ).
 - Chi tiết URL, tài khoản và thao tác trước khi chụp của từng ảnh ở `images/manifest.json`.

@@ -13,4 +13,4 @@
 | Client: mục "Báo cáo năm học" ở trang xuất dữ liệu ICPDP | — | xong |
 | Seed demo: đánh giá `Published` và báo cáo định kỳ `Accepted` cho `Spring 2026`, `Summer 2026`, `Fall 2026` | — | xong |
 | Test: unit cho phân tích kỳ và hàm tổng hợp, integration cho route và audit | — | xong |
-| Docs: thêm FR-UC55-11 (A2) vào `docs/SRS.md` và `UC_CODE_MAPPING.md` | — | xong |
+| Docs: thêm FR-UC55-11 (A2) vào `docs/srs.md` và `uc-code-mapping.md` | — | xong |

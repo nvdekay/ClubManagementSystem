@@ -404,7 +404,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
               state: { $in: [...UNDECIDED_COMPLAINT_STATES] },
             },
             { $set: { state: 'Withdrawn', withdrawnAt: now } },
-            { session, new: true },
+            { session, returnDocument: 'after' },
           )
           .lean()
         if (!withdrawn) {

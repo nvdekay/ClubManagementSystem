@@ -4,7 +4,10 @@ import { apiErrors as enApiErrors } from '@/i18n/locales/en/apiErrors'
 import { apiErrors as viApiErrors } from '@/i18n/locales/vi/apiErrors'
 import { clubEvents as enClubEvents } from '@/i18n/locales/en/clubEvents'
 import { clubEvents as viClubEvents } from '@/i18n/locales/vi/clubEvents'
-import { resolveClubEventErrorDescriptor } from '@/pages/club/ClubEventErrorMessage'
+import {
+  clubEventErrorText,
+  resolveClubEventErrorDescriptor,
+} from '@/pages/club/ClubEventErrorMessage'
 import { ApiError, apiFetch } from '@/services/apiError'
 import { apiRequest, type ApiFailure } from '@/services/apiRequest'
 import { actOnClubEvent, ClubEventError } from '@/services/clubEvents'
@@ -148,7 +151,7 @@ describe('localized API errors', () => {
       400,
     )
     expect(notice).toEqual({ key: 'internalNoticeHours', params: { hours: '24' } })
-    expect(i18next.t(`clubEvents.errors.${notice.key}`, notice.params)).toBe(
+    expect(clubEventErrorText(i18next.t, notice)).toBe(
       'Thời gian bắt đầu sự kiện nội bộ phải cách hiện tại ít nhất 24 giờ.',
     )
     const outsideCheckIn = resolveClubEventErrorDescriptor(

@@ -11,12 +11,22 @@ interface ClubEventErrorMessageProps {
 
 export type ClubEventErrorKey = keyof typeof clubEvents.errors
 
-interface ClubEventErrorDescriptor {
-  key: ClubEventErrorKey
-  params?: Record<string, string | number>
+// The messages that interpolate {{hours}}; every other error message takes no variables.
+type HoursErrorKey = 'proposalNotice' | 'internalNoticeHours' | 'cancelNoticeHours'
+type PlainErrorKey = Exclude<ClubEventErrorKey, HoursErrorKey>
+
+type ClubEventErrorDescriptor =
+  | { key: HoursErrorKey; params: { hours: string | number } }
+  | { key: PlainErrorKey; params?: undefined }
+
+/** Translates a descriptor; the union keeps each key paired with the variables it needs. */
+export function clubEventErrorText(t: TFunction, descriptor: ClubEventErrorDescriptor): string {
+  return descriptor.params === undefined
+    ? t(`clubEvents.errors.${descriptor.key}`)
+    : t(`clubEvents.errors.${descriptor.key}`, descriptor.params)
 }
 
-const BOOKING_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
+const BOOKING_ERROR_KEYS: Readonly<Record<string, PlainErrorKey>> = {
   room_allocation: 'bookingRoomAllocation',
   not_available: 'bookingNotAvailable',
   already_linked: 'bookingAlreadyLinked',
@@ -24,7 +34,7 @@ const BOOKING_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
   schedule_not_covered: 'bookingScheduleNotCovered',
 }
 
-const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
+const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, PlainErrorKey>> = {
   'room allocations cannot be attached to an event proposal': 'bookingRoomAllocation',
   'booking does not belong to the club or is no longer available': 'bookingNotAvailable',
   'booking is already attached to another event': 'bookingAlreadyLinked',
@@ -123,7 +133,7 @@ const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
 }
 
 // Ánh xạ mã HTTP của lỗi sự kiện sang khóa thông báo
-function statusErrorKey(statusCode?: number): ClubEventErrorKey {
+function statusErrorKey(statusCode?: number): PlainErrorKey {
   switch (statusCode) {
     case 400:
     case 422:
@@ -260,7 +270,7 @@ export function ClubEventErrorMessage({ error }: ClubEventErrorMessageProps) {
   const descriptor = resolveClubEventErrorDescriptor(rawMessage, statusCode, details)
   return (
     <p role="alert" className={className}>
-      {t(`clubEvents.errors.${descriptor.key}`, descriptor.params)}
+      {clubEventErrorText(t, descriptor)}
     </p>
   )
 }

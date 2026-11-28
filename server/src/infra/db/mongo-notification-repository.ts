@@ -335,7 +335,7 @@ export function mongoMailOutboxRepository(): MailOutboxRepository {
         .findOneAndUpdate(
           { state: 'Queued', dueAt: { $lte: now }, channels: NOTIFICATION_CHANNEL_EMAIL },
           { $set: { dueAt: new Date(now.getTime() + leaseMs) }, $inc: { attempts: 1 } },
-          { sort: { dueAt: 1, _id: 1 }, new: true },
+          { sort: { dueAt: 1, _id: 1 }, returnDocument: 'after' },
         )
         .lean()
       if (!doc) {
@@ -377,6 +377,8 @@ export function mongoMailOutboxRepository(): MailOutboxRepository {
           },
           { $unset: 'lastError' },
         ],
+        // Mongoose 9 rejects update pipelines unless they are opted into per call.
+        { updatePipeline: true },
       )
     },
     // Ghi log gửi email lỗi, đặt lịch thử lại nếu còn lượt

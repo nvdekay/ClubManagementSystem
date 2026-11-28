@@ -42,7 +42,7 @@ COPY server/package.json server/
 COPY --from=build /app/server/dist server/dist
 COPY --from=build /app/client/dist client/dist
 # Read at runtime by infra/files/event-proposal-files.ts (default event proposal template).
-COPY ["docs/Template Đề án sự kiện.docx", "docs/"]
+COPY ["docs/template-de-an-su-kien.docx", "docs/"]
 USER node
 WORKDIR /app/server
 EXPOSE 3000

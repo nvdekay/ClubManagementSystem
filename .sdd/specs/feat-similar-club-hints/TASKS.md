@@ -10,4 +10,4 @@
 | Client: bảng gợi ý ở màn thẩm định ICPDP | — | xong |
 | Client: cảnh báo ở màn hồ sơ của người nộp | — | xong |
 | Test: unit cho hàm tính điểm, integration cho phạm vi dữ liệu theo vai trò | — | xong |
-| Docs: thêm FR-UC08-14 và mở rộng FR-UC07-10 trong `docs/SRS.md` | — | xong |
+| Docs: thêm FR-UC08-14 và mở rộng FR-UC07-10 trong `docs/srs.md` | — | xong |

@@ -97,16 +97,16 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
     department: Record<string, unknown>,
     session: ClientSession,
   ) {
-    const [roleCount, memberCount] = await Promise.all([
-      positions.countDocuments({ clubId, isActive: true, unit: department.name }).session(session),
-      memberships
-        .countDocuments({
-          clubId,
-          departmentId: department._id,
-          state: { $in: ['Active', 'Inactive'] },
-        })
-        .session(session),
-    ])
+    const roleCount = await positions
+      .countDocuments({ clubId, isActive: true, unit: department.name })
+      .session(session)
+    const memberCount = await memberships
+      .countDocuments({
+        clubId,
+        departmentId: department._id,
+        state: { $in: ['Active', 'Inactive'] },
+      })
+      .session(session)
     if (roleCount || memberCount) {
       throw new DomainError('department is still in use', 'conflict', { roleCount, memberCount })
     }

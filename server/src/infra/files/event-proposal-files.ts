@@ -44,7 +44,7 @@ export function cloudinaryEventProposalFiles(config: CloudinaryConfig): EventPro
 
 // Cùng độ sâu từ server/src/infra/files (tsx, vitest) và server/dist/infra/files (build): lên bốn cấp là gốc repo.
 const DEFAULT_TEMPLATE = fileURLToPath(
-  new URL('../../../../docs/Template Đề án sự kiện.docx', import.meta.url),
+  new URL('../../../../docs/template-de-an-su-kien.docx', import.meta.url),
 )
 let cachedDefault:
   Promise<{ fileName: string; mimeType: string; content: Buffer; updatedAt: Date }> | undefined

@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
-SOURCE = ROOT / "docs/05-implementation/UCMS_Database_Design.dbml"
+SOURCE = ROOT / "docs/05-implementation/database-design.dbml"
 TARGET = Path(__file__).with_name("ucms-schema.generated.ts")
 FIELD = re.compile(r'^\s*(\w+)\s+("[^"]+"|\w+)\s*(?:\[(.*)\])?\s*$')
 INDEX = re.compile(r'^\s*(\([^)]*\)|\w+)\s+\[(.*)\]\s*$')
@@ -101,7 +101,7 @@ def main() -> None:
     if len(tables) != 55 or len(enums) != 28:
         raise ValueError(f"Unexpected DBML inventory: {len(tables)} tables, {len(enums)} enums")
     output = (
-        "// Generated from docs/05-implementation/UCMS_Database_Design.dbml.\n"
+        "// Generated from docs/05-implementation/database-design.dbml.\n"
         "// Run python3 server/src/infra/db/generate-ucms-schema.py after DBML changes.\n"
         "// Do not edit by hand.\n"
         f"export const ucmsEnums = {json.dumps(enums, ensure_ascii=False, indent=2)} as const;\n\n"

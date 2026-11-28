@@ -167,10 +167,7 @@ const dynamicCodes = [
   'CLUB_MEMBERSHIP_ACTIVE',
   'CLUB_MEMBERSHIP_INACTIVE',
   'CLUB_MEMBERSHIP_BANNED',
-  // `BUDGET_${kind}_RECORDED`, `REPORT_${kind}`, `SETTLEMENT_${kind}` (accountability-workflow)
-  'BUDGET_ADVANCE_RECORDED',
-  'BUDGET_TOPUP_RECORDED',
-  'BUDGET_REFUND_RECORDED',
+  // `REPORT_${kind}`, `SETTLEMENT_${kind}` (accountability-workflow)
   'REPORT_SAVE',
   'REPORT_SUBMIT',
   'REPORT_CLAIM',
@@ -200,8 +197,12 @@ const dynamicCodes = [
   'REPORT_ESCALATED_TO_ICPDP',
   'REFUND_OVERDUE_TO_ICPDP',
 ]
-// Legacy codes no server code sends any more: UC23 (withdrawn) and EVENT_PUBLISHED (internal events removed).
+// Legacy codes no server code sends any more: UC23 (withdrawn), EVENT_PUBLISHED (internal events
+// removed) and the budget money flows replaced by sponsored items (POST /admin/budgets/:id/flows).
 const legacyCodes = [
+  'BUDGET_ADVANCE_RECORDED',
+  'BUDGET_TOPUP_RECORDED',
+  'BUDGET_REFUND_RECORDED',
   'CLUB_ROLE_ASSIGNED',
   'CLUB_ROLE_REVOKED',
   'CLUB_ROLE_UPDATED',

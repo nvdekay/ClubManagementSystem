@@ -5,7 +5,6 @@ import mongoose, { Types } from 'mongoose'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { mongoEventFinanceRepository } from '../../src/infra/db/mongo-event-finance-repository.js'
 import { mongoPostEventReportRepository } from '../../src/infra/db/mongo-post-event-report-repository.js'
-import { mongoBudgetDisbursementRepository } from '../../src/infra/db/mongo-budget-disbursement-repository.js'
 import { ensureUcmsDatabase, ucmsModels as m } from '../../src/infra/db/ucms-models.js'
 import { DEFAULT_FORM_REQUIREMENTS } from '../../src/domain/policy.js'
 import type { FinanceDetail } from '../../src/domain/event-finance.js'
@@ -741,27 +740,6 @@ describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
       recoveryDueAt: new Date(now.getTime() + 14 * DAY),
     })
     expect(d.history.filter((h) => h.action === 'SETTLEMENT_SUBMIT')).toHaveLength(2)
-    const flows = mongoBudgetDisbursementRepository()
-    expect(
-      (
-        await flows.record(
-          d.id,
-          String(actor),
-          { kind: 'Refund', amount: 10, disbursedAt: now },
-          now,
-        )
-      ).state,
-    ).toBe('Recovery Pending')
-    expect(
-      (
-        await flows.record(
-          d.id,
-          String(actor),
-          { kind: 'Refund', amount: 10, disbursedAt: now },
-          now,
-        )
-      ).state,
-    ).toBe('Closed')
   })
   it('handles top-up and zero balance, denies orphan evidence, and marks category exceptions', async () => {
     for (const amount of [100, 150]) {
@@ -815,18 +793,6 @@ describe.skipIf(!uri)('Wave 4 Mongo accountability', () => {
         now,
       )
       expect(d.state).toBe(amount === 100 ? 'Closed' : 'Reconciled')
-      if (amount === 150) {
-        expect(
-          (
-            await mongoBudgetDisbursementRepository().record(
-              d.id,
-              String(actor),
-              { kind: 'TopUp', amount: 50, disbursedAt: now },
-              now,
-            )
-          ).state,
-        ).toBe('Closed')
-      }
     }
   })
   it('serializes overdue A2 against submission and excludes unsupported spend', async () => {

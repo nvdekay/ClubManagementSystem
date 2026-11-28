@@ -275,7 +275,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
               draftPayload: { ...draft, _revision: expectedDraftRevision + 1 },
             },
           },
-          { new: true },
+          { returnDocument: 'after' },
         )
         .lean()
       if (!updated) {
@@ -296,7 +296,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
             $push: { 'draftPayload.documents': document },
             $inc: { 'draftPayload._revision': 1 },
           },
-          { new: true },
+          { returnDocument: 'after' },
         )
         .lean()
       if (!updated) {
@@ -318,7 +318,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
             $pull: { 'draftPayload.documents': { id: documentId } },
             $inc: { 'draftPayload._revision': 1 },
           },
-          { new: true },
+          { returnDocument: 'after' },
         )
         .lean()
       if (!updated) {

@@ -15,7 +15,7 @@ export function useDashboard(context: DashboardContext) {
   })
 }
 
-// Query sự kiện nội bộ lọc theo CLB và học kỳ
+// Query lịch sử ban chủ nhiệm của một CLB (drill-down UC02)
 export function useClubBoardHistory(clubId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: [...dashboardKeyRoot, 'board-history', clubId],

@@ -197,15 +197,17 @@ export async function periodicSystemData(
 ): Promise<PeriodicSystemSnapshot> {
   const m = ucmsModels
   const s = session ?? null
-  const [memberships, eventDocs] = await Promise.all([
-    m.clubMemberships!.find({ clubId, state: 'Active' }).select({ userId: 1 }).session(s).lean(),
-    m
-      .events!.find({ clubId, semesterCode: periodCode, state: { $in: heldEventStates } })
-      .select({ title: 1, description: 1, objective: 1, startAt: 1 })
-      .sort({ startAt: 1 })
-      .session(s)
-      .lean(),
-  ])
+  const memberships = await m
+    .clubMemberships!.find({ clubId, state: 'Active' })
+    .select({ userId: 1 })
+    .session(s)
+    .lean()
+  const eventDocs = await m
+    .events!.find({ clubId, semesterCode: periodCode, state: { $in: heldEventStates } })
+    .select({ title: 1, description: 1, objective: 1, startAt: 1 })
+    .sort({ startAt: 1 })
+    .session(s)
+    .lean()
   const userIds = memberships.map((item) => item.userId as Types.ObjectId)
   const eventIds = eventDocs.map((item) => item._id as Types.ObjectId)
   const [users, profiles, attendances] = await Promise.all([
@@ -283,19 +285,19 @@ export async function periodicLiveFigures(
   session?: ClientSession,
 ): Promise<PeriodicReportDetail['live']> {
   const m = ucmsModels
-  const [eventDocs, active, budgetDocs] = await Promise.all([
-    m
-      .events!.find({ clubId, semesterCode: periodCode })
-      .select({ state: 1 })
-      .session(session ?? null)
-      .lean(),
-    m.clubMemberships!.countDocuments({ clubId, state: 'Active' }).session(session ?? null),
-    m
-      .eventBudgets!.find({ clubId, periodCode, state: { $ne: 'Cancelled' } })
-      .select({ approvedTotal: 1, disbursedTotal: 1 })
-      .session(session ?? null)
-      .lean(),
-  ])
+  const eventDocs = await m
+    .events!.find({ clubId, semesterCode: periodCode })
+    .select({ state: 1 })
+    .session(session ?? null)
+    .lean()
+  const active = await m
+    .clubMemberships!.countDocuments({ clubId, state: 'Active' })
+    .session(session ?? null)
+  const budgetDocs = await m
+    .eventBudgets!.find({ clubId, periodCode, state: { $ne: 'Cancelled' } })
+    .select({ approvedTotal: 1, disbursedTotal: 1 })
+    .session(session ?? null)
+    .lean()
   const held = eventDocs.filter((item) => heldEventStates.includes(String(item.state)))
   const total = await m
     .attendances!.countDocuments({ eventId: { $in: held.map((item) => item._id) } })
@@ -641,7 +643,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
         .clubs!.find({
           $or: [
             { state: { $in: owingStates } },
-            { _id: { $in: reportDocs.map((doc) => doc.clubId) } },
+            { _id: { $in: reportDocs.map((doc) => doc.clubId as Types.ObjectId) } },
           ],
         })
         .sort({ name: 1 })

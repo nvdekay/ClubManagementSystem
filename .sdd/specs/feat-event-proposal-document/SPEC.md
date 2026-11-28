@@ -1,6 +1,6 @@
 # SPEC: feat-event-proposal-document
 
-> Nguồn: `docs/05-implementation/EVENT_PROPOSAL_TEMPLATE_PLAN.md` (đã xoá khỏi repo; nội dung còn hiệu lực nằm trong SPEC này và `EVENT_PROPOSAL_IMPORT.md`)
+> Nguồn: `docs/05-implementation/EVENT_PROPOSAL_TEMPLATE_PLAN.md` (đã xoá khỏi repo; nội dung còn hiệu lực nằm trong SPEC này và `event-proposal-import.md`)
 > (quy tắc đã chốt ngày 2026-11-14). SPEC này là hợp đồng giữa server và client; chỗ nào plan lệch với
 > code thì mục "Điều chỉnh so với plan" là bản được áp dụng.
 
@@ -27,7 +27,7 @@ chi tiết theo mẫu. CLB cần tải được mẫu đề án của ICPDP, đ�
 - Sự kiện cũ không có file: đọc bình thường (trường vắng mặt), chỉ bị chặn khi `submit`.
 - Template: `auditLogs` với `entityType: "SystemTemplate"`, `action: "EVENT_PROPOSAL_TEMPLATE_UPDATED"`,
   `after` là metadata file; bản mới nhất là template hiện hành, không xoá được. Chưa có bản nào thì dùng
-  `docs/Template Đề án sự kiện.docx` (đọc từ đĩa, cache trong bộ nhớ).
+  `docs/template-de-an-su-kien.docx` (đọc từ đĩa, cache trong bộ nhớ).
 - Không thêm collection; 54 bảng / 28 enum giữ nguyên.
 
 ### Kiểm tra file (`validateEventProposalFile`)
