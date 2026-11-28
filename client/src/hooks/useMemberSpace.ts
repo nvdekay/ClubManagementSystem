@@ -1,7 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authKeyRoot } from '@/hooks/useAuth'
+import { dashboardKeyRoot } from '@/hooks/useDashboard'
+import { useInvalidatingMutation } from '@/hooks/useInvalidatingMutation'
+import { ApiError } from '@/services/apiError'
+import { useQuery } from '@tanstack/react-query'
 import {
   onboardMember,
-  MemberSpaceError,
   changeMembershipState,
   executeWithdrawal,
   fetchClubMemberships,
@@ -20,7 +23,7 @@ const key = ['member-space'] as const
 // Kiểm tra lỗi có phải do người dùng không phải thành viên CLB
 /** True khi người gọi không (hoặc không còn) là thành viên, nên trang cần dẫn tới trang CLB công khai. */
 export function isNotAMember(error: unknown): boolean {
-  return error instanceof MemberSpaceError && error.status === 403
+  return error instanceof ApiError && error.status === 403
 }
 
 // Query các CLB tôi đang tham gia
@@ -70,9 +73,8 @@ export function useClubWithdrawals(clubId: string | undefined, enabled: boolean)
 
 // Mutation xử lý thành viên và yêu cầu rời CLB, rồi làm mới cache
 export function useMembershipAction() {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (
+  return useInvalidatingMutation(
+    (
       action:
         | {
             kind: 'request'
@@ -116,10 +118,6 @@ export function useMembershipAction() {
         action.csrfToken,
       )
     },
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key })
-      await client.invalidateQueries({ queryKey: ['dashboard'] })
-      await client.invalidateQueries({ queryKey: ['auth'] })
-    },
-  })
+    [key, dashboardKeyRoot, authKeyRoot],
+  )
 }
