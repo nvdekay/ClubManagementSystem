@@ -3,6 +3,7 @@ import {
   type PeriodicEvidenceStorage,
   type UploadedEvidenceRepository,
 } from '../domain/periodic-report.js'
+import { removeOnFailure } from './upload-rollback.js'
 
 /** Ảnh xét trong một lượt chạy; phần còn lại chờ lượt sau. */
 export const EVIDENCE_CLEANUP_BATCH = 200
@@ -20,16 +21,13 @@ export function trackEvidenceUploads(
   return {
     async upload(input) {
       const stored = await storage.upload(input)
-      try {
-        await uploads.record({
+      await removeOnFailure(storage, stored.assetId, () =>
+        uploads.record({
           assetId: stored.assetId,
           clubId: input.clubId.toLowerCase(),
           uploadedAt: clock(),
-        })
-      } catch (error) {
-        await storage.remove(stored.assetId).catch(() => undefined)
-        throw error
-      }
+        }),
+      )
       return stored
     },
     accessUrl: (assetId) => storage.accessUrl(assetId),
