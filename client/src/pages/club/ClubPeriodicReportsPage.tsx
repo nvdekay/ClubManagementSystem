@@ -16,6 +16,7 @@ import { useClubPeriodicReports, useChangePeriodicReport } from '@/hooks/useClub
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { ClubPeriodicReportEditor } from './ClubPeriodicReportEditor'
 import { formatDay } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 // Trang danh sách và tạo báo cáo định kỳ của CLB theo kỳ
 export function ClubPeriodicReportsPage() {
@@ -67,12 +68,9 @@ export function ClubPeriodicReportsPage() {
       />
       {query.isPending && <AppSkeleton className="h-64 w-full" />}
       {query.isError && (
-        <AppNotice tone="danger" role="alert">
+        <AppErrorNotice onRetry={() => void query.refetch()} retryVariant="primary">
           {query.error.message}
-          <AppButton onClick={() => void query.refetch()}>
-            {t('clubPeriodicReports.retry')}
-          </AppButton>
-        </AppNotice>
+        </AppErrorNotice>
       )}
       {query.data && (
         <div className="mb-6 space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
