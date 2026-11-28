@@ -12,6 +12,7 @@ import {
 import type { Classification } from '../../domain/evaluation.js'
 import { EVALUATION_DIMENSIONS, type SchemeThresholds } from '../../domain/evaluation-scheme.js'
 import { ucmsModels } from './ucms-models.js'
+import { optionalNumber } from './repo-helpers.js'
 
 type Doc = Record<string, unknown>
 
@@ -34,15 +35,6 @@ function money(value: unknown): ExportCell {
 // Lấy chuỗi không rỗng, ngược lại null
 function text(value: unknown): ExportCell {
   return typeof value === 'string' && value ? value : null
-}
-
-// Chuyển sang số hữu hạn, không hợp lệ thì undefined
-function optionalNumber(value: unknown): number | undefined {
-  if (value === undefined || value === null) {
-    return undefined
-  }
-  const parsed = Number(String(value))
-  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 // Ép giá trị về object thường, ngược lại object rỗng
