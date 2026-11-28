@@ -1,17 +1,13 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import type { AccountAdminRepository } from '../../domain/account-admin.js'
-import type { SessionService } from '../../domain/session.js'
-import type { AuthRepository } from '../../domain/auth.js'
 import { changeSystemRole, searchAdminUsers, setAccountLock } from '../../usecase/account-admin.js'
-import { authGuard } from './auth-routes.js'
+import { guards, type SessionDeps } from './auth-routes.js'
 import { ok } from './response.js'
-import { actor, parse } from './request.js'
+import { actor, parse, objectId } from './request.js'
 
-export interface AccountAdminRouteDeps {
+export interface AccountAdminRouteDeps extends SessionDeps {
   adminRepo: AccountAdminRepository
-  authRepo: AuthRepository
-  sessions: SessionService
 }
 
 const roleBody = z.object({ roleCode: z.string(), reason: z.string().optional() }).strict()
@@ -19,10 +15,7 @@ const reasonBody = z.object({ reason: z.string() }).strict()
 export const lockBody = z
   .object({
     reason: z.string(),
-    violationId: z
-      .string()
-      .regex(/^[0-9a-f]{24}$/i)
-      .optional(),
+    violationId: objectId.optional(),
   })
   .strict()
 
@@ -34,10 +27,10 @@ function param(value: unknown): string {
 // Mount các route quản trị tài khoản người dùng của ICPDP
 export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   const router = Router()
-  const guardDeps = { repo: deps.authRepo, sessions: deps.sessions }
+  const { read, write } = guards(deps)
 
   // Tìm kiếm và phân trang danh sách tài khoản người dùng
-  router.get('/admin/users', authGuard(guardDeps, false), async (req, res) => {
+  router.get('/admin/users', read, async (req, res) => {
     ok(
       res,
       await searchAdminUsers(deps.adminRepo, actor(res), req.query.search, {
@@ -48,7 +41,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   })
 
   // Cấp system role cho tài khoản kèm lý do
-  router.post('/admin/users/:id/roles', authGuard(guardDeps), async (req, res) => {
+  router.post('/admin/users/:id/roles', write, async (req, res) => {
     const body = parse(roleBody, req.body, 'request body')
     await changeSystemRole(
       deps.adminRepo,
@@ -64,7 +57,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   })
 
   // Thu hồi system role của tài khoản kèm lý do
-  router.delete('/admin/users/:id/roles/:roleCode', authGuard(guardDeps), async (req, res) => {
+  router.delete('/admin/users/:id/roles/:roleCode', write, async (req, res) => {
     const body = parse(reasonBody, req.body, 'request body')
     await changeSystemRole(
       deps.adminRepo,
@@ -80,7 +73,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   })
 
   // Khoá tài khoản (có thể gắn violationId) và thu hồi phiên
-  router.post('/admin/users/:id/lock', authGuard(guardDeps), async (req, res) => {
+  router.post('/admin/users/:id/lock', write, async (req, res) => {
     const body = parse(lockBody, req.body, 'request body')
     await setAccountLock(
       deps.adminRepo,
@@ -96,7 +89,7 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   })
 
   // Mở khoá tài khoản kèm lý do
-  router.post('/admin/users/:id/unlock', authGuard(guardDeps), async (req, res) => {
+  router.post('/admin/users/:id/unlock', write, async (req, res) => {
     const body = parse(reasonBody, req.body, 'request body')
     await setAccountLock(
       deps.adminRepo,
