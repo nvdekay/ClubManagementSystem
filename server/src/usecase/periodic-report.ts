@@ -1,5 +1,5 @@
 import type { AuthRepository } from '../domain/auth.js'
-import { DomainError } from '../domain/errors.js'
+import { DomainError, orNotFound } from '../domain/errors.js'
 import {
   normalizedPeriodicCampaign,
   normalizedPeriodicDecision,
@@ -104,10 +104,7 @@ export async function getPeriodicReport(
   id: string,
 ) {
   await requireIcpdpOfficer(deps.auth, actor)
-  const found = await deps.repo.find(parseObjectId(id, 'report id'))
-  if (!found) {
-    throw new DomainError('periodic report not found', 'not_found')
-  }
+  const found = orNotFound(await deps.repo.find(parseObjectId(id, 'report id')), 'periodic report')
   return withEvidenceUrls(deps.files ?? null, found)
 }
 
