@@ -1,24 +1,23 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { SponsoredItems } from '@/components/custom/SponsoredItems'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
-import { AppButton } from '@/components/ui/button/AppButton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { AppIcon } from '@/components/ui/icon/AppIcon'
 import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppPagination } from '@/components/ui/pagination/AppPagination'
 import { AppSelect } from '@/components/ui/select/AppSelect'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
-import { useAuth } from '@/hooks/useAuth'
 import { useBudget, useBudgets } from '@/hooks/useBudgets'
 import { useSponsoredItems } from '@/hooks/useSponsoredItems'
 import { BUDGET_FILTERS, type BudgetFilter } from '@/services/budgets'
 import { cn } from '@/utils/cn'
-import { formatMoney } from '@/utils/formatMoney'
-import { formatDay } from '@/utils/formatDate'
+import { useFormat } from '@/hooks/useFormat'
+import { IcpdpOfficerGate } from '@/pages/icpdp/IcpdpOfficerGate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 const PAGE_SIZE = 20
 // Tab order on screen; the server owns which budgets each tab holds.
@@ -64,45 +63,10 @@ function filterLabel(t: TFunction, filter: Filter): string {
   }
 }
 
-// Cổng kiểm tra đăng nhập và quyền cho hai trang ngân sách
-function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
-  const { t } = useTranslation()
-  const auth = useAuth()
-  if (auth.isPending) {
-    return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((item) => (
-          <AppSkeleton key={item} className="h-20 w-full" />
-        ))}
-      </div>
-    )
-  }
-  if (!auth.data) {
-    return (
-      <AppNotice>
-        <p>{t('budgets.signIn')}</p>
-        <Link
-          className="inline-block font-semibold text-primary-app hover:underline"
-          to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}
-        >
-          {t('budgets.signInLink')}
-        </Link>
-      </AppNotice>
-    )
-  }
-  if (!auth.data.systemRoles.includes('ICPDP_OFFICER')) {
-    return (
-      <AppNotice tone="danger" role="alert">
-        {t('budgets.unauthorized')}
-      </AppNotice>
-    )
-  }
-  return <>{children(auth.data.csrfToken)}</>
-}
-
 // Danh sách ngân sách sự kiện kèm bộ lọc theo trạng thái và câu lạc bộ
 function BudgetList() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day, money } = useFormat()
   const [filter, setFilter] = useState<Filter>('all')
   const [clubId, setClubId] = useState('')
   const [pageIndex, setPageIndex] = useState(0)
@@ -113,13 +77,6 @@ function BudgetList() {
   if (list.data && !list.isPlaceholderData && pageIndex > 0 && pageIndex >= pageCount) {
     setPageIndex(Math.max(pageCount - 1, 0))
   }
-  function money(value: number) {
-    return formatMoney(value, i18n.language)
-  }
-  function day(value: string) {
-    return formatDay(value, i18n.language)
-  }
-
   if (list.isPending) {
     return (
       <div className="space-y-2">
@@ -131,11 +88,10 @@ function BudgetList() {
   }
   if (list.isError) {
     return (
-      <AppNotice tone="danger" role="alert" title={list.error.message || t('budgets.loadError')}>
-        <AppButton variant="secondary" onClick={() => void list.refetch()}>
-          {t('budgets.retry')}
-        </AppButton>
-      </AppNotice>
+      <AppErrorNotice
+        title={list.error.message || t('budgets.loadError')}
+        onRetry={() => void list.refetch()}
+      />
     )
   }
 
@@ -290,9 +246,6 @@ function BudgetList() {
             pageIndex={pageIndex}
             pageCount={pageCount}
             onPageChange={setPageIndex}
-            prevLabel={t('budgets.previousPage')}
-            nextLabel={t('budgets.nextPage')}
-            pageLabel={(value) => t('budgets.pageNumber', { page: value })}
             navLabel={t('budgets.pagination')}
           />
         </>
@@ -314,21 +267,20 @@ export function BudgetsPage() {
   return (
     <>
       <PageHeader title={t('budgets.title')} description={t('budgets.description')} />
-      <Gate>{() => <BudgetList />}</Gate>
+      <IcpdpOfficerGate deniedMessage={t('budgets.unauthorized')}>
+        {() => <BudgetList />}
+      </IcpdpOfficerGate>
     </>
   )
 }
 
 // Chi tiết một ngân sách sự kiện theo từng hạng mục tài trợ
 function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { day } = useFormat()
   const budget = useBudget(id, true)
   const sponsored = useSponsoredItems(id)
   const back = { to: '/workspace/budgets', label: t('budgets.back') }
-
-  function day(value: string) {
-    return formatDay(value, i18n.language)
-  }
 
   if (budget.isPending || sponsored.isPending) {
     return (
@@ -342,15 +294,10 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
     return (
       <>
         <PageHeader title={t('budgets.budget')} back={back} />
-        <AppNotice
-          tone="danger"
-          role="alert"
+        <AppErrorNotice
           title={budget.error.message || t('budgets.loadError')}
-        >
-          <AppButton variant="secondary" onClick={() => void budget.refetch()}>
-            {t('budgets.retry')}
-          </AppButton>
-        </AppNotice>
+          onRetry={() => void budget.refetch()}
+        />
       </>
     )
   }
@@ -379,7 +326,10 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
 // Trang ICPDP chi tiết một ngân sách sự kiện
 export function BudgetDetailPage() {
   const { id } = useParams()
+  const { t } = useTranslation()
   return (
-    <Gate>{(csrfToken) => (id ? <BudgetDetailView id={id} csrfToken={csrfToken} /> : null)}</Gate>
+    <IcpdpOfficerGate deniedMessage={t('budgets.unauthorized')}>
+      {(csrfToken) => (id ? <BudgetDetailView id={id} csrfToken={csrfToken} /> : null)}
+    </IcpdpOfficerGate>
   )
 }
