@@ -2,6 +2,7 @@ import { DomainError } from './errors.js'
 import { BOOKING_SLOTS, bookingIntervalsConflict, slotsConflict } from './facility-booking.js'
 import type { AcademicSemester } from './policy.js'
 import type { Property } from './property.js'
+import { isObjectId } from './access-denial.js'
 
 /** Mục đích được lưu trên mọi booking sinh ra từ một lần phân bổ phòng của ICPDP. */
 export const ROOM_ALLOCATION_PURPOSE = 'ICPDP room allocation'
@@ -90,11 +91,9 @@ export interface RoomAllocationRepository {
   roomCommitments(propertyId: string, from: Date, to: Date): Promise<RoomAllocationConflict[]>
 }
 
-const OBJECT_ID = /^[0-9a-f]{24}$/i
-
 // Kiểm tra và chuẩn hoá mã phân bổ phòng dạng ObjectId
 export function allocationId(value: string): string {
-  if (typeof value !== 'string' || !OBJECT_ID.test(value)) {
+  if (!isObjectId(value)) {
     throw new DomainError('invalid room allocation identifier', 'validation')
   }
   return value.toLowerCase()
