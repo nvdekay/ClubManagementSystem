@@ -2,13 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
 import { AppBadge, type AppBadgeTone } from '@/components/ui/badge/AppBadge'
-import { AppButton } from '@/components/ui/button/AppButton'
-import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { useAuth } from '@/hooks/useAuth'
 import { useMyWithdrawals } from '@/hooks/useMemberSpace'
 import type { Locale } from '@/i18n'
 import type { WithdrawalState } from '@/services/memberSpace'
 import { formatDay } from '@/utils/formatDate'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 const tones: Record<WithdrawalState, AppBadgeTone> = {
   Pending: 'info',
@@ -27,16 +26,11 @@ export function MyWithdrawalRequests() {
 
   if (requests.isError) {
     return (
-      <AppNotice
-        tone="danger"
-        role="alert"
-        className="mt-8"
+      <AppErrorNotice
         title={t('memberSpace.myWithdrawalsError')}
-      >
-        <AppButton variant="secondary" onClick={() => void requests.refetch()}>
-          {t('memberSpace.retry')}
-        </AppButton>
-      </AppNotice>
+        className="mt-8"
+        onRetry={() => void requests.refetch()}
+      />
     )
   }
   if (!requests.data?.length) {
