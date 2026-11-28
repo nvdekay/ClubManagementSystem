@@ -1,14 +1,13 @@
 import { useTranslation } from 'react-i18next'
 
 import { AppBadge } from '@/components/ui/badge/AppBadge'
-import { AppButton } from '@/components/ui/button/AppButton'
-import { AppNotice } from '@/components/ui/notice/AppNotice'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { AppEmptyState } from '@/components/ui/empty-state/AppEmptyState'
 import { useClubBoardHistory } from '@/hooks/useDashboard'
 import type { Locale } from '@/i18n'
 import { formatDay } from '@/utils/formatDate'
 import { cn } from '@/utils/cn'
+import { AppErrorNotice } from '@/components/ui/notice/AppErrorNotice'
 
 interface ClubBoardHistoryProps {
   clubId: string
@@ -38,11 +37,11 @@ export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryP
   }
   if (history.isError) {
     return (
-      <AppNotice tone="danger" role="alert" title={t('clubOversight.historyLoadError')}>
-        <AppButton variant="secondary" onClick={() => void history.refetch()}>
-          {t('clubOversight.retry')}
-        </AppButton>
-      </AppNotice>
+      <AppErrorNotice
+        title={t('clubOversight.historyLoadError')}
+        onRetry={() => void history.refetch()}
+        retryLabel={t('clubOversight.retry')}
+      />
     )
   }
   const heading = cn('font-heading text-base font-semibold text-text-app', headingClassName)
